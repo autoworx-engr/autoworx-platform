@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 
 /**
@@ -27,6 +28,10 @@ import { db } from "@/lib/db";
  *                 type: integer
  *                 example: 12
  *                 description: ID of the user stopping the break
+ *               timezone:
+ *                 type: string
+ *                 example: America/New_York
+ *                 description: Optional company timezone used to stamp breakEnd/updatedAt. Falls back to the timezone stored on the clock-in record.
  *     responses:
  *       200:
  *         description: Break stopped successfully
@@ -67,7 +72,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { clockBreakId, userId } = body;
+    const { clockBreakId, userId, timezone } = body;
 
     if (!clockBreakId || !userId) {
       return NextResponse.json(
@@ -76,12 +81,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const existing = await db.clockBreak.findUnique({
+      where: { id: clockBreakId },
+      select: { clockInOut: { select: { timezone: true } } },
+    });
+
+    const now = companyNow(timezone || existing?.clockInOut?.timezone);
+
     const breakStop = await db.clockBreak.update({
       where: {
         id: clockBreakId,
       },
       data: {
-        breakEnd: new Date(),
+        breakEnd: now,
+        updatedAt: now,
       },
     });
 

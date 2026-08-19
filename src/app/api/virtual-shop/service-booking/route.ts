@@ -1074,38 +1074,6 @@ export async function POST(req: Request) {
           }
           client = clientResult.data;
           createdClientId = client?.id ?? null;
-
-          if (client) {
-            const column = await tx.column.findFirst({
-              where: {
-                title: "New Leads",
-                companyId: shop.companyId,
-                type: "sales",
-              },
-            });
-
-            const servicesForLead = await tx.shopService.findMany({
-              where: { id: { in: shopServiceIds } },
-              select: { title: true },
-            });
-            const serviceTitles = servicesForLead
-              .map((s) => s.title)
-              .join(", ");
-
-            await tx.lead.create({
-              data: {
-                clientName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
-                clientEmail: email,
-                clientPhone: phone,
-                companyId: shop.companyId,
-                source: "Virtual Shop",
-                vehicleInfo: `${year} ${make} ${model}`,
-                services: serviceTitles,
-                clientId: client.id,
-                columnId: column?.id,
-              },
-            });
-          }
         }
 
         // 4. Find or Create Vehicle
@@ -1789,7 +1757,6 @@ export async function POST(req: Request) {
         );
     }
     if (createdClientId) {
-      // The shared addCustomer action also creates a Lead, let's delete the client (which cascades or we can rely on lead being created in tx normally, but if addCustomer does it, it's global)
       await db.client
         .delete({ where: { id: createdClientId } })
         .catch((e) => console.error("Fallback deletion failed for Client:", e));

@@ -16,6 +16,7 @@ import moment from "moment-timezone";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RefundModal from "./RefundModal";
+import CarLoading from "@/components/common/CarLoading";
 
 export default function PaymentTable() {
   const { search, dateRange, amount, paidStatus, paymentMethod } =
@@ -255,11 +256,7 @@ export default function PaymentTable() {
             {/* Desktop View */}
             <div className="hidden lg:block">
               {loading ? (
-                <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-                  <h3 className="mb-2 text-lg font-bold text-slate-500">
-                    Loading payments...
-                  </h3>
-                </div>
+                <CarLoading />
               ) : rows.length === 0 ? (
                 <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                   <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">

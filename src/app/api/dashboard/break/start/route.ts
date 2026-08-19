@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 
 /**
@@ -27,6 +28,10 @@ import { db } from "@/lib/db";
  *                 type: integer
  *                 example: 12
  *                 description: User ID starting the break
+ *               timezone:
+ *                 type: string
+ *                 example: America/New_York
+ *                 description: Optional company timezone used to stamp breakStart/createdAt/updatedAt. Falls back to the timezone stored on the clock-in record.
  *     responses:
  *       200:
  *         description: Break started successfully
@@ -68,7 +73,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { clockInOutId, userId } = body;
+    const { clockInOutId, userId, timezone } = body;
 
     if (!clockInOutId || !userId) {
       return NextResponse.json(
@@ -77,10 +82,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const parent = await db.clockInOut.findUnique({
+      where: { id: clockInOutId },
+      select: { timezone: true },
+    });
+
+    const now = companyNow(timezone || parent?.timezone);
+
     const breakStart = await db.clockBreak.create({
       data: {
         clockInOutId,
-        breakStart: new Date(),
+        breakStart: now,
+        createdAt: now,
+        updatedAt: now,
       },
     });
 

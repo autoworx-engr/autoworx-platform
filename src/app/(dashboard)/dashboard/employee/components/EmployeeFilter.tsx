@@ -70,6 +70,9 @@ export default function EmployeeFilter() {
                 setSearchInput(e.target.value);
                 handleSearchChange(e.target.value.trim());
               }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
           </div>
 

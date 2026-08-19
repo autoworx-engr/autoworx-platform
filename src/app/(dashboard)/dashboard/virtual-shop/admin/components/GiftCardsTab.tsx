@@ -855,15 +855,27 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                       </div>
                     </Tooltip>
                     <Popconfirm
-                      title="Delete template"
-                      description={`Delete template "${design.name}"? This action cannot be undone.`}
+                      title="Delete Template"
+                      description={`Delete template "${
+                        design.name.length > 50
+                          ? `${design.name.slice(0, 50)}...`
+                          : design.name
+                      }"? This action cannot be undone.`}
                       okText="Delete"
                       cancelText="Cancel"
-                      okButtonProps={{
-                        danger: true,
-                        loading: isDeletingTemplate,
-                      }}
+                      placement="topRight"
                       onConfirm={() => handleDeleteTemplate(design)}
+                      onPopupClick={(e) => e.stopPropagation()}
+                      overlayClassName="[&_.ant-popover-inner]:max-w-[280px] [&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800 [&_.ant-popover-message-description]:break-words"
+                      okButtonProps={{
+                        loading: isDeletingTemplate,
+                        className:
+                          "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                      }}
+                      cancelButtonProps={{
+                        className:
+                          "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                      }}
                     >
                       <button
                         type="button"
@@ -1063,15 +1075,27 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                         <PencilLineIcon size={16} color={"#6571FF"} />
                       </button>
                       <Popconfirm
-                        title="Delete promo code"
-                        description={`Delete promo code "${promo.code}"? This action cannot be undone.`}
+                        title="Delete Promo Code"
+                        description={`Delete promo code "${
+                          promo.code.length > 50
+                            ? `${promo.code.slice(0, 50)}...`
+                            : promo.code
+                        }"? This action cannot be undone.`}
                         okText="Delete"
                         cancelText="Cancel"
-                        okButtonProps={{
-                          danger: true,
-                          loading: isDeletingPromo,
-                        }}
+                        placement="topRight"
                         onConfirm={() => handleDeletePromoCode(promo.id)}
+                        onPopupClick={(e) => e.stopPropagation()}
+                        overlayClassName="[&_.ant-popover-inner]:max-w-[280px] [&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800 [&_.ant-popover-message-description]:break-words"
+                        okButtonProps={{
+                          loading: isDeletingPromo,
+                          className:
+                            "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                        }}
+                        cancelButtonProps={{
+                          className:
+                            "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                        }}
                       >
                         <button
                           type="button"

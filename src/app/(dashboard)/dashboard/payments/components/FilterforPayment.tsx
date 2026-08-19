@@ -8,6 +8,16 @@ import { Filter, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import SliderRange from "./SliderRange";
 
+const PAYMENT_METHOD_OPTIONS: PaymentMethod[] = [
+  "All",
+  "Cash",
+  "Card",
+  "Cheque",
+  "Deposit",
+  "Other",
+  "Refund",
+];
+
 const FilterforPayment = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("All");
   const [amount, setAmount] = useState<[number, number]>([0, 3000]);
@@ -15,7 +25,11 @@ const FilterforPayment = () => {
   const [showFilter, setShowFilter] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { setFilter } = usePaymentFilterStore();
-
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
+      setShowFilter(false);
+    }
+  };
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -25,12 +39,6 @@ const FilterforPayment = () => {
 
   const handleSliderChange = (newValue: [number, number]) => {
     setAmount(newValue);
-  };
-
-  const handleClickOutside = (event: any) => {
-    if (ref.current && !ref.current.contains(event.target)) {
-      setShowFilter(false);
-    }
   };
 
   const onApply = () => {
@@ -77,15 +85,7 @@ const FilterforPayment = () => {
                 Payment Method
               </div>
               <div className="flex flex-wrap gap-2">
-                {[
-                  "All",
-                  "Cash",
-                  "Card",
-                  "Check",
-                  "Deposit",
-                  "Other",
-                  "Refund",
-                ].map((method) => (
+                {PAYMENT_METHOD_OPTIONS.map((method) => (
                   <button
                     key={method}
                     className={cn(
@@ -94,7 +94,7 @@ const FilterforPayment = () => {
                         ? "bg-primary text-white border-transparent shadow-md"
                         : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800",
                     )}
-                    onClick={() => setPaymentMethod(method as PaymentMethod)}
+                    onClick={() => setPaymentMethod(method)}
                   >
                     {method}
                   </button>

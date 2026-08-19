@@ -25,6 +25,9 @@ export default function SearchTerms() {
         onChange={(e) => {
           setFilter({ search: e.target.value });
         }}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
       />
     </div>
   );

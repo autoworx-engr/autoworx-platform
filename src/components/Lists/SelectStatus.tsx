@@ -155,58 +155,70 @@ export function SelectStatus({
 
           {/* List Area */}
           <div className="max-h-[250px] overflow-y-auto thin-scrollbar p-2 space-y-1">
-            {filteredShopStatus.map((statusItem) => (
+            {filteredShopStatus.length === 0 ? (
               <div
-                key={statusItem.id}
-                onClick={() => {
-                  /* Logic remains untouched */
-                  if (statusItem.title === "Delivered" && due > 0) {
-                    errorToast(
-                      "Outstanding balance detected. Please clear all dues before changing the invoice status to Delivered.",
-                    );
-                    setOpen && setOpen(false);
-                    // Let the dropdown finish closing before the payment dialog
-                    // takes over the focus trap, otherwise Radix leaves the
-                    // page with pointer-events disabled.
-                    setTimeout(() => setPaymentModalOpen(true), 150);
-                    return;
-                  }
-
-                  if (
-                    statusItem.title === "Delivered" &&
-                    !isAllServicesCompleted
-                  )
-                    return errorToast(
-                      "All services must be completed by Technicians before moving to delivered.",
-                    );
-                  setStatus(statusItem);
-                  setOpen && setOpen(false);
-                }}
-                className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition-all hover:scale-[1.02] active:scale-95"
-                style={{
-                  backgroundColor: statusItem?.bgColor ?? undefined,
-                  color: statusItem?.textColor ?? undefined,
-                  boxShadow:
-                    statusItem?.id === status?.id
-                      ? `inset 0 0 0 2px ${status.textColor}40`
-                      : "none",
-                }}
+                role="status"
+                className="flex flex-col items-center justify-center py-6 px-4"
               >
-                {statusItem.title}
-                {!restrictedColumns.includes(statusItem.title) && (
-                  <button
-                    className="rounded-md p-1 opacity-0 transition-opacity hover:bg-black/10 group-hover:opacity-100"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setStatusToDelete(statusItem.id);
-                      setDeleteConfirmOpen(true);
-                    }}
-                  >
-                    <X size={14} />
-                  </button>
-                )}
+                <Search size={18} className="text-slate-300 mb-1.5" />
+                <p className="text-center text-sm text-slate-400">
+                  No results found
+                </p>
               </div>
-            ))}
+            ) : (
+              filteredShopStatus.map((statusItem) => (
+                <div
+                  key={statusItem.id}
+                  onClick={() => {
+                    /* Logic remains untouched */
+                    if (statusItem.title === "Delivered" && due > 0) {
+                      errorToast(
+                        "Outstanding balance detected. Please clear all dues before changing the invoice status to Delivered.",
+                      );
+                      setOpen && setOpen(false);
+                      // Let the dropdown finish closing before the payment dialog
+                      // takes over the focus trap, otherwise Radix leaves the
+                      // page with pointer-events disabled.
+                      setTimeout(() => setPaymentModalOpen(true), 150);
+                      return;
+                    }
+
+                    if (
+                      statusItem.title === "Delivered" &&
+                      !isAllServicesCompleted
+                    )
+                      return errorToast(
+                        "All services must be completed by Technicians before moving to delivered.",
+                      );
+                    setStatus(statusItem);
+                    setOpen && setOpen(false);
+                  }}
+                  className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition-all hover:scale-[1.02] active:scale-95"
+                  style={{
+                    backgroundColor: statusItem?.bgColor ?? undefined,
+                    color: statusItem?.textColor ?? undefined,
+                    boxShadow:
+                      statusItem?.id === status?.id
+                        ? `inset 0 0 0 2px ${status.textColor}40`
+                        : "none",
+                  }}
+                >
+                  {statusItem.title}
+                  {!restrictedColumns.includes(statusItem.title) && (
+                    <button
+                      className="rounded-md p-1 opacity-0 transition-opacity hover:bg-black/10 group-hover:opacity-100"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setStatusToDelete(statusItem.id);
+                        setDeleteConfirmOpen(true);
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
           <div className="border-t border-slate-100 p-2">

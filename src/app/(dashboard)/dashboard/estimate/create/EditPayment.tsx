@@ -422,6 +422,7 @@ export default function EditPaymentModal({
             <SlimInput
               label="Cash Received"
               name="cash"
+              placeholder="Enter received by"
               value={cash}
               onChange={(e) => setCash(e.target.value)}
             />
@@ -443,7 +444,7 @@ export default function EditPaymentModal({
                     onClick={handleNewPaymentMethod}
                     className={cn(
                       "text-nowrap rounded-md px-2 text-white",
-                      paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
+                      paymentMethodInput ? "bg-primary" : "bg-slate-400",
                     )}
                     type="button"
                     disabled={!paymentMethodInput}

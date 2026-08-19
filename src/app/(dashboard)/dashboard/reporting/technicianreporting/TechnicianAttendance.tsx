@@ -33,7 +33,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
     Number(currentUserId),
     startDate || undefined,
     endDate || undefined,
-    refetch
+    refetch,
   );
   // console.log("🚀 ~ TechnicianAttendance ~ attendanceInfo:", attendanceInfo);
 
@@ -154,7 +154,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         const effectiveHours = isNaN(Number(data.hours))
                           ? data.hours
                           : convertDuration(
-                              Number(data.hours) - Number(data.totalBreaks)
+                              Number(data.hours) - Number(data.totalBreaks),
                             );
                         const totalBreaks = isNaN(Number(data.totalBreaks))
                           ? data.totalBreaks
@@ -170,7 +170,19 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                             }
                           >
                             <td className="bg-background px-2 py-2 sm:px-4 font-medium">
-                              {dayAbbr}-{dayDate}
+                              <div className="flex flex-col items-center leading-tight">
+                                <span>
+                                  {dayAbbr}-{dayDate}
+                                </span>
+                                {data.dayType === "WEEKEND" && (
+                                  <span
+                                    className="text-[10px] font-semibold uppercase text-amber-600 dark:text-amber-400"
+                                    title="Worked on weekend"
+                                  >
+                                    Weekend
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-2 py-2 sm:px-4">
                               {typeof data.clockedIn === "string"

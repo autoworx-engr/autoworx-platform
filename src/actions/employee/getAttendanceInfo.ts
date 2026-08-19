@@ -19,6 +19,7 @@ interface AttendanceRecord {
   workedMinutes: number;
   extraMinutes: number;
   breakMinutes: number;
+  dayType?: "WEEKEND";
 }
 
 interface AttendanceInfo {
@@ -159,17 +160,18 @@ export async function getAttendanceInfo(
         continue;
       }
 
-      // WEEKEND
-      if (
+      // WEEKEND (keep the clock data when the employee actually worked)
+      const isWeekend =
         dayName === calendarSettings.weekend1.toLowerCase() ||
-        dayName === calendarSettings.weekend2.toLowerCase()
-      ) {
+        dayName === calendarSettings.weekend2.toLowerCase();
+
+      if (isWeekend && !clockMap.has(dayKey)) {
         records.push(createAttendanceRecord(date, "WEEKEND"));
         continue;
       }
 
       // HOLIDAY
-      if (holidayMap.has(dayKey)) {
+      if (!isWeekend && holidayMap.has(dayKey)) {
         records.push(createAttendanceRecord(date, "HOLIDAY"));
         continue;
       }
@@ -184,7 +186,7 @@ export async function getAttendanceInfo(
         ),
       );
 
-      if (onLeave) {
+      if (!isWeekend && onLeave) {
         records.push(createAttendanceRecord(date, "LEAVE"));
         continue;
       }
@@ -210,7 +212,8 @@ export async function getAttendanceInfo(
 
         records.push({
           id: clock.id,
-          date: date.clone().toDate(), // ✅ keeps same day in system timezone
+          // same shape as createAttendanceRecord so the table renders one day label for both
+          date: new Date(date.format("YYYY-MM-DD")),
           clockedIn: clock.clockIn,
           clockedOut: clock.clockOut ?? "N/A",
           hours: workedHours,
@@ -219,6 +222,7 @@ export async function getAttendanceInfo(
           workedMinutes,
           extraMinutes,
           breakMinutes,
+          ...(isWeekend ? { dayType: "WEEKEND" as const } : {}),
         });
       } else {
         records.push(createAttendanceRecord(date, "ABSENT"));

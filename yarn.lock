@@ -10613,6 +10613,11 @@ open@^11.0.0:
     powershell-utils "^0.1.0"
     wsl-utils "^0.3.0"
 
+openai@^7.5.0:
+  version "7.5.0"
+  resolved "https://registry.yarnpkg.com/openai/-/openai-7.5.0.tgz#adacc4ba3e325ffa9f71e0aeec834058e3d2e98b"
+  integrity sha512-ZbDBz8FSB8Mv8fFYIUvzTFMdV5vl93/octp1MdtK2lfYepSpfv/ewmeugpKz/cwGtFSx+YuUM4NwpZ2P55YiPA==
+
 openapi-path-templating@^2.2.1:
   version "2.2.1"
   resolved "https://registry.npmjs.org/openapi-path-templating/-/openapi-path-templating-2.2.1.tgz"

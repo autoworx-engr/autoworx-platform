@@ -49,7 +49,7 @@ export default function Page() {
               htmlFor="firstName"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              First Name
+              First Name <span className="text-destructive">*</span>
             </label>
             <Input
               type="text"
@@ -80,7 +80,7 @@ export default function Page() {
               htmlFor="email"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Email
+              Email <span className="text-destructive">*</span>
             </label>
             <Input
               type="email"
@@ -95,7 +95,7 @@ export default function Page() {
               htmlFor="company"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Company
+              Company <span className="text-destructive">*</span>
             </label>
             <Input
               type="text"
@@ -110,7 +110,7 @@ export default function Page() {
               htmlFor="password"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Password
+              Password <span className="text-destructive">*</span>
             </label>
             <Password
               name="password"
@@ -124,7 +124,7 @@ export default function Page() {
               htmlFor="confirmPassword"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Confirm Password
+              Confirm Password <span className="text-destructive">*</span>
             </label>
             <Password
               name="confirmPassword"
@@ -138,7 +138,7 @@ export default function Page() {
               htmlFor="access"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Access Code
+              Access Code <span className="text-destructive">*</span>
             </label>
             <Input
               name="access"

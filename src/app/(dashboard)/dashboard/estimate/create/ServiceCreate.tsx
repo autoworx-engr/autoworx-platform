@@ -21,10 +21,6 @@ export default function ServiceCreate() {
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
 
-  // Seed the form from the popup payload. Deliberately keyed on `data` alone:
-  // this effect resets the form, so subscribing to `categories` would wipe the
-  // user's input every time a category is added from the dropdown. The category
-  // list is read as a one-off snapshot instead of a reactive dependency.
   useEffect(() => {
     if (data?.service && data.edit) {
       setName(data.service.name);
@@ -44,9 +40,6 @@ export default function ServiceCreate() {
   }, [data]);
 
   async function handleSubmit() {
-    if (!category?.id) {
-      return errorToast("Service Category is required!");
-    }
     const res = await newService({
       name,
       categoryId: category?.id!,
@@ -143,7 +136,7 @@ export default function ServiceCreate() {
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-          Category <span className="text-red-500">*</span>
+          Category
         </label>
         <SelectCategory
           onCategoryChange={setCategory}

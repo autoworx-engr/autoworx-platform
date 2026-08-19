@@ -185,12 +185,14 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                 <td className={`${tDataCommonClasses}`}>
                   <div className="flex items-center justify-center gap-4">
                     <Popconfirm
-                      title="Are you sure you want to delete this statement?"
+                      title="Delete this statement?"
+                      description="Are you sure you want to delete this statement?"
                       onConfirm={(e) => {
                         e?.stopPropagation();
                         handleDeleteStatement(statement.id);
                       }}
                       onCancel={(e) => e?.stopPropagation()}
+                      placement="topLeft"
                       okText="Yes"
                       cancelText="No"
                     >
@@ -247,7 +249,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                   </span>
                 </div>
 
-                {/* Date and Invoice Count */}
+                {/* Date, Invoice Count, and Amounts */}
                 <div className="space-y-2 mb-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Date Created:</span>
@@ -261,17 +263,50 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                       {statement.invoice?.length || 0} invoices
                     </span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Total Amount:</span>
+                    <span className="text-sm font-medium">
+                      {formatCurrency(
+                        statement.totals?.totalAmount?.toFixed(2) || "0.00",
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Paid Amount:</span>
+                    <span className="text-sm font-medium">
+                      {formatCurrency(
+                        statement.totals?.totalPaid?.toFixed(2) || "0.00",
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Due Amount:</span>
+                    <span
+                      className={cn(
+                        "text-sm font-medium",
+                        statement.totals?.totalDue > 0
+                          ? "text-red-600"
+                          : "text-green-600",
+                      )}
+                    >
+                      {formatCurrency(
+                        statement.totals?.totalDue?.toFixed(2) || "0.00",
+                      )}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Action Buttons for Mobile */}
                 <div className="flex items-center justify-end gap-3 pt-2 border-t">
                   <Popconfirm
-                    title="Are you sure you want to delete this statement?"
+                    title="Delete this statement?"
+                    description="Are you sure you want to delete this statement?"
                     onConfirm={(e) => {
                       e?.stopPropagation();
                       handleDeleteStatement(statement.id);
                     }}
                     onCancel={(e) => e?.stopPropagation()}
+                    placement="topLeft"
                     okText="Yes"
                     cancelText="No"
                   >

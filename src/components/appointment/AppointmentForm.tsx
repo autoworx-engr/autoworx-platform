@@ -288,6 +288,9 @@ export default function AppointmentForm({
                       value={draftSearch}
                       onChange={(e) => setDraftSearch(e.target.value)}
                       autoFocus
+                      autoComplete="off"
+                      autoCorrect="off"
+                      spellCheck="false"
                     />
                   </div>
 

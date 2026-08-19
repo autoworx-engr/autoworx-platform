@@ -42,18 +42,18 @@ type TProps = {
     })[]
   >;
   redoPerService: Record<number, InvoiceRedo[]>;
-  onAddTechnician: (
+  onAddTechnician?: (
     invoiceItemId: number,
     serviceId: number | null,
     payload: any,
     employeeName: string,
   ) => void;
-  onUpdateTechnician: (
+  onUpdateTechnician?: (
     invoiceItemId: number,
     techId: number | string,
     payload: any,
   ) => void;
-  onDeleteTechnician: (invoiceItemId: number, techId: number | string) => void;
+  onDeleteTechnician?: (invoiceItemId: number, techId: number | string) => void;
 };
 
 export function InvoiceItems({

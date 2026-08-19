@@ -22,6 +22,7 @@ interface AttendanceRecord {
   hours: string;
   extraHours: string;
   totalBreaks: string;
+  dayType?: "WEEKEND";
 }
 
 interface AttendanceData {
@@ -350,16 +351,6 @@ const Dashboard = () => {
                 endDateObj = moment.tz(timezone).endOf("week").toDate();
               }
 
-              // Convert the dates to proper format for server
-              // When user selects dates from DateRangePicker, they're in local browser time
-              // We need to ensure these dates are interpreted correctly by the server
-              // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
-              // const formattedStartDate = moment
-              //   .utc(startDateObj)
-              //   .format("YYYY-MM-DD");
-              // const formattedEndDate = moment
-              //   .utc(endDateObj)
-              //   .format("YYYY-MM-DD");
               const formattedStartDate =
                 moment(startDateObj).format("YYYY-MM-DD");
               const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
@@ -441,6 +432,8 @@ const Dashboard = () => {
                             : convertDuration(
                                 Number(data.hours) - Number(data.totalBreaks),
                               );
+
+                          const workedOnWeekend = data.dayType === "WEEKEND";
                           return (
                             <tr
                               key={index}
@@ -451,7 +444,19 @@ const Dashboard = () => {
                               }`}
                             >
                               <td className="bg-background px-2 py-2 font-medium sm:px-4">
-                                {dayAbbr}-{dayDate}
+                                <div className="flex flex-col items-center leading-tight">
+                                  <span>
+                                    {dayAbbr}-{dayDate}
+                                  </span>
+                                  {workedOnWeekend && (
+                                    <span
+                                      className="text-[10px] font-semibold uppercase text-amber-600 dark:text-amber-400"
+                                      title="Worked on weekend"
+                                    >
+                                      Weekend
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-2 py-2 sm:px-4">
                                 {renderTimeCell(data, "clockedIn", index)}

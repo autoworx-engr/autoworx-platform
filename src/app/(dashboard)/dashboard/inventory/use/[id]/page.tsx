@@ -25,6 +25,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const product = await db.inventoryProduct.findUnique({
     where: { id: productId, companyId },
   });
+
   const invoices = await db.invoice.findMany({
     where: { companyId, type: "Invoice" },
     select: {

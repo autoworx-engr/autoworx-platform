@@ -334,7 +334,7 @@ export default function NewService({
                   setDescription(value);
                 }}
                 rows={5}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 min-h-[100px] max-h-[200px]"
               />
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">

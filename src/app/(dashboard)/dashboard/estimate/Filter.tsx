@@ -50,6 +50,8 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
   const [open, setOpen] = useState(false);
 
   const isIncompleteDateRange = Boolean(start) !== Boolean(end);
+  const isFilterApplied =
+    Boolean(startDate) || Boolean(endDate) || Boolean(status);
 
   useEffect(() => {
     if (status) {
@@ -114,20 +116,33 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-primary/30 active:scale-95 md:flex">
+      <DialogTrigger
+        className={cn(
+          "relative flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold shadow-sm transition-all active:scale-95 sm:px-4",
+          isFilterApplied
+            ? "bg-primary/10 text-primary ring-1 ring-primary/40 hover:bg-primary/15"
+            : "bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-primary/30",
+        )}
+      >
         <Image
           src="/icons/Filter.svg"
           alt="Filter"
           width={18}
           height={18}
-          className="cursor-pointer opacity-70"
+          className={cn(
+            "cursor-pointer",
+            isFilterApplied ? "opacity-100" : "opacity-70",
+          )}
         />
-        Customize
+        <span className="hidden sm:inline">Customize</span>
+        {isFilterApplied && (
+          <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />
+        )}
       </DialogTrigger>
 
       <DialogContent
         form
-        className="max-w-xl overflow-hidden rounded-[1.5rem] border-none bg-white p-0 shadow-2xl"
+        className="max-w-xl rounded-[1.5rem] border-none bg-white p-0 shadow-2xl max-h-[85vh] overflow-x-hidden overflow-y-auto"
       >
         <DialogHeader className="bg-slate-50/50 px-6 py-4">
           <DialogTitle className="text-lg font-bold tracking-tight text-slate-500">
@@ -135,7 +150,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-6 px-6">
+        <div className="grid grid-cols-1 gap-6 px-6 sm:grid-cols-2">
           {/* Start Date */}
           <div className="space-y-1.5">
             <label className="ml-1 text-sm font-semibold tracking-wider text-slate-600">
@@ -226,7 +241,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                     placeholder="Search Status"
                     className={cn(
                       slimInputClassName,
-                      "h-9 w-1/2 rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-primary/30 outline-none",
+                      "h-9 w-full rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-primary/30 outline-none sm:w-1/2",
                     )}
                   />
                 </div>
@@ -287,17 +302,17 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
           </div>
         </div>
 
-        <DialogFooter className="bg-slate-50/50 p-4 flex items-center justify-end gap-2">
+        <DialogFooter className="bg-slate-50/50 p-4 flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
-            className="w-fit flex h-10 items-center gap-2 rounded-xl px-8 text-sm font-medium text-red-500 border border-red-100 shadow-sm transition-all active:scale-95"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl px-8 text-sm font-medium text-red-500 border border-red-100 shadow-sm transition-all active:scale-95 sm:w-fit"
             onClick={clearFilters}
           >
             <XCircle size={16} />
             Clear Filters
           </button>
           <Submit
-            className="w-fit flex h-10 items-center gap-2 rounded-xl bg-primary px-8 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-8 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
             formAction={handleFilter}
             disabled={isIncompleteDateRange}
           >

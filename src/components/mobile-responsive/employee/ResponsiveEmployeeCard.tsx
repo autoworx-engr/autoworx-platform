@@ -124,7 +124,7 @@ const ResponsiveEmployeeCard = ({
         <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-2 text-sm font-medium">
             <Calendar className="w-4 h-4 flex-shrink-0 text-gray-400" />
-            <span className="truncate">Date Joined: {joinDate}</span>
+            <span className="truncate"> Joined: {joinDate}</span>
           </div>
           {actions && (
             <div

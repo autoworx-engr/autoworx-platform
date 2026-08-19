@@ -12,7 +12,8 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Popconfirm } from "antd";
 import type { JSX } from "react";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
@@ -223,30 +224,24 @@ export default function Selector<T>({
                   {(onRemoveItem || isSelected) && (
                     <div className="flex shrink-0 items-center gap-1">
                       {onRemoveItem && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveItem(item, e);
+                        <Popconfirm
+                          title="Are you sure to delete this item?"
+                          onConfirm={(e) => {
+                            e?.stopPropagation();
+                            onRemoveItem(
+                              item,
+                              e as unknown as React.MouseEvent,
+                            );
                           }}
-                          className="p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50/50 transition-colors"
+                          onCancel={(e) => {
+                            e?.stopPropagation();
+                          }}
+                          okText="Yes"
+                          cancelText="No"
+                          placement="topRight"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 6h18" />
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                          </svg>
-                        </button>
+                          <X cursor={"pointer"} color="#f87171" size={20} />
+                        </Popconfirm>
                       )}
                       {isSelected && (
                         <span className="flex w-4 shrink-0 items-center justify-center">

@@ -55,6 +55,7 @@ type PhoneInputProps = {
     callingCode: string,
     countryCode: string,
   ) => void;
+  onBlur?: () => void;
   label?: string;
   placeholder?: string;
   required?: boolean;
@@ -67,6 +68,7 @@ type PhoneInputProps = {
 export default function PhoneInput({
   value = "",
   onChange,
+  onBlur,
   label = "Phone Number",
   placeholder = "1234567890",
   required = false,
@@ -259,6 +261,7 @@ export default function PhoneInput({
               type="tel"
               value={phoneNumber}
               onChange={handlePhoneChange}
+              onBlur={onBlur}
               placeholder={placeholder}
               disabled={disabled}
               className="h-full w-full bg-transparent px-3 pr-10 text-base placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed md:text-sm"
