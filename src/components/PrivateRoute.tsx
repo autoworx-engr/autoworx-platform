@@ -6,7 +6,9 @@ import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermiss
 import { usePermissionStore } from "@/stores/permissionStore";
 import { Spin } from "antd";
 import { Session } from "next-auth";
+import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import CarLoading from "./common/CarLoading";
 
 type TProps = {
@@ -22,6 +24,14 @@ export default function PrivateRoute({ children, session }: TProps) {
   // Grab the user’s permissions from Zustand
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      window.location.replace("/login");
+    }
+  }, [status]);
 
   // Combine the pathname + search
   const params = searchParams?.toString() ? `?${searchParams.toString()}` : "";
