@@ -56,7 +56,7 @@ export default function Page() {
               name="firstName"
               placeholder="John"
               autoFocus
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -71,7 +71,7 @@ export default function Page() {
               type="text"
               name="lastName"
               placeholder="Doe"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -101,7 +101,7 @@ export default function Page() {
               type="text"
               name="company"
               placeholder="Autoworx LLC"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -115,7 +115,7 @@ export default function Page() {
             <Password
               name="password"
               placeholder="••••••••"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -129,7 +129,7 @@ export default function Page() {
             <Password
               name="confirmPassword"
               placeholder="••••••••"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -143,7 +143,7 @@ export default function Page() {
             <Input
               name="access"
               placeholder="Enter your access code"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
         </div>
