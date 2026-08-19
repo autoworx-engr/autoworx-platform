@@ -39,10 +39,6 @@ export function segmentMessage(
   return packUnits(splitIntoUnits(text), maxLength);
 }
 
-// ---------------------------------------------------------------------------
-// Tokenize
-// ---------------------------------------------------------------------------
-
 /**
  * Breaks text into logical units — one per sentence, plus a break at every
  * hard newline. Each unit keeps its trailing whitespace, so joining all units
@@ -63,10 +59,6 @@ function splitIntoUnits(text: string): string[] {
   if (start < text.length) units.push(text.slice(start));
   return units;
 }
-
-// ---------------------------------------------------------------------------
-// Pack
-// ---------------------------------------------------------------------------
 
 /**
  * Fills segments with whole units in order. A unit is appended to the current
@@ -119,10 +111,6 @@ function splitLongUnit(unit: string, maxLength: number): SmsSegment[] {
   if (tail) pieces.push(tail);
   return pieces;
 }
-
-// ---------------------------------------------------------------------------
-// Boundary-priority ladder
-// ---------------------------------------------------------------------------
 
 interface SplitRule {
   /** True when index `i` in `text` is a boundary of this class. */
@@ -185,11 +173,6 @@ function isPunctuationBoundary(mark: string) {
 function isWhitespace(ch: string | undefined): boolean {
   return ch !== undefined && /\s/.test(ch);
 }
-
-// ---------------------------------------------------------------------------
-// Normalization — repairs missing separators in raw AI output so the
-// tokenizer can find real sentence/clause boundaries.
-// ---------------------------------------------------------------------------
 
 /**
  * Compound words/brand names that legitimately mix case with no separator
