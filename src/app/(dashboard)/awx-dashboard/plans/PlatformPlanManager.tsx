@@ -224,7 +224,7 @@ export const PlatformPlanManager = ({ initialPlans }: Props) => {
                   <span className="text-right text-slate-700">
                     {plan.interval}
                   </span>
-                  <span>Trial Months</span>
+                  <span>Trial Days</span>
                   <span className="text-right text-slate-700">
                     {plan.trialLengthDays}
                   </span>

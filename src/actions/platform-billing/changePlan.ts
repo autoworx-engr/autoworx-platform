@@ -58,21 +58,25 @@ export async function changePlatformPlan(companyId: number, newPlanId: string) {
     // Optimistic local update — the customer.subscription.updated webhook
     // will also sync status/periods shortly after, but the plan/name switch
     // should reflect immediately in the UI rather than waiting on it.
-    await db.platformSubscription.update({
-      where: { companyId },
-      data: { planId: newPlan.id },
-    });
-    await db.platformSubscriptionItem.deleteMany({
-      where: { subscriptionId: subscription.id },
-    });
-    await db.platformSubscriptionItem.create({
-      data: {
-        subscriptionId: subscription.id,
-        name: newPlan.name,
-        price: newPlan.price,
-        quantity: 1,
-      },
-    });
+    // Transactional so a crash mid-write can't leave planId pointing at the
+    // new plan while the subscription item still shows the old one.
+    await db.$transaction([
+      db.platformSubscription.update({
+        where: { companyId },
+        data: { planId: newPlan.id },
+      }),
+      db.platformSubscriptionItem.deleteMany({
+        where: { subscriptionId: subscription.id },
+      }),
+      db.platformSubscriptionItem.create({
+        data: {
+          subscriptionId: subscription.id,
+          name: newPlan.name,
+          price: newPlan.price,
+          quantity: 1,
+        },
+      }),
+    ]);
 
     revalidatePath("/dashboard/settings/billing");
     return { success: true };

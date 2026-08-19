@@ -74,7 +74,7 @@ export function PricePlans({
                   ? "/yr"
                   : "/mo";
               const trialLabel = plan.trialLengthDays
-                ? `${plan.trialLengthDays}-month free trial included`
+                ? `${plan.trialLengthDays}-day free trial included`
                 : null;
 
               return (

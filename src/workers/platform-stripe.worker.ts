@@ -93,6 +93,26 @@ async function upsertSubscriptionFromStripe(
   const item = subscription.items.data[0];
   const priceId = item?.price?.id;
 
+  // Defense in depth: this upsert is keyed on companyId, so it always wins
+  // — if a different live Stripe subscription somehow already exists for
+  // this company (the checkout-time guard is the real prevention, but a
+  // manual Stripe Dashboard action or a bug elsewhere could still cause
+  // this), we'd otherwise silently start tracking whichever one's webhook
+  // processes last with zero visibility into the other one still billing
+  // in the background. Loudly alert instead of staying silent.
+  const priorSubscriptionRow = await db.platformSubscription.findUnique({
+    where: { companyId },
+    select: { stripeSubscriptionId: true },
+  });
+  if (
+    priorSubscriptionRow?.stripeSubscriptionId &&
+    priorSubscriptionRow.stripeSubscriptionId !== subscription.id
+  ) {
+    console.error(
+      `[platform-stripe] ALERT: company ${companyId} already had Stripe subscription ${priorSubscriptionRow.stripeSubscriptionId} on file; now receiving events for a different subscription ${subscription.id}. This likely means two live Stripe subscriptions exist for this company — investigate in the Stripe dashboard.`,
+    );
+  }
+
   const billingCustomer = await db.platformBillingCustomer.upsert({
     where: { companyId },
     update: { stripeCustomerId: subscription.customer as string },
@@ -204,12 +224,8 @@ async function handleInvoiceEvent(
     data: { companyId: subscription.companyId },
   });
 
-  const existingInvoice = await db.platformInvoice.findFirst({
-    where: { stripeInvoiceId: invoice.id },
-  });
-  if (existingInvoice) return; // already recorded — pg-boss redelivery or dual webhook events
-
   const isPaid = invoice.status === "paid";
+  const newStatus = isPaid ? "PAID" : "FAILED";
   const amount = (isPaid ? invoice.amount_paid : invoice.amount_due) / 100;
   const firstPayment = invoice.payments?.data?.[0]?.payment;
   const paymentIntentId =
@@ -217,26 +233,47 @@ async function handleInvoiceEvent(
       ? firstPayment.payment_intent
       : firstPayment?.payment_intent?.id;
 
+  const existingInvoice = await db.platformInvoice.findFirst({
+    where: { stripeInvoiceId: invoice.id },
+  });
+
+  // Only a true redelivery of the same outcome is a no-op. Smart Retries
+  // means the same invoice legitimately transitions FAILED -> PAID (a
+  // retry succeeding) — that must still update the row and record the
+  // payment, not be skipped just because a failed attempt was recorded
+  // first.
+  if (existingInvoice?.status === newStatus) return;
+
   await db.$transaction(async (tx) => {
-    const record = await tx.platformInvoice.create({
-      data: {
-        billingCustomerId: subscription.billingCustomerId,
-        subscriptionId: subscription.id,
-        amount,
-        status: isPaid ? "PAID" : "FAILED",
-        stripeInvoiceId: invoice.id,
-      },
-    });
+    const record = existingInvoice
+      ? await tx.platformInvoice.update({
+          where: { id: existingInvoice.id },
+          data: { amount, status: newStatus },
+        })
+      : await tx.platformInvoice.create({
+          data: {
+            billingCustomerId: subscription.billingCustomerId,
+            subscriptionId: subscription.id,
+            amount,
+            status: newStatus,
+            stripeInvoiceId: invoice.id,
+          },
+        });
 
     if (isPaid) {
-      await tx.platformPayment.create({
-        data: {
-          platformInvoiceId: record.id,
-          amount,
-          status: "SUCCESS",
-          stripePaymentIntentId: paymentIntentId,
-        },
+      const existingPayment = await tx.platformPayment.findFirst({
+        where: { platformInvoiceId: record.id, status: "SUCCESS" },
       });
+      if (!existingPayment) {
+        await tx.platformPayment.create({
+          data: {
+            platformInvoiceId: record.id,
+            amount,
+            status: "SUCCESS",
+            stripePaymentIntentId: paymentIntentId,
+          },
+        });
+      }
     }
     // No dunning TODO here — Smart Retries + the Dashboard's post-retry
     // action own the past_due -> unpaid/canceled transition; the

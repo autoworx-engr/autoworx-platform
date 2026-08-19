@@ -212,7 +212,7 @@ export const PlanEditorDialog = ({
         parsedTrial < 0
       ) {
         nextFieldErrors.trialLengthDays =
-          "Trial months must be a whole number 0 or greater.";
+          "Trial length (days) must be a whole number 0 or greater.";
       }
     }
 
@@ -435,7 +435,7 @@ export const PlanEditorDialog = ({
 
               <div className="min-w-0 space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Trial Months
+                  Trial Length (Days)
                 </label>
                 <Input
                   name="plan-trial"

@@ -251,7 +251,7 @@ export function CompanyCustomPlanDialog({
 
             <div className="md:col-span-2 space-y-2">
               <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Free Trial (Months)
+                Free Trial (Days)
               </label>
               <Input
                 name="trialMonths"

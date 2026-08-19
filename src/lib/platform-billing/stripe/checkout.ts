@@ -74,9 +74,14 @@ export async function createPlatformCheckoutSession(params: {
   // retry). A second checkout started inside that window would read stale
   // local state and create a second live subscription instead of updating
   // the first — this check closes that race by asking Stripe itself.
+  // limit: 100 (Stripe's max) rather than the 10-item default — a customer
+  // who has resubscribed many times over the years could otherwise push
+  // their one live subscription past the first page, since old canceled
+  // ones from prior cycles stay in this list too.
   const existingStripeSubs = await stripe.subscriptions.list({
     customer: stripeCustomerId,
     status: "all",
+    limit: 100,
   });
   const liveStripeSub = existingStripeSubs.data.find((s) =>
     LIVE_STRIPE_STATUSES.has(s.status),

@@ -118,7 +118,7 @@ export async function PATCH(req: NextRequest, props: Params) {
       const trialValue = Number(trialLengthDays);
       if (!Number.isFinite(trialValue) || trialValue < 0) {
         return NextResponse.json(
-          { success: false, message: "Trial months must be 0 or more" },
+          { success: false, message: "Trial length (days) must be 0 or more" },
           { status: 400 },
         );
       }

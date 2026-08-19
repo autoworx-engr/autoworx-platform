@@ -89,7 +89,8 @@ export default function Page() {
 
   const currentPlanIdForModal =
     subStatus === PlatformSubscriptionStatus.ACTIVE ||
-    subStatus === PlatformSubscriptionStatus.PAST_DUE
+    subStatus === PlatformSubscriptionStatus.PAST_DUE ||
+    subStatus === PlatformSubscriptionStatus.TRIALING
       ? currentPlan?.id
       : null;
 

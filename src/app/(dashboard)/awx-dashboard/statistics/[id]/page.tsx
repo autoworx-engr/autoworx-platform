@@ -5,6 +5,7 @@ import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
 import { CompanyPlanEditor } from "./CompanyPlanEditor";
+import { ForceCancelSubscriptionButton } from "./ForceCancelSubscriptionButton";
 import { PlatformPlanToggle } from "./PlatformPlanToggle";
 import { TestCompanyToggle } from "./TestCompanyToggle";
 import { ArrowLeft, Upload } from "lucide-react";
@@ -304,6 +305,13 @@ const Page = async (props: propsType) => {
                 <TestCompanyToggle
                   companyId={Number(id)}
                   initialEnabled={!!company?.isTest}
+                />
+                <ForceCancelSubscriptionButton
+                  companyId={Number(id)}
+                  hasCancellableStripeSubscription={
+                    !!subscription?.stripeSubscriptionId &&
+                    subscription.status !== "CANCELED"
+                  }
                 />
               </div>
             </div>
