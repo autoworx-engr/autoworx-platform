@@ -137,12 +137,26 @@ export default function ServiceCard({
           <PencilLineIcon size={18} color="#6571FF" />
         </button>
         <Popconfirm
-          title="Delete service"
-          description={`Are you sure you want to delete "${service.name}"?`}
+          title="Delete Service"
+          description={`Are you sure you want to delete "${
+            service.name.length > 50
+              ? `${service.name.slice(0, 50)}...`
+              : service.name
+          }"?`}
           okText="Delete"
           cancelText="Cancel"
-          okButtonProps={{ danger: true }}
+          placement="topRight"
           onConfirm={() => onDelete?.(service)}
+          onPopupClick={(e) => e.stopPropagation()}
+          overlayClassName="[&_.ant-popover-inner]:max-w-[280px] [&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800 [&_.ant-popover-message-description]:break-words"
+          okButtonProps={{
+            className:
+              "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+          }}
+          cancelButtonProps={{
+            className:
+              "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+          }}
         >
           <button
             type="button"

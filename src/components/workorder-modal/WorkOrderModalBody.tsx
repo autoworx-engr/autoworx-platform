@@ -352,9 +352,9 @@ export default function WorkOrderModalBody({
           openService={openService}
           setOpenService={setOpenService}
           invoiceId={invoice?.id}
-          onAddTechnician={onAddTechnician}
-          onUpdateTechnician={onUpdateTechnician}
-          onDeleteTechnician={onDeleteTechnician}
+          onAddTechnician={writePermission ? onAddTechnician : undefined}
+          onUpdateTechnician={writePermission ? onUpdateTechnician : undefined}
+          onDeleteTechnician={writePermission ? onDeleteTechnician : undefined}
         />
 
         {/* see images dialog trigger (uses its own internal state) */}

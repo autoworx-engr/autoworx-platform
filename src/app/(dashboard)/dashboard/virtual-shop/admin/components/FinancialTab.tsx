@@ -1,7 +1,6 @@
 "use client";
 
 import { Switch } from "@/components/Switch";
-import { Button } from "@/components/ui/button";
 import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
@@ -50,33 +49,68 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
     setTax(Boolean(bookingSettings.isTaxEnabled));
   }, [bookingSettings]);
 
-  const handleSave = async () => {
+  const SHOP_FEE_TOAST_ID = "financial-settings-shop-fee";
+  const TAX_TOAST_ID = "financial-settings-tax";
+
+  const persistSettings = async (
+    next: { isTaxEnabled: boolean; isServiceFeeEnabled: boolean },
+    fieldLabel: string,
+    fieldValue: boolean,
+    toastId: string,
+    revert: () => void,
+  ) => {
     if (!shopId) {
-      toast.error("Shop is not configured yet");
+      toast.error("Shop is not configured yet", { id: toastId });
+      revert();
       return;
     }
 
     if (!session?.accessToken) {
-      toast.error("Session expired. Please sign in again.");
+      toast.error("Session expired. Please sign in again.", { id: toastId });
+      revert();
       return;
     }
 
     try {
       await updateBookingSettings({
-        payload: {
-          shopId,
-          isTaxEnabled: tax,
-          isServiceFeeEnabled: shopFee,
-        },
+        payload: { shopId, ...next },
         accessToken: session.accessToken,
       });
 
-      toast.success("Financial settings saved successfully");
+      toast.success(`${fieldLabel} ${fieldValue ? "enabled" : "disabled"}`, {
+        id: toastId,
+      });
     } catch (error: any) {
       const message =
-        error?.response?.data?.message ?? "Failed to save financial settings";
-      toast.error(message);
+        error?.response?.data?.message ??
+        `Failed to update ${fieldLabel.toLowerCase()}`;
+      toast.error(message, { id: toastId });
+      revert();
     }
+  };
+
+  const handleShopFeeChange = (value: boolean) => {
+    const previous = shopFee;
+    setShopFee(value);
+    persistSettings(
+      { isTaxEnabled: tax, isServiceFeeEnabled: value },
+      "Shop fee",
+      value,
+      SHOP_FEE_TOAST_ID,
+      () => setShopFee(previous),
+    );
+  };
+
+  const handleTaxChange = (value: boolean) => {
+    const previous = tax;
+    setTax(value);
+    persistSettings(
+      { isTaxEnabled: value, isServiceFeeEnabled: shopFee },
+      "Tax",
+      value,
+      TAX_TOAST_ID,
+      () => setTax(previous),
+    );
   };
 
   return (
@@ -107,10 +141,6 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
               <div className="h-6 w-11 rounded-full bg-gray-200" />
             </div>
           </div>
-
-          <div className="mt-2 flex justify-end">
-            <div className="h-10 w-44 rounded-md bg-gray-200" />
-          </div>
         </div>
       )}
 
@@ -127,7 +157,11 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
                   Applied as percentage of subtotal
                 </p>
               </div>
-              <Switch checked={shopFee} setChecked={setShopFee} />
+              <Switch
+                checked={shopFee}
+                setChecked={handleShopFeeChange}
+                disabled={isLoading || isSaving || !shopId}
+              />
             </div>
           </div>
 
@@ -142,19 +176,12 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
                   Applied to subtotal + shop fee
                 </p>
               </div>
-              <Switch checked={tax} setChecked={setTax} />
+              <Switch
+                checked={tax}
+                setChecked={handleTaxChange}
+                disabled={isLoading || isSaving || !shopId}
+              />
             </div>
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={isLoading || isSaving || !shopId}
-              className="bg-primary hover:bg-[#5a66ee]"
-            >
-              {isSaving ? "Saving..." : "Save Financial Settings"}
-            </Button>
           </div>
         </>
       )}

@@ -309,11 +309,11 @@ export const Checkout = () => {
       return;
     }
     const parsedYear = Number(form.vehicleYear);
-    const currentYear = new Date().getFullYear();
+    const maxVehicleYear = new Date().getFullYear() + 1;
     if (
       !Number.isFinite(parsedYear) ||
       parsedYear < 1886 ||
-      parsedYear > currentYear
+      parsedYear > maxVehicleYear
     ) {
       errorToast("Vehicle year must be a valid number.");
       return;

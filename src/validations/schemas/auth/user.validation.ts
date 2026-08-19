@@ -2,7 +2,10 @@ import { requiredEmailValidationSchema } from "@/validations/utils/email.validat
 import { z } from "zod";
 
 const createUserValidation = z.object({
-  firstName: z.string().trim().min(1, { message: "firstName cannot be empty" }),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, { message: "First name cannot be empty" }),
   lastName: z.string().optional(),
   email: requiredEmailValidationSchema,
   password: z
@@ -10,11 +13,11 @@ const createUserValidation = z.object({
       required_error: "Password is required",
       invalid_type_error: "Password must be string",
     })
-    .min(6),
+    .min(6, { message: "Password must contain at least 6 characters" }),
   company: z
     .string()
     .trim()
-    .min(1, { message: "company name cannot be empty" }),
+    .min(1, { message: "Company name cannot be empty" }),
   accessCode: z.string().min(1, { message: "Access code cannot be empty" }),
 });
 

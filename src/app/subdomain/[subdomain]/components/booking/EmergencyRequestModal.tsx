@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { cn } from "@/lib/cn";
+import PhoneInput from "@/components/PhoneInput";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import { CheckoutVehicleSection } from "./CheckoutVehicleSection";
 import { useEmergencyRequest } from "./emergency/useEmergencyRequest";
@@ -109,17 +110,17 @@ export const EmergencyRequestModal = ({
                   Phone Number <span className="text-destructive">*</span>
                 </label>
                 <div className="relative">
-                  <input
-                    type="tel"
-                    value={form.contactPhone}
-                    onChange={(e) => set("contactPhone", e.target.value)}
-                    onBlur={handlePhoneLookup}
-                    placeholder="(555) 000-0000"
+                  <PhoneInput
+                    label=""
+                    placeholder="1234567890"
                     required
-                    className={INPUT_CLASS + " pr-10"}
+                    onChange={(num, code) =>
+                      set("contactPhone", num ? `${code}${num}` : "")
+                    }
+                    onBlur={handlePhoneLookup}
                   />
                   {isLookingUp && (
-                    <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-muted-foreground" />
+                    <Loader2 className="absolute right-10 top-2.5 w-4 h-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">

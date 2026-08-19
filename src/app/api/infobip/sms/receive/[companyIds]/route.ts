@@ -6,6 +6,10 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
@@ -119,11 +123,12 @@ export async function POST(
         continue;
       }
 
+      const phoneLookup = phoneLookupWhereClause(from);
       let client = await db.client.findFirst({
         where: {
-          mobile: {
-            endsWith: from.replace("+", ""),
-          },
+          ...(phoneLookup
+            ? { OR: phoneLookup }
+            : { mobile: { endsWith: from.replace("+", "") } }),
           companyId: infobipConfig.companyId,
         },
         include: {
@@ -141,7 +146,7 @@ export async function POST(
           data: {
             firstName: from,
             lastName: " ",
-            mobile: from,
+            mobile: normalizePhoneForStorage(from),
             companyId: infobipConfig.companyId,
             isSalesAgent: true,
           },

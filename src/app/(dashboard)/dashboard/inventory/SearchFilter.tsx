@@ -84,6 +84,9 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
               setSearch(value);
               handleSearchChange(value);
             }}
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
         </div>
         <div className="w-fit md:w-auto">

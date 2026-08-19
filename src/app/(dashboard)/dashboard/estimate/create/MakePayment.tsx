@@ -685,6 +685,7 @@ export default function MakePayment() {
                     name="cash"
                     type="text"
                     label="Cash Received"
+                    placeholder="Enter received by"
                     value={cash}
                     onChange={(e) => setCash(e.target.value)}
                   />
@@ -745,7 +746,7 @@ export default function MakePayment() {
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
+                          paymentMethodInput ? "bg-primary" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}

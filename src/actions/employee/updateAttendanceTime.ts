@@ -1,5 +1,6 @@
 "use server";
 
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import moment from "moment";
 import { getCompany } from "../settings/getCompany";
@@ -91,6 +92,8 @@ export async function updateAttendanceTime(
         };
       }
     }
+
+    updateData.updatedAt = companyNow(clockInOut.timezone || company.timezone);
 
     // Update the attendance record
     await db.clockInOut.update({

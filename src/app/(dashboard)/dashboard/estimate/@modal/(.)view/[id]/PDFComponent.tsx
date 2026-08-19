@@ -385,7 +385,7 @@ const PDFComponent = ({
                   calculateDue(
                     Number(invoice.grandTotal),
                     Number(invoice.totalPayment),
-                    Number(invoice.deposit)
+                    Number(invoice.deposit),
                   ),
                 ],
               ].map(([field, value], ind) => (
@@ -406,6 +406,13 @@ const PDFComponent = ({
         </View>
 
         <PDFInvoiceItems items={invoice.invoiceItems} />
+
+        {invoice.customerNotes && (
+          <View style={styles.terms}>
+            <Text style={styles.boldText}>Customer Notes:</Text>
+            <Text>{invoice.customerNotes}</Text>
+          </View>
+        )}
 
         <View style={styles.terms}>
           <Text style={styles.boldText}>Terms & Conditions:</Text>
@@ -526,8 +533,8 @@ const PDFInvoiceItems = ({
                         Number(material.quantity ?? 0)
                       : 0) -
                       parseFloat(
-                        material.discount ? material.discount.toString() : "0"
-                      )
+                        material.discount ? material.discount.toString() : "0",
+                      ),
                   )}
                 </Text>
               </View>
