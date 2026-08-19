@@ -39,7 +39,7 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
                 {item.purchaserName}
               </p>
               {item.orderNumber && (
-                <span className="text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-mono font-semibold text-primary bg-primary/10 dark:bg-primary/20 px-1.5 py-0.5 rounded">
                   {item.orderNumber}
                 </span>
               )}

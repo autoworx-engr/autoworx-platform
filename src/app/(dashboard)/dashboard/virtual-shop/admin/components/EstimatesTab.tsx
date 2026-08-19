@@ -10,7 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import EstimateCard from "./EstimateCard";
 import type { Estimate, FilterStatus } from "./EstimatesTab.types";
 
@@ -80,7 +80,11 @@ export default function EstimatesTab({
     [pathname, router, searchParams],
   );
 
+  const lastPushedSearchRef = useRef(search);
+
   useEffect(() => {
+    if (search === lastPushedSearchRef.current) return;
+    lastPushedSearchRef.current = search;
     setSearchInput(search);
   }, [search]);
 
@@ -91,6 +95,7 @@ export default function EstimatesTab({
     if (normalizedInput === normalizedSearch) return;
 
     const timeout = setTimeout(() => {
+      lastPushedSearchRef.current = normalizedInput;
       updateQuery({
         search: normalizedInput || undefined,
         page: undefined,
