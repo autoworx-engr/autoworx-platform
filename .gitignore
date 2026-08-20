@@ -2,7 +2,6 @@
 
 .vscode/
 .prettierignore
-src/lib/search-registry.generated.ts
 
 graphify-out
 # dependencies
