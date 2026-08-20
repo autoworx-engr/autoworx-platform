@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { PanelBottomOpen } from "lucide-react";
+import { ListChecks } from "lucide-react";
 import { useState } from "react";
 import SidePanelTabs from "./SidePanelTabs";
 import { useIsAdminOrManager } from "./useIsAdminOrManager";
@@ -27,20 +27,19 @@ export default function MobileSidePanel() {
       <SheetTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
-          className="h-9 shrink-0 gap-2 md:hidden"
+          className="h-9 shrink-0 gap-1 text-xs md:hidden"
+          aria-label={`Open ${title}`}
         >
-          <PanelBottomOpen size={16} />
-          <span className="text-sm font-medium">Panel</span>
+          <ListChecks size={16} />
+          Tasks
         </Button>
       </SheetTrigger>
 
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="h-[85vh] gap-0 rounded-t-2xl px-3 pb-3 pt-2"
+        className="h-[85dvh] gap-0 overflow-hidden rounded-t-2xl px-3 pb-14 pt-2 data-[side=bottom]:h-[85dvh]"
       >
-        {/* Grabber — signals the sheet is dismissible by swiping down. */}
         <div className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700" />
 
         <div className="flex shrink-0 items-center justify-between py-2">

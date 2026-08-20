@@ -110,8 +110,9 @@ export default function Tasks() {
   }
 
   return (
-    <div className="md:app-shadow relative flex h-full min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden rounded-lg p-3 md:max-w-80 md:bg-background">
-      <h2 className="flex items-center justify-between">
+    <div className="md:app-shadow relative flex h-full min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden rounded-lg py-2 md:max-w-80 md:bg-background md:p-3">
+      {/* The mobile sheet already titles itself, so this only shows on desktop. */}
+      <h2 className="hidden items-center justify-between md:flex">
         <div className="text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
           Task List
         </div>

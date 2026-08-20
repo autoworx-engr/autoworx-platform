@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../../../components/ui/select";
+import MobileSidePanel from "../sideBar/MobileSidePanel";
 import { CalendarFilterDropdown } from "./CalendarFilterDropdown";
 import CalendarSearch from "./CalendarSearch";
 import DateSelector from "./DateSelector";
@@ -279,6 +280,10 @@ export function CalendarHeader({
         <div className="hidden md:block w-56 lg:w-80 xl:w-96">
           <CalendarSearch type={type} />
         </div>
+
+        {/* Tasks & Users — the side panel has no room below `md`, so it opens
+            as a sheet from here instead. */}
+        <MobileSidePanel />
 
         {/* New Appointment */}
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(

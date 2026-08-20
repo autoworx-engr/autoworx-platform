@@ -33,7 +33,7 @@ export default function SidePanelTabs() {
       onValueChange={(value) => setType(value as "USERS" | "TASKS")}
       className="flex h-full min-h-0 flex-grow flex-col"
     >
-      <TabsList className="flex h-auto w-full items-center gap-2 rounded-xl border border-slate-200 bg-white/50 p-1.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50">
+      <TabsList className="flex h-auto w-full shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white/50 p-1.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50">
         {isAdminOrManager && (
           <TabsTrigger value="USERS" className={triggerClassName}>
             Users
