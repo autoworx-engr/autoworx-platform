@@ -57,15 +57,15 @@ export default function VehicleCard({
             <dl className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <dt className="font-medium text-muted-foreground">Year</dt>
-                <dd className="text-lg font-bold">{vehicle.year || ""}</dd>
+                <dd className="text-lg font-bold">{vehicle.year || "N/A"}</dd>
               </div>
               <div>
                 <dt className="font-medium text-muted-foreground">Make</dt>
-                <dd className="text-lg font-bold">{vehicle.make}</dd>
+                <dd className="text-lg font-bold">{vehicle.make || "N/A"}</dd>
               </div>
               <div>
                 <dt className="font-medium text-muted-foreground">Model</dt>
-                <dd className="text-lg font-bold">{vehicle.model}</dd>
+                <dd className="text-lg font-bold">{vehicle.model || "N/A"}</dd>
               </div>
               {vehicle.other && (
                 <div>
@@ -76,7 +76,7 @@ export default function VehicleCard({
               <div>
                 <dt className="font-medium text-muted-foreground">Plate</dt>
                 <dd className="text-lg font-bold uppercase tracking-wider">
-                  {vehicle.license}
+                  {vehicle.license || "N/A"}
                 </dd>
               </div>
             </dl>

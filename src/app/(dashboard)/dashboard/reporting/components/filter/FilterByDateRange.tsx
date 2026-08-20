@@ -92,6 +92,7 @@ export default function FilterDateRange({
       searchParams.delete("startDate");
       searchParams.delete("endDate");
     }
+    searchParams.delete("page");
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.push(newPath);
     setState({ selection: tempRange });
@@ -110,6 +111,7 @@ export default function FilterDateRange({
     const searchParams = new URLSearchParams(params!);
     searchParams.delete("startDate");
     searchParams.delete("endDate");
+    searchParams.delete("page");
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
 

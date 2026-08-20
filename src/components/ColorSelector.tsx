@@ -11,8 +11,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
+import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { VehicleColor } from "@prisma/client";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
@@ -76,31 +78,30 @@ export default function ColorSelector({
   }, [colorOpen]);
 
   return (
-    <div className="w-full">
-      <label className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-        {label}
-      </label>
-      <input type="hidden" name="colorId" value={selectedColor?.id || ""} />
-
+    <div className="group flex w-full flex-col gap-1.5">
+      <Label className="flex items-center gap-1 text-base">{label}</Label>
       {/* Color selector */}
       <div className="relative w-full">
+        <input type="hidden" name="colorId" value={selectedColor?.id || ""} />
         <button
           type="button"
-          className={`
-            mt-1 flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700
-            bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm font-medium text-slate-600 dark:text-slate-200
-            transition-all duration-200
-            hover:border-primary hover:shadow-md focus:ring-2 focus:ring-primary/30 focus:border-primary
-          `}
+          className={cn(
+            slimInputClassName,
+            "items-center justify-between text-left",
+          )}
           onClick={() => setColorOpen(!colorOpen)}
         >
-          <span className={selectedColor ? "" : "text-slate-400"}>
+          <span className={selectedColor ? "" : "text-muted-foreground"}>
             {selectedColor
               ? selectedColor.name
               : `Select a ${label.toLowerCase()}`}
           </span>
-          <span className="text-slate-500 dark:text-slate-300">
-            {colorOpen ? <ChevronUp /> : <ChevronDown />}
+          <span className="shrink-0 opacity-60">
+            {colorOpen ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </span>
         </button>
 

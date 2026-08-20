@@ -577,10 +577,6 @@ export default function ServiceCreateClient({
           await createShopService(payload);
         }
 
-        reset();
-        setServiceInfo(INITIAL_SERVICE_INFO);
-        setSelectedImageFile(null);
-        setValidationErrors({});
         router.push(`/dashboard/virtual-shop/admin/${selectedShopId}/services`);
         router.refresh();
       } catch (error) {

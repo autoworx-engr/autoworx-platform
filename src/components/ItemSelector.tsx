@@ -250,26 +250,35 @@ export default function ItemSelector<T>({
             </div>
 
             {/* List Area */}
-            <div className="my-2 max-h-[200px] space-y-0.5 overflow-y-auto px-2">
-              {itemIist.map((item, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-primary/10 hover:text-primary"
-                  onClick={() => {
-                    setSelected(item);
-                    onSelect && onSelect(item);
-                    setOpen(false);
-                    setDropdownsOpen(() => ({
-                      ...dropdownsOpen,
-                      [type]: [-1, -1],
-                    }));
-                  }}
-                >
-                  {/* @ts-ignore */}
-                  {item[display]}
-                </button>
-              ))}
+            <div className="thin-scrollbar my-2 max-h-[200px] space-y-0.5 overflow-y-auto px-2">
+              {itemIist.length > 0 ? (
+                itemIist.map((item, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-primary/10 hover:text-primary"
+                    onClick={() => {
+                      setSelected(item);
+                      onSelect && onSelect(item);
+                      setOpen(false);
+                      setDropdownsOpen(() => ({
+                        ...dropdownsOpen,
+                        [type]: [-1, -1],
+                      }));
+                    }}
+                  >
+                    {/* @ts-ignore */}
+                    {item[display]}
+                  </button>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 px-4">
+                  <Search size={18} className="text-slate-300 mb-1.5" />
+                  <p className="text-center text-sm text-slate-400">
+                    No results found
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer "New" Button */}

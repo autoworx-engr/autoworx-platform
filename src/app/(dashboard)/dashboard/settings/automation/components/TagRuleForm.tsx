@@ -30,7 +30,7 @@ import {
   convertSecondsToTime,
   convertTimeToSeconds,
 } from "@/utils/timeConvertToSeconds";
-import { Spin } from "antd";
+import CarLoading from "@/components/common/CarLoading";
 import InfoCard from "./InfoCard";
 import { getConditionHelp, TipBox } from "./TagautomationHelper";
 import { TEMPLATE_VARIABLES } from "./TemplateVariable";
@@ -608,7 +608,7 @@ const TagRuleForm = ({
   if (isLoading || isFetching || stagesLoading || isAllTagRuleLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }

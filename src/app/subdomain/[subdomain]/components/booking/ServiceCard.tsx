@@ -157,7 +157,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl overflow-hidden p-0 gap-0 [&>button]:hidden max-h-[90vh] flex flex-col">
           {/* Image header */}
-          <div className="relative aspect-[16/6] w-full overflow-hidden flex-shrink-0">
+          <div className="relative aspect-video w-full overflow-hidden flex-shrink-0">
             <Image
               src={imgSrc}
               alt={service.title}

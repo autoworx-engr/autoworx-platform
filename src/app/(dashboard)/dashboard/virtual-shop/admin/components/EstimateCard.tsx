@@ -202,6 +202,14 @@ export default function EstimateCard({
                 ${estimate.serviceFee.toLocaleString()}
               </span>
             </div>
+            {estimate.tip > 0 && (
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Tip</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  ${estimate.tip.toLocaleString()}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between items-center pt-1.5 border-t border-slate-200 dark:border-slate-700">
               <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
                 Total

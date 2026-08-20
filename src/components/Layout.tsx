@@ -7,7 +7,7 @@ import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { EmployeeType } from "@prisma/client";
 import { Session } from "next-auth";
 import { redirect, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MobileNav from "./mobile-responsive/MobileNav";
 import PopupState from "./PopupState";
 import PrivateRoute from "./PrivateRoute";
@@ -50,6 +50,10 @@ export default function Layout({
 }) {
   const pathname = usePathname(); // Get the current route path
   const isSuperAdminRoute = pathname?.startsWith("/awx-dashboard");
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
   useSetPermissions(session); // Set user permissions based on session
   useSetCompanyFeaturePermission(session); // Set user permissions based on session
   const { permissions } = usePermissionStore();
@@ -207,7 +211,10 @@ export default function Layout({
         <div className="sm:ml-[5%]">
           <TopNavbar />
           <PopupState />
-          <main className="relative mt-14 max-h-[calc(100vh-56px)] overflow-y-auto bg-[#F8F9FA] sm:mt-0 sm:p-2 sm:px-4 md:h-[93vh]">
+          <main
+            ref={mainRef}
+            className="relative mt-14 max-h-[calc(100vh-56px)] overflow-y-auto bg-[#F8F9FA] sm:mt-0 sm:p-2 sm:px-4 md:h-[93vh]"
+          >
             <InitOneSignalProvider />
             <PrivateRoute session={session}>{children}</PrivateRoute>
             <UserBugReport />

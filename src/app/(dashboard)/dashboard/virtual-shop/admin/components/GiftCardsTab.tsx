@@ -185,7 +185,7 @@ function Section({
         <Icon size={20} className="text-gray-700" />
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
       </div>
-      <p className="mt-1 text-sm text-primary">{subtitle}</p>
+      <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
       <div className="mt-5">{children}</div>
     </div>
   );
@@ -926,6 +926,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPreset1}
                     type="number"
                     min="0"
+                    placeholder="e.g. 25"
                   />
                   <SettingInput
                     label="Preset 2 ($)"
@@ -933,6 +934,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPreset2}
                     type="number"
                     min="0"
+                    placeholder="e.g. 50"
                   />
                   <SettingInput
                     label="Preset 3 ($)"
@@ -940,6 +942,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPreset3}
                     type="number"
                     min="0"
+                    placeholder="e.g. 100"
                   />
                 </div>
               )}
@@ -959,6 +962,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setMinAmount}
                     type="number"
                     min="0"
+                    placeholder="e.g. 10"
                   />
                   <SettingInput
                     label="Max ($)"
@@ -966,6 +970,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setMaxAmount}
                     type="number"
                     min="0"
+                    placeholder="e.g. 500"
                   />
                 </div>
               )}
@@ -1141,6 +1146,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                         e.preventDefault();
                       }
                     }}
+                    placeholder="e.g. SUMMER25"
                     className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1172,6 +1178,9 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPromoValue}
                     type="number"
                     min="0"
+                    placeholder={
+                      promoType === "Percentage" ? "e.g. 10" : "e.g. 5.00"
+                    }
                   />
                 </div>
 
@@ -1194,6 +1203,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPromoUsageLimit}
                     type="number"
                     min="0"
+                    placeholder="e.g. 100"
                   />
                 </div>
               </div>
@@ -1226,11 +1236,13 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                 label="Terms URL"
                 value={termsUrl}
                 onChange={setTermsUrl}
+                placeholder="https://example.com/terms"
               />
               <SettingInput
                 label="Privacy Policy URL"
                 value={privacyUrl}
                 onChange={setPrivacyUrl}
+                placeholder="https://example.com/privacy"
               />
             </div>
           </Section>

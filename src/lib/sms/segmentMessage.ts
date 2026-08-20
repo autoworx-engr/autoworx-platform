@@ -32,16 +32,12 @@ export function segmentMessage(
   maxLength: number = DEFAULT_MAX_SEGMENT_LENGTH,
 ): SmsSegment[] {
   const text = normalizeSentenceSpacing(
-    normalizeGluedClauses((message ?? "").trim()),
+    normalizeGluedNumbers(normalizeGluedClauses((message ?? "").trim())),
   );
   if (!text) return [];
   if (text.length <= maxLength) return [text];
   return packUnits(splitIntoUnits(text), maxLength);
 }
-
-// ---------------------------------------------------------------------------
-// Tokenize
-// ---------------------------------------------------------------------------
 
 /**
  * Breaks text into logical units — one per sentence, plus a break at every
@@ -63,10 +59,6 @@ function splitIntoUnits(text: string): string[] {
   if (start < text.length) units.push(text.slice(start));
   return units;
 }
-
-// ---------------------------------------------------------------------------
-// Pack
-// ---------------------------------------------------------------------------
 
 /**
  * Fills segments with whole units in order. A unit is appended to the current
@@ -119,10 +111,6 @@ function splitLongUnit(unit: string, maxLength: number): SmsSegment[] {
   if (tail) pieces.push(tail);
   return pieces;
 }
-
-// ---------------------------------------------------------------------------
-// Boundary-priority ladder
-// ---------------------------------------------------------------------------
 
 interface SplitRule {
   /** True when index `i` in `text` is a boundary of this class. */
@@ -186,11 +174,6 @@ function isWhitespace(ch: string | undefined): boolean {
   return ch !== undefined && /\s/.test(ch);
 }
 
-// ---------------------------------------------------------------------------
-// Normalization — repairs missing separators in raw AI output so the
-// tokenizer can find real sentence/clause boundaries.
-// ---------------------------------------------------------------------------
-
 /**
  * Compound words/brand names that legitimately mix case with no separator
  * (e.g. "AutoWorx", "iPhone") — exempted so they aren't split apart.
@@ -236,6 +219,15 @@ function normalizeGluedClauses(text: string): string {
  * intro, or parenthetical into the next clause. Capital-only so decimals
  * ("$89.99") and lowercase run-ons ("e.g.this") are left untouched.
  */
+/**
+ * Inserts ". " where a digit is glued to a capitalised word ("$4000Window
+ * Tinting") — the shape AI price lists take when the separator is dropped. A
+ * following lowercase is required, so "24V Battery"/"4K Video"/"5W30" survive.
+ */
+function normalizeGluedNumbers(text: string): string {
+  return text.replace(/(\d)(?=[A-Z][a-z])/g, "$1. ");
+}
+
 function normalizeSentenceSpacing(text: string): string {
   return text.replace(/([.!?:)\]])(?=[A-Z])/g, "$1 ");
 }
