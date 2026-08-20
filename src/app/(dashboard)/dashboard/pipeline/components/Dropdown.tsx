@@ -54,7 +54,7 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-x-12 rounded-xl border px-4 py-2"
+          className="flex items-center gap-x-2 sm:gap-x-12 rounded-xl border px-4 py-2 whitespace-nowrap"
           aria-label="Customise options"
         >
           <span>Filter</span>
@@ -73,12 +73,12 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
               items={[
                 { id: "all", value: "All", label: "All" },
                 ...columnStatus
-                .filter((column)=> column.title !== "Delivered")
-                .map((column) => ({
-                  id: column.id,
-                  value: column.title,
-                  label: column.title,
-                })),
+                  .filter((column) => column.title !== "Delivered")
+                  .map((column) => ({
+                    id: column.id,
+                    value: column.title,
+                    label: column.title,
+                  })),
               ]}
               onChange={(value) =>
                 setFilter({ status: value === "All" ? "" : value })
