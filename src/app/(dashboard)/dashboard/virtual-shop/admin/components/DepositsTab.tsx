@@ -98,7 +98,7 @@ export default function DepositsTab({ shopId = 0 }: DepositsTabProps) {
         parsedAmount < 0 ||
         !Number.isInteger(parsedAmount)
       ) {
-        toast.error("Please enter a valid whole number amount");
+        toast.error("Please enter a valid deposit number");
         return;
       }
 
