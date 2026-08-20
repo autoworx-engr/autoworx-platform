@@ -178,9 +178,9 @@ export default function EditVehicle({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
-          <FormError />
+        <FormError />
 
+        <div className="thin-scrollbar scrollbar-track-transparent scrollbar-thumb-muted grid content-start items-start gap-x-4 gap-y-4 overflow-y-auto px-2 py-2 sm:grid-cols-2 md:px-4">
           {/* Year */}
           <SelectorWithSearch
             name="year"
@@ -233,11 +233,13 @@ export default function EditVehicle({
             defaultValue={vehicle?.submodel || ""}
             required={false}
             label="Sub Model"
+            placeholder="Enter sub model"
           />
           <SlimInput
             name="type"
             defaultValue={vehicle?.type || ""}
             required={false}
+            placeholder="Enter type"
           />
 
           {/* ColorSelector component */}
@@ -250,36 +252,40 @@ export default function EditVehicle({
             name="transmission"
             defaultValue={vehicle?.transmission || ""}
             required={false}
+            placeholder="Enter transmission"
           />
           <SlimInput
             name="engineSize"
             value={engineSize}
             onChange={(e) => setEngineSize(e.target.value)}
             required={false}
+            placeholder="Enter engine size"
           />
           <SlimInput
             name="license"
             defaultValue={vehicle?.license || ""}
             required={false}
             label="License Plate"
+            placeholder="Enter license plate"
           />
-          <div>
+          <div className="flex flex-col gap-1.5">
             <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <SlimInput
-                  name="vin"
-                  value={vinValue}
-                  onChange={(e) => setVinValue(e.target.value)}
-                  onBlur={(e) => handleVinBlur(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleVinBlur(vinValue);
-                    }
-                  }}
-                  required={false}
-                />
-              </div>
+              <SlimInput
+                name="vin"
+                label="Vin"
+                placeholder="Enter VIN"
+                rootClassName="flex-1"
+                value={vinValue}
+                onChange={(e) => setVinValue(e.target.value)}
+                onBlur={(e) => handleVinBlur(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleVinBlur(vinValue);
+                  }
+                }}
+                required={false}
+              />
               <VINInputCamera
                 onVehicleInfo={(value) => {
                   const { make, model, year, specs, vin } =
@@ -298,7 +304,7 @@ export default function EditVehicle({
                 }}
               />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Press Enter or click away after typing to auto-fill vehicle
               details
             </p>
@@ -307,13 +313,14 @@ export default function EditVehicle({
             name="other"
             required={false}
             label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
+            placeholder="Enter vehicle details"
             value={formData.other}
             onChange={(e) => handleInputChange("other", e.target.value)}
             rootClassName={`col-span-full ${
               !!formData.vehicleYear &&
               !!formData.vehicleMake &&
               !!formData.vehicleModel &&
-              "cursor-not-allowed bg-gray-100 opacity-50"
+              "cursor-not-allowed bg-muted opacity-50"
             }`}
             disabled={
               !!formData.vehicleYear &&
@@ -325,6 +332,7 @@ export default function EditVehicle({
             name="notes"
             defaultValue={vehicle?.notes || ""}
             required={false}
+            placeholder="Enter notes"
             rootClassName="col-span-full"
           />
         </div>

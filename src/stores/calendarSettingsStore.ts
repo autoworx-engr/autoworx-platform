@@ -20,8 +20,8 @@ export const useCalendarSettingsStore = create<CalendarSettingsStore>(
         const res = await fetch("/api/calendar-settings");
         if (!res.ok) throw new Error("Failed to fetch calendar settings");
 
-        const data = await res.json();
-        set({ calendarSettings: data, loading: false });
+        const json = await res.json();
+        set({ calendarSettings: json.data, loading: false });
       } catch (err: any) {
         set({ error: err.message, loading: false });
       }

@@ -13,7 +13,9 @@ const fetchClientSms = async ({
   const { data: clientSms, totalSmsCount } = await getSms(clientId, {
     take: defaultTake,
     skip: (pageParam - 1) * defaultTake,
-    orderBy: { createdAt: "desc" },
+    // `id` breaks the tie: segments of one split reply can land in the same
+    // millisecond, and createdAt alone leaves their order up to the DB.
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
   const hasMore = defaultTake * pageParam < totalSmsCount;
   return {

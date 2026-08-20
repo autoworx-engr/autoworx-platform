@@ -226,7 +226,7 @@ export default function NewVehicle({
         <FormError />
 
         <div className="thin-scrollbar scrollbar-track-transparent scrollbar-thumb-muted space-y-4 overflow-y-auto px-2 py-2 md:px-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid content-start items-start gap-x-4 gap-y-4 sm:grid-cols-2">
             {/* Year */}
             <SelectorWithSearch
               name="year"
@@ -308,25 +308,24 @@ export default function NewVehicle({
               label="License Plate"
               placeholder="Enter license plate"
             />
-            <div>
+            <div className="flex flex-col gap-1.5">
               <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <SlimInput
-                    name="vin"
-                    label="Vin"
-                    required={false}
-                    placeholder="Enter VIN"
-                    value={vinCode}
-                    onChange={(e) => setVinCOde(e.target.value)}
-                    onBlur={(e) => handleVinBlur(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleVinBlur(vinCode);
-                      }
-                    }}
-                  />
-                </div>
+                <SlimInput
+                  name="vin"
+                  label="Vin"
+                  required={false}
+                  placeholder="Enter VIN"
+                  rootClassName="flex-1"
+                  value={vinCode}
+                  onChange={(e) => setVinCOde(e.target.value)}
+                  onBlur={(e) => handleVinBlur(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleVinBlur(vinCode);
+                    }
+                  }}
+                />
 
                 <VINInputCamera
                   onVehicleInfo={(value) => {
@@ -344,7 +343,7 @@ export default function NewVehicle({
                   }}
                 />
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Press Enter or click away after typing to auto-fill vehicle
                 details
               </p>

@@ -84,7 +84,7 @@ export default function PipelineTypeSelector({
         />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-2 z-50 min-w-[190px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+        <div className="absolute top-full left-0 mt-2 z-[60] min-w-[190px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
           {options.map((option) => (
             <button
               key={option.type}
