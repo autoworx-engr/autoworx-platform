@@ -810,7 +810,7 @@ const PDFComponent = function PDF({
               {companyDetails?.city && `${companyDetails.city}`}
               {companyDetails?.city && companyDetails?.state && ", "}
               {companyDetails?.state && `${companyDetails.state}`}
-              {companyDetails?.state && companyDetails?.zip && " "}
+              {companyDetails?.state && companyDetails?.zip && " - "}
               {companyDetails?.zip && `${companyDetails.zip}`}
             </Text>
             <Text style={styles.companySubtext}>{companyDetails?.phone}</Text>
@@ -1045,7 +1045,7 @@ const PDFComponent = function PDF({
 
         {invoice.customerNotes && (
           <View style={styles.termsSection}>
-            <Text style={styles.termsTitle}>Notes</Text>
+            <Text style={styles.termsTitle}>Customer Notes</Text>
             <Text style={styles.termsText}>{invoice.customerNotes}</Text>
           </View>
         )}
