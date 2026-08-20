@@ -21,7 +21,6 @@ const PAYMENT_METHOD_OPTIONS: PaymentMethod[] = [
 ];
 
 const STATUS_OPTIONS: PaymentStatus[] = ["All", "Paid", "Unpaid"];
-
 const DEFAULT_AMOUNT: [number, number] = [0, 3000];
 
 const FilterforPayment = () => {
