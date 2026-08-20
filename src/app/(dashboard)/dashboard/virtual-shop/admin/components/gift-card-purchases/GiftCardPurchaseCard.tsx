@@ -1,4 +1,4 @@
-import { Gift, Mail, Phone, TrendingDown } from "lucide-react";
+import { Calendar, Gift, Mail, Phone, TrendingDown } from "lucide-react";
 import { IssuedGiftCardItem, statusMeta } from "./types";
 
 interface GiftCardPurchaseCardProps {
@@ -46,6 +46,15 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
               {item.purchaserEmail}
+            </p>
+            <p className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              <Calendar size={11} />
+              Purchased{" "}
+              {new Date(item.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
             </p>
           </div>
         </div>
