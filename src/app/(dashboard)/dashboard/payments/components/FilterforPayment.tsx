@@ -57,7 +57,6 @@ const FilterforPayment = () => {
       onMethodChange={(method) => setPaymentMethod(method as PaymentMethod)}
       onApply={onApply}
       onClear={onClear}
-      panelClassName="-right-16 md:right-auto [@media(min-width:375px)]:-right-4 [@media(min-width:425px)]:-right-[4.5rem]"
     >
       <div className="mb-6">
         <div className="font-Inter mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">

@@ -74,11 +74,11 @@ export default function PaymentFilterPopover({
       {open && (
         <div
           className={cn(
-            "absolute right-0 z-40 mt-2 origin-top-right animate-in fade-in zoom-in-95 duration-200",
+            "absolute right-0 top-full z-40 mt-2 origin-top-right animate-in fade-in zoom-in-95 duration-200",
             panelClassName,
           )}
         >
-          <div className="mt-2 w-72 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-slate-900/50 lg:w-[400px]">
+          <div className="mt-2 max-h-[70vh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-slate-900/50 sm:w-72 lg:w-[400px]">
             <div className="mb-6">
               <div className="font-Inter mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Payment Method
