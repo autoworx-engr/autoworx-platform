@@ -24,7 +24,7 @@ export default function VehicleList({
 
   return (
     <div className={`${selectedVehicle && "hidden lg:block"} w-full space-y-2`}>
-      <div className="flex items-center justify-between px-2">
+      <div className="flex items-center justify-between px-4">
         <h3 className="text-xl font-bold tracking-tight text-slate-600">
           Client Vehicles
         </h3>
