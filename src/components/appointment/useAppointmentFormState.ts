@@ -636,7 +636,7 @@ export function useAppointmentFormState({
           message: "No confirmation template is selected",
         });
         return;
-        // Reminders also go to assigned team mates, so this is validated even
+        // Reminders also go to assigned teammates, so this is validated even
         // when no client is attached — unlike the confirmation above, which is
         // a client-only email.
       } else if (reminderTemplateStatus && !reminderTemplate) {

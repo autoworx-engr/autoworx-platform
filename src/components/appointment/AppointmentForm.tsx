@@ -183,8 +183,8 @@ export default function AppointmentForm({
             here, so Sales and Technician are no longer split apart. */}
         <AssignUsers
           assignedUsers={assignedUsers}
-          title="+ Assign Team Mate"
-          emptyMessage="No team mate assigned yet."
+          title="+ Assign Teammate"
+          emptyMessage="No teammate assigned yet."
           onAssignUser={(user: User) =>
             setAssignedUsers((prev) => [...prev, user])
           }
