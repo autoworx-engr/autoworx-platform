@@ -176,7 +176,7 @@ export async function processAuthorizeNetPayment(eventId: string) {
   if (sourceType === "virtual_shop_deposit") {
     const result = await confirmShopBooking({
       shopBookingId: targetId,
-      cashPaid: authAmount,
+      cashPaid: baseAmount,
     });
 
     const shopBooking = await db.shopBooking.findUnique({
@@ -200,7 +200,8 @@ export async function processAuthorizeNetPayment(eventId: string) {
         data: {
           companyId,
           invoiceId,
-          amount: authAmount,
+          amount: baseAmount,
+          tip: tipAmount,
           type: "DEPOSIT",
           date: new Date(),
           gateway: "AUTHORIZE_NET",
