@@ -9,7 +9,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Image, Trash2, Loader2, Lightbulb } from "lucide-react";
+import {
+  MessageSquare,
+  Image,
+  Trash2,
+  Loader2,
+  Lightbulb,
+  MessageCircleMore,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import {
   useConversationExamples,
@@ -137,8 +144,8 @@ export function ConversationExamplesTab() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-2">
-          <div>
-            <MessageSquare className="h-5 w-5" />
+          <div className="flex items-center gap-2">
+            <MessageCircleMore className="h-5 w-5" />
             Conversation Examples
           </div>
           <div>
