@@ -70,6 +70,7 @@ export default function CompanyMessageBox({
   const prevScrollHeightRef = useRef(0);
   const isLoadingOlderRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [showJump, setShowJump] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
@@ -143,13 +144,16 @@ export default function CompanyMessageBox({
 
   // Initial scroll to bottom
   useEffect(() => {
-    if (messages.length > 0 && !isReady) {
+    if (messages.length > 0 && (!isReady || isImageLoaded)) {
       requestAnimationFrame(() => {
         bottomAnchorRef.current?.scrollIntoView({ block: "end" });
-        setTimeout(() => setIsReady(true), 200);
+        setIsImageLoaded(false);
+        if (!isReady) {
+          setTimeout(() => setIsReady(true), 200);
+        }
       });
     }
-  }, [messages.length, isReady]);
+  }, [messages.length, isReady, isImageLoaded]);
 
   // Auto-scroll when a new live message arrives (only if user is near bottom)
   useEffect(() => {
@@ -382,7 +386,7 @@ export default function CompanyMessageBox({
       <div className="relative flex-1 min-h-0">
         <div
           ref={messageBoxRef}
-          className="h-full overflow-y-auto p-4 space-y-3"
+          className="h-full overflow-y-auto p-2 space-y-3"
         >
           {/* Top loader for older messages */}
           {!messagesLoading && messages.length > 0 && (
