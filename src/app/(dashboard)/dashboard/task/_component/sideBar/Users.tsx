@@ -130,7 +130,7 @@ export default function Users() {
   };
 
   return (
-    <div className="md:app-shadow relative flex h-full min-h-0 w-full max-w-80 flex-1 flex-col gap-2 overflow-hidden rounded-lg p-3 md:bg-background">
+    <div className="md:app-shadow relative flex h-full min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden rounded-lg p-3 md:max-w-80 md:bg-background">
       <div>
         <h2 className="flex items-center justify-between ">
           <div className="text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">

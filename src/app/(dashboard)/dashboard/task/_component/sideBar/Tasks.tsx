@@ -110,9 +110,9 @@ export default function Tasks() {
   }
 
   return (
-    <div className="md:app-shadow relative flex h-full min-h-0 w-full max-w-80 flex-1 flex-col gap-2 overflow-hidden rounded-lg p-3 md:bg-background">
-      <h2 className="-mt-4 flex items-center justify-between md:-mt-0">
-        <div className=" text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
+    <div className="md:app-shadow relative flex h-full min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden rounded-lg p-3 md:max-w-80 md:bg-background">
+      <h2 className="flex items-center justify-between">
+        <div className="text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
           Task List
         </div>
         <div className="hidden md:block">

@@ -1,5 +1,6 @@
 "use client";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { cn } from "@/lib/cn";
 import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
 import {
@@ -18,23 +19,24 @@ type RailButtonProps = {
 
 function RailButton({ label, icon: Icon, active, onClick }: RailButtonProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className={cn(
-        "group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60",
-        active
-          ? "bg-gradient-to-br from-primary to-[#5a66ee] text-white shadow-md shadow-primary/30"
-          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100",
-      )}
-    >
-      <Icon size={18} />
-      {/* Hover label — the rail has no room for text, so the name lives here. */}
-      <span className="pointer-events-none absolute left-full z-30 ml-2 hidden whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white shadow-lg group-hover:block dark:bg-slate-100 dark:text-slate-900">
-        {label}
-      </span>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={label}
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60",
+            active
+              ? "bg-gradient-to-br from-primary to-[#5a66ee] text-white shadow-md shadow-primary/30"
+              : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100",
+          )}
+        >
+          <Icon size={18} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
