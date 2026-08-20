@@ -1,9 +1,15 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/cn";
-import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
+import {
+  CALENDAR_SIDEBAR_EXPAND_BREAKPOINT,
+  useCalendarSidebarStore,
+} from "@/stores/calendarSidebar";
 import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import CollapsedRail from "./CollapsedRail";
 import Tasks from "./Tasks";
 import Users from "./Users";
 
@@ -13,30 +19,41 @@ const triggerClassName = cn(
 );
 
 export default function CalendarSidebar() {
-  const { type, minimized, setType } = useCalendarSidebarStore();
+  const { type, minimized, setType, applyViewportDefault } =
+    useCalendarSidebarStore();
   const sessionUser = useSession();
   const isAdminOrManager =
     sessionUser.data?.user?.employeeType === "Admin" ||
     sessionUser.data?.user?.employeeType === "Manager";
 
+  const isWideScreen = useMediaQuery(
+    `(min-width: ${CALENDAR_SIDEBAR_EXPAND_BREAKPOINT}px)`,
+  );
+
+  // Wide screens fit the calendar and the panel side by side, so the panel is
+  // open there by default; narrower ones start on the rail. Once the user
+  // toggles it themselves the store ignores this.
+  useEffect(() => {
+    applyViewportDefault(!isWideScreen);
+  }, [isWideScreen, applyViewportDefault]);
+
   return (
     <div
       className={cn(
-        "hidden h-full flex-col overflow-x-clip transition-[width] ease-in md:flex",
+        "hidden h-full flex-col transition-[width,min-width,max-width] duration-300 ease-out md:flex",
         minimized
-          ? "md:w-10 md:min-w-10 md:max-w-10"
-          : "md:w-[20%] md:min-w-[300px] md:max-w-[320px] md:shrink-0",
+          ? "md:w-12 md:min-w-12 md:max-w-12 md:shrink-0"
+          : "overflow-x-clip md:w-[20%] md:min-w-[300px] md:max-w-[320px] md:shrink-0",
       )}
     >
-      <Tabs
-        value={type}
-        onValueChange={(value) => setType(value as "USERS" | "TASKS")}
-        className={cn(
-          "flex min-h-0 h-full flex-col",
-          !minimized && "flex-grow",
-        )}
-      >
-        {!minimized && (
+      {minimized ? (
+        <CollapsedRail showUsers={isAdminOrManager} />
+      ) : (
+        <Tabs
+          value={type}
+          onValueChange={(value) => setType(value as "USERS" | "TASKS")}
+          className="flex h-full min-h-0 flex-grow flex-col"
+        >
           <TabsList className="flex h-auto w-full items-center gap-2 rounded-xl border border-slate-200 bg-white/50 p-1.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50">
             {isAdminOrManager && (
               <TabsTrigger value="USERS" className={triggerClassName}>
@@ -47,26 +64,20 @@ export default function CalendarSidebar() {
               Tasks
             </TabsTrigger>
           </TabsList>
-        )}
-        <TabsContent
-          value="USERS"
-          className={cn(
-            "mt-2 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden",
-            !minimized && "flex-grow",
-          )}
-        >
-          <Users />
-        </TabsContent>
-        <TabsContent
-          value="TASKS"
-          className={cn(
-            "mt-2 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden",
-            !minimized && "flex-grow",
-          )}
-        >
-          <Tasks />
-        </TabsContent>
-      </Tabs>
+          <TabsContent
+            value="USERS"
+            className="mt-2 flex min-h-0 flex-1 flex-grow flex-col data-[state=inactive]:hidden"
+          >
+            <Users />
+          </TabsContent>
+          <TabsContent
+            value="TASKS"
+            className="mt-2 flex min-h-0 flex-1 flex-grow flex-col data-[state=inactive]:hidden"
+          >
+            <Tasks />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }
