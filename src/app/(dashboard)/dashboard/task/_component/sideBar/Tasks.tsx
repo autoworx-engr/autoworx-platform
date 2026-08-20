@@ -120,7 +120,7 @@ export default function Tasks() {
         </div>
       </h2>
 
-      <div className="thin-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:max-h-full">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:max-h-full">
         {content}
         <div ref={ref} className="text-center text-sm text-gray-500">
           {isFetchingNextPage ? (

@@ -127,7 +127,7 @@ const CreateStatementModal = ({
           </DialogHeader>
 
           {/* Table Container with Scroll */}
-          <div className="thin-scrollbar flex-1 overflow-y-auto scroll-smooth">
+          <div className="flex-1 overflow-y-auto scroll-smooth">
             {unPaidInvoices.length > 0 ? (
               <table className="w-full">
                 <thead className="sticky top-0 z-10 bg-background">

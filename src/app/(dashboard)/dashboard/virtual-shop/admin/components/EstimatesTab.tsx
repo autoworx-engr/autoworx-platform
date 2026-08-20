@@ -233,7 +233,7 @@ export default function EstimatesTab({
         </div>
       ) : (
         <>
-          <div className="space-y-4 max-h-[54vh] overflow-y-auto thin-scrollbar pr-1">
+          <div className="space-y-4 max-h-[54vh] overflow-y-auto pr-1">
             {estimates.map((est) => (
               <EstimateCard
                 key={est.id}

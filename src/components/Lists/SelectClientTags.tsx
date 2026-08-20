@@ -169,7 +169,7 @@ export function SelectClientTags({
             </button>
           </div>
 
-          <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
+          <div className="my-1 max-h-[200px] overflow-y-auto px-2">
             {filteredTagList.map((tagItem) => (
               <div
                 key={tagItem.id}

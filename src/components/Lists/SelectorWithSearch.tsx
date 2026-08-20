@@ -152,7 +152,7 @@ export function SelectorWithSearch({
         </button>
 
         {isOpen && (
-          <div className="thin-scrollbar absolute z-20 mt-2 w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg shadow-slate-200/60 dark:shadow-black/30">
+          <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg shadow-slate-200/60 dark:shadow-black/30">
             {isSearch && (
               <div className="sticky top-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2">
                 <input

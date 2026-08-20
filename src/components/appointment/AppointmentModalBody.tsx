@@ -152,11 +152,11 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
         />
 
         {/* Desktop right panel */}
-        <div className="hidden lg:block relative row-span-2 overflow-y-auto thin-scrollbar divide-y bg-background border-l">
+        <div className="hidden lg:block relative row-span-2 overflow-y-auto divide-y bg-background border-l">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}
-              className="absolute inset-0 divide-y overflow-y-auto thin-scrollbar"
+              className="absolute inset-0 divide-y overflow-y-auto"
             >
               <ScheduleTab
                 rows={rows}

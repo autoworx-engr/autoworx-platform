@@ -33,7 +33,7 @@ export function GiftCardPurchaseList({
 
   return (
     <>
-      <div className="space-y-3 max-h-[54vh] overflow-y-auto thin-scrollbar pr-1">
+      <div className="space-y-3 max-h-[54vh] overflow-y-auto pr-1">
         {items.map((item) => (
           <GiftCardPurchaseCard key={item.id} item={item} />
         ))}

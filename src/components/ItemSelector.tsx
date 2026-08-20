@@ -250,7 +250,7 @@ export default function ItemSelector<T>({
             </div>
 
             {/* List Area */}
-            <div className="thin-scrollbar my-2 max-h-[200px] space-y-0.5 overflow-y-auto px-2">
+            <div className="my-2 max-h-[200px] space-y-0.5 overflow-y-auto px-2">
               {itemIist.map((item, i) => (
                 <button
                   key={i}

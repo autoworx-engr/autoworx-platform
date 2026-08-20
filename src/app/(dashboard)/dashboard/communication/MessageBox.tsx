@@ -615,7 +615,7 @@ export default function MessageBox({
           </div>
 
           {/* Scrollable attachments */}
-          <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
+          <div className="max-h-64 overflow-y-auto px-4 pb-4">
             {/* Fixed responsive grid with minimum item width */}
             <div
               className="gap-3 pt-3"

@@ -23,7 +23,7 @@ export default function AttachmentInput({
     <div
       className={cn(
         "absolute bottom-[56px] w-full rounded-t-lg border border-gray-200 bg-white shadow-md z-50",
-        className
+        className,
       )}
     >
       {/* Sticky header with remove-all button */}
@@ -38,7 +38,7 @@ export default function AttachmentInput({
       </div>
 
       {/* Scrollable attachments container */}
-      <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
+      <div className="max-h-64 overflow-y-auto px-4 pb-4">
         {/* Responsive grid for attachments with minimum item width */}
         <div
           className="grid gap-3 pt-3"
@@ -73,7 +73,8 @@ export default function AttachmentInput({
                       sizes="80px"
                     />
                   </div>
-                ) : isAudio(attachmentFile.name) || attachmentFile.type.startsWith("audio/") ? (
+                ) : isAudio(attachmentFile.name) ||
+                  attachmentFile.type.startsWith("audio/") ? (
                   // Audio / voice note preview
                   <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white shadow-sm">
                     <Mic size={28} className="opacity-90" />

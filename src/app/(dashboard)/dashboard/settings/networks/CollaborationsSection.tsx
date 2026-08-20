@@ -48,7 +48,7 @@ export function CollaborationsSection({
               No active collaborations
             </p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto thin-scrollbar">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {active.map(({ company, joinId, joinedAt }) => (
                 <CompanyCard
                   key={joinId}

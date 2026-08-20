@@ -295,7 +295,7 @@ export default function PhoneInput({
             </div>
 
             {/* Country List */}
-            <div className="max-h-64 overflow-y-auto thin-scrollbar">
+            <div className="max-h-64 overflow-y-auto">
               {filteredCountries.length > 0 ? (
                 filteredCountries.map((country) => (
                   <button

@@ -42,7 +42,7 @@ export function SidebarChatList({
   return (
     <div
       id="internalSidebarScroll"
-      className="thin-scrollbar h-[calc(80vh-7rem)] mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
+      className="h-[calc(80vh-7rem)] mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
     >
       <InfiniteScroll
         key={tab}

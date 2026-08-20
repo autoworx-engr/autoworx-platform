@@ -96,7 +96,7 @@ export default function AppointmentForm({
   handleDate,
 }: AppointmentFormProps) {
   return (
-    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
+    <div className="h-full sm:h-full overflow-y-auto max-h-[80vh] lg:max-h-none">
       <div className="space-y-2 p-4 sm:p-6">
         <AppointmentTitleSelectAndAdd
           value={title}
@@ -367,7 +367,7 @@ export default function AppointmentForm({
           <Textarea
             name="notes"
             placeholder="Notes"
-            className="max-h-[220px] min-h-[96px] resize-y thin-scrollbar"
+            className="max-h-[220px] min-h-[96px] resize-y"
             rows={3}
             maxLength={1000}
             value={notes}
@@ -428,7 +428,7 @@ export default function AppointmentForm({
 
       {/* Mobile right panel — horizontal padding lines its content up with the
           form sections above; Reminder's own wrappers pad vertically only. */}
-      <div className="relative lg:hidden h-full row-span-2 thin-scrollbar divide-y bg-background px-4 pb-6 sm:px-6">
+      <div className="relative lg:hidden h-full row-span-2 divide-y bg-background px-4 pb-6 sm:px-6">
         {tab === Tab.Schedule ? (
           <div
             ref={containerRef}

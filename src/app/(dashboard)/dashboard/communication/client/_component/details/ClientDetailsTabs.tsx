@@ -101,7 +101,7 @@ export default function ClientDetailsTabs({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Tab bar */}
-      <div className="thin-scrollbar flex shrink-0 gap-1 overflow-x-auto overflow-y-hidden border-b border-zinc-100 px-4 pt-2 dark:border-white/10">
+      <div className="flex shrink-0 gap-1 overflow-x-auto overflow-y-hidden border-b border-zinc-100 px-4 pt-2 dark:border-white/10">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = active === tab.id;
@@ -157,9 +157,7 @@ export default function ClientDetailsTabs({
           <div
             key={panel.id}
             className={
-              active === panel.id
-                ? "thin-scrollbar min-h-0 flex-1 overflow-y-auto"
-                : "hidden"
+              active === panel.id ? "min-h-0 flex-1 overflow-y-auto" : "hidden"
             }
           >
             {panel.node}

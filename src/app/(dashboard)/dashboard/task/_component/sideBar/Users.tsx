@@ -167,7 +167,7 @@ export default function Users() {
         </form>
       </div>
 
-      <div className="thin-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
         {content}
         <div ref={ref} className="text-center text-sm text-gray-500">
           {isFetchingNextPage ? (

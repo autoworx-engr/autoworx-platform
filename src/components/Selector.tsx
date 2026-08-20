@@ -172,7 +172,7 @@ export default function Selector<T>({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
+        className="flex max-h-48 flex-col overflow-y-auto py-1"
       >
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-6 px-4">

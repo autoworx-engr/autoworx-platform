@@ -150,7 +150,7 @@ export default function CannedLabor({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="overflow-y-auto thin-scrollbar h-full">
+          <TableBody className="overflow-y-auto h-full">
             {labors.length > 0 ? (
               labors.map((labor, index) => (
                 <CannedLaborItem

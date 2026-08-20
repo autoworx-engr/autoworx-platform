@@ -197,7 +197,7 @@ export default function AssignTask() {
 
         <div
           ref={scrollContainerRef}
-          className="thin-scrollbar flex max-h-[15rem] flex-col gap-1 overflow-y-auto rounded-xl border bg-muted/20 p-2"
+          className="flex max-h-[15rem] flex-col gap-1 overflow-y-auto rounded-xl border bg-muted/20 p-2"
         >
           {content}
           <div

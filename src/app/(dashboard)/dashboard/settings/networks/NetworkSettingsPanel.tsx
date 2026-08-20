@@ -247,7 +247,7 @@ export function NetworkSettingsPanel({
             spellCheck="false"
           />
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden max-h-96 overflow-y-auto thin-scrollbar">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden max-h-96 overflow-y-auto">
           {!locationAllow ? (
             <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
               <MapPin size={28} className="text-gray-300 mb-2" />

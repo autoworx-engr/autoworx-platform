@@ -84,7 +84,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
       </div>
       {/* Table Body */}
 
-      <div className="max-h-80 overflow-y-auto thin-scrollbar">
+      <div className="max-h-80 overflow-y-auto">
         {carParts.map((part, index) => {
           // Find if this car part exists in inspections by title
           const existingInspection = inspections.find(

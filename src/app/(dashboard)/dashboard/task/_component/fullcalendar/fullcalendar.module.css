@@ -153,41 +153,15 @@
 }
 
 /*
+ * Scroller appearance comes from the site-wide thin scrollbar in globals.css —
+ * nothing to add here.
+ *
  * FullCalendar forces `overflow-y: scroll` on every scrollgrid section
- * (header + body) to reserve a matching gutter for column alignment. On
- * Windows that renders the header's empty gutter as a redundant native
- * scrollbar (with up/down arrows). Custom thin scrollbars drop the arrows and
- * keep the empty header track transparent, so only the body's thumb shows
- * while the reserved width — and column alignment — stays intact.
- */
-.calendarScope :global(.fc-scroller) {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
-}
-
-.calendarScope :global(.fc-scroller)::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.calendarScope :global(.fc-scroller)::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.calendarScope :global(.fc-scroller)::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.5);
-  border-radius: 9999px;
-}
-
-.calendarScope :global(.fc-scroller)::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(100, 116, 139, 0.6);
-}
-
-/*
- * The header section keeps its reserved gutter (so columns stay aligned with
- * the body) but its scrollbar must never be visible — hide the thumb there so
- * the sticky-shim's 1px overflow can't render a tiny stray scrollbar next to
- * the day header.
+ * (header + body) to reserve a matching gutter for column alignment. The header
+ * section keeps that reserved gutter (so columns stay aligned with the body)
+ * but its scrollbar must never be visible — hide the thumb there so the
+ * sticky-shim's 1px overflow can't render a tiny stray scrollbar next to the
+ * day header.
  */
 .calendarScope
   :global(.fc-scrollgrid-section-header .fc-scroller)::-webkit-scrollbar-thumb {

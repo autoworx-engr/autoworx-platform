@@ -84,7 +84,7 @@ const UserList: React.FC = () => {
               <Search />
             </div>
 
-            <div className="thin-scrollbar max-h-[100vh] overflow-y-auto pr-1 2xl:max-h-[calc(100vh-450px)]">
+            <div className="max-h-[100vh] overflow-y-auto pr-1 2xl:max-h-[calc(100vh-450px)]">
               {isLoading && (
                 <ul className="space-y-3">
                   {Array.from({ length: 6 }).map((_, index) => (

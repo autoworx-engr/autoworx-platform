@@ -225,7 +225,7 @@ export default function NewVehicle({
 
         <FormError />
 
-        <div className="thin-scrollbar scrollbar-track-transparent scrollbar-thumb-muted space-y-4 overflow-y-auto px-2 py-2 md:px-4">
+        <div className="scrollbar-track-transparent scrollbar-thumb-muted space-y-4 overflow-y-auto px-2 py-2 md:px-4">
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Year */}
             <SelectorWithSearch
