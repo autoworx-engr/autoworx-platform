@@ -125,7 +125,7 @@ export default function Create() {
                               <span className="h-1 w-1 rounded-full bg-slate-300" />
                               {material.name}
                             </p>
-                            <p className="text-slate-700">
+                            <p className="text-slate-700 text-base font-medium">
                               {formatCurrency(
                                 material.sell
                                   ? parseFloat(material.sell.toString()) *
@@ -162,7 +162,7 @@ export default function Create() {
                               <span className="h-1 w-1 rounded-full bg-slate-300" />
                               {material.name}
                             </p>
-                            <p className="text-slate-700">
+                            <p className="text-slate-700 text-base font-medium">
                               {formatCurrency(
                                 material.sell
                                   ? parseFloat(material.sell.toString()) *
