@@ -278,6 +278,7 @@ export default function UrgentRequestDetail({
             <p className="text-sm text-slate-500">
               {request.shop?.storeName} &bull; Submitted{" "}
               {fToNow(request.createdAt)}
+              {" ago"}
             </p>
           </div>
         </div>
