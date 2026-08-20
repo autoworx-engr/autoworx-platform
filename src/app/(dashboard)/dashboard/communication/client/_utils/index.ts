@@ -98,6 +98,26 @@ export const mergeNewAttachments = (prev: File[], picked: File[]): File[] => {
   return [...prev, ...validNewFiles];
 };
 
+/**
+ * Oldest -> newest ordering for a message list, with `id` as the tie-breaker.
+ *
+ * Needed because a long AI reply is sent as several separate texts: carriers
+ * don't guarantee delivery order between them, realtime (pusher) messages are
+ * appended in arrival order, and segments persisted in the same millisecond
+ * share a `createdAt`. Sorting on (createdAt, id) makes the rendered order
+ * deterministic instead of arrival-dependent.
+ */
+export const sortMessagesChronologically = <
+  T extends { id: number; createdAt: Date | string },
+>(
+  messages: T[],
+): T[] =>
+  messages.slice().sort((a, b) => {
+    const diff =
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return diff !== 0 ? diff : a.id - b.id;
+  });
+
 export const clientSortByUpdatedMessage = (
   clients: (Client & {
     conversationsTrack?: ClientConversationTrack | null;
