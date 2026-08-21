@@ -8,7 +8,9 @@ import SMSAttachment from "./SMSAttachment";
 
 export default function SmsMessage({
   message,
+  clientPhoto,
 }: {
+  clientPhoto?: string | null;
   message: ClientSMS & {
     user?: {
       firstName: string;
@@ -56,11 +58,15 @@ export default function SmsMessage({
       {/* Avatar (incoming only) */}
       {isIncoming && (
         <Image
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNL_ZnOTpXSvhf1UaK7beHey2BX42U6solRA&s"
-          alt="Client avatar"
+          src={
+            clientPhoto?.includes("autoworx-production")
+              ? clientPhoto
+              : "/images/default.png"
+          }
+          alt="Messenger user"
           width={30}
           height={30}
-          className="mt-1 rounded-full ring-1 ring-white/50"
+          className="mt-1 rounded-full ring-1 ring-[#0866FF]/40"
         />
       )}
 
