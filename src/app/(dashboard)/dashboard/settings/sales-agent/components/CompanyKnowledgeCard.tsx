@@ -4,6 +4,8 @@ import {
 } from "@/hooks/sales-agent/useCompanyKnowledge";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import PhoneInput from "@/components/PhoneInput";
+import { getIsoCodeFromPhone } from "@/utils/getIsoCodeFromPhone";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -49,6 +51,13 @@ export default function CompanyKnowledgeCard() {
     // Placeholder for website scraping logic
     setIsScrapingWebsite(true);
     setTimeout(() => setIsScrapingWebsite(false), 1500);
+  };
+
+  const handlePhoneChange = (num: string, code: string) => {
+    setCompanyInfo((prev: any) => ({
+      ...prev,
+      phone: num ? `${code}${num}` : "",
+    }));
   };
 
   const handleSave = () => {
@@ -117,15 +126,12 @@ export default function CompanyKnowledgeCard() {
                 <Label className="flex items-center gap-2">
                   <Phone className="h-4 w-4" /> Phone
                 </Label>
-                <Input
-                  value={companyInfo.phone || ""}
-                  onChange={(e) =>
-                    setCompanyInfo((prev: any) => ({
-                      ...prev,
-                      phone: e.target.value,
-                    }))
-                  }
-                  placeholder="(555) 123-4567"
+                <PhoneInput
+                  label=""
+                  placeholder="1234567890"
+                  defaultValue={data?.phone || ""}
+                  defaultIsoCode={getIsoCodeFromPhone(data?.phone)}
+                  onChange={handlePhoneChange}
                 />
               </div>
               <div className="space-y-2">
