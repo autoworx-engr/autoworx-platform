@@ -94,9 +94,7 @@ export default function InventoryDisplay({
       },
     );
 
-    const averageSales = Math.round(
-      totalSalesPrice / (quantitySold || 1),
-    ) as number;
+    const averageSales = quantitySold > 0 ? totalSalesPrice / quantitySold : 0;
 
     const totalPurchaseQuantity = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.quantity),
@@ -114,7 +112,7 @@ export default function InventoryDisplay({
         : 0;
 
     const ReturnAndInvestment =
-      averageSales > averageCost
+      averageCost > 0 && averageSales > averageCost
         ? (((averageSales - averageCost) / averageCost) * 100).toFixed(2)
         : "0.00";
     const { InventoryProductHistory, ...productInfo } = product;
