@@ -56,6 +56,12 @@ type Props = {
   className?: string;
   /** Overrides the label's default `text-base` to match surrounding labels. */
   labelClassName?: string;
+  /**
+   * Controls the panel from the parent, so a screen holding several pickers /
+   * selects can keep only one of them open. Omit for self-managed open state.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 /**
@@ -78,8 +84,15 @@ export function TimeScrollPicker({
   placeholder = label,
   className,
   labelClassName,
+  open: controlledOpen,
+  onOpenChange,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
   const hourColumnRef = useRef<HTMLDivElement>(null);
 
   const minutes = useMemo(() => {

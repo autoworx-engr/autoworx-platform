@@ -4,13 +4,6 @@ import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSett
 import { DialogClose, DialogFooter } from "@/components/Dialog";
 import Submit from "@/components/Submit";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { errorToast, successToast } from "@/lib/toast";
 import { addMinutes } from "@/utils/time";
@@ -19,16 +12,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { calenderQueryKey } from "../../_constant";
 import ConnectGoogle from "./ConnectGoogle";
+import WeekDaySelect from "./WeekDaySelect";
 
-const WEEK_DAYS = [
-  "Saturday",
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-];
+const WEEKEND_TRIGGER_CLASS =
+  "border-primary bg-[#EEF0FF] text-primary focus:ring-primary";
+
+/** Identifies which single dropdown on this tab may be open. */
+type TOpenField =
+  | "week-start"
+  | "day-start"
+  | "day-end"
+  | "weekend-1"
+  | "weekend-2";
 
 type TGeneralProps = {
   settings: CalendarSettings;
@@ -52,6 +47,20 @@ export default function General({
   // popover button, not a form input, so it submits nothing.
   const [dayStart, setDayStart] = useState(settings?.dayStart ?? "10:00");
   const [dayEnd, setDayEnd] = useState(settings?.dayEnd ?? "18:00");
+  // One dropdown at a time. Radix layers don't dismiss one another here — an
+  // opening Select disables outside-pointer handling for the popover beneath
+  // it — so the open panel is tracked here instead of per-field.
+  const [openField, setOpenField] = useState<TOpenField | null>(null);
+
+  // Ignores a stale `false` from the panel that just lost focus, which would
+  // otherwise close the panel the user is opening.
+  const openProps = (field: TOpenField) => ({
+    open: openField === field,
+    onOpenChange: (next: boolean) =>
+      setOpenField((current) =>
+        next ? field : current === field ? null : current,
+      ),
+  });
 
   const queryClient = useQueryClient();
 
@@ -108,22 +117,12 @@ export default function General({
               <Label htmlFor="week-start" className="text-base">
                 Week Starts
               </Label>
-              <Select value={weekStart} onValueChange={setWeekStart}>
-                <SelectTrigger
-                  size="md"
-                  id="week-start"
-                  className="h-9 !w-full rounded-md px-3 shadow-sm"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="start" sideOffset={4}>
-                  {WEEK_DAYS.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <WeekDaySelect
+                id="week-start"
+                value={weekStart}
+                onValueChange={setWeekStart}
+                {...openProps("week-start")}
+              />
             </div>
 
             {/* Day starts */}
@@ -133,6 +132,7 @@ export default function General({
               value={dayStart}
               maxTime="23:30"
               onChange={setDayStart}
+              {...openProps("day-start")}
             />
 
             {/* Day ends */}
@@ -143,6 +143,7 @@ export default function General({
               // The day must end after it starts; validated again on save.
               minTime={dayStart ? addMinutes(dayStart, 15) : undefined}
               onChange={setDayEnd}
+              {...openProps("day-end")}
             />
           </div>
 
@@ -152,40 +153,22 @@ export default function General({
               Show Weekends
             </Label>
             <div className="grid grid-cols-2 gap-3">
-              <Select value={weekend1} onValueChange={setWeekend1}>
-                <SelectTrigger
-                  size="md"
-                  id="weekend-1"
-                  className="h-9 !w-full rounded-md px-3 shadow-sm border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="start" sideOffset={4}>
-                  {WEEK_DAYS.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <WeekDaySelect
+                id="weekend-1"
+                value={weekend1}
+                onValueChange={setWeekend1}
+                className={WEEKEND_TRIGGER_CLASS}
+                {...openProps("weekend-1")}
+              />
 
-              <Select value={weekend2} onValueChange={setWeekend2}>
-                <SelectTrigger
-                  size="md"
-                  id="weekend-2"
-                  aria-label="Second weekend day"
-                  className="h-9 !w-full rounded-md px-3 shadow-sm border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="start" sideOffset={4}>
-                  {WEEK_DAYS.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <WeekDaySelect
+                id="weekend-2"
+                value={weekend2}
+                onValueChange={setWeekend2}
+                ariaLabel="Second weekend day"
+                className={WEEKEND_TRIGGER_CLASS}
+                {...openProps("weekend-2")}
+              />
             </div>
           </div>
 
