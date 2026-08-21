@@ -149,7 +149,7 @@ const ResponsiveSalesPipelineCard = ({
         {/* Actions */}
         <div className="mt-3 flex items-center gap-4 border-t pt-3">
           <Link
-            href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
+            href={`/dashboard/communication/client/${lead?.client?.id ?? lead?.clientId}?source=lead`}
             className="group relative"
           >
             <MessageCircleMore
@@ -199,8 +199,10 @@ const ResponsiveSalesPipelineCard = ({
                   )}
                 </button>
               }
-              vehicleId={lead?.client?.vehicle?.id}
-              clientId={lead?.client?.id}
+              // Falls back to the lead's own ids so the modal still pre-selects
+              // the client when the client record isn't linked back to the lead.
+              vehicleId={lead?.client?.vehicle?.id ?? lead?.vehicleId}
+              clientId={lead?.client?.id ?? lead?.clientId}
               onAppointmentCreated={(appointment: Appointment) =>
                 onUpdateAppointment(appointment, {
                   leadId: lead.id,

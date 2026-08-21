@@ -696,8 +696,17 @@ const Leads = ({ salesColumn }: TProps) => {
                                               </span>
                                             </button>
                                           }
-                                          vehicleId={lead?.client?.vehicle?.id}
-                                          clientId={lead?.client?.id}
+                                          // Falls back to the lead's own ids so
+                                          // the modal still pre-selects the
+                                          // client when the client record
+                                          // isn't linked back to the lead.
+                                          vehicleId={
+                                            lead?.client?.vehicle?.id ??
+                                            lead?.vehicleId
+                                          }
+                                          clientId={
+                                            lead?.client?.id ?? lead?.clientId
+                                          }
                                           onAppointmentCreated={(
                                             appointment: Appointment,
                                           ) => {
