@@ -300,7 +300,9 @@ export default function LeadActions({ lead }: TProps) {
       : undefined;
   const fromEdit = !!appointment?.id;
   const vehicleId = lead?.vehicleId;
-  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
+  // Only the resolved client record — lead.clientId has no foreign key and may
+  // point at a deleted client, which the appointment modal can't look up.
+  const clientId = lead?.client?.id ?? undefined;
   const hasDraftEstimate = !!lead.isEstimateCreated && !!invoiceId;
   return (
     <>

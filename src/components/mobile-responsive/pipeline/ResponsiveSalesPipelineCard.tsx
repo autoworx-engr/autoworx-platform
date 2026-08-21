@@ -70,8 +70,9 @@ const ResponsiveSalesPipelineCard = ({
       : undefined;
 
   // Every action below needs a client record; leads without one show them
-  // greyed out instead of opening a modal that can't be saved.
-  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
+  // greyed out instead of opening a modal that can't be saved. lead.clientId
+  // isn't enough — it has no foreign key and may point at a deleted client.
+  const clientId = lead?.client?.id ?? undefined;
   const vehicleId = lead?.client?.vehicle?.id ?? lead?.vehicleId ?? undefined;
   const hasClient = !!clientId;
   const disabledActionClass = "cursor-not-allowed opacity-40";

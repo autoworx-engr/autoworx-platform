@@ -81,8 +81,7 @@ const AddTaskIcon = () => (
  * Communications, draft estimate, appointment and task all hang off a client
  * record, so a lead with no client (an unqualified enquiry that was never
  * converted) renders them disabled rather than opening a modal that can't be
- * saved. The lead's own ids are used as a fallback because the client may be
- * linked through lead.clientId without pointing back at the lead.
+ * saved.
  */
 export default function LeadTableActions({
   lead,
@@ -91,7 +90,10 @@ export default function LeadTableActions({
   onCreateDraftEstimate,
   onUpdateAppointment,
 }: TLeadTableActionsProps) {
-  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
+  // Lead.clientId has no foreign key, so it can still hold the id of a client
+  // that was deleted or belongs to another company. Only the client the server
+  // actually resolved proves there is one to act on.
+  const clientId = lead?.client?.id ?? undefined;
   const vehicleId = lead?.client?.vehicle?.id ?? lead?.vehicleId ?? undefined;
   const hasClient = !!clientId;
 

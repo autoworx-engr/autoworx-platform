@@ -508,6 +508,9 @@ const Leads = ({ salesColumn }: TProps) => {
                             const timeCreated = moment(lead.createdAt).format(
                               "MM/DD/YYYY",
                             );
+                            // lead.clientId has no foreign key, so it can point
+                            // at a deleted client — link only what resolved.
+                            const clientId = lead.client?.id;
 
                             return (
                               <tr
@@ -520,9 +523,9 @@ const Leads = ({ salesColumn }: TProps) => {
                                 )}
                               >
                                 <td className="px-4 py-2 text-left">
-                                  {lead.clientId ? (
+                                  {clientId ? (
                                     <Link
-                                      href={`/dashboard/client/${lead.clientId}`}
+                                      href={`/dashboard/client/${clientId}`}
                                       className="block h-full w-full text-primary"
                                     >
                                       {(currentPage - 1) * pageSize + index + 1}
@@ -534,9 +537,9 @@ const Leads = ({ salesColumn }: TProps) => {
                                   )}
                                 </td>
                                 <td className="px-4 py-2 text-left">
-                                  {lead.clientId ? (
+                                  {clientId ? (
                                     <Link
-                                      href={`/dashboard/client/${lead.clientId}`}
+                                      href={`/dashboard/client/${clientId}`}
                                       className="block h-full w-full"
                                     >
                                       {formatDisplayName(lead.clientName)}

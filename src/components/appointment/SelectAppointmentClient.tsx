@@ -50,7 +50,11 @@ export function SelectAppointmentClient({
 
   // Guard so we only auto-select the initial client once, not on every clientList refetch
   const initialClientSet = useRef(false);
-  const fetchingClientId = useRef<number | null>(null);
+  // Ids already looked up, resolved or not. This effect re-runs on every render
+  // (clientList is a fresh array each time), so without it a client id that
+  // can't be resolved — Lead.clientId has no foreign key and may point at a
+  // deleted client — would refetch in an endless loop.
+  const attemptedClientId = useRef<number | null>(null);
   // Drives the spinner while the prefilled client is still being resolved.
   const [isResolvingClient, setIsResolvingClient] = useState(false);
 
@@ -67,8 +71,8 @@ export function SelectAppointmentClient({
       }
     }
 
-    if (fetchingClientId.current === clientId) return;
-    fetchingClientId.current = clientId;
+    if (attemptedClientId.current === clientId) return;
+    attemptedClientId.current = clientId;
     setIsResolvingClient(true);
     fetch(`/api/client/client-details/${clientId}`)
       .then((res) => res.json())
@@ -79,11 +83,8 @@ export function SelectAppointmentClient({
         }
       })
       .catch(() => {})
-      .finally(() => {
-        // Cleared on failure too, so a bad response can't spin forever.
-        setIsResolvingClient(false);
-        if (!initialClientSet.current) fetchingClientId.current = null;
-      });
+      // Cleared on failure too, so a bad response can't spin forever.
+      .finally(() => setIsResolvingClient(false));
   }, [fromLead, clientId, clientList]);
 
   useEffect(() => {
@@ -114,8 +115,10 @@ export function SelectAppointmentClient({
         label={(client: Partial<Client> | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }
+        // A lead's client is fixed, but only once it actually resolved —
+        // an unresolvable id would otherwise leave an empty locked field.
         disabledDropdown={Boolean(
-          (fromLead && clientId) || client?.fromRequest,
+          (fromLead && (client || isResolvingClient)) || client?.fromRequest,
         )}
         newButton={
           <NewCustomer
