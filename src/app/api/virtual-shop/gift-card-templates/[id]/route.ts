@@ -107,6 +107,26 @@ export async function PATCH(
 
     const { name, imageUrl, isActive, isDefault } = parsedBody.data;
 
+    if (
+      name !== undefined &&
+      name.toLowerCase() !== existingTemplate.name.toLowerCase()
+    ) {
+      const duplicateTemplate = await db.giftCardTemplate.findFirst({
+        where: {
+          shopId: existingTemplate.shopId,
+          name: { equals: name, mode: "insensitive" },
+          id: { not: templateId },
+        },
+      });
+
+      if (duplicateTemplate) {
+        throw new AppError(
+          409,
+          "A template with this name already exists for this shop",
+        );
+      }
+    }
+
     const finalIsActive = isActive ?? existingTemplate.isActive;
     const finalIsDefault = isDefault ?? existingTemplate.isDefault;
 

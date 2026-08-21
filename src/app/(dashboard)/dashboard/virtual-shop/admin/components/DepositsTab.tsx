@@ -93,8 +93,12 @@ export default function DepositsTab({ shopId = 0 }: DepositsTabProps) {
     }
 
     if (requireDeposit) {
-      if (parsedAmount === null || parsedAmount < 0) {
-        toast.error("Please enter a valid deposit amount");
+      if (
+        parsedAmount === null ||
+        parsedAmount < 0 ||
+        !Number.isInteger(parsedAmount)
+      ) {
+        toast.error("Please enter a valid deposit number");
         return;
       }
 
@@ -177,16 +181,26 @@ export default function DepositsTab({ shopId = 0 }: DepositsTabProps) {
                 />
               </div>
 
-              {/* Amount / Percentage */}
+              {/* Amount / Percentage — integer only */}
               <SlimInput
                 name="depositAmount"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                    setAmount(nextValue);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-", "."].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
                 label={label}
                 type="number"
                 min="0"
                 max={depositType === "Percentage (%)" ? "100" : undefined}
-                step={depositType === "Percentage (%)" ? "0.01" : "0.01"}
+                step="1"
                 className="w-full md:max-w-40"
               />
             </div>

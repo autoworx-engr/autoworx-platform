@@ -110,7 +110,12 @@ function ServiceBillSummary({
         ? Number((Number(labor.charge) * Number(labor.hours)).toFixed(2))
         : 0;
 
-      newServicesTotal += materialCost + laborCost;
+      const laborDiscount = labor?.discount
+        ? parseFloat(labor.discount.toString())
+        : 0;
+
+      newServicesTotal +=
+        materialCost + laborCost - materialDiscount - laborDiscount;
     });
 
     setSubtotal(newServicesTotal);
