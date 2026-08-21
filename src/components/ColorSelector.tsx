@@ -154,18 +154,22 @@ export default function ColorSelector({
                           title="Are you sure to delete this color?"
                           onConfirm={async (e) => {
                             e?.stopPropagation();
-                            const res = await deleteVehicleColor(color.id);
-                            if (res.type === "success") {
-                              setColors((prev) =>
-                                prev.filter((c) => c.id !== color.id),
-                              );
-                              setFilteredColors((prev) =>
-                                prev.filter((c) => c.id !== color.id),
-                              );
-                              if (selectedColor?.id === color.id) {
-                                onSelect(null);
+                            try {
+                              const res = await deleteVehicleColor(color.id);
+                              if (res.type === "success") {
+                                setColors((prev) =>
+                                  prev.filter((c) => c.id !== color.id),
+                                );
+                                setFilteredColors((prev) =>
+                                  prev.filter((c) => c.id !== color.id),
+                                );
+                                if (selectedColor?.id === color.id) {
+                                  onSelect(null);
+                                }
+                              } else {
+                                errorToast("Failed to delete color");
                               }
-                            } else {
+                            } catch {
                               errorToast("Failed to delete color");
                             }
                           }}

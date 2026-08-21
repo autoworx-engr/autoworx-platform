@@ -12,22 +12,16 @@ export async function deleteVehicleColor(
   try {
     const companyId = await getCompanyId();
 
-    const existingColor = await db.vehicleColor.findFirst({
+    const deleted = await db.vehicleColor.deleteMany({
       where: {
         id,
         companyId,
       },
     });
 
-    if (!existingColor) {
+    if (deleted.count === 0) {
       throw new Error("Color not found");
     }
-
-    await db.vehicleColor.delete({
-      where: {
-        id,
-      },
-    });
 
     return {
       type: "success",
