@@ -18,6 +18,7 @@ type TProps = {
   })[];
 
   newestFirst?: boolean; // optional: set true if your array is newest-first
+  clientPhoto?: string | null;
 };
 
 export const formatDate = (dateString: string) =>
@@ -31,6 +32,7 @@ export const formatDate = (dateString: string) =>
 export default function MailGunConversation({
   messages,
   newestFirst = false,
+  clientPhoto,
 }: TProps) {
   // Normalize to deterministic chronological order (oldest -> newest).
   // This prevents wrong date orientation when source/query order varies.
@@ -145,7 +147,11 @@ export default function MailGunConversation({
                   >
                     {showAvatar ? (
                       <Image
-                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNL_ZnOTpXSvhf1UaK7beHey2BX42U6solRA&s"
+                        src={
+                          clientPhoto?.includes("autoworx-production")
+                            ? clientPhoto
+                            : "/images/default.png"
+                        }
                         alt="Client avatar"
                         width={28}
                         height={28}
