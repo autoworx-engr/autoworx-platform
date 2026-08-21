@@ -4,6 +4,7 @@ import newTag from "@/actions/tag/newTag";
 import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { Tag } from "@prisma/client";
+import { Popconfirm } from "antd";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { deleteTag } from "../../actions/tag/deleteTag";
@@ -190,14 +191,33 @@ export function SelectClientTags({
                 >
                   {tagItem.name}
                 </button>
-                <button
-                  onClick={() => handleDelete(tagItem.id)}
-                  className="ml-1.5 transition-transform hover:scale-110"
+                <Popconfirm
+                  title="Delete Tag"
+                  description="Are you sure you want to delete this tag?"
+                  okText="Delete"
+                  cancelText="Cancel"
+                  onConfirm={() => handleDelete(tagItem.id)}
+                  onPopupClick={(e) => e.stopPropagation()}
+                  overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                  okButtonProps={{
+                    className:
+                      "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                  }}
+                  cancelButtonProps={{
+                    className:
+                      "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                  }}
                 >
-                  <div className="rounded-full border text-slate-500 border-slate-100 p-0.5 hover:bg-red-100 hover:text-red-600">
-                    <X size={16} strokeWidth={2.5} />
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="ml-1.5 transition-transform hover:scale-110"
+                  >
+                    <div className="rounded-full border text-slate-500 border-slate-100 p-0.5 hover:bg-red-100 hover:text-red-600">
+                      <X size={16} strokeWidth={2.5} />
+                    </div>
+                  </button>
+                </Popconfirm>
               </div>
             ))}
           </div>
