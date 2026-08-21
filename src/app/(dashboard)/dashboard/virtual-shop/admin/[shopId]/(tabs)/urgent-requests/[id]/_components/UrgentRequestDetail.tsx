@@ -14,7 +14,8 @@ import {
   UpdateUrgentRequestPayload,
   UrgentRequest,
 } from "@/service/virtual-shop/api";
-import { fToNow } from "@/utils/formatDate";
+import { formatTime } from "@/app/(dashboard)/dashboard/virtual-shop/admin/components/CalendarTab.utils";
+import { fToNow, fUsDate } from "@/utils/formatDate";
 import {
   AlertTriangle,
   Calendar,
@@ -405,12 +406,16 @@ export default function UrgentRequestDetail({
               <InfoRow
                 icon={<Calendar size={15} />}
                 label="Requested Date"
-                value={request.requestedDate ?? "Not specified"}
+                value={fUsDate(request.requestedDate) ?? "Not specified"}
               />
               <InfoRow
                 icon={<Clock size={15} />}
                 label="Requested Time"
-                value={request.requestedTime ?? "Not specified"}
+                value={
+                  request.requestedTime
+                    ? formatTime(request.requestedTime)
+                    : "Not specified"
+                }
               />
               <InfoRow
                 icon={<CheckCircle size={15} />}
@@ -456,14 +461,14 @@ export default function UrgentRequestDetail({
                   <InfoRow
                     icon={<Calendar size={15} />}
                     label="Proposed Date"
-                    value={request.proposedDate}
+                    value={fUsDate(request.proposedDate) ?? "—"}
                   />
                 )}
                 {request.proposedTime && (
                   <InfoRow
                     icon={<Clock size={15} />}
                     label="Proposed Time"
-                    value={request.proposedTime}
+                    value={formatTime(request.proposedTime)}
                   />
                 )}
               </div>

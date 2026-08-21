@@ -109,7 +109,7 @@ export default function AssignUsers({
     );
   } else if (!isLoading && !isError && visibleEmployees.length > 0) {
     content = (
-      <div className="thin-scrollbar max-h-[220px] space-y-0.5 overflow-y-auto p-1">
+      <div className="max-h-[220px] space-y-0.5 overflow-y-auto p-1">
         {visibleEmployees.map((employee, index) => (
           <button
             key={`${employee.id}-${index}`}

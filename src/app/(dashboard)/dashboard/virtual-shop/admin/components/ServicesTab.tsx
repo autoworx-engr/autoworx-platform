@@ -179,7 +179,7 @@ export default function ServicesTab({
       </div>
 
       {/* Service list */}
-      <div className="min-h-[65vh] max-h-[65vh] overflow-y-auto thin-scrollbar pr-1">
+      <div className="min-h-[65vh] max-h-[65vh] overflow-y-auto pr-1">
         <div className="flex flex-col gap-2">
           {!shopId ? (
             <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">

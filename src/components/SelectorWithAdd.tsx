@@ -363,7 +363,7 @@ export function SelectorWithAdd({
             ) : (
               <>
                 {/* Scrollable Options List */}
-                <div className="max-h-56 overflow-y-auto p-1.5 thin-scrollbar">
+                <div className="max-h-56 overflow-y-auto p-1.5">
                   {filteredOptions?.length > 0 ? (
                     filteredOptions?.map((opt) => {
                       const optionId = opt?.id?.toString();

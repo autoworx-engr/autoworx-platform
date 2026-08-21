@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import {
-  readClientSmsAndEmail,
-  unreadClientSmsAndEmail,
+  readClientConversations,
+  unreadClientConversations,
 } from "@/actions/communication/client/chat-track";
 
 import { starUnstarClient } from "@/actions/communication/client/starUnstarClient";
@@ -92,7 +92,7 @@ export default function ClientItem({
 
   const markClientMessagesAsUnseen = async (clientId: number) => {
     try {
-      const updatedTrack = await unreadClientSmsAndEmail(clientId);
+      const updatedTrack = await unreadClientConversations(clientId);
 
       publishTrack(updatedTrack);
     } catch (err: any) {
@@ -103,7 +103,7 @@ export default function ClientItem({
 
   const markClientMessagesAsSeen = async (clientId: number) => {
     try {
-      const updatedTrack = await readClientSmsAndEmail(clientId);
+      const updatedTrack = await readClientConversations(clientId);
       publishTrack(updatedTrack);
       if (filter === "Unread") {
         setClients((prev) => prev.filter((c) => c.id !== clientId));
@@ -226,7 +226,8 @@ export default function ClientItem({
     !!conversationsTrack &&
     (!conversationsTrack.emailIsRead ||
       !conversationsTrack.smsIsRead ||
-      conversationsTrack.messengerIsRead === false);
+      conversationsTrack.messengerIsRead === false ||
+      conversationsTrack.instagramIsRead === false);
 
   // While a call is ringing or connected the row collapses to just the call —
   // the email and SMS previews would only bury the thing that needs attention

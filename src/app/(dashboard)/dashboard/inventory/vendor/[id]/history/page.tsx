@@ -143,7 +143,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           className="h-[90%] w-full border overflow-hidden rounded-xl hidden lg:block lg:w-[70%]"
         >
           <div
-            className={`h-full overflow-auto thin-scrollbar rounded-xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-800 shadow-xl ${TRANSITION_UTILITY}`}
+            className={`h-full overflow-auto rounded-xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-800 shadow-xl ${TRANSITION_UTILITY}`}
           >
             {/* Transactions Table (Desktop) */}
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">

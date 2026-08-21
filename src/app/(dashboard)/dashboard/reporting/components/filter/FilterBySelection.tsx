@@ -80,7 +80,7 @@ export default function FilterBySelection({
           activeModal[modalName as keyof TFilterModalState]
             ? "rounded-md"
             : "rounded-xl",
-          selectedItem ? "border-2 border-[#6470fd]" : "border"
+          selectedItem ? "border-2 border-[#6470fd]" : "border",
         )}
       >
         <span className="truncate max-w-[10rem] text-slate-600 dark:text-slate-200">
@@ -99,7 +99,9 @@ export default function FilterBySelection({
           role="img"
           className={cn(
             "ml-2 text-slate-500 dark:text-slate-300 transition-transform duration-200",
-            activeModal[modalName as keyof TFilterModalState] ? "text-[#6470fd]" : ""
+            activeModal[modalName as keyof TFilterModalState]
+              ? "text-[#6470fd]"
+              : "",
           )}
         >
           <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
@@ -110,10 +112,10 @@ export default function FilterBySelection({
           ref={dropdownRef}
           className={cn(
             "absolute left-0 right-0 z-50 flex max-h-52 w-full flex-col bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-2 shadow-lg border-transparent md:w-44",
-            "ring-1 ring-slate-900/5 dark:ring-slate-700/20 transition-all duration-200"
+            "ring-1 ring-slate-900/5 dark:ring-slate-700/20 transition-all duration-200",
           )}
         >
-          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 thin-scrollbar pb-1 min-w-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 pb-1 min-w-0">
             {items.map((item) => (
               <button
                 onClick={() => handleSelection(item)}
@@ -122,7 +124,7 @@ export default function FilterBySelection({
                   "group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-200 w-full",
                   item === selectedItem
                     ? "bg-[#6470fd] text-white shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
-                    : "text-slate-600 border dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                    : "text-slate-600 border dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
                 )}
               >
                 <span className="truncate">{item}</span>
@@ -133,7 +135,10 @@ export default function FilterBySelection({
             <button
               disabled={!selectedItem}
               onClick={handleClear}
-              className={cn("w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg", !selectedItem && "opacity-50 cursor-not-allowed")}
+              className={cn(
+                "w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg",
+                !selectedItem && "opacity-50 cursor-not-allowed",
+              )}
             >
               Clear
             </button>

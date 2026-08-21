@@ -192,7 +192,7 @@ export default function VehicleParts({
           )}
         </div>
       </div>
-      <div className="thin-scrollbar mt-3 flex max-h-[120px] flex-wrap gap-2 overflow-y-auto p-2">
+      <div className="mt-3 flex max-h-[120px] flex-wrap gap-2 overflow-y-auto p-2">
         {visibleParts?.length > 0 ? (
           visibleParts?.map((part) => (
             <div key={part.id} className="relative">

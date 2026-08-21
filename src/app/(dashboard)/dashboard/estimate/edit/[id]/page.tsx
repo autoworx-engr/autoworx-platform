@@ -333,34 +333,34 @@ export default async function Page(props: {
 
           <TabsContent
             value="create"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
             <CreateTab />
           </TabsContent>
 
           <TabsContent
             value="attachment"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
             <AttachmentTab />
           </TabsContent>
 
           <TabsContent
             value="inspections"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
             <EstimateInspectionsTab />
           </TabsContent>
           <TabsContent
             value="payments"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
             <PaymentTab clientId={clientId ?? undefined} />
           </TabsContent>
         </Tabs>
       </div>
 
-      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
+      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto">
         <div>
           <ConvertButton
             type={invoice.type}

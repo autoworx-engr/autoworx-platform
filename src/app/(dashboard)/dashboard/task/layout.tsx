@@ -9,9 +9,14 @@ type TaskLayoutProps = {
 export default async function TaskLayout({ children }: TaskLayoutProps) {
   return (
     <>
-      <Title className="hidden md:block">Task and Activity Management</Title>
+      <Title className="px-3 pt-3 text-lg sm:px-0 sm:pt-0 sm:text-xl md:text-[26px]">
+        Task and Activity Management
+      </Title>
 
-      <div id="task" className="relative flex h-screen gap-4 pt-4 md:h-[81vh]">
+      <div
+        id="task"
+        className="relative flex h-[calc(100vh-8rem)] gap-4 pt-3 md:h-[81vh] md:pt-4"
+      >
         {/* <SyncLists {...data} /> */}
         <DnDWrapper id="task">
           <CalendarSidebar />

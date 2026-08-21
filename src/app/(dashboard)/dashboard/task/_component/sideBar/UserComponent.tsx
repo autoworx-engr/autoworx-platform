@@ -1,11 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { usePopupStore } from "@/stores/popup";
 import { User } from "@prisma/client";
 
 import Avatar from "@/components/Avatar";
-import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
 import { ChevronRight } from "lucide-react";
 import UserTaskList from "./UserTaskList";
 
@@ -20,9 +18,6 @@ export default function UserComponent({
   onSelect,
   user,
 }: TUserComponentProps) {
-  const { open } = usePopupStore();
-  const minimized = useCalendarSidebarStore((x) => x.minimized);
-
   const baseClasses = cn(
     "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5",
     "cursor-pointer transition-all duration-200 ease-in-out",
@@ -45,25 +40,22 @@ export default function UserComponent({
           className={cn(
             "flex-grow truncate text-left text-base font-semibold",
             isSelected ? "text-white" : "text-slate-700 dark:text-slate-200",
-            minimized && "sr-only",
           )}
         >
           {user.firstName} {user.lastName}
         </p>
 
-        {!minimized && (
-          <ChevronRight
-            className={cn(
-              "h-4 w-4 shrink-0 transition-transform duration-200",
-              isSelected
-                ? "rotate-90 text-white/90"
-                : "text-slate-400 group-hover:text-slate-500",
-            )}
-          />
-        )}
+        <ChevronRight
+          className={cn(
+            "h-4 w-4 shrink-0 transition-transform duration-200",
+            isSelected
+              ? "rotate-90 text-white/90"
+              : "text-slate-400 group-hover:text-slate-500",
+          )}
+        />
       </button>
 
-      {isSelected && !minimized && (
+      {isSelected && (
         <div className="mt-2 pl-4 border-l-2 border-primary/50 dark:border-[#5a66ee]/50 transition-all duration-300">
           <UserTaskList user={user} />
         </div>

@@ -614,7 +614,7 @@ export default function ServiceCreateClient({
 
           <TabsContent
             value="service-info"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto p-2"
           >
             <ServiceInfo
               value={serviceInfo}
@@ -626,7 +626,7 @@ export default function ServiceCreateClient({
 
           <TabsContent
             value="create"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto p-2"
           >
             <CreateTab />
           </TabsContent>
@@ -634,7 +634,7 @@ export default function ServiceCreateClient({
       </div>
 
       <div className="flex-grow w-full min-h-0 xl:max-w-[32%] xl:self-stretch app-shadow grid grid-rows-[minmax(0,1fr),auto,auto] divide-y rounded-md bg-slate-50 overflow-hidden">
-        <div className="min-h-0 overflow-y-auto thin-scrollbar">
+        <div className="min-h-0 overflow-y-auto">
           <Create />
         </div>
 

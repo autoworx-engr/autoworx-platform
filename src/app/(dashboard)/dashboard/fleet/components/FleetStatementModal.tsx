@@ -446,7 +446,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           </div>
 
           {/* Fleet Table */}
-          <div className="thin-scrollbar max-h-[40vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
+          <div className="max-h-[40vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-slate-50">
                 <tr className="border-b border-slate-200">

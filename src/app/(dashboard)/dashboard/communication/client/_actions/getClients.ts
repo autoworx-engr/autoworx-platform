@@ -59,6 +59,7 @@ export const getClients = cache(async (props?: TGetClientsProps) => {
                 { emailIsRead: false },
                 { smsIsRead: false },
                 { messengerIsRead: false },
+                { instagramIsRead: false },
               ],
             },
           },

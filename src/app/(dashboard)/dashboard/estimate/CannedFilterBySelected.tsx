@@ -119,7 +119,7 @@ export default function CannedFilterBySelection({
           ref={dropdownRef}
           className="absolute left-0 right-0 z-50 flex max-h-56 w-full flex-col overflow-hidden rounded-b-lg border border-t-0 border-gray-300 bg-white shadow-xl md:w-48"
         >
-          <div className="flex min-h-0 flex-1 flex-col space-y-1 overflow-y-auto thin-scrollbar p-3 pb-2">
+          <div className="flex min-h-0 flex-1 flex-col space-y-1 overflow-y-auto p-3 pb-2">
             {items.map((item) => (
               <button
                 key={item.id}

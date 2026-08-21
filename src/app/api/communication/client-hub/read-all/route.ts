@@ -1,11 +1,11 @@
-import { readClientSmsAndEmail } from "@/actions/communication/client/chat-track";
+import { readClientConversations } from "@/actions/communication/client/chat-track";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
  * /api/communication/client-hub/read-all:
  *   post:
- *     summary: Mark both SMS and Email as read
+ *     summary: Mark every client channel (SMS, Email, Messenger, Instagram) as read
  *     tags:
  *       - Client Conversation
  *     requestBody:
@@ -19,13 +19,13 @@ import { NextRequest, NextResponse } from "next/server";
  *                 type: number
  *     responses:
  *       200:
- *         description: SMS and Email marked as read
+ *         description: Conversation marked as read
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const data = await readClientSmsAndEmail(body.clientId);
+    const data = await readClientConversations(body.clientId);
 
     return NextResponse.json({
       success: true,

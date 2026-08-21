@@ -1,7 +1,5 @@
 "use client";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import { cn } from "@/lib/cn";
-import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
 import { Task } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
@@ -37,7 +35,6 @@ export default function Tasks() {
 
   const tasks = data?.pages?.flatMap((page) => page.data) || [];
   const queryClient = useQueryClient();
-  const minimized = useCalendarSidebarStore((x) => x.minimized);
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -113,43 +110,33 @@ export default function Tasks() {
   }
 
   return (
-    <div
-      className={cn(
-        "md:app-shadow relative flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
-        minimized || "p-3",
-      )}
-    >
-      <h2 className="-mt-4 flex items-center justify-between md:-mt-0">
-        {!minimized && (
-          <div className=" text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
-            Task List
-          </div>
-        )}
+    <div className="md:app-shadow relative flex h-full min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden rounded-lg py-2 md:max-w-80 md:bg-background md:p-3">
+      {/* The mobile sheet already titles itself, so this only shows on desktop. */}
+      <h2 className="hidden items-center justify-between md:flex">
+        <div className="text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
+          Task List
+        </div>
         <div className="hidden md:block">
           <MinimizeButton />
         </div>
       </h2>
 
-      {!minimized && (
-        <div className="thin-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:max-h-full">
-          {content}
-          <div ref={ref} className="text-center text-sm text-gray-500">
-            {isFetchingNextPage ? (
-              <TaskSpinner />
-            ) : hasNextPage ? (
-              "Scroll to load more"
-            ) : (
-              tasks.length !== 0 && "No more tasks"
-            )}
-          </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:max-h-full">
+        {content}
+        <div ref={ref} className="text-center text-sm text-gray-500">
+          {isFetchingNextPage ? (
+            <TaskSpinner />
+          ) : hasNextPage ? (
+            "Scroll to load more"
+          ) : (
+            tasks.length !== 0 && "No more tasks"
+          )}
         </div>
-      )}
+      </div>
 
-      {!minimized && (
-        <div className="mt-auto w-full">
-          <TaskCreateOrEdit onTaskCreated={handleTaskCreated} />
-        </div>
-      )}
+      <div className="mt-auto w-full">
+        <TaskCreateOrEdit onTaskCreated={handleTaskCreated} />
+      </div>
     </div>
   );
 }

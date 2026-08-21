@@ -163,7 +163,7 @@ export default function InventoryDisplay({
     : sortedInventoryHistory.slice(startIndex, endIndex);
   if (isDesktop) {
     return (
-      <div className="thin-scrollbar hidden scroll-smooth md:block pt-2">
+      <div className="hidden scroll-smooth md:block pt-2">
         <div className="relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
           <div className="max-h-[60vh] overflow-auto custom-scrollbar">
             {inventoryToRender.length === 0 ? (

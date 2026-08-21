@@ -135,7 +135,7 @@ export function SalesTagSelector({
           </div>
 
           {/* Tag List */}
-          <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
+          <div className="my-1 max-h-[200px] overflow-y-auto px-2">
             {filteredTags
               .filter(
                 (el) => !leadTags.map((tag) => tag.tag.name).includes(el.name),

@@ -178,8 +178,8 @@ export default function ClientInfinityScroll({
   return (
     <div
       id="scrollableDiv"
-      // className="thin-scrollbar mt-2 flex h-[84%] flex-col gap-2 p-2 max-[1835px]:h-[82%] lg:overflow-y-auto"
-      className="thin-scrollbar mt-2 h-[82%] overflow-y-auto p-2"
+      // className="mt-2 flex h-[84%] flex-col gap-2 p-2 max-[1835px]:h-[82%] lg:overflow-y-auto"
+      className="mt-2 h-[82%] overflow-y-auto p-2"
     >
       <InfiniteScroll
         dataLength={dataLength} //This is important field to render the next data

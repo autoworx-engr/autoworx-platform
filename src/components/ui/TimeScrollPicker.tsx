@@ -157,7 +157,7 @@ export function TimeScrollPicker({
     return () => cancelAnimationFrame(raf);
   }, [open]);
 
-  const columnClass = "thin-scrollbar h-[200px] overflow-y-auto px-1 py-1";
+  const columnClass = "h-[200px] overflow-y-auto px-1 py-1";
   const cellClass =
     "w-full rounded px-2 py-1 text-center text-sm transition-colors hover:bg-gray-100";
   const activeClass = "bg-primary text-white hover:bg-primary";

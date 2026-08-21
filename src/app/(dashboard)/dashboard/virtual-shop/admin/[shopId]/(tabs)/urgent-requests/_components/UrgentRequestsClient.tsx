@@ -11,7 +11,8 @@ import {
   UrgentRequestsListResponse,
   getUrgentRequests,
 } from "@/service/virtual-shop/api";
-import { fToNow } from "@/utils/formatDate";
+import { formatTime } from "@/app/(dashboard)/dashboard/virtual-shop/admin/components/CalendarTab.utils";
+import { fToNow, fUsDate } from "@/utils/formatDate";
 import {
   AlertTriangle,
   Calendar,
@@ -333,8 +334,10 @@ function UrgentRequestCard({
             {request.requestedDate && (
               <span className="flex items-center gap-1">
                 <Calendar size={12} />
-                {request.requestedDate}
-                {request.requestedTime ? ` at ${request.requestedTime}` : ""}
+                {fUsDate(request.requestedDate)}
+                {request.requestedTime
+                  ? ` at ${formatTime(request.requestedTime)}`
+                  : ""}
                 {request.flexibleTiming && " (flexible)"}
               </span>
             )}

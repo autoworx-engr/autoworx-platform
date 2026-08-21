@@ -79,7 +79,7 @@ const InvoiceListTable = ({
 
   return (
     <div className="mt-5 rounded-md bg-background p-4 shadow-md min-h-[500px]">
-      <div className="thin-scrollbar hidden max-h-[60vh] overflow-y-auto scroll-smooth md:block">
+      <div className="hidden max-h-[60vh] overflow-y-auto scroll-smooth md:block">
         <div className="">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-background">

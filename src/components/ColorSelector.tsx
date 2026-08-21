@@ -120,7 +120,7 @@ export default function ColorSelector({
                 className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-9 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
               />
             </div>
-            <div className="thin-scrollbar max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto">
               {filteredColors.map((color) => (
                 <button
                   key={color.id}

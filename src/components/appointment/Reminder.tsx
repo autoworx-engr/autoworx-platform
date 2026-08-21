@@ -33,7 +33,7 @@ type TReminderProps = {
   openReminder: boolean;
   setOpenReminder: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenConfirmation: React.Dispatch<React.SetStateAction<boolean>>;
-  /** Reminders also go to assigned team mates, so they count as recipients. */
+  /** Reminders also go to assigned teammates, so they count as recipients. */
   hasAssignedUsers?: boolean;
   fromEdit?: boolean;
 };
@@ -61,7 +61,7 @@ export function Reminder({
   const initializedClientIdRef = useRef<number | null>(null);
   const previousReminderTemplateIdRef = useRef<number | null>(null);
 
-  // Reminders can go to assigned team mates alone, so a client is optional
+  // Reminders can go to assigned teammates alone, so a client is optional
   // here. Build the name defensively rather than interpolating possibly-absent
   // fields, which rendered "undefined undefined" in the template preview.
   const clientName =
@@ -109,7 +109,7 @@ export function Reminder({
     // defaulting them here would overwrite what was loaded.
     if (fromEdit) return;
 
-    // Reminders can be for assigned team mates only, so default the templates
+    // Reminders can be for assigned teammates only, so default the templates
     // even with no client. `0` stands in for "no client" so switching between
     // no-client and a real client still re-runs exactly once each.
     const clientKey = client?.id ?? 0;
@@ -187,7 +187,7 @@ export function Reminder({
     }
   }
 
-  // Nobody to remind yet — a client or at least one assigned team mate is
+  // Nobody to remind yet — a client or at least one assigned teammate is
   // needed before these templates mean anything.
   if (!client && !hasAssignedUsers) {
     return (
@@ -202,7 +202,7 @@ export function Reminder({
             No Recipient Yet
           </h3>
           <p className="mx-auto max-w-[260px] text-sm font-medium text-slate-400">
-            Select a client or assign a team mate to set up confirmation and
+            Select a client or assign a teammate to set up confirmation and
             reminder emails.
           </p>
         </div>
@@ -395,7 +395,7 @@ export function Reminder({
         <CircleAlert className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
         <div className="flex-1 min-w-0">
           <p className="leading-relaxed break-words">
-            Your client and the assigned team mates will receive automated
+            Your client and the assigned teammates will receive automated
             reminders <strong>24 hours</strong> and <strong>2 hours</strong>{" "}
             prior to the scheduled appointment.
           </p>

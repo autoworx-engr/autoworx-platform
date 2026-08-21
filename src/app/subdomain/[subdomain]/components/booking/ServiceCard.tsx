@@ -196,7 +196,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
           </div>
 
           {/* Scrollable body — description only */}
-          <div className="thin-scrollbar overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
+          <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
             {service.description && (
               <div
                 className="px-5 pt-5 text-sm text-muted-foreground leading-relaxed break-words w-full [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-blue-500 [&_a]:underline [&_a]:cursor-pointer"

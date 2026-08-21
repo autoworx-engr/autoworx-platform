@@ -99,7 +99,7 @@ export default function MailGunConversation({
     <div className="relative h-full w-full">
       <div
         ref={containerRef}
-        className="thin-scrollbar h-full w-full overflow-y-auto px-2 py-2"
+        className="h-full w-full overflow-y-auto px-2 py-2"
       >
         <div className="flex w-full flex-col gap-3">
           {(() => {

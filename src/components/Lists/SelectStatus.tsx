@@ -154,7 +154,7 @@ export function SelectStatus({
           </div>
 
           {/* List Area */}
-          <div className="max-h-[250px] overflow-y-auto thin-scrollbar p-2 space-y-1">
+          <div className="max-h-[250px] overflow-y-auto p-2 space-y-1">
             {filteredShopStatus.length === 0 ? (
               <div
                 role="status"

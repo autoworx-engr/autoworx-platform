@@ -134,7 +134,7 @@ export default function ManagePipelines({
 
           {/* Content */}
           <div className="flex-1 flex flex-col min-h-0 px-6 py-4">
-            <div className="flex-1  overflow-y-auto pr-2 space-y-3 thin-scrollbar">
+            <div className="flex-1  overflow-y-auto pr-2 space-y-3">
               {localColumns.map((column, index) => (
                 <ColumnItem
                   key={column.id ?? `new-${index}`}

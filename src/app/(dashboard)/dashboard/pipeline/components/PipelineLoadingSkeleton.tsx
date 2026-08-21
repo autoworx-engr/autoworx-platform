@@ -4,7 +4,7 @@ import { Skeleton } from "antd";
 const PipelineLoadingSkeleton = () => {
   return (
     <div className="h-full w-full overflow-hidden px-2">
-      <div className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto">
+      <div className="flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto">
         {Array.from({ length: 6 }).map((_, index) => (
           <div
             key={index}
