@@ -69,6 +69,13 @@ const ResponsiveSalesPipelineCard = ({
       ? lead?.client?.appointments?.[0]
       : undefined;
 
+  // Every action below needs a client record; leads without one show them
+  // greyed out instead of opening a modal that can't be saved.
+  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
+  const vehicleId = lead?.client?.vehicle?.id ?? lead?.vehicleId ?? undefined;
+  const hasClient = !!clientId;
+  const disabledActionClass = "cursor-not-allowed opacity-40";
+
   return (
     <Card
       key={index}
@@ -148,15 +155,21 @@ const ResponsiveSalesPipelineCard = ({
 
         {/* Actions */}
         <div className="mt-3 flex items-center gap-4 border-t pt-3">
-          <Link
-            href={`/dashboard/communication/client/${lead?.client?.id ?? lead?.clientId}?source=lead`}
-            className="group relative"
-          >
-            <MessageCircleMore
-              size={20}
-              className="duration-300 hover:text-primary"
-            />
-          </Link>
+          {hasClient ? (
+            <Link
+              href={`/dashboard/communication/client/${clientId}?source=lead`}
+              className="group relative"
+            >
+              <MessageCircleMore
+                size={20}
+                className="duration-300 hover:text-primary"
+              />
+            </Link>
+          ) : (
+            <span className={disabledActionClass}>
+              <MessageCircleMore size={20} />
+            </span>
+          )}
 
           {onCreateDraftEstimate &&
             (lead.isEstimateCreated && lead.invoiceId ? (
@@ -166,11 +179,15 @@ const ResponsiveSalesPipelineCard = ({
                 onClick={() =>
                   onCreateDraftEstimate({
                     leadId: lead.id,
-                    clientId: Number(lead?.clientId),
-                    vehicleId: lead?.client?.vehicle?.id,
+                    clientId,
+                    vehicleId,
                   })
                 }
-                className="group relative"
+                disabled={!hasClient}
+                className={cn(
+                  "group relative",
+                  !hasClient && disabledActionClass,
+                )}
               >
                 <div className="relative h-4 w-4">
                   <Image
@@ -185,7 +202,13 @@ const ResponsiveSalesPipelineCard = ({
               </button>
             ))}
 
-          {onUpdateAppointment && (
+          {onUpdateAppointment && !hasClient && (
+            <span className={disabledActionClass}>
+              <Calendar size={18} color="#66738C" />
+            </span>
+          )}
+
+          {onUpdateAppointment && hasClient && (
             <AppointmentCreateOrEdit
               fromEdit={!!appointment}
               fromLead
@@ -199,10 +222,8 @@ const ResponsiveSalesPipelineCard = ({
                   )}
                 </button>
               }
-              // Falls back to the lead's own ids so the modal still pre-selects
-              // the client when the client record isn't linked back to the lead.
-              vehicleId={lead?.client?.vehicle?.id ?? lead?.vehicleId}
-              clientId={lead?.client?.id ?? lead?.clientId}
+              vehicleId={vehicleId}
+              clientId={clientId}
               onAppointmentCreated={(appointment: Appointment) =>
                 onUpdateAppointment(appointment, {
                   leadId: lead.id,
@@ -218,13 +239,30 @@ const ResponsiveSalesPipelineCard = ({
             />
           )}
 
-          {companyUsers && (
-            <TaskForm
-              companyUsers={companyUsers}
-              leadId={lead.id}
-              previousTasks={lead.tasks || []}
-            />
-          )}
+          {companyUsers &&
+            (hasClient ? (
+              <TaskForm
+                companyUsers={companyUsers}
+                leadId={lead.id}
+                previousTasks={lead.tasks || []}
+              />
+            ) : (
+              <span
+                className={cn(
+                  "relative inline-block h-4 w-4",
+                  disabledActionClass,
+                )}
+              >
+                <Image
+                  src="/icons/addtask.png"
+                  alt="Add Task"
+                  fill
+                  sizes="16px"
+                  className="object-contain"
+                  loading="lazy"
+                />
+              </span>
+            ))}
         </div>
       </CardContent>
     </Card>
