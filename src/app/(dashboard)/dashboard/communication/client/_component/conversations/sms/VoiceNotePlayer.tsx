@@ -1,7 +1,8 @@
 "use client";
 
+import { formatAudioTime, useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { Mic, Pause, Play } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 
 // Decorative waveform bar heights (percent of container height)
 const WAVE_HEIGHTS = [
@@ -18,73 +19,22 @@ export default function VoiceNotePlayer({
   src,
   isOutgoing,
 }: VoiceNotePlayerProps) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onLoadedMetadata = () => {
-      if (isFinite(audio.duration)) setDuration(audio.duration);
-    };
-    const onDurationChange = () => {
-      if (isFinite(audio.duration)) setDuration(audio.duration);
-    };
-    const onEnded = () => {
-      setIsPlaying(false);
-      setCurrentTime(0);
-    };
-
-    audio.addEventListener("timeupdate", onTimeUpdate);
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
-    audio.addEventListener("durationchange", onDurationChange);
-    audio.addEventListener("ended", onEnded);
-
-    return () => {
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("durationchange", onDurationChange);
-      audio.removeEventListener("ended", onEnded);
-    };
-  }, []);
-
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      audio.play().catch(() => {});
-      setIsPlaying(true);
-    }
-  };
+  // Shared with the call recording player: keeps the bar from running backwards
+  // when a streamed clip revises its duration estimate mid-playback.
+  const {
+    audioRef,
+    isPlaying,
+    currentTime,
+    duration,
+    progress,
+    toggle,
+    seekToRatio,
+  } = useAudioPlayer();
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(
-      0,
-      Math.min(1, (e.clientX - rect.left) / rect.width),
-    );
-    audio.currentTime = ratio * duration;
+    seekToRatio((e.clientX - rect.left) / rect.width);
   };
-
-  const formatTime = (secs: number) => {
-    if (!isFinite(secs) || isNaN(secs) || secs < 0) return "0:00";
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div
@@ -102,7 +52,7 @@ export default function VoiceNotePlayer({
 
       {/* Play / Pause button */}
       <button
-        onClick={togglePlay}
+        onClick={toggle}
         className={`flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-95 shadow-sm ${
           isOutgoing
             ? "bg-white/25 hover:bg-white/40 text-white"
@@ -159,11 +109,11 @@ export default function VoiceNotePlayer({
             isOutgoing ? "text-white/60" : "text-zinc-400"
           }`}
         >
-          <span>{formatTime(currentTime)}</span>
+          <span>{formatAudioTime(currentTime)}</span>
           {duration > 0 && (
             <>
               <span className="mx-0.5 opacity-50">/</span>
-              <span>{formatTime(duration)}</span>
+              <span>{formatAudioTime(duration)}</span>
             </>
           )}
         </div>

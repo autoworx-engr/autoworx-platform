@@ -68,11 +68,20 @@ export async function GET(
 
   const recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioCredentials.accountSid}/Recordings/${recordingSid}.mp3`;
 
+  const authorization = `Basic ${Buffer.from(
+    `${twilioCredentials.apiKeySid}:${twilioCredentials.apiKeySecret}`,
+  ).toString("base64")}`;
+
+  // Players ask for byte ranges to seek and to work out the duration. Twilio
+  // honours Range, so pass it straight through; a proxy that always answered
+  // 200 with the whole file left the media unseekable, which is what made the
+  // progress bar jump around instead of advancing.
+  const range = req.headers.get("range");
+
   const response = await fetch(recordingUrl, {
     headers: {
-      Authorization: `Basic ${Buffer.from(
-        `${twilioCredentials.apiKeySid}:${twilioCredentials.apiKeySecret}`,
-      ).toString("base64")}`,
+      Authorization: authorization,
+      ...(range ? { Range: range } : {}),
     },
   });
 
@@ -82,12 +91,46 @@ export async function GET(
     });
   }
 
+  // `?download=1` turns the same URL into a save-to-disk link for the player's
+  // download action.
+  const disposition =
+    req.nextUrl.searchParams.get("download") === "1" ? "attachment" : "inline";
+
   const audioBuffer = await response.arrayBuffer();
 
-  return new Response(audioBuffer, {
-    headers: {
-      "Content-Type": "audio/mpeg",
-      "Content-Disposition": `inline; filename="${recordingSid}.mp3"`,
-    },
+  const headers = new Headers({
+    "Content-Type": "audio/mpeg",
+    "Content-Disposition": `${disposition}; filename="${recordingSid}.mp3"`,
+    "Content-Length": String(audioBuffer.byteLength),
+    // Recordings never change once Twilio has written them.
+    "Cache-Control": "private, max-age=3600",
+    "Accept-Ranges": "bytes",
   });
+
+  // 206 from Twilio means the range was served; forward the range metadata so
+  // the player can map bytes back to time.
+  const contentRange = response.headers.get("content-range");
+  if (response.status === 206 && contentRange) {
+    headers.set("Content-Range", contentRange);
+    return new Response(audioBuffer, { status: 206, headers });
+  }
+
+  // Twilio ignored the range (or there wasn't one) — satisfy it here so the
+  // client still gets the 206 it asked for.
+  if (range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
+    const total = audioBuffer.byteLength;
+    if (match) {
+      const start = match[1] ? Number(match[1]) : 0;
+      const end = match[2] ? Math.min(Number(match[2]), total - 1) : total - 1;
+      if (start <= end && start < total) {
+        const slice = audioBuffer.slice(start, end + 1);
+        headers.set("Content-Length", String(slice.byteLength));
+        headers.set("Content-Range", `bytes ${start}-${end}/${total}`);
+        return new Response(slice, { status: 206, headers });
+      }
+    }
+  }
+
+  return new Response(audioBuffer, { headers });
 }

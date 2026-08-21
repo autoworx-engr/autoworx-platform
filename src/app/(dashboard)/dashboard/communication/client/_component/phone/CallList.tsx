@@ -2,6 +2,7 @@
 
 import { MISSED_STATUSES, isCallStale } from "@/lib/twilio/callDisplay";
 import { useEffect, useRef } from "react";
+import CallRecordingPlayer from "./CallRecordingPlayer";
 import { useCallListRefresh } from "./useCallListRefresh";
 
 export type CallListItem = {
@@ -161,11 +162,11 @@ export const CallList = ({
                   {missedLabel}
                 </div>
               ) : call.playableUrl ? (
-                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 p-2 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
-                  <audio
-                    controls
+                <div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 p-2 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
+                  <CallRecordingPlayer
                     src={call.playableUrl}
-                    className="w-full h-8"
+                    fallbackDuration={call.duration}
+                    fileName={`call-${call.id}.mp3`}
                   />
                 </div>
               ) : isInProgress ? (
