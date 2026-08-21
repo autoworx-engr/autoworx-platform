@@ -13,8 +13,14 @@
   margin-bottom: 2px;
 }
 
+/*
+ * 15-minute slots, so a 30-minute event gets 2 slots of height. At 2.5em the
+ * card was ~80px and the last line — the invoice total — was clipped, which is
+ * why sub-hour appointments showed no price. 3em gives every under-an-hour
+ * event room for the full card.
+ */
 .calendarScope :global(.fc-timegrid-slot) {
-  height: 2.5em !important;
+  height: 3em !important;
 }
 
 .calendarScope :global(.fc-timegrid-col-bg .fc-non-business) {
