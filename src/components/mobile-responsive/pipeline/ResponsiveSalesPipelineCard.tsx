@@ -87,13 +87,18 @@ const ResponsiveSalesPipelineCard = ({
     >
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <CardTitle>
-          <Link
-            href={`/dashboard/client/${lead.clientId}`}
-            passHref
-            className="block w-full text-blue-600"
-          >
-            {id}
-          </Link>
+          {hasClient ? (
+            <Link
+              href={`/dashboard/client/${clientId}`}
+              passHref
+              className="block w-full text-blue-600"
+            >
+              {id}
+            </Link>
+          ) : (
+            // No client page to open, so it isn't styled as a link.
+            <span className="block w-full">{id}</span>
+          )}
         </CardTitle>
         <CardDescription className="font-bold">{timeCreated}</CardDescription>
       </CardHeader>

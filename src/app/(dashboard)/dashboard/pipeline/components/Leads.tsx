@@ -531,7 +531,10 @@ const Leads = ({ salesColumn }: TProps) => {
                                       {(currentPage - 1) * pageSize + index + 1}
                                     </Link>
                                   ) : (
-                                    <span className="block h-full w-full text-primary">
+                                    // Inherits the row's text colour instead of
+                                    // primary blue — there's nothing to open,
+                                    // so it shouldn't read as a link.
+                                    <span className="block h-full w-full">
                                       {(currentPage - 1) * pageSize + index + 1}
                                     </span>
                                   )}
