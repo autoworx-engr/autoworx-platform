@@ -220,12 +220,6 @@ const Leads = ({ salesColumn }: TProps) => {
     [pageSize],
   );
 
-  // Reset page to 1 when search changes
-  // useEffect(() => {
-  //   setCurrentPage(1);
-  // }, [search]);
-
-  // Debounced search and filter effect
   useEffect(() => {
     const filterKey = JSON.stringify({
       search,
@@ -338,35 +332,6 @@ const Leads = ({ salesColumn }: TProps) => {
     },
     [router, currentUser, createDraftEstimate],
   );
-
-  //sort leads by time created in descending order (already sorted by backend)
-  // leads?.sort((a, b) => {
-  //   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  // });
-
-  // Reset page to 1 when filters change
-  // useEffect(() => {
-  //   setCurrentPage(1);
-  // }, [search, filter, dateRange]);
-
-  // if (loading) {
-  //   return (
-  //     <Spin
-  //       size="large"
-  //       className="flex w-full items-center justify-center"
-  //       style={{ height: "calc(100vh - 150px)" }} // Adjust height as needed>
-  //     />
-  //   );
-  // }
-  // if (loading) {
-  //   return (
-  //     <Spin
-  //       size="large"
-  //       className="flex w-full items-center justify-center"
-  //       style={{ height: "calc(100vh - 150px)" }} // Adjust height as needed>
-  //     />
-  //   );
-  // }
 
   // Optimized column change handler with useCallback
   const handleColumnChange = useCallback(
@@ -508,8 +473,6 @@ const Leads = ({ salesColumn }: TProps) => {
                             const timeCreated = moment(lead.createdAt).format(
                               "MM/DD/YYYY",
                             );
-                            // lead.clientId has no foreign key, so it can point
-                            // at a deleted client — link only what resolved.
                             const clientId = lead.client?.id;
 
                             return (
@@ -531,9 +494,6 @@ const Leads = ({ salesColumn }: TProps) => {
                                       {(currentPage - 1) * pageSize + index + 1}
                                     </Link>
                                   ) : (
-                                    // Inherits the row's text colour instead of
-                                    // primary blue — there's nothing to open,
-                                    // so it shouldn't read as a link.
                                     <span className="block h-full w-full">
                                       {(currentPage - 1) * pageSize + index + 1}
                                     </span>
