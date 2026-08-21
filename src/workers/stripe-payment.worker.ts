@@ -64,6 +64,8 @@ export async function processStripePayment(eventId: string) {
     paymentData.payType === "virtual_shop_deposit" &&
     paymentData.shopBookingId
   ) {
+    const tipAmount = parseFloat(paymentData.tip || "0");
+
     const result = await confirmShopBooking({
       shopBookingId: paymentData.shopBookingId,
       cashPaid: Number(paymentData.amount),
@@ -77,6 +79,7 @@ export async function processStripePayment(eventId: string) {
           companyId: paymentData.companyId,
           invoiceId,
           amount: paymentData.amount,
+          tip: tipAmount,
           type: "DEPOSIT",
           date: new Date(),
           deposit: {

@@ -3,6 +3,7 @@ import { getInspections } from "@/actions/estimate/invoice/getInspections";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
+import { stripHtml } from "@/utils/stripHtml";
 import {
   Client,
   Column,
@@ -809,7 +810,7 @@ const PDFComponent = function PDF({
               {companyDetails?.city && `${companyDetails.city}`}
               {companyDetails?.city && companyDetails?.state && ", "}
               {companyDetails?.state && `${companyDetails.state}`}
-              {companyDetails?.state && companyDetails?.zip && " "}
+              {companyDetails?.state && companyDetails?.zip && " - "}
               {companyDetails?.zip && `${companyDetails.zip}`}
             </Text>
             <Text style={styles.companySubtext}>{companyDetails?.phone}</Text>
@@ -1044,7 +1045,7 @@ const PDFComponent = function PDF({
 
         {invoice.customerNotes && (
           <View style={styles.termsSection}>
-            <Text style={styles.termsTitle}>Notes</Text>
+            <Text style={styles.termsTitle}>Customer Notes</Text>
             <Text style={styles.termsText}>{invoice.customerNotes}</Text>
           </View>
         )}
@@ -1237,7 +1238,8 @@ const PDFInvoiceItems = ({
 
         {(item.service?.description || item.serviceDesc) && (
           <Text style={styles.itemDesc}>
-            Description - {item.service?.description || item.serviceDesc}
+            Description -{" "}
+            {stripHtml(item.service?.description || item.serviceDesc)}
           </Text>
         )}
 

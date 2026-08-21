@@ -666,6 +666,11 @@ export async function GET(req: Request) {
               vehicleExtraCost: true,
               deposit: true,
               due: true,
+              payments: {
+                select: {
+                  tip: true,
+                },
+              },
               status: {
                 select: {
                   name: true,
@@ -711,6 +716,10 @@ export async function GET(req: Request) {
           const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
           const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
           const grandTotal = Number(sb.invoice?.grandTotal || 0);
+          const tipAmount = (sb.invoice?.payments || []).reduce(
+            (sum, p) => sum + Number(p.tip || 0),
+            0,
+          );
 
           const totalServiceCost = subtotal - vehicleExtraCost;
           const taxAmount = (totalServiceCost * taxRate) / 100;
@@ -732,7 +741,8 @@ export async function GET(req: Request) {
             subtotal: subtotal,
             tax: taxAmount,
             serviceFee: serviceFeeAmount,
-            total: grandTotal,
+            tip: tipAmount,
+            total: grandTotal + tipAmount,
             depositRequired,
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),

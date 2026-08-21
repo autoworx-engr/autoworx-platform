@@ -23,7 +23,7 @@ const UserList: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [openEdit, setOpenEdit] = useState<boolean>(true);
-  const { search } = useEmployeeWorkFilterStore();
+  const { search, setFilter } = useEmployeeWorkFilterStore();
 
   useEffect(() => {
     const usersFetchFunction = async () => {
@@ -60,6 +60,7 @@ const UserList: React.FC = () => {
   const handleBackClick = () => {
     setSelectedUser(null);
     setOpenEdit(true);
+    setFilter({ search: "" });
   };
 
   return (

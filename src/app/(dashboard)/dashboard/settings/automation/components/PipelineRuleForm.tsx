@@ -356,6 +356,7 @@ const PipelineRuleForm = ({
               <Selector
                 name="delay"
                 label="Delay"
+                required
                 options={timeDelays}
                 value={formData?.timeDelay!}
                 onChange={(value) => handleInputChange("timeDelay", value)}

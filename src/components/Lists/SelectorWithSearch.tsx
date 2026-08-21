@@ -1,5 +1,7 @@
 "use client";
 
+import { slimInputClassName } from "@/components/SlimInput";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/cn";
 import { sentenceCase } from "change-case";
 import { ChevronDown, Plus } from "lucide-react";
@@ -121,34 +123,34 @@ export function SelectorWithSearch({
       ?.title || (selectedValue ? selectedValue : "");
 
   return (
-    <div className={cn("block", rootClassName)} ref={dropdownRef}>
-      <div
-        className={cn(
-          "mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200",
-          labelClassName,
-        )}
+    <div
+      className={cn("group flex flex-col gap-1.5", rootClassName)}
+      ref={dropdownRef}
+    >
+      <Label
+        htmlFor={name}
+        className={cn("flex items-center gap-1 text-base", labelClassName)}
       >
         {label ?? sentenceCase(name)}
-        {required && <span className="text-[#E9405F]"> *</span>}
-      </div>
+        {required && <span className="font-bold text-destructive">*</span>}
+      </Label>
       <div className="relative">
         <button
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm leading-6 text-slate-700 dark:text-slate-200 outline-none transition-all duration-200",
-            "focus:ring-2 focus:ring-primary/30 focus:border-primary hover:border-primary hover:shadow-md",
-            error && "border-red-500 focus:border-red-500 focus:ring-red-200",
-            disabled &&
-              "cursor-not-allowed bg-slate-100 text-slate-400 opacity-70 dark:bg-slate-800",
+            slimInputClassName,
+            "items-center justify-between text-left",
+            error &&
+              "border-destructive text-destructive focus-visible:ring-destructive/30",
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
           disabled={disabled}
         >
-          <span className={selectedLabel ? "" : "text-slate-400"}>
+          <span className={selectedLabel ? "" : "text-muted-foreground"}>
             {selectedLabel || placeholder}
           </span>
-          <ChevronDown className="text-slate-500 dark:text-slate-400" />
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
         </button>
 
         {isOpen && (
@@ -212,7 +214,12 @@ export function SelectorWithSearch({
           </div>
         )}
       </div>
-      {error && <div className="mt-1 px-2 text-xs text-red-500">{error}</div>}
+      {error && (
+        <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
+          <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
+          <span className="text-xs font-medium text-destructive">{error}</span>
+        </div>
+      )}
     </div>
   );
 }
