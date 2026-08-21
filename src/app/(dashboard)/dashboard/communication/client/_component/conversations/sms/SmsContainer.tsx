@@ -13,9 +13,17 @@ import { useClientCommunicationStore } from "@/stores/client-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { smsQueryKey } from "../../../_utils/queryKey";
 
-type TProps = { clientId: number; canUseSms?: boolean };
+type TProps = {
+  clientId: number;
+  canUseSms?: boolean;
+  clientPhoto?: string | null;
+};
 
-export default function SmsContainer({ clientId, canUseSms = true }: TProps) {
+export default function SmsContainer({
+  clientId,
+  canUseSms = true,
+  clientPhoto,
+}: TProps) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState();
   const user = useGetCurrentUser();
@@ -49,9 +57,7 @@ export default function SmsContainer({ clientId, canUseSms = true }: TProps) {
           const initialPage = oldData.pages[0];
 
           // avoid duplicates (e.g. if both channels fire)
-          const exists = initialPage.data.some(
-            (m: any) => m.id === data.id,
-          );
+          const exists = initialPage.data.some((m: any) => m.id === data.id);
           if (exists) return oldData;
 
           const updatedLastPageMessages = [data, ...initialPage.data];
@@ -132,7 +138,7 @@ export default function SmsContainer({ clientId, canUseSms = true }: TProps) {
   return (
     <div className="flex h-full flex-col gap-0">
       <div className="flex-1 overflow-hidden">
-        <SmsBox key={clientId} clientId={clientId} />
+        <SmsBox key={clientId} clientId={clientId} clientPhoto={clientPhoto} />
       </div>
       {/* Input area - always stays at bottom */}
       <div className="flex-shrink-0">

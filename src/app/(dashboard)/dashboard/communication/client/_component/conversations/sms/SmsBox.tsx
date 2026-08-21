@@ -14,7 +14,13 @@ import { cn } from "@/lib/cn";
 import JumpToLatestButton from "@/components/JumpToLatestButton";
 import { sortMessagesChronologically } from "../../../_utils";
 
-export default function SmsBox({ clientId }: { clientId: number }) {
+export default function SmsBox({
+  clientId,
+  clientPhoto,
+}: {
+  clientId: number;
+  clientPhoto?: string | null;
+}) {
   // data
   const {
     data,
@@ -258,7 +264,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
                     </span>
                   </div>
                 )}
-                <SmsMessage message={message} />
+                <SmsMessage message={message} clientPhoto={clientPhoto} />
               </div>
             );
           })}

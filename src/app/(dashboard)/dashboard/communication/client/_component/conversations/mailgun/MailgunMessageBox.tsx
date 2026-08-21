@@ -23,12 +23,14 @@ type TProps = {
     } | null;
   })[];
   clientEmail: boolean;
+  clientPhoto?: string | null;
 };
 
 export default function MailgunMessageBox({
   clientId,
   conversations: initialMessages,
   clientEmail,
+  clientPhoto,
 }: TProps) {
   const [conversations, setConversations] = useState(initialMessages);
   const setClientConversationTrack = useClientCommunicationStore(
@@ -80,7 +82,11 @@ export default function MailgunMessageBox({
       {clientEmail ? (
         <div className="flex flex-col h-full gap-0">
           <div className="flex-1 overflow-hidden">
-            <MaiGunBox conversations={conversations} clientId={clientId} />
+            <MaiGunBox
+              conversations={conversations}
+              clientId={clientId}
+              clientPhoto={clientPhoto}
+            />
           </div>
           {user && (
             <div className="flex-shrink-0">

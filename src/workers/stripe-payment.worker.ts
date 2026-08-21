@@ -118,6 +118,7 @@ export async function processStripePayment(eventId: string) {
       paymentData.paymentRef || paymentData.paymentId || "",
     ).trim();
     const companyId = Number(paymentData.companyId);
+    const tipAmount = parseFloat(paymentData.tip || "0");
 
     if (!paymentRef) {
       await db.webhookEvent.update({
@@ -204,6 +205,7 @@ export async function processStripePayment(eventId: string) {
             data: {
               gateway: "STRIPE",
               date: new Date(),
+              tip: tipAmount,
               ...(Number.isFinite(gatewayAmount) && gatewayAmount > 0
                 ? { amount: gatewayAmount }
                 : {}),
@@ -251,6 +253,7 @@ export async function processStripePayment(eventId: string) {
         data: {
           companyId,
           amount: Number(paymentData.amount),
+          tip: tipAmount,
           type: "OTHER",
           date: new Date(),
           gateway: "STRIPE",
