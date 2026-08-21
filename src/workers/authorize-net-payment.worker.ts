@@ -337,8 +337,9 @@ export async function processAuthorizeNetPayment(eventId: string) {
             data: {
               gateway: "AUTHORIZE_NET",
               date: new Date(),
-              ...(Number.isFinite(authAmount) && authAmount > 0
-                ? { amount: authAmount }
+              tip: tipAmount,
+              ...(Number.isFinite(baseAmount) && baseAmount > 0
+                ? { amount: baseAmount }
                 : {}),
             },
           });
@@ -387,7 +388,8 @@ export async function processAuthorizeNetPayment(eventId: string) {
       const createdPayment = await tx.payment.create({
         data: {
           companyId: companyIdFromRef,
-          amount: authAmount,
+          amount: baseAmount,
+          tip: tipAmount,
           type: "OTHER",
           date: new Date(),
           gateway: "AUTHORIZE_NET",
@@ -399,7 +401,7 @@ export async function processAuthorizeNetPayment(eventId: string) {
                   reloadData: {
                     giftCardId: reloadGiftCardId,
                     code: reloadGiftCardCode,
-                    requestedAmount: authAmount,
+                    requestedAmount: baseAmount,
                   },
                 }
               : {}),
