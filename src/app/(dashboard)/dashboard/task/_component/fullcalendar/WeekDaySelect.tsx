@@ -23,15 +23,12 @@ type TWeekDaySelectProps = {
   id: string;
   value: string;
   onValueChange: (value: string) => void;
-  /** Controlled so the parent can keep a single dropdown open at a time. */
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Extra trigger classes — e.g. the highlighted weekend styling. */
   className?: string;
   ariaLabel?: string;
 };
 
-/** Day-of-week picker shared by the Week Starts and Show Weekends fields. */
 export default function WeekDaySelect({
   id,
   value,

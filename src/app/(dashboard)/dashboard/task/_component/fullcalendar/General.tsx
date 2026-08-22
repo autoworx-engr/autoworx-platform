@@ -17,7 +17,6 @@ import WeekDaySelect from "./WeekDaySelect";
 const WEEKEND_TRIGGER_CLASS =
   "border-primary bg-[#EEF0FF] text-primary focus:ring-primary";
 
-/** Identifies which single dropdown on this tab may be open. */
 type TOpenField =
   | "week-start"
   | "day-start"
@@ -43,17 +42,10 @@ export default function General({
   const [weekStart, setWeekStart] = useState(settings?.weekStart ?? "Monday");
   const [weekend1, setWeekend1] = useState(settings?.weekend1 ?? "Saturday");
   const [weekend2, setWeekend2] = useState(settings?.weekend2 ?? "Sunday");
-  // Held in state rather than read from FormData: TimeScrollPicker is a
-  // popover button, not a form input, so it submits nothing.
   const [dayStart, setDayStart] = useState(settings?.dayStart ?? "10:00");
   const [dayEnd, setDayEnd] = useState(settings?.dayEnd ?? "18:00");
-  // One dropdown at a time. Radix layers don't dismiss one another here — an
-  // opening Select disables outside-pointer handling for the popover beneath
-  // it — so the open panel is tracked here instead of per-field.
   const [openField, setOpenField] = useState<TOpenField | null>(null);
 
-  // Ignores a stale `false` from the panel that just lost focus, which would
-  // otherwise close the panel the user is opening.
   const openProps = (field: TOpenField) => ({
     open: openField === field,
     onOpenChange: (next: boolean) =>
@@ -140,7 +132,6 @@ export default function General({
               id="day-end"
               label="Day ends"
               value={dayEnd}
-              // The day must end after it starts; validated again on save.
               minTime={dayStart ? addMinutes(dayStart, 15) : undefined}
               onChange={setDayEnd}
               {...openProps("day-end")}
