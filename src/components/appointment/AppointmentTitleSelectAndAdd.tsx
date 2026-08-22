@@ -231,7 +231,7 @@ const AppointmentTitleSelectAndAdd = ({
 
   return (
     <SelectorWithAdd
-      label={isLoading ? "Appointment Title (loading…)" : "Appointment Title"}
+      label="Appointment Title"
       name="appointmentTitle"
       options={enhancedOptions}
       value={selectorValue}
@@ -249,6 +249,7 @@ const AppointmentTitleSelectAndAdd = ({
       selectCategory={false}
       placeholder="Free Consultation, Design Consultation..."
       disabled={disabled}
+      isLoading={isLoading}
       required={true}
       error={error}
     />

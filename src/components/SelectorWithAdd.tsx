@@ -19,6 +19,7 @@ import {
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import SelectCategory from "./Lists/SelectCategory";
+import { Spinner } from "@/components/ui/spinner";
 
 export type SelectorWithAddProps = {
   label?: ReactNode;
@@ -33,6 +34,8 @@ export type SelectorWithAddProps = {
   placeholder?: string;
   isSearch?: boolean;
   disabled?: boolean;
+  /** Shows the loading state inside the control and blocks opening it. */
+  isLoading?: boolean;
   allowClear?: boolean;
   allowAddNew?: boolean;
   addNewLabel?: string;
@@ -68,6 +71,7 @@ export function SelectorWithAdd({
   isSearch = false,
   placeholder = "Select an option",
   disabled = false,
+  isLoading = false,
   allowClear = true,
   allowAddNew = false,
   addNewLabel = "Add new item",
@@ -235,6 +239,9 @@ export function SelectorWithAdd({
   )?.title;
 
   const hasValue = selectedValue && selectedValue !== "";
+  // Loading blocks the control the same way `disabled` does, so the two share
+  // every check below rather than each being tested separately.
+  const isInteractionBlocked = disabled || isLoading;
 
   return (
     <div className={cn("block group", rootClassName)} ref={dropdownRef}>
@@ -258,12 +265,12 @@ export function SelectorWithAdd({
               ? "bg-white ring-primary shadow-lg shadow-primary/10"
               : "bg-slate-50/50 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:shadow-sm",
             error && "ring-rose-500 focus:ring-rose-500",
-            disabled &&
+            isInteractionBlocked &&
               "cursor-not-allowed bg-slate-100 opacity-60 ring-slate-200",
           )}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={() => !isInteractionBlocked && setIsOpen(!isOpen)}
           id={name}
-          disabled={disabled}
+          disabled={isInteractionBlocked}
         >
           <span
             className={cn(
@@ -271,11 +278,11 @@ export function SelectorWithAdd({
               selectedLabel ? "font-medium text-slate-700" : "text-slate-400",
             )}
           >
-            {selectedLabel || placeholder}
+            {selectedLabel || (isLoading ? "Loading..." : placeholder)}
           </span>
 
           <div className="flex items-center gap-2">
-            {hasValue && allowClear && !disabled && (
+            {hasValue && allowClear && !isInteractionBlocked && (
               <div
                 onClick={(e) => {
                   e.stopPropagation();
@@ -287,12 +294,16 @@ export function SelectorWithAdd({
                 <X strokeWidth={3} className="h-2.5 w-2.5" />
               </div>
             )}
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 text-slate-400 transition-transform duration-300",
-                isOpen && "rotate-180 text-primary",
-              )}
-            />
+            {isLoading ? (
+              <Spinner className="size-4 shrink-0 text-primary" />
+            ) : (
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 text-slate-400 transition-transform duration-300",
+                  isOpen && "rotate-180 text-primary",
+                )}
+              />
+            )}
           </div>
         </button>
 
