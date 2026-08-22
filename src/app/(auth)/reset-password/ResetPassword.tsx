@@ -5,7 +5,6 @@ import FormError from "@/components/FormError";
 import Input from "@/components/Input";
 import Password from "@/components/Password";
 import { useFormErrorStore } from "@/stores/form-error";
-import { getPasswordStrengthScore } from "@/utils/passwordStrength";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SubmitButton from "./SubmitButton";
@@ -24,7 +23,17 @@ export default function ResetPassword({
   const { showError } = useFormErrorStore();
   const [password, setPassword] = useState("");
 
-  const strength = getPasswordStrengthScore(password);
+  const getStrengthScore = (password: string) => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^A-Za-z\d]/.test(password)) score++;
+    return score;
+  };
+
+  const strength = getStrengthScore(password);
 
   useEffect(() => {
     if (uriToken) {

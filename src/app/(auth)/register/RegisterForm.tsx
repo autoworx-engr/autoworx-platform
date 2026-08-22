@@ -4,10 +4,6 @@ import FormError from "@/components/FormError";
 import Input from "@/components/Input";
 import Password from "@/components/Password";
 import Submit from "@/components/Submit";
-import {
-  getPasswordStrengthMeta,
-  getPasswordStrengthScore,
-} from "@/utils/passwordStrength";
 import FormField from "@/components/FormField";
 import { FieldName, useRegisterForm } from "./useRegisterForm";
 
@@ -24,9 +20,6 @@ const controlClass = (hasError: boolean) =>
 
 export default function RegisterForm() {
   const { values, errors, update, validateOnBlur, handler } = useRegisterForm();
-
-  const strength = getPasswordStrengthScore(values.password);
-  const strengthMeta = getPasswordStrengthMeta(strength);
 
   const fieldProps = (field: FieldName, autoComplete: string) => ({
     name: field,
@@ -93,23 +86,9 @@ export default function RegisterForm() {
           required
           error={errors.password}
           belowControl={
-            values.password ? (
-              <div className="mt-2 flex items-center gap-2">
-                <div className="h-2 flex-1 rounded bg-slate-200 dark:bg-slate-700">
-                  <div
-                    className={`h-2 rounded transition-all duration-300 ${strengthMeta.barClass}`}
-                    style={{ width: `${(strength / 5) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {strengthMeta.label}
-                </span>
-              </div>
-            ) : (
-              <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                At least 6 characters.
-              </p>
-            )
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+              At least 6 characters.
+            </p>
           }
         >
           <Password

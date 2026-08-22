@@ -38,5 +38,16 @@ const createUserValidation = z.object({
     .min(1, { message: "Access code cannot be empty" }),
 });
 
+export const registerRequestValidation = createUserValidation.extend({
+  timezone: z
+    .string({ invalid_type_error: "Timezone must be a string" })
+    .trim()
+    .min(1, { message: "Timezone cannot be empty" })
+    .optional(),
+});
+
 export type TUserSchemaValidation = z.infer<typeof createUserValidation>;
+export type TRegisterRequestValidation = z.infer<
+  typeof registerRequestValidation
+>;
 export { createUserValidation };
