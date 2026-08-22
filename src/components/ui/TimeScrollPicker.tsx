@@ -40,32 +40,20 @@ function formatLabel(value: string) {
 
 type Props = {
   label: string;
-  /** Selected time as "HH:mm" (24h). Empty string when nothing is chosen. */
   value: string;
-  /** Emits "HH:mm" (24h) — only fires once a full hour+minute+period is known. */
   onChange: (value: string) => void;
-  /** Earliest selectable "HH:mm"; later times stay enabled. */
   minTime?: string;
-  /** Latest selectable "HH:mm"; earlier times stay enabled. */
   maxTime?: string;
-  /** Minute granularity in minutes. */
   step?: number;
   id?: string;
   required?: boolean;
   placeholder?: string;
   className?: string;
-  /** Overrides the label's default `text-base` to match surrounding labels. */
   labelClassName?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-/**
- * Three-column Hour / Minute / AM-PM time picker.
- *
- * Each column commits immediately against the currently-shown time, so the
- * value is always a complete "HH:mm" and never a half-built selection. When
- * nothing is selected yet the picker previews 12:00 PM without emitting it —
- * the first click on any column is what commits a real value.
- */
 export function TimeScrollPicker({
   label,
   value,
@@ -78,8 +66,15 @@ export function TimeScrollPicker({
   placeholder = label,
   className,
   labelClassName,
+  open: controlledOpen,
+  onOpenChange,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
   const hourColumnRef = useRef<HTMLDivElement>(null);
 
   const minutes = useMemo(() => {
@@ -97,26 +92,12 @@ export function TimeScrollPicker({
   const isOutOfRange = (candidate: string) =>
     (!!minTime && candidate < minTime) || (!!maxTime && candidate > maxTime);
 
-  /**
-   * An hour/period is offered only if at least one minute in the step grid
-   * lands inside the allowed range — otherwise the user could pick an hour
-   * and find every minute disabled.
-   */
   const hasSelectableMinute = (hour: number, period: Period) =>
     minutes.some((m) => !isOutOfRange(to24Hour(hour, m, period)));
 
-  /**
-   * An hour stays enabled if it works in *either* period. Judging it against
-   * only the previewed period would wrongly disable e.g. 11 under a 22:45 cap,
-   * where 11 PM is out of range but 11 AM is perfectly valid.
-   */
   const isHourSelectable = (hour: number) =>
     PERIODS.some((period) => hasSelectableMinute(hour, period));
 
-  /**
-   * Commits a change, falling back through period then minute so a click on a
-   * valid-in-principle cell always lands on a real time.
-   */
   const commit = (hour: number, minute: number, period: Period) => {
     // Prefer the requested period, then the other one.
     const periodOrder: Period[] = period === "AM" ? ["AM", "PM"] : ["PM", "AM"];
@@ -140,9 +121,6 @@ export function TimeScrollPicker({
     }
   };
 
-  // Centre the selected hour when the panel opens. Sets scrollTop directly
-  // rather than using scrollIntoView, which would also scroll the surrounding
-  // modal and leave the column itself stuck.
   useEffect(() => {
     if (!open) return;
     const raf = requestAnimationFrame(() => {
@@ -172,8 +150,6 @@ export function TimeScrollPicker({
 
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
-          {/* Trigger mirrors DatePickerField's button so date and time fields
-              line up at the same height in the shared grid row. */}
           <Button
             id={id}
             type="button"

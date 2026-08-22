@@ -174,6 +174,9 @@ export const CallList = ({
                     src={call.playableUrl}
                     isOutgoing={isSentByMe}
                     variant="recording"
+                    fallbackDuration={call.duration}
+                    downloadUrl={`${call.playableUrl}${call.playableUrl.includes("?") ? "&" : "?"}download=1`}
+                    fileName={`call-${call.id}.mp3`}
                     registerAudio={(el) => {
                       if (el) {
                         audioRefs.current.set(call.id, el);

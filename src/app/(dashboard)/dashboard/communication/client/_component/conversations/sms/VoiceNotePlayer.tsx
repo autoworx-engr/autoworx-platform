@@ -1,7 +1,9 @@
 "use client";
 
+import { formatAudioTime, useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { Mic, Pause, Phone, Play } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
+import AudioOptionsMenu from "./AudioOptionsMenu";
 
 // Decorative waveform bar heights (percent of container height)
 const WAVE_HEIGHTS = [
@@ -22,6 +24,7 @@ const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
       barEmpty: "#cbd5e1",
       time: "text-slate-500",
       badge: "text-slate-300",
+      menuTone: "dark" as const,
     };
   }
   return {
@@ -35,6 +38,7 @@ const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
     barEmpty: isOutgoing ? "rgba(255,255,255,0.28)" : "#d1d5db",
     time: isOutgoing ? "text-white/60" : "text-zinc-400",
     badge: isOutgoing ? "text-white/40" : "text-zinc-300",
+    menuTone: (isOutgoing ? "light" : "dark") as "light" | "dark",
   };
 };
 
@@ -44,6 +48,9 @@ interface VoiceNotePlayerProps {
   variant?: PlayerVariant;
   registerAudio?: (el: HTMLAudioElement | null) => void;
   onPlay?: () => void;
+  fallbackDuration?: number | null;
+  downloadUrl?: string;
+  fileName?: string;
 }
 
 export default function VoiceNotePlayer({
@@ -52,82 +59,32 @@ export default function VoiceNotePlayer({
   variant = "voice-note",
   registerAudio,
   onPlay,
+  fallbackDuration,
+  downloadUrl,
+  fileName,
 }: VoiceNotePlayerProps) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const {
+    audioRef,
+    isPlaying,
+    currentTime,
+    duration,
+    progress,
+    rate,
+    toggle,
+    seekToRatio,
+    changeRate,
+  } = useAudioPlayer(fallbackDuration);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onLoadedMetadata = () => {
-      if (isFinite(audio.duration)) setDuration(audio.duration);
-    };
-    const onDurationChange = () => {
-      if (isFinite(audio.duration)) setDuration(audio.duration);
-    };
-    // Driven off the element rather than the click so the button stays correct
-    // when something else pauses this player.
-    const onPlaying = () => setIsPlaying(true);
-    const onPaused = () => setIsPlaying(false);
-    const onEnded = () => {
-      setIsPlaying(false);
-      audio.currentTime = 0;
-      setCurrentTime(0);
-    };
-
-    audio.addEventListener("timeupdate", onTimeUpdate);
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
-    audio.addEventListener("durationchange", onDurationChange);
-    audio.addEventListener("play", onPlaying);
-    audio.addEventListener("pause", onPaused);
-    audio.addEventListener("ended", onEnded);
-
-    return () => {
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("durationchange", onDurationChange);
-      audio.removeEventListener("play", onPlaying);
-      audio.removeEventListener("pause", onPaused);
-      audio.removeEventListener("ended", onEnded);
-    };
-  }, []);
-
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audio.paused) {
-      onPlay?.();
-      audio.play().catch(() => {});
-    } else {
-      audio.pause();
-    }
+  const handleToggle = () => {
+    if (audioRef.current?.paused) onPlay?.();
+    toggle();
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(
-      0,
-      Math.min(1, (e.clientX - rect.left) / rect.width),
-    );
-    audio.currentTime = ratio * duration;
+    seekToRatio((e.clientX - rect.left) / rect.width);
   };
 
-  const formatTime = (secs: number) => {
-    if (!isFinite(secs) || isNaN(secs) || secs < 0) return "0:00";
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
   const theme = getTheme(variant, isOutgoing);
   const BadgeIcon = variant === "recording" ? Phone : Mic;
 
@@ -146,7 +103,7 @@ export default function VoiceNotePlayer({
 
       {/* Play / Pause button */}
       <button
-        onClick={togglePlay}
+        onClick={handleToggle}
         className={`flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-95 shadow-sm ${theme.button}`}
         aria-label={isPlaying ? "Pause" : "Play"}
       >
@@ -191,18 +148,28 @@ export default function VoiceNotePlayer({
         <div
           className={`flex items-center text-[10px] leading-none font-medium ${theme.time}`}
         >
-          <span>{formatTime(currentTime)}</span>
+          <span>{formatAudioTime(currentTime)}</span>
           {duration > 0 && (
             <>
               <span className="mx-0.5 opacity-50">/</span>
-              <span>{formatTime(duration)}</span>
+              <span>{formatAudioTime(duration)}</span>
             </>
           )}
         </div>
       </div>
 
-      {/* Source badge */}
-      <BadgeIcon className={`w-3.5 h-3.5 flex-shrink-0 ${theme.badge}`} />
+      {downloadUrl ? (
+        <AudioOptionsMenu
+          downloadUrl={downloadUrl}
+          fileName={fileName ?? "recording.mp3"}
+          rate={rate}
+          onRateChange={changeRate}
+          tone={theme.menuTone}
+        />
+      ) : (
+        /* Source badge */
+        <BadgeIcon className={`w-3.5 h-3.5 flex-shrink-0 ${theme.badge}`} />
+      )}
     </div>
   );
 }

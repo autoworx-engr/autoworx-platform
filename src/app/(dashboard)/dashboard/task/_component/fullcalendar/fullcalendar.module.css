@@ -4,7 +4,6 @@
   box-shadow: none !important;
 }
 
-/* Match the week view's "today" highlight (#eff6ff) in month and day views. */
 .calendarScope :global(.fc-day-today) {
   background-color: #eff6ff !important;
 }
@@ -14,7 +13,7 @@
 }
 
 .calendarScope :global(.fc-timegrid-slot) {
-  height: 2.5em !important;
+  height: 3em !important;
 }
 
 .calendarScope :global(.fc-timegrid-col-bg .fc-non-business) {
@@ -45,7 +44,6 @@
   width: 99% !important;
 }
 
-/* Desktop: flex row with justify-between */
 @media (min-width: 641px) {
   .calendarScope :global(.fc-list-event) {
     display: flex !important;
@@ -71,9 +69,6 @@
   display: none !important;
 }
 
-/* Rows tagged by markRepeatedListTime share the time slot of the row above.
-   Hide the duplicate label and drop the divider so consecutive same-time
-   items read as one row with the time shown once. */
 .calendarScope :global(tr.fc-list-event[data-repeated-time]) > td {
   border-top: 0 !important;
   padding-top: 0 !important;
@@ -136,7 +131,6 @@
   max-height: 70vh;
 }
 
-/* week/day view width fix */
 .calendarScope :global(.fc-timegrid .fc-scroller-harness),
 .calendarScope :global(.fc-timegrid .fc-timegrid-body),
 .calendarScope :global(.fc-timegrid .fc-timegrid-body table),
@@ -144,7 +138,6 @@
   width: 100% !important;
 }
 
-/* month view width fix */
 .calendarScope :global(.fc-daygrid .fc-scroller-harness),
 .calendarScope :global(.fc-daygrid-body),
 .calendarScope :global(.fc-daygrid-body table),
@@ -152,17 +145,6 @@
   width: 100% !important;
 }
 
-/*
- * Scroller appearance comes from the site-wide thin scrollbar in globals.css —
- * nothing to add here.
- *
- * FullCalendar forces `overflow-y: scroll` on every scrollgrid section
- * (header + body) to reserve a matching gutter for column alignment. The header
- * section keeps that reserved gutter (so columns stay aligned with the body)
- * but its scrollbar must never be visible — hide the thumb there so the
- * sticky-shim's 1px overflow can't render a tiny stray scrollbar next to the
- * day header.
- */
 .calendarScope
   :global(.fc-scrollgrid-section-header .fc-scroller)::-webkit-scrollbar-thumb {
   background-color: transparent;

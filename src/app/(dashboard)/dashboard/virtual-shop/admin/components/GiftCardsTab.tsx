@@ -11,6 +11,7 @@ import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
 import { DatePickerField } from "@/components/ui/DatePickerField";
+import { fUsDate } from "@/utils/formatDate";
 import {
   useCreateGiftCardPromo,
   useDeleteGiftCardPromo,
@@ -338,9 +339,11 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
   const [promoExpireDate, setPromoExpireDate] = useState("2026-12-31");
   const [promoUsageLimit, setPromoUsageLimit] = useState("100");
 
+  // "YYYY-MM-DD" for the date input, read in UTC like every other date here.
   const formatDateForInput = (value?: string | null) => {
     if (!value) return "";
-    return new Date(value).toISOString().slice(0, 10);
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
   };
 
   const openCreatePromoDialog = () => {
@@ -375,10 +378,8 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
     return `$${numericValue}`;
   };
 
-  const formatPromoExpireDate = (value?: string | null) => {
-    if (!value) return "No expiry";
-    return new Date(value).toLocaleDateString("en-US");
-  };
+  const formatPromoExpireDate = (value?: string | null) =>
+    fUsDate(value) ?? "No expiry";
 
   const handleDeletePromoCode = async (id: number) => {
     if (!accessToken) {
