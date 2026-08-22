@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/cn";
+import { Funnel } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
 import { useEffect, useRef } from "react";
@@ -79,6 +80,14 @@ export default function FilterByRevenue({
           selectedItem ? "border-2 border-[#6470fd]" : "border",
         )}
       >
+        <Funnel
+          className={cn(
+            "w-4 h-4 shrink-0 text-slate-500 dark:text-slate-300",
+            selectedItem || activeModal[modalName as keyof TFilterModalState]
+              ? "text-[#6470fd]"
+              : "",
+          )}
+        />
         <span className="truncate max-w-[10rem] text-slate-600 dark:text-slate-200">
           {selectedItem ? selectedItem : "Filter"}
         </span>
@@ -90,7 +99,7 @@ export default function FilterByRevenue({
           aria-hidden="true"
           role="img"
           className={cn(
-            "ml-2 text-slate-500 dark:text-slate-300 transition-transform duration-200",
+            "shrink-0 text-slate-500 dark:text-slate-300 transition-transform duration-200",
             activeModal[modalName as keyof TFilterModalState]
               ? "text-[#6470fd]"
               : "",
