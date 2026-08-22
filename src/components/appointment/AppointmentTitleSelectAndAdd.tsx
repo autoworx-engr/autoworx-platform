@@ -49,7 +49,9 @@ const AppointmentTitleSelectAndAdd = ({
   // Always hold the latest selected value so the delete handler can decide
   // whether to clear the field without relying on a stale closure.
   const valueRef = useRef(value);
-  valueRef.current = value;
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   // Memoize options to prevent unnecessary re-renders
   const options = useMemo<Option[]>(() => {
