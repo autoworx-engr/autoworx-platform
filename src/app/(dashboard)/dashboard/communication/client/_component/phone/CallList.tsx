@@ -2,6 +2,7 @@
 
 import { MISSED_STATUSES, isCallStale } from "@/lib/twilio/callDisplay";
 import { useEffect, useRef } from "react";
+import VoiceNotePlayer from "../conversations/sms/VoiceNotePlayer";
 import { useCallListRefresh } from "./useCallListRefresh";
 
 export type CallListItem = {
@@ -30,7 +31,17 @@ export const CallList = ({
   clientId: number;
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const audioRefs = useRef<Map<number, HTMLAudioElement>>(new Map());
   useCallListRefresh(clientId);
+
+  // Only one recording plays at a time
+  const pauseOtherRecordings = (playingCallId: number) => {
+    audioRefs.current.forEach((audio, id) => {
+      if (id !== playingCallId && !audio.paused) {
+        audio.pause();
+      }
+    });
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -57,13 +68,10 @@ export const CallList = ({
       {data.map((call) => {
         const isSentByMe = call.direction === "outbound";
         const status = call.status ?? "";
-        // A row still marked ringing/in-progress long after it was created
-        // never received its final Twilio callback — treat it as missed rather
-        // than leaving it animating as a live call forever.
+
         const isStale = isCallStale(status, call.createdAt);
         const isMissed = MISSED_STATUSES.has(status) || isStale;
-        // An inbound call we never picked up reads as "missed"; an outbound one
-        // the client never picked up reads as "no answer".
+
         const missedLabel =
           status === "no-answer" && isSentByMe
             ? "No answer"
@@ -79,7 +87,7 @@ export const CallList = ({
             <div
               className={`group w-[85%] rounded-xl p-3 shadow-sm transition-all duration-300 hover:shadow-md ${
                 isSentByMe
-                  ? "rounded-br-none bg-gradient-to-br from-primary/10 to-[#5563E8]/10 ring-1 ring-primary/20 text-slate-800 hover:ring-primary/30"
+                  ? "rounded-br-none bg-gradient-to-br from-[#067E89]/10 to-[#067E89]/5 ring-1 ring-[#067E89]/20 text-slate-800 hover:ring-[#067E89]/30"
                   : "rounded-bl-none bg-white ring-1 ring-slate-200 text-slate-800 hover:ring-slate-300"
               }`}
             >
@@ -88,7 +96,7 @@ export const CallList = ({
                   {isSentByMe ? (
                     <span className="inline-flex items-center gap-1">
                       <svg
-                        className="h-3.5 w-3.5 text-primary"
+                        className="h-3.5 w-3.5 text-[#067E89]"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -161,11 +169,19 @@ export const CallList = ({
                   {missedLabel}
                 </div>
               ) : call.playableUrl ? (
-                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 p-2 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
-                  <audio
-                    controls
+                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
+                  <VoiceNotePlayer
                     src={call.playableUrl}
-                    className="w-full h-8"
+                    isOutgoing={isSentByMe}
+                    variant="recording"
+                    registerAudio={(el) => {
+                      if (el) {
+                        audioRefs.current.set(call.id, el);
+                      } else {
+                        audioRefs.current.delete(call.id);
+                      }
+                    }}
+                    onPlay={() => pauseOtherRecordings(call.id)}
                   />
                 </div>
               ) : isInProgress ? (

@@ -82,12 +82,55 @@ export async function GET(
     });
   }
 
-  const audioBuffer = await response.arrayBuffer();
+  const body = Buffer.from(await response.arrayBuffer());
 
-  return new Response(audioBuffer, {
-    headers: {
-      "Content-Type": "audio/mpeg",
-      "Content-Disposition": `inline; filename="${recordingSid}.mp3"`,
-    },
+  const baseHeaders: Record<string, string> = {
+    "Content-Type": "audio/mpeg",
+    "Content-Disposition": `inline; filename="${recordingSid}.mp3"`,
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "private, max-age=3600",
+  };
+
+  const range = req.headers.get("range");
+  const match = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null;
+
+  if (match) {
+    const [, startRaw, endRaw] = match;
+    let start: number;
+    let end: number;
+
+    if (startRaw === "") {
+      // Suffix range: the last N bytes
+      const suffixLength = Number(endRaw);
+      start = Math.max(0, body.length - suffixLength);
+      end = body.length - 1;
+    } else {
+      start = Number(startRaw);
+      end =
+        endRaw === ""
+          ? body.length - 1
+          : Math.min(Number(endRaw), body.length - 1);
+    }
+
+    if (!Number.isFinite(start) || start > end || start >= body.length) {
+      return new Response("Range not satisfiable", {
+        status: 416,
+        headers: { "Content-Range": `bytes */${body.length}` },
+      });
+    }
+
+    const chunk = body.subarray(start, end + 1);
+    return new Response(chunk, {
+      status: 206,
+      headers: {
+        ...baseHeaders,
+        "Content-Length": String(chunk.length),
+        "Content-Range": `bytes ${start}-${end}/${body.length}`,
+      },
+    });
+  }
+
+  return new Response(body, {
+    headers: { ...baseHeaders, "Content-Length": String(body.length) },
   });
 }
