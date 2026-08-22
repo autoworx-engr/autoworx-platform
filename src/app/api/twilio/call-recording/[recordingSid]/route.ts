@@ -68,19 +68,15 @@ export async function GET(
 
   const recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioCredentials.accountSid}/Recordings/${recordingSid}.mp3`;
 
-  const authorization = `Basic ${Buffer.from(
-    `${twilioCredentials.apiKeySid}:${twilioCredentials.apiKeySecret}`,
-  ).toString("base64")}`;
-
-  // Players ask for byte ranges to seek and to work out the duration. Twilio
-  // honours Range, so pass it straight through; a proxy that always answered
-  // 200 with the whole file left the media unseekable, which is what made the
-  // progress bar jump around instead of advancing.
   const range = req.headers.get("range");
 
+  // Twilio honours Range, so pass it through and let it send just the slice the
+  // player asked for instead of re-downloading the whole recording per seek.
   const response = await fetch(recordingUrl, {
     headers: {
-      Authorization: authorization,
+      Authorization: `Basic ${Buffer.from(
+        `${twilioCredentials.apiKeySid}:${twilioCredentials.apiKeySecret}`,
+      ).toString("base64")}`,
       ...(range ? { Range: range } : {}),
     },
   });
@@ -91,46 +87,73 @@ export async function GET(
     });
   }
 
+  const body = Buffer.from(await response.arrayBuffer());
+
   // `?download=1` turns the same URL into a save-to-disk link for the player's
   // download action.
   const disposition =
     req.nextUrl.searchParams.get("download") === "1" ? "attachment" : "inline";
 
-  const audioBuffer = await response.arrayBuffer();
-
-  const headers = new Headers({
+  const baseHeaders: Record<string, string> = {
     "Content-Type": "audio/mpeg",
     "Content-Disposition": `${disposition}; filename="${recordingSid}.mp3"`,
-    "Content-Length": String(audioBuffer.byteLength),
-    // Recordings never change once Twilio has written them.
-    "Cache-Control": "private, max-age=3600",
     "Accept-Ranges": "bytes",
-  });
+    "Cache-Control": "private, max-age=3600",
+  };
 
-  // 206 from Twilio means the range was served; forward the range metadata so
-  // the player can map bytes back to time.
-  const contentRange = response.headers.get("content-range");
-  if (response.status === 206 && contentRange) {
-    headers.set("Content-Range", contentRange);
-    return new Response(audioBuffer, { status: 206, headers });
+  // Twilio already answered with the requested slice — forward its range
+  // metadata rather than slicing again.
+  const upstreamRange = response.headers.get("content-range");
+  if (response.status === 206 && upstreamRange) {
+    return new Response(body, {
+      status: 206,
+      headers: {
+        ...baseHeaders,
+        "Content-Length": String(body.length),
+        "Content-Range": upstreamRange,
+      },
+    });
   }
 
-  // Twilio ignored the range (or there wasn't one) — satisfy it here so the
-  // client still gets the 206 it asked for.
-  if (range) {
-    const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
-    const total = audioBuffer.byteLength;
-    if (match) {
-      const start = match[1] ? Number(match[1]) : 0;
-      const end = match[2] ? Math.min(Number(match[2]), total - 1) : total - 1;
-      if (start <= end && start < total) {
-        const slice = audioBuffer.slice(start, end + 1);
-        headers.set("Content-Length", String(slice.byteLength));
-        headers.set("Content-Range", `bytes ${start}-${end}/${total}`);
-        return new Response(slice, { status: 206, headers });
-      }
+  const match = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null;
+
+  if (match) {
+    const [, startRaw, endRaw] = match;
+    let start: number;
+    let end: number;
+
+    if (startRaw === "") {
+      // Suffix range: the last N bytes
+      const suffixLength = Number(endRaw);
+      start = Math.max(0, body.length - suffixLength);
+      end = body.length - 1;
+    } else {
+      start = Number(startRaw);
+      end =
+        endRaw === ""
+          ? body.length - 1
+          : Math.min(Number(endRaw), body.length - 1);
     }
+
+    if (!Number.isFinite(start) || start > end || start >= body.length) {
+      return new Response("Range not satisfiable", {
+        status: 416,
+        headers: { "Content-Range": `bytes */${body.length}` },
+      });
+    }
+
+    const chunk = body.subarray(start, end + 1);
+    return new Response(chunk, {
+      status: 206,
+      headers: {
+        ...baseHeaders,
+        "Content-Length": String(chunk.length),
+        "Content-Range": `bytes ${start}-${end}/${body.length}`,
+      },
+    });
   }
 
-  return new Response(audioBuffer, { headers });
+  return new Response(body, {
+    headers: { ...baseHeaders, "Content-Length": String(body.length) },
+  });
 }
