@@ -29,6 +29,20 @@ const toNumber = (value: unknown) => {
   return Number.isFinite(num) ? num : 0;
 };
 
+// Material-only price (sell × quantity) — the tax base, labor is not taxed
+const toMaterialTotal = (invoiceItems: unknown) =>
+  ((invoiceItems as any[]) || []).reduce((total: number, item: any) => {
+    const materials = (item?.materials as any[]) || [];
+    return (
+      total +
+      materials.reduce(
+        (sum: number, material: any) =>
+          sum + toNumber(material?.sell) * toNumber(material?.quantity),
+        0,
+      )
+    );
+  }, 0);
+
 const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [hasNoSlots, setHasNoSlots] = useState(false);
@@ -127,6 +141,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
         suv: toNumber(svc.modifierSUV),
         truck: toNumber(svc.modifierTruck),
       },
+      materialTotal: toMaterialTotal(svc.invoiceItems),
     }));
 
     setServices(mapped);
