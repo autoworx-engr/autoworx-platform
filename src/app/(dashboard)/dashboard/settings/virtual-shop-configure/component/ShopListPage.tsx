@@ -18,28 +18,30 @@ export default function ShopListPage({ companyId }: { companyId: number }) {
   return (
     <section className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
       {/* Header */}
-      {/* <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
-              Your Shops
-            </h1>
-            <p className="max-w-md text-sm text-slate-500">
-              Manage all your virtual stores
-            </p>
-          </div>
+      {data?.length > 0 && (
+        <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
+                Your Shops
+              </h1>
+              <p className="max-w-md text-sm text-slate-500">
+                Manage all your virtual stores
+              </p>
+            </div>
 
-          <Link
-            href="/dashboard/settings/virtual-shop-configure/shops/create"
-            className="w-full sm:w-auto"
-          >
-            <Button className="flex w-full items-center justify-center gap-2 sm:w-auto bg-primary hover:bg-primary/90 focus-visible:bg-primary/90">
-              <Plus className="h-4 w-4" />
-              Configure New Shop
-            </Button>
-          </Link>
+            <Link
+              href="/dashboard/settings/virtual-shop-configure/shops/create"
+              className="w-full sm:w-auto"
+            >
+              <Button className="flex w-full items-center justify-center gap-2 sm:w-auto bg-primary hover:bg-primary/90 focus-visible:bg-primary/90">
+                <Plus className="h-4 w-4" />
+                Configure New Shop
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div> */}
+      )}
 
       {/* Shop Grid */}
       {data?.length > 0 ? (
