@@ -192,6 +192,7 @@ export function MultiSelectorWithAdd({
     setCategory(newCategory);
 
   const hasValue = selectedValues.length > 0;
+  const showClear = Boolean(hasValue && allowClear && !disabled);
 
   return (
     <div className={cn("block", rootClassName)} ref={dropdownRef}>
@@ -205,6 +206,7 @@ export function MultiSelectorWithAdd({
           type="button"
           className={cn(
             "flex w-full items-center justify-between rounded-sm border border-slate-400 bg-background px-2 py-0.5 text-left leading-6 outline-none",
+            showClear ? "pr-16" : "pr-9",
             error && "border-red-500 focus:border-red-500",
             disabled && "cursor-not-allowed bg-gray-100 opacity-50",
           )}
@@ -217,20 +219,24 @@ export function MultiSelectorWithAdd({
               ? selectedValues.map((v) => v.title).join(", ")
               : placeholder}
           </span>
-          <div className="flex items-center gap-1">
-            {hasValue && allowClear && !disabled && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="flex h-4 w-4 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600"
-                title="Clear selection"
-              >
-                <X strokeWidth={2} className="h-2 w-2" />
-              </button>
-            )}
-            <ChevronDown className="text-gray-500" />
-          </div>
         </button>
+
+        {/* Kept out of the trigger: a button inside a button is invalid markup
+            and only cleared when the click hit its 16px icon exactly. */}
+        <div className="pointer-events-none absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+          {showClear && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Clear selection"
+              title="Clear selection"
+              className="pointer-events-auto flex size-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+            >
+              <X strokeWidth={2} className="h-3 w-3" />
+            </button>
+          )}
+          <ChevronDown className="text-gray-500" />
+        </div>
 
         {isOpen && (
           <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-sm border border-slate-200 bg-white shadow-md">

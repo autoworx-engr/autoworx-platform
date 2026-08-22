@@ -242,6 +242,7 @@ export function SelectorWithAdd({
   // Loading blocks the control the same way `disabled` does, so the two share
   // every check below rather than each being tested separately.
   const isInteractionBlocked = disabled || isLoading;
+  const showClear = Boolean(hasValue && allowClear && !isInteractionBlocked);
 
   return (
     <div className={cn("block group", rootClassName)} ref={dropdownRef}>
@@ -261,6 +262,9 @@ export function SelectorWithAdd({
           type="button"
           className={cn(
             "flex w-full touch-manipulation items-center justify-between rounded-lg border-none px-3 py-2 text-left text-sm leading-6 transition-all duration-300 outline-none ring-1",
+            // Room for the icons, which now sit outside this button so the
+            // clear control can own its click target.
+            showClear ? "pr-[4.5rem]" : "pr-10",
             isOpen
               ? "bg-white ring-primary shadow-lg shadow-primary/10"
               : "bg-slate-50/50 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:shadow-sm",
@@ -280,32 +284,31 @@ export function SelectorWithAdd({
           >
             {selectedLabel || (isLoading ? "Loading..." : placeholder)}
           </span>
-
-          <div className="flex items-center gap-2">
-            {hasValue && allowClear && !isInteractionBlocked && (
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClear(e);
-                }}
-                className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200/50 text-slate-500 transition-all hover:bg-rose-100 hover:text-rose-600"
-                title="Clear selection"
-              >
-                <X strokeWidth={3} className="h-2.5 w-2.5" />
-              </div>
-            )}
-            {isLoading ? (
-              <Spinner className="size-4 shrink-0 text-primary" />
-            ) : (
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 text-slate-400 transition-transform duration-300",
-                  isOpen && "rotate-180 text-primary",
-                )}
-              />
-            )}
-          </div>
         </button>
+
+        <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
+          {showClear && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Clear selection"
+              title="Clear selection"
+              className="pointer-events-auto flex size-7 items-center justify-center rounded-full bg-slate-200/50 text-slate-500 transition-colors hover:bg-rose-100 hover:text-rose-600"
+            >
+              <X strokeWidth={3} className="h-3 w-3" />
+            </button>
+          )}
+          {isLoading ? (
+            <Spinner className="size-4 shrink-0 text-primary" />
+          ) : (
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-slate-400 transition-transform duration-300",
+                isOpen && "rotate-180 text-primary",
+              )}
+            />
+          )}
+        </div>
 
         {/* Dropdown Menu */}
         {isOpen && (
