@@ -1515,7 +1515,9 @@ export async function POST(req: Request) {
                 totals: {
                   subtotal,
                   tax: taxAmount,
+                  taxRate,
                   serviceFee: serviceFeeAmount,
+                  serviceFeeRate,
                   grandTotal: adjustedGrandTotal,
                   giftCardRedeemed: 0,
                   depositRequired: requiredDepositAmount,
@@ -1735,7 +1737,9 @@ export async function POST(req: Request) {
               totals: {
                 subtotal: Number(estimate.subtotal),
                 tax: taxAmount,
+                taxRate,
                 serviceFee: serviceFeeAmount,
+                serviceFeeRate,
                 grandTotal: Number(estimate.grandTotal),
                 giftCardRedeemed: giftCardRedeemedAmount,
                 depositRequired: 0,
