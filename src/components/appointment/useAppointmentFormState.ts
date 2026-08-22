@@ -550,7 +550,9 @@ export function useAppointmentFormState({
     if (fromEdit && !appointment) return;
     const currentClientId = client?.id ?? null;
     if (prevDraftClientId.current === undefined) {
-      prevDraftClientId.current = currentClientId;
+      prevDraftClientId.current = fromEdit
+        ? (appointment?.client?.id ?? currentClientId)
+        : currentClientId;
       return;
     }
     if (prevDraftClientId.current === currentClientId) return;
