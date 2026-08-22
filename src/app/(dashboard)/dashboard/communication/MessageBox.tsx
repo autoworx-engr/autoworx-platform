@@ -348,7 +348,7 @@ export default function MessageBox({
   return (
     <div
       className={cn(
-        "app-shadow flex h-[calc(100vh-50px)] w-full flex-col overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
+        "app-shadow flex h-[calc(100dvh-56px)] w-full flex-col overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
         totalMessageBox > 2 && "sm:h-[44vh]",
       )}
     >
