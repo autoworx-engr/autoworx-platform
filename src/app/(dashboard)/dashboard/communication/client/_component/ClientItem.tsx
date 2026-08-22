@@ -20,7 +20,7 @@ import {
 import { starUnstarClient } from "@/actions/communication/client/starUnstarClient";
 import { useDemoClientFilterStore } from "@/stores/clientFilter";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import StarOrUnStarAction from "./StarOrUnStarAction";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { ChevronDown } from "lucide-react";
@@ -60,7 +60,6 @@ export default function ClientItem({
       permission.permission_name === companyPermissionModule?.MESSENGER,
   );
 
-  const buttonRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const conversationTrack = useClientCommunicationStore(
@@ -132,15 +131,6 @@ export default function ClientItem({
       });
     }
   }, [conversationTrack, client?.id]);
-
-  // Bring the row into view when it becomes the selected client (e.g. after
-  // navigating in from a pipeline card or notification), since the list can
-  // be scrolled past it.
-  useEffect(() => {
-    if (selected) {
-      buttonRef.current?.scrollIntoView({ block: "nearest" });
-    }
-  }, [selected]);
 
   const filter = useDemoClientFilterStore((state) => state.filter);
 
@@ -249,7 +239,7 @@ export default function ClientItem({
 
   return (
     <div
-      ref={buttonRef}
+      data-client-row={clientFromDB.id}
       onClick={() => handleRedirect()}
       className={cn(
         // layout
