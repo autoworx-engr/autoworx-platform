@@ -24,7 +24,9 @@ export type Estimate = {
   services: EstimateService[];
   subtotal: number;
   taxAmount: number;
+  taxRate: number;
   serviceFee: number;
+  serviceFeeRate: number;
   tip: number;
   total: number;
 };

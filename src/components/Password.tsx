@@ -37,8 +37,12 @@ export default function Input({
         id={name}
         className={
           isLoginPage
-            ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
-            : cn(slimInputClassName, "pr-10", className)
+            ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors [&::-ms-reveal]:hidden [&::-ms-clear]:hidden focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
+            : cn(
+                slimInputClassName,
+                "pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden",
+                className,
+              )
         }
         required={required}
         value={value || inputValue}
