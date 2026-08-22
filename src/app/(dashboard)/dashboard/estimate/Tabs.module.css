@@ -1,6 +1,6 @@
 .tab {
-  filter: drop-shadow(1px 1px #fff) drop-shadow(-1px 1px #fff)
-    drop-shadow(-1px -1px #fff) drop-shadow(1px -1px #fff);
+  filter: drop-shadow(-1px 0 hsl(var(--border)))
+    drop-shadow(1px 0 hsl(var(--border))) drop-shadow(0 -1px hsl(var(--border)));
 }
 
 .tab[data-state="active"] {

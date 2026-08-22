@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-08-20T14:51:52.901Z
+ * Generated: 2026-08-20T16:17:22.806Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
