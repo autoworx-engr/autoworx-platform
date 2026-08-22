@@ -34,7 +34,6 @@ export type SelectorWithAddProps = {
   placeholder?: string;
   isSearch?: boolean;
   disabled?: boolean;
-  /** Shows the loading state inside the control and blocks opening it. */
   isLoading?: boolean;
   allowClear?: boolean;
   allowAddNew?: boolean;
@@ -155,8 +154,6 @@ export function SelectorWithAdd({
 
   const normalizedOptions = normalizeOptions();
 
-  // Compared with whitespace and dots stripped from both sides, so a stray
-  // leading/trailing space or a double space between words still matches.
   const filteredOptions = searchTerm.trim()
     ? normalizedOptions.filter((opt) =>
         normalizeSearch(opt.title).includes(normalizeSearch(searchTerm)),
@@ -239,8 +236,6 @@ export function SelectorWithAdd({
   )?.title;
 
   const hasValue = selectedValue && selectedValue !== "";
-  // Loading blocks the control the same way `disabled` does, so the two share
-  // every check below rather than each being tested separately.
   const isInteractionBlocked = disabled || isLoading;
   const showClear = Boolean(hasValue && allowClear && !isInteractionBlocked);
 
@@ -262,8 +257,6 @@ export function SelectorWithAdd({
           type="button"
           className={cn(
             "flex w-full touch-manipulation items-center justify-between rounded-lg border-none px-3 py-2 text-left text-sm leading-6 transition-all duration-300 outline-none ring-1",
-            // Room for the icons, which now sit outside this button so the
-            // clear control can own its click target.
             showClear ? "pr-[4.5rem]" : "pr-10",
             isOpen
               ? "bg-white ring-primary shadow-lg shadow-primary/10"
