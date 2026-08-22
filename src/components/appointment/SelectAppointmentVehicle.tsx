@@ -8,9 +8,24 @@ import { Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
+import { TruncatedText } from "@/components/ui/TruncatedText";
+
+/** One label for the trigger, the rows and the search box to agree on. */
+const vehicleLabel = (vehicle: Partial<Vehicle>) =>
+  [vehicle.year, vehicle.make, vehicle.model, vehicle.other]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
 export function SelectAppointmentVehicle({
   name = "vehicleId",
@@ -103,6 +118,15 @@ export function SelectAppointmentVehicle({
     };
   }, []);
 
+  // The selected vehicle isn't always part of the client's list (it can come
+  // from the lead), and it still has to be listed so it can show as ticked.
+  const vehicleOptions = useMemo(() => {
+    if (!vehicle?.id) return clientVehicles;
+    return clientVehicles.some((option) => option.id === vehicle.id)
+      ? clientVehicles
+      : [vehicle as Vehicle, ...clientVehicles];
+  }, [clientVehicles, vehicle]);
+
   const handleClear = () => {
     setVehicle(null);
     useListsStore.setState({ vehicle: null, newAddedVehicle: null });
@@ -117,9 +141,7 @@ export function SelectAppointmentVehicle({
           className="min-w-full"
           disabledDropdown={clientId && !vehicle?.fromRequest ? false : true}
           label={(vehicle: Partial<Vehicle> | null) =>
-            vehicle
-              ? `${vehicle.year || ""} ${vehicle.make ?? ""} ${vehicle.model ?? ""} ${vehicle.other ?? ""}`
-              : "Vehicle"
+            vehicle ? vehicleLabel(vehicle) : "Vehicle"
           }
           newButton={
             <NewVehicle
@@ -154,15 +176,21 @@ export function SelectAppointmentVehicle({
               setIsAppointmentModalOpen={setIsAppointmentModalOpen}
             />
           }
-          items={clientVehicles}
+          items={vehicleOptions}
           isLoading={isLoadingVehicles}
-          onSearch={(search: string) =>
-            clientVehicles.filter(
-              (vehicle) =>
-                vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-                vehicle.other?.toLowerCase().includes(search.toLowerCase()),
-            )
-          }
+          // Matched against the whole displayed label plus VIN/plate. Filtering
+          // on model and `other` alone meant searching the year or make of the
+          // vehicle you were looking at returned "No results found".
+          onSearch={(search: string) => {
+            const query = search.toLowerCase();
+            return vehicleOptions.filter((option) =>
+              [
+                vehicleLabel(option),
+                option.vin ?? "",
+                option.license ?? "",
+              ].some((field) => field.toLowerCase().includes(query)),
+            );
+          }}
           openState={[
             openDropdown as boolean,
             setOpenDropdown as Dispatch<SetStateAction<boolean>>,
@@ -171,9 +199,7 @@ export function SelectAppointmentVehicle({
           onSelect={(vehicle) => {
             setVehicle(vehicle);
           }}
-          displayList={(item) => (
-            <p>{`${item.year || ""} ${item.make ?? ""} ${item.model ?? ""} ${item.other ?? ""}`}</p>
-          )}
+          displayList={(item) => <TruncatedText text={vehicleLabel(item)} />}
           footer={
             isClear && vehicle ? (
               <button
