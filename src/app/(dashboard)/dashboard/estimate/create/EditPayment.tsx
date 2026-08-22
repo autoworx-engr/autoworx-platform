@@ -14,7 +14,6 @@ import {
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
@@ -95,9 +94,7 @@ export default function EditPaymentModal({
     mergedPaymentData?.card?.cardType || "MASTERCARD",
   );
   const [check, setCheck] = useState(mergedPaymentData.checkNumber || "");
-  const [cash, setCash] = useState<string>(
-    mergedPaymentData.cashReceived || "",
-  );
+  const [cash, setCash] = useState(mergedPaymentData.cashReceived || "");
   const [depositMethod, setDepositMethod] = useState(
     mergedPaymentData.depositMethod || "",
   );
@@ -106,14 +103,6 @@ export default function EditPaymentModal({
   );
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
-
-  const { data: company } = useCompanyQuery();
-  const companyName = company?.name ?? "";
-
-  // Cash is received by the shop, so the field defaults to the company name
-  useEffect(() => {
-    if (companyName) setCash((prev) => prev || companyName);
-  }, [companyName]);
 
   // Reset form with NET amount when modal opens
   useEffect(() => {
@@ -132,7 +121,7 @@ export default function EditPaymentModal({
       setCard(mergedPaymentData?.card?.creditCard || "");
       setCardType(mergedPaymentData?.card?.cardType || "MASTERCARD");
       setCheck(mergedPaymentData.checkNumber || "");
-      setCash(mergedPaymentData.cashReceived || companyName);
+      setCash(mergedPaymentData.cashReceived || "");
       setDepositMethod(mergedPaymentData.depositMethod || "");
       setDepositNotes(mergedPaymentData.depositNotes || "");
 

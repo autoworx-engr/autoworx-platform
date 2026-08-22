@@ -104,10 +104,12 @@ export default function MakePayment() {
   const { data: company } = useCompanyQuery();
   const companyName = company?.name ?? "";
 
-  // Cash is received by the shop, so the field defaults to the company name
+  // Cash is received by the shop, so a new payment defaults to the company
+  // name. An existing payment keeps whatever was saved, blank included.
   useEffect(() => {
-    if (companyName) setCash((prev) => prev || companyName);
-  }, [companyName]);
+    if (!companyName || payment) return;
+    setCash((prev) => prev || companyName);
+  }, [companyName, payment]);
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
 
@@ -380,7 +382,7 @@ export default function MakePayment() {
           setCheck(payment.check?.checkNumber || "");
           break;
         case "CASH":
-          setCash(payment.cash?.receivedCash || companyName);
+          setCash(payment.cash?.receivedCash || "");
           break;
         case "OTHER":
           setPaymentMethod(payment.other?.paymentMethod || null);
