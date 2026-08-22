@@ -20,6 +20,7 @@ import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { formatAmount, useAmountField } from "@/hooks/useAmountField";
+import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
 import { cn } from "@/lib/cn";
@@ -100,6 +101,14 @@ export default function MakePayment() {
     null,
   );
 
+  const { data: company } = useCompanyQuery();
+  const companyName = company?.name ?? "";
+
+  // Cash is received by the shop, so the field defaults to the company name
+  useEffect(() => {
+    if (companyName) setCash((prev) => prev || companyName);
+  }, [companyName]);
+
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
 
   const [depositMethod, setDepositMethod] = useState<string>("");
@@ -128,7 +137,7 @@ export default function MakePayment() {
     setCard("");
     setCardType("MASTERCARD");
     setCheck("");
-    setCash("");
+    setCash(companyName);
     setAmount(0);
     setDeposit(0);
     setDepositNotes("");
@@ -371,7 +380,7 @@ export default function MakePayment() {
           setCheck(payment.check?.checkNumber || "");
           break;
         case "CASH":
-          setCash(payment.cash?.receivedCash || "");
+          setCash(payment.cash?.receivedCash || companyName);
           break;
         case "OTHER":
           setPaymentMethod(payment.other?.paymentMethod || null);
