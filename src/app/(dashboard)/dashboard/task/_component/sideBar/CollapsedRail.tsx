@@ -77,7 +77,6 @@ export default function CollapsedRail({ showUsers }: { showUsers: boolean }) {
         />
       )}
 
-      {/* Fills the otherwise blank strip and names the panel it opens. */}
       <button
         type="button"
         onClick={expand}

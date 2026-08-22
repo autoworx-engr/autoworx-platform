@@ -11,13 +11,7 @@ export type AppointmentSearchItem = Appointment & {
   vehicle: { id: number; make: string; model: string; year: string } | null;
 };
 
-/**
- * Server-paginated appointment search. Fetches one page at a time (skip/take)
- * so the calendar search dropdown can infinite-scroll against the server.
- */
 export default function useAppointmentSearchQuery(searchTerm: string = "") {
-  // Surrounding whitespace must never reach the `contains` filters — " test"
-  // matches nothing in the DB even when "test" does.
   const term = searchTerm.trim();
   const nameFilter = clientNameFilter(term);
 

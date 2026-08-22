@@ -118,10 +118,17 @@ export default function NewVehicle({
       : [];
 
   const handleInputChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      if (name === "vehicleMake") {
+        if (prev[name as keyof typeof prev] !== value) {
+          newData.vehicleModel = null;
+        }
+      }
+
+      return newData;
+    });
   };
 
   async function handleSubmit(data: FormData) {

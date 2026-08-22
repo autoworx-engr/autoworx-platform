@@ -12,11 +12,6 @@ import { useState } from "react";
 import SidePanelTabs from "./SidePanelTabs";
 import { useIsAdminOrManager } from "./useIsAdminOrManager";
 
-/**
- * Below `md` the side panel has no room next to the calendar, so tasks and
- * users live in a bottom sheet reachable from the page header instead of being
- * dropped entirely.
- */
 export default function MobileSidePanel() {
   const [open, setOpen] = useState(false);
   const isAdminOrManager = useIsAdminOrManager();
