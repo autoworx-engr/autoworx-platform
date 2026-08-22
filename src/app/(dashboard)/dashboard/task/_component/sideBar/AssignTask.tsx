@@ -1,5 +1,4 @@
 import { assignTask } from "@/actions/task/assignTask";
-import FormError from "@/components/FormError";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
+import FormError from "@/components/FormError";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,8 +47,6 @@ export default function AssignTask() {
 
   const queryClient = useQueryClient();
   const { popup, data: popupData, close } = usePopupStore();
-  // close() nulls the store data, so read defensively — the dialog can still
-  // render a frame while Radix plays its close animation.
   const user = popupData?.user as User | undefined;
   const assignedUserTasks = (popupData?.userTasks as Task[]) ?? [];
 
@@ -57,7 +55,6 @@ export default function AssignTask() {
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Add only newly loaded tasks to the input state without resetting existing ones
   useEffect(() => {
     setTaskDataInput((prev) => {
       const existingIds = new Set(prev.map((t) => t.taskId));

@@ -3,7 +3,6 @@
 import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
 import { PanelLeftClose } from "lucide-react";
 
-/** Collapses the calendar side panel down to the rail. */
 export function MinimizeButton() {
   const setMinimized = useCalendarSidebarStore((x) => x.setMinimized);
   return (
