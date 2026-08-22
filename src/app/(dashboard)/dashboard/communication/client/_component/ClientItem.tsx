@@ -72,10 +72,6 @@ export default function ClientItem({
     (state) => state.setClientTrackUpdate,
   );
 
-  // The store holds the track for the conversation that's currently open, and
-  // ChatHead reads it to draw its badges. Writing another row's track into it
-  // would make the open conversation adopt that row's unread state, so only
-  // the selected row may publish. Rows keep their own state via `setClient`.
   const publishTrack = (
     updatedTrack: ClientConversationTrack | null | undefined,
   ) => {
@@ -190,10 +186,6 @@ export default function ClientItem({
     }
   };
 
-  // Suppress the draft preview for the row that's currently open — you're
-  // already looking at that text in the compose box, so re-showing it here
-  // on every keystroke is just noise (WhatsApp only shows drafts for chats
-  // you're NOT currently in).
   const draftEmailLive = useDraftPreview("client", "email", client?.id);
   const draftSmsLive = useDraftPreview("client", "sms", client?.id);
   const draftMessengerLive = useDraftPreview("client", "messenger", client?.id);
@@ -219,9 +211,6 @@ export default function ClientItem({
       conversationsTrack.messengerIsRead === false ||
       conversationsTrack.instagramIsRead === false);
 
-  // While a call is ringing or connected the row collapses to just the call —
-  // the email and SMS previews would only bury the thing that needs attention
-  // right now. They come back the moment the call settles.
   const callTrack = conversationsTrack as
     | (typeof conversationsTrack & {
         callStatus?: string | null;
