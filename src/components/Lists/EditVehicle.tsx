@@ -23,7 +23,7 @@ import {
 import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
 import { PencilLineIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
 import SelectorWithSearch from "./SelectorWithSearch";
@@ -49,6 +49,21 @@ export default function EditVehicle({
     vehicle?.engineSize || "",
   );
   const [vinValue, setVinValue] = useState<string>(vehicle?.vin || "");
+
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        vehicleYear: vehicle.year ? String(vehicle.year) : "",
+        vehicleMake: vehicle.make || "",
+        vehicleModel: vehicle.model || "",
+        other: vehicle.other || "",
+      });
+      setSelectedColor(vehicle?.color ? vehicle.color : null);
+      setEngineSize(vehicle?.engineSize || "");
+      setVinValue(vehicle?.vin || "");
+      clearError();
+    }
+  }, [open, vehicle]);
   const { decodeVin } = useVinDecode();
 
   const handleVinBlur = async (vin: string) => {
@@ -86,10 +101,17 @@ export default function EditVehicle({
       : [];
 
   const handleInputChange = (name: string, value: string | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value || "",
-    }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value || "" };
+
+      if (name === "vehicleMake") {
+        if (prev[name as keyof typeof prev] !== (value || "")) {
+          newData.vehicleModel = "";
+        }
+      }
+
+      return newData;
+    });
   };
 
   async function handleSubmit(data: FormData) {
