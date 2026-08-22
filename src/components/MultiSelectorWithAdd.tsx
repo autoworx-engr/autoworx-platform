@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeSearch } from "@/utils/normalizeSearch";
+
 import { cn } from "@/lib/utils";
 import { Category } from "@prisma/client";
 import { ChevronDown, Plus, X } from "lucide-react";
@@ -114,9 +116,11 @@ export function MultiSelectorWithAdd({
 
   const normalizedOptions = normalizeOptions();
 
-  const filteredOptions = searchTerm
+  // Compared with whitespace and dots stripped from both sides, so a stray
+  // leading/trailing space or a double space between words still matches.
+  const filteredOptions = searchTerm.trim()
     ? normalizedOptions.filter((opt) =>
-        opt.title.toLowerCase().includes(searchTerm.toLowerCase()),
+        normalizeSearch(opt.title).includes(normalizeSearch(searchTerm)),
       )
     : normalizedOptions;
 

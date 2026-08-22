@@ -19,6 +19,7 @@ import {
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
 import { TruncatedText } from "@/components/ui/TruncatedText";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 
 /** One label for the trigger, the rows and the search box to agree on. */
 const vehicleLabel = (vehicle: Partial<Vehicle>) =>
@@ -182,13 +183,13 @@ export function SelectAppointmentVehicle({
           // on model and `other` alone meant searching the year or make of the
           // vehicle you were looking at returned "No results found".
           onSearch={(search: string) => {
-            const query = search.toLowerCase();
+            const query = normalizeSearch(search);
             return vehicleOptions.filter((option) =>
               [
                 vehicleLabel(option),
                 option.vin ?? "",
                 option.license ?? "",
-              ].some((field) => field.toLowerCase().includes(query)),
+              ].some((field) => normalizeSearch(field).includes(query)),
             );
           }}
           openState={[
