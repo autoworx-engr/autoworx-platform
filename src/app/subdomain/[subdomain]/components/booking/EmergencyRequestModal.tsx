@@ -74,7 +74,7 @@ export const EmergencyRequestModal = ({
         onClick={handleClose}
       />
 
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-none bg-background rounded-2xl shadow-2xl border border-border">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto no-visible-scrollbar bg-background rounded-2xl shadow-2xl border border-border">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-primary text-primary-foreground px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
