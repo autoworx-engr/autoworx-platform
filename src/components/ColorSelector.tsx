@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { VehicleColor } from "@prisma/client";
 import { Check, ChevronDown, ChevronUp, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ColorSelectorProps {
   selectedColor: VehicleColor | null;
@@ -35,6 +35,24 @@ export default function ColorSelector({
   const [colors, setColors] = useState<VehicleColor[]>([]);
   const [filteredColors, setFilteredColors] = useState<VehicleColor[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setColorOpen(false);
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Fetch colors on component mount
   useEffect(() => {
@@ -78,7 +96,7 @@ export default function ColorSelector({
   }, [colorOpen]);
 
   return (
-    <div className="group flex w-full flex-col gap-1.5">
+    <div className="group flex w-full flex-col gap-1.5" ref={dropdownRef}>
       <Label className="flex items-center gap-1 text-base">{label}</Label>
       {/* Color selector */}
       <div className="relative w-full">
