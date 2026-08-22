@@ -376,6 +376,7 @@ const MyAccount = ({ user }: { user: User }) => {
                     name="description"
                     label="Description"
                     value={leaveRequest.description}
+                    rows={3}
                     onChange={(e) =>
                       setLeaveRequest({
                         ...leaveRequest,
