@@ -65,10 +65,17 @@ export const ServiceCard = ({ service }: { service: Service }) => {
             loading="lazy"
             onError={() => setImgSrc(FALLBACK_IMAGE)}
           />
-          {service.category && (
-            <Badge className="absolute top-3 left-3 bg-background/90 text-foreground backdrop-blur-sm text-[10px] font-medium">
-              {service.category}
-            </Badge>
+          {service.category.length > 0 && (
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[calc(100%-1.5rem)]">
+              {service.category.map((cat) => (
+                <Badge
+                  key={cat}
+                  className="bg-background/90 text-foreground backdrop-blur-sm text-[10px] font-medium"
+                >
+                  {cat}
+                </Badge>
+              ))}
+            </div>
           )}
         </div>
         <div className="p-4 space-y-3">
@@ -168,10 +175,17 @@ export const ServiceCard = ({ service }: { service: Service }) => {
               onError={() => setImgSrc(FALLBACK_IMAGE)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            {service.category && (
-              <Badge className="absolute top-3 left-3 bg-background/90 text-foreground backdrop-blur-sm text-[10px]">
-                {service.category}
-              </Badge>
+            {service.category.length > 0 && (
+              <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[calc(100%-3rem)]">
+                {service.category.map((cat) => (
+                  <Badge
+                    key={cat}
+                    className="bg-background/90 text-foreground backdrop-blur-sm text-[10px]"
+                  >
+                    {cat}
+                  </Badge>
+                ))}
+              </div>
             )}
             <button
               onClick={() => setIsDetailsOpen(false)}

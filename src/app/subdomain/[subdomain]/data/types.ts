@@ -14,7 +14,7 @@ export interface Service {
   description: string;
   price: number;
   estimatedMinutes: number;
-  category: string;
+  category: string[];
   images: string[];
   vehicleTypePricing: VehicleTypePricing;
 }

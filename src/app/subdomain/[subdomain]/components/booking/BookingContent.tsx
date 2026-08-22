@@ -119,7 +119,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       description: svc.description || "",
       price: toNumber(svc.price),
       estimatedMinutes: svc.duration,
-      category: svc.category && svc.category.length > 0 ? svc.category[0] : "",
+      category: svc.category || [],
       images: svc.imageUrl ? [svc.imageUrl] : [""],
       vehicleTypePricing: {
         coupe: toNumber(svc.modifierCoupe),
