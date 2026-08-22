@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour } from "@/utils/time";
@@ -259,11 +260,14 @@ export function useAppointmentFormState({
   }, [estimates, invoices]);
 
   const filteredDraftEstimateOptions = useMemo(() => {
-    const term = draftSearch.toLowerCase();
+    // Normalised so a stray or doubled space in the query still matches, the
+    // same way the other pickers in this modal search.
+    const term = normalizeSearch(draftSearch);
+    if (!term) return draftEstimateOptions;
     return draftEstimateOptions.filter(
       (item) =>
-        item.id.includes(draftSearch) ||
-        item.vehicle.toLowerCase().includes(term),
+        normalizeSearch(item.id).includes(term) ||
+        normalizeSearch(item.vehicle).includes(term),
     );
   }, [draftSearch, draftEstimateOptions]);
 
