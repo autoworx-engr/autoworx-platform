@@ -74,8 +74,6 @@ export default function TaskCreateOrEdit({
     );
   }
 
-  // When the parent fully controls open state (setIsModalOpen) without giving
-  // us a triggerIcon, it opens the modal itself and doesn't want a visible button.
   const showTrigger = Boolean(triggerIcon) || !setIsModalOpen;
 
   return (
@@ -84,7 +82,6 @@ export default function TaskCreateOrEdit({
         <DialogTrigger
           asChild
           onClick={(e) => {
-            // Ensure click handler prevents propagation if needed (good practice for components inside lists)
             e.stopPropagation();
           }}
         >

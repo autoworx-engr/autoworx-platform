@@ -1,16 +1,16 @@
 "use client";
 
 import {
+  BellRing,
   CalendarDays,
+  Car,
   Clock3,
-  User,
+  DollarSign,
   Mail,
   Phone,
-  Car,
-  DollarSign,
   Tag,
+  User,
   Users,
-  BellRing,
 } from "lucide-react";
 import moment from "moment";
 

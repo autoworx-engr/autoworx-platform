@@ -17,7 +17,6 @@ export default async function TaskLayout({ children }: TaskLayoutProps) {
         id="task"
         className="relative flex h-[calc(100vh-8rem)] gap-4 pt-3 md:h-[81vh] md:pt-4"
       >
-        {/* <SyncLists {...data} /> */}
         <DnDWrapper id="task">
           <CalendarSidebar />
           {children}

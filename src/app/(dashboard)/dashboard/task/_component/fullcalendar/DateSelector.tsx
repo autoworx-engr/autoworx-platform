@@ -187,15 +187,12 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         className="flex-1 lg:flex-none w-full lg:w-auto"
       >
         <span className="flex flex-1 lg:flex-none items-center gap-2">
-          {/* Calendar Icon: Subtle coloring */}
           <CalendarDays size={18} className={iconStyle} />
-          {/* Display Value: Core data using specified text color */}
           <span className={`${textStyle} font-medium`}>
             {getDisplayValue()}
           </span>
         </span>
 
-        {/* Chevron Icon: Rotates on open, smooth transition */}
         <ChevronDown
           size={16}
           className={`${iconStyle} ${TRANSITION_UTILITY} ${

@@ -22,9 +22,6 @@ export default function CalendarSidebar() {
     `(min-width: ${CALENDAR_SIDEBAR_EXPAND_BREAKPOINT}px)`,
   );
 
-  // Wide screens fit the calendar and the panel side by side, so the panel is
-  // open there by default; narrower ones start on the rail. Once the user
-  // toggles it themselves the store ignores this.
   useEffect(() => {
     applyViewportDefault(!isWideScreen);
   }, [isWideScreen, applyViewportDefault]);
