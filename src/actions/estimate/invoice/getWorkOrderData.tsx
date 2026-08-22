@@ -10,6 +10,7 @@ import {
   Invoice,
   InvoiceItem,
   InvoicePhoto,
+  InvoiceRedo,
   Task,
   Technician,
   TechnicianImage,
@@ -42,6 +43,8 @@ export interface IWorkOrderData {
       images: TechnicianImage[];
     })[]
   >;
+  // serviceId -> InvoiceRedo[]
+  redoPerService: Record<number, InvoiceRedo[]>;
 }
 
 export async function getWorkOrderData(id: string) {
@@ -117,10 +120,23 @@ export async function getWorkOrderData(id: string) {
       });
     });
 
+    const redoRecords = await db.invoiceRedo.findMany({
+      where: { invoiceId: invoice.id },
+    });
+
+    const redoPerService: Record<number, typeof redoRecords> = {};
+    redoRecords.forEach((redo) => {
+      if (!redoPerService[redo.serviceId]) {
+        redoPerService[redo.serviceId] = [];
+      }
+      redoPerService[redo.serviceId].push(redo);
+    });
+
     return {
       invoice,
       invoiceTechnicians: Object.values(techniciansPerItem).flat(),
       techniciansPerItem,
+      redoPerService,
       company: invoice.company,
       writePermission:
         user?.employeeType === "Admin" || user?.employeeType === "Manager",

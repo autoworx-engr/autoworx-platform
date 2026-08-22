@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 import deleteGoogleCalendarEvent from "../task/google-calendar/deleteGoogleCalendarEvent";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
+import { getPusherInstance } from "@/lib/pusher/server";
 import axios from "axios";
 
 export async function deleteAppointment(id: number): Promise<ServerAction> {
@@ -14,8 +15,23 @@ export async function deleteAppointment(id: number): Promise<ServerAction> {
       },
     });
 
+    // realtime: notify subscribers (e.g. Com hub client data section) so the
+    // appointment list updates without a refresh
     try {
-      deleteRemindersInNest(deletedAppointment.id.toString());
+      if (deletedAppointment.clientId) {
+        const pusher = getPusherInstance();
+        await pusher.trigger(
+          `appointment-${deletedAppointment.companyId}-${deletedAppointment.clientId}`,
+          "appointment-deleted",
+          { id: deletedAppointment.id },
+        );
+      }
+    } catch (error) {
+      console.log("🚀 ~ deleteAppointment ~ pusher error:", error);
+    }
+
+    try {
+      await deleteRemindersInNest(deletedAppointment.id.toString());
     } catch (error) {
       console.log("🚀 ~ deleteAppointment ~ error:", error);
     }
@@ -28,7 +44,7 @@ export async function deleteAppointment(id: number): Promise<ServerAction> {
         ?.googleCalendarToken;
 
       if (googleCalendarToken && deletedAppointment.googleEventId) {
-        deleteGoogleCalendarEvent(deletedAppointment.googleEventId);
+        await deleteGoogleCalendarEvent(deletedAppointment.googleEventId);
       }
     } catch (error) {
       console.log("🚀 ~ deleteAppointment ~ error:", error);
@@ -55,7 +71,7 @@ export async function deleteRemindersInNest(id: string) {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     console.log("🚀 ~ deleteRemindersInNest ~ end:");
     return data;

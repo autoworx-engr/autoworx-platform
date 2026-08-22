@@ -1,13 +1,13 @@
 "use client";
 
-import { Dialog, DialogTrigger } from "@/components/Dialog";
 import EditClientModalBody from "@/app/(dashboard)/dashboard/client/EditClientModalBody";
+import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { Client } from "@prisma/client";
+import { PencilLineIcon } from "lucide-react";
 import { useState } from "react";
-import { Edit } from "lucide-react";
 
 type TProps = {
-  client: Client
+  client: Client;
 };
 
 export default function EditClientModalTrigger({ client }: TProps) {
@@ -20,7 +20,7 @@ export default function EditClientModalTrigger({ client }: TProps) {
       className="ml-1 inline-flex items-center justify-center rounded-full p-1 hover:bg-white/10"
       aria-label="Edit client"
     >
-      <Edit className="size-5 text-white/90" />
+      <PencilLineIcon className="size-5 text-white/90" />
     </button>
   );
 
@@ -28,7 +28,11 @@ export default function EditClientModalTrigger({ client }: TProps) {
     <Dialog open={open} onOpenChange={(val) => setOpen(val)}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       {open && (
-        <EditClientModalBody client={client as any} onClose={() => setOpen(false)} />
+        <EditClientModalBody
+          key={client.id}
+          client={client as any}
+          onClose={() => setOpen(false)}
+        />
       )}
     </Dialog>
   );

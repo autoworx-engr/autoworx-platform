@@ -1,12 +1,20 @@
 "use server";
 
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { revalidatePath } from "next/cache";
 
-export async function clockOut({ clockInOutId }: { clockInOutId: number }) {
+export async function clockOut({
+  clockInOutId,
+  timezone,
+}: {
+  clockInOutId: number;
+  timezone?: string;
+}) {
   try {
     const user = await getUser();
+    const now = companyNow(timezone);
     const clockedOut = await db.clockInOut.update({
       where: {
         id: clockInOutId,
@@ -14,28 +22,29 @@ export async function clockOut({ clockInOutId }: { clockInOutId: number }) {
         companyId: user.companyId,
       },
       data: {
-        clockOut: new Date(),
+        clockOut: now,
+        updatedAt: now,
       },
       include: {
         ClockBreak: true,
       },
     });
 
-    let ClockBreaksLength = clockedOut?.ClockBreak?.length - 1;
-    let lastClockBreakId = clockedOut.ClockBreak[ClockBreaksLength]?.id;
+    if (clockedOut.ClockBreak && clockedOut.ClockBreak.length > 0) {
+      const lastIndex = clockedOut.ClockBreak.length - 1;
+      const lastClockBreak = clockedOut.ClockBreak[lastIndex];
 
-    if (
-      clockedOut?.ClockBreak[ClockBreaksLength]?.id &&
-      !clockedOut.ClockBreak[clockedOut?.ClockBreak?.length - 1]?.breakEnd
-    ) {
-      await db.clockBreak.update({
-        where: {
-          id: lastClockBreakId,
-        },
-        data: {
-          breakEnd: new Date(),
-        },
-      });
+      if (lastClockBreak && !lastClockBreak.breakEnd) {
+        await db.clockBreak.update({
+          where: {
+            id: lastClockBreak.id,
+          },
+          data: {
+            breakEnd: now,
+            updatedAt: now,
+          },
+        });
+      }
     }
 
     revalidatePath("/");

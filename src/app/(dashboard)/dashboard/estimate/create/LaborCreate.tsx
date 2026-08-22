@@ -1,6 +1,4 @@
-// import SelectCategory from "@/components/Lists/SelectCategory";
 import SelectCategory from "@/components/Lists/CreateEstimateCategory";
-import { SelectTags } from "@/components/Lists/SelectTags";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useListsStore } from "@/stores/lists";
@@ -12,6 +10,14 @@ import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { laborCreateValidationSchema } from "@/validations/schemas/estimate/labor/labor.validation";
 import { cn } from "@/lib/cn";
+import {
+  LABOR_NAME_MAX_LENGTH,
+  validateLabor,
+  type LaborField,
+  type LaborFieldErrors,
+} from "./laborValidation";
+
+const MAX_LABOR_VALUE = 99999999;
 
 export default function LaborCreate() {
   const { categories } = useListsStore();
@@ -24,29 +30,53 @@ export default function LaborCreate() {
   const [charge, setCharge] = useState<number>();
   const [discount, setDiscount] = useState<number>();
   const [addToCannedLabor, setAddToCannedLabor] = useState<boolean>(false);
+  const [errors, setErrors] = useState<LaborFieldErrors>({});
 
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
 
-  const [tagsOpen, setTagsOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
+
+  // Drop a field's error as soon as the user edits it, so the form stops
+  // shouting about something that's already been fixed.
+  const clearFieldError = (field: LaborField) =>
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+
+  /**
+   * Returns false when the form is invalid. The offending fields get a red
+   * border, and the first problem is surfaced as a toast — validateLabor
+   * returns its errors in field order, so the toast follows the visual order.
+   */
+  const validateForm = () => {
+    const nextErrors = validateLabor({ name, hours, charge }, MAX_LABOR_VALUE);
+    setErrors(nextErrors);
+
+    const [firstError] = Object.values(nextErrors);
+    if (firstError) {
+      errorToast(firstError, { id: "labor-validation" });
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId]);
 
   useEffect(() => {
-    setTagsOpen(false);
-  }, [categoryOpen]);
-  useEffect(() => {
-    setCategoryOpen(false);
-  }, [tagsOpen]);
+    // Opening the popup for a different labor row must not inherit the
+    // previous one's validation errors.
+    setErrors({});
 
-  useEffect(() => {
     if (data?.labor && data.edit) {
       setName(data.labor.name);
       setCategory(categories.find((cat) => cat.id === data.labor.categoryId)!);
@@ -54,10 +84,10 @@ export default function LaborCreate() {
       setNotes(data.labor.notes);
       setHours(data.labor.hours == 0 ? undefined : data.labor.hours);
       setCharge(
-        data.labor.charge == 0 ? undefined : parseFloat(data.labor.charge)
+        data.labor.charge == 0 ? undefined : parseFloat(data.labor.charge),
       );
       setDiscount(
-        data.labor.discount == 0 ? undefined : parseFloat(data.labor.discount)
+        data.labor.discount == 0 ? undefined : parseFloat(data.labor.discount),
       );
       setAddToCannedLabor(data.labor.addToCannedLabor);
     } else {
@@ -73,10 +103,7 @@ export default function LaborCreate() {
   }, [data]);
 
   async function handleSubmit() {
-    // if (!name) {
-    //   alert("Labor name is required");
-    //   return;
-    // }
+    if (!validateForm()) return;
 
     try {
       const validatedLaborData = await laborCreateValidationSchema.parseAsync({
@@ -93,7 +120,7 @@ export default function LaborCreate() {
         const res = await newLabor(validatedLaborData);
         if (res.type === "globalError") {
           errorToast(
-            res.errorSource?.length ? res.errorSource[0].message : res.message
+            res.errorSource?.length ? res.errorSource[0].message : res.message,
           );
         }
       }
@@ -150,17 +177,14 @@ export default function LaborCreate() {
       errorToast(
         formattedError.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
   // }
 
   async function handleEdit() {
-    if (!name) {
-      alert("Labor name is required");
-      return;
-    }
+    if (!validateForm()) return;
 
     // Change the service where itemId is the same
     // @ts-ignore
@@ -196,18 +220,33 @@ export default function LaborCreate() {
       </h3>
 
       {/* Labor Name */}
-      <div className="flex items-center gap-3">
-        <label htmlFor="name" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
-          Labor Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
-          placeholder="e.g. Oil Change"
-        />
+      <div>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="name"
+            className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+          >
+            Labor Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              clearFieldError("name");
+            }}
+            aria-invalid={!!errors.name}
+            maxLength={LABOR_NAME_MAX_LENGTH}
+            className={cn(
+              "h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border transition-all focus:outline-none focus:ring-2",
+              errors.name
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-200 focus:border-primary/30 focus:ring-primary/30",
+            )}
+            placeholder="Labor Name"
+          />
+        </div>
       </div>
 
       {/* Category */}
@@ -227,93 +266,100 @@ export default function LaborCreate() {
         </div>
       </div>
 
-      {/* Tags */}
-      <div className="flex items-center gap-3">
-        <label htmlFor="tags" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
-          Tags
-        </label>
-        <div className="flex-1">
-          <SelectTags
-            value={tags}
-            setValue={setTags}
-            openStates={[tagsOpen, setTagsOpen]}
+      {/* Hours */}
+      <div>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="hours"
+            className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+          >
+            No. of Hours <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="hours"
+            min="0"
+            value={hours ?? ""}
+            onChange={(e) => {
+              clearFieldError("hours");
+              const inputValue = e.target.value;
+              if (
+                inputValue === "" ||
+                inputValue === "-" ||
+                inputValue === "0"
+              ) {
+                setHours(undefined);
+                return;
+              }
+              const value = parseFloat(inputValue);
+              if (isNaN(value) || value <= 0) {
+                setHours(undefined);
+              } else {
+                setHours(value);
+              }
+            }}
+            aria-invalid={!!errors.hours}
+            className={cn(
+              "h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border transition-all focus:outline-none focus:ring-2",
+              errors.hours
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-200 focus:border-primary/30 focus:ring-primary/30",
+            )}
+            placeholder="0"
           />
         </div>
       </div>
 
-      {/* Notes */}
-      <div className="flex items-start gap-3">
-        <label htmlFor="notes" className="mt-2 w-28 text-sm font-semibold tracking-wider text-slate-500">
-          Notes
-        </label>
-        <textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
-          placeholder="Additional details..."
-        />
-      </div>
-
-      {/* Hours */}
-      <div className="flex items-center gap-3">
-        <label htmlFor="hours" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
-          No. of Hours
-        </label>
-        <input
-          type="number"
-          id="hours"
-          min="0"
-          value={hours ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setHours(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setHours(undefined);
-            } else {
-              setHours(value);
-            }
-          }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
-          placeholder="0"
-        />
-      </div>
-
       {/* Charge ($/hr) */}
-      <div className="flex items-center gap-3">
-        <label htmlFor="perhour" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
-          $/hr
-        </label>
-        <input
-          type="number"
-          id="perhour"
-          min="0"
-          value={charge ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setCharge(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setCharge(undefined);
-            } else {
-              setCharge(value);
-            }
-          }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
-          placeholder="0.00"
-        />
+      <div>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="perhour"
+            className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+          >
+            $/hr <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="perhour"
+            min="0"
+            value={charge ?? ""}
+            onChange={(e) => {
+              clearFieldError("charge");
+              const inputValue = e.target.value;
+              if (
+                inputValue === "" ||
+                inputValue === "-" ||
+                inputValue === "0"
+              ) {
+                setCharge(undefined);
+                return;
+              }
+              const value = parseFloat(inputValue);
+              if (isNaN(value) || value <= 0) {
+                setCharge(undefined);
+              } else {
+                setCharge(value);
+              }
+            }}
+            aria-invalid={!!errors.charge}
+            className={cn(
+              "h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border transition-all focus:outline-none focus:ring-2",
+              errors.charge
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-200 focus:border-primary/30 focus:ring-primary/30",
+            )}
+            placeholder="0.00"
+          />
+        </div>
       </div>
 
       {/* Discount */}
       <div className="flex items-center gap-3">
-        <label htmlFor="discount" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="discount"
+          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Discount
         </label>
         <input
@@ -334,8 +380,25 @@ export default function LaborCreate() {
               setDiscount(value);
             }
           }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
           placeholder="0"
+        />
+      </div>
+
+      {/* Notes */}
+      <div className="flex items-start gap-3">
+        <label
+          htmlFor="notes"
+          className="mt-2 w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
+          Notes
+        </label>
+        <textarea
+          id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30 resize-none"
+          placeholder="Additional details..."
         />
       </div>
 
@@ -351,12 +414,14 @@ export default function LaborCreate() {
                 className="peer sr-only"
               />
 
-              <div className={cn(
-                "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
-                "border-slate-200 bg-white shadow-sm",
-                "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
-                "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20"
-              )}>
+              <div
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                  "border-slate-200 bg-white shadow-sm",
+                  "peer-checked:border-primary peer-checked:bg-primary peer-checked:shadow-md peer-checked:shadow-primary/20",
+                  "group-hover:border-primary/50 peer-focus:ring-2 peer-focus:ring-primary/20",
+                )}
+              >
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -366,7 +431,9 @@ export default function LaborCreate() {
                   strokeLinejoin="round"
                   className={cn(
                     "h-3.5 w-3.5 transition-all duration-200",
-                    addToCannedLabor ? "scale-100 opacity-100" : "scale-50 opacity-0"
+                    addToCannedLabor
+                      ? "scale-100 opacity-100"
+                      : "scale-50 opacity-0",
                   )}
                 >
                   <polyline points="20 6 9 17 4 12" />
@@ -374,10 +441,12 @@ export default function LaborCreate() {
               </div>
             </div>
 
-            <span className={cn(
-              "font-semibold transition-colors duration-200",
-              addToCannedLabor ? "text-slate-800" : "text-slate-600"
-            )}>
+            <span
+              className={cn(
+                "font-semibold transition-colors duration-200",
+                addToCannedLabor ? "text-slate-800" : "text-slate-600",
+              )}
+            >
               Add to Canned Labor
             </span>
           </label>
@@ -388,7 +457,7 @@ export default function LaborCreate() {
       <div className="mt-4 flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
         <Close />
         <button
-          className="rounded-xl bg-[#6571FF] px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+          className="rounded-xl bg-primary px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
           onClick={data?.edit ? handleEdit : handleSubmit}
           type="button"
         >

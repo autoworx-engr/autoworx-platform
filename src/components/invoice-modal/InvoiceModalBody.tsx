@@ -1,11 +1,10 @@
 "use client";
 import { authorizeInvoice } from "@/actions/estimate/invoice/authorize";
-import { authorizedLeadsConvertion } from "@/actions/estimate/invoice/authorizedLeadsConvertion";
+import { checkInventoryForConversion } from "@/actions/estimate/invoice/checkInventory";
 import { getInvoiceModalData } from "@/actions/estimate/invoice/getInvoiceModalData";
 import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCreated";
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
 import { sendInvoiceSms } from "@/actions/estimate/invoice/sendInvoiceSms";
-import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
 import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import {
@@ -14,6 +13,10 @@ import {
   DialogOverlay,
   DialogPortal,
 } from "@/components/Dialog";
+import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
+import ComponentsLightbox from "@/components/common/LightBox";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
+import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { useServerGet } from "@/hooks/useServerGet";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
@@ -22,9 +25,13 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
+  CardPayment,
+  CashPayment,
+  CheckPayment,
   Client,
   Column,
   Company,
+  DepositPayment,
   InfobipConfig,
   Invoice,
   InvoiceItem,
@@ -32,6 +39,9 @@ import {
   InvoiceType,
   Labor,
   Material,
+  OtherPayment,
+  Payment,
+  PaymentMethod,
   Refund,
   Service,
   TwilioCredentials,
@@ -40,7 +50,19 @@ import {
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
-import { Eye, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  Copy,
+  Eye,
+  FileDown,
+  Mail,
+  MessageCircle,
+  MessageCircleMore,
+  PencilLineIcon,
+  Printer,
+  X,
+} from "lucide-react";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -49,6 +71,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useReactToPrint } from "react-to-print";
+import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
 import CarLoading from "../common/CarLoading";
 import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
@@ -56,6 +79,10 @@ import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
+  ssr: false,
+});
+
+const InvoicePdfActions = dynamic(() => import("./InvoicePdfActions"), {
   ssr: false,
 });
 
@@ -72,14 +99,27 @@ type InvoiceData = Invoice & {
   user: User;
   client: Client;
   vehicle: Vehicle;
+  Refund: Refund[];
+  payments: (Payment & {
+    card: CardPayment | null;
+    check: CheckPayment | null;
+    cash: CashPayment | null;
+    other: (OtherPayment & { paymentMethod: PaymentMethod | null }) | null;
+    deposit: DepositPayment | null;
+    Refund: Refund[];
+  })[];
 };
 
 export default function InvoiceModalBody({
   invoiceId,
   isPublic = false,
+  isShowEdit = true,
+  fromCollaboration = false,
 }: {
   invoiceId?: string;
   isPublic?: boolean;
+  isShowEdit?: boolean;
+  fromCollaboration?: boolean;
 }) {
   const searchParams = useSearchParams();
 
@@ -89,8 +129,6 @@ export default function InvoiceModalBody({
     queryFn: () => getInvoiceModalData(invoiceId!),
     enabled: !!invoiceId,
   });
-
-  // console.log({ isError, error, data });
 
   const [twilioCredentials, setTwilioCredentials] = useState<
     TwilioCredentials | InfobipConfig | null
@@ -105,12 +143,22 @@ export default function InvoiceModalBody({
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const { runWithInventoryCheck, dialogProps: inventoryShortageDialogProps } =
+    useInventoryConfirm();
   const [activeTab, setActiveTab] = useState<
     "estimate" | "attachments" | "inspections"
   >("estimate");
   const [desktopActiveTab, setDesktopActiveTab] = useState<
     "attachments" | "inspections"
   >("attachments");
+  // This modal is reused on pages outside /dashboard/estimate/ (e.g.
+  // /dashboard/payments), where /dashboard/estimate/photo's intercepting
+  // route doesn't apply — navigating there is a real page transition that
+  // unmounts this modal's plain `open` state, so closing the photo lands
+  // back on a flat list page instead of the modal. Render the lightbox
+  // inline instead of routing to it.
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const params = new URLSearchParams(searchParams!);
   const isSuccess = params.get("success") ?? false;
 
@@ -120,6 +168,11 @@ export default function InvoiceModalBody({
   const [isSuccessMsgShown, setIsSuccessMsgShown] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [refundAmount, setRefundAmount] = useState<number>(0);
+  const [openGroup, setOpenGroup] = useState<"export" | "share" | null>(null);
+  const isExportOpen = openGroup === "export";
+  const isShareOpen = openGroup === "share";
+
+  const canEdit = useCanAccessRoute("/dashboard/estimate");
 
   // Detect if we're coming from an intercepted route
   const fromInterceptedRoute =
@@ -134,7 +187,7 @@ export default function InvoiceModalBody({
         data.invoice.Refund?.reduce(
           (total: number, refund: Refund) =>
             total + (Number(refund.amount) || 0),
-          0
+          0,
         ) || 0;
 
       setRefundAmount(refundAmount);
@@ -181,7 +234,6 @@ export default function InvoiceModalBody({
   const companyId = data?.invoice?.companyId;
   const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
   const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
-  console.log("🚀 ~ InvoiceModalBody ~ gatewayInfo:", gatewayInfo);
 
   useEffect(() => {
     if (isSuccess && !isSuccessMsgShown) {
@@ -234,6 +286,25 @@ export default function InvoiceModalBody({
   const company = invoice.company;
   const client = invoice.client;
   const vehicle = invoice.vehicle;
+  const paymentEntries = (invoice.payments ?? [])
+    .filter((payment) => payment.invoiceId === invoice.id)
+    .sort(
+      (a, b) =>
+        new Date(b.date || b.createdAt).getTime() -
+        new Date(a.date || a.createdAt).getTime(),
+    );
+
+  const getPaymentMethodText = (payment: InvoiceData["payments"][number]) => {
+    if (payment.type === "OTHER") {
+      return payment.other?.paymentMethod?.name || "OTHER";
+    }
+
+    if (payment.type === "CARD") {
+      return payment.card?.cardType || "CARD";
+    }
+
+    return payment.type;
+  };
 
   const handleEmail = async () => {
     let res = await sendInvoiceEmail({ invoiceId: invoice.id });
@@ -252,23 +323,9 @@ export default function InvoiceModalBody({
     successToast("Invoice sent successfully");
   };
   const handleCopyLink = async () => {
-    // 1. Identify what you want to copy
-    const clientName =
-      invoice?.client?.firstName || invoice?.client?.lastName || "";
-
-    const shortLinkResult = await getOrCreateShortLinkAction({
-      invoiceId: invoiceId!,
-      clientName,
-    });
-
-    const urlToCopy =
-      shortLinkResult.success && shortLinkResult.shortUrl
-        ? shortLinkResult.shortUrl
-        : shortLinkResult.originalUrl ||
-          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
+    const urlToCopy = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
 
     try {
-      // 2. Check if the Clipboard API is available AND the context is secure
       if (
         typeof window !== "undefined" &&
         navigator.clipboard &&
@@ -277,7 +334,6 @@ export default function InvoiceModalBody({
         await navigator.clipboard.writeText(urlToCopy);
         successToast("Link copied to clipboard");
       } else {
-        // 3. Fallback for insecure connections (like your IP address testing)
         throw new Error("Clipboard API unavailable");
       }
     } catch (error) {
@@ -301,15 +357,11 @@ export default function InvoiceModalBody({
     }
   };
 
-  const handleSaveSignature = async (invoiceId: string) => {
-    if (!sigCanvas.current) return;
-
+  const authorizeWithSignature = async (
+    file: File,
+    allowInsufficientInventory: boolean,
+  ) => {
     try {
-      const file = getFileFromCanvas(
-        sigCanvas.current.getCanvas(),
-        `signature-${invoiceId}.png`
-      );
-
       const formData = new FormData();
       formData.append("file", file);
 
@@ -332,21 +384,70 @@ export default function InvoiceModalBody({
         invoice.id,
         authorizedNameInput,
         data[0],
-        invoice.type
+        invoice.type,
+        allowInsufficientInventory,
       );
 
       if (response?.type === "success") {
         successToast("Invoice Authorized");
-        await authorizedLeadsConvertion(invoice.id);
+
+        setSignImage(data[0]);
+        setAuthorizedName(authorizedNameInput);
+        setInvoice((prev) =>
+          prev
+            ? {
+                ...prev,
+                signatureImage: data[0],
+                authorizedName: authorizedNameInput,
+                wasAuthorized: true,
+              }
+            : prev,
+        );
       } else {
-        errorToast("Signature upload failed");
-        console.error("Signature upload failed:");
+        errorToast(
+          (response as { message?: string })?.message ||
+            "Invoice authorization failed",
+        );
+        console.error("Invoice authorization failed:", response);
       }
     } catch (err) {
       errorToast("Signature upload failed");
       console.error("Signature upload failed:", err);
     }
   };
+
+  const handleSaveSignature = async (invoiceId: string) => {
+    if (!sigCanvas.current) return;
+
+    try {
+      const file = getFileFromCanvas(
+        sigCanvas.current.getCanvas(),
+        `signature-${invoiceId}.png`,
+      );
+
+      // Warn about a stock shortage before the signature is uploaded or the
+      // estimate is converted, so cancelling leaves everything untouched.
+      await runWithInventoryCheck(
+        () => checkInventoryForConversion(invoice.id),
+        (allowInsufficientInventory) =>
+          authorizeWithSignature(file, allowInsufficientInventory),
+      );
+    } catch (err) {
+      errorToast("Signature upload failed");
+      console.error("Signature upload failed:", err);
+    }
+  };
+
+  const totalMaterialSell = invoice.invoiceItems.reduce(
+    (invoiceSum: number, invoiceItem: any) =>
+      invoiceSum +
+      (invoiceItem.materials ?? []).reduce(
+        (materialSum: number, material: { quantity?: number; sell?: number }) =>
+          materialSum + (material.quantity ?? 0) * (material.sell ?? 0),
+        0,
+      ),
+    0,
+  );
 
   return (
     <DialogPortal>
@@ -365,127 +466,238 @@ export default function InvoiceModalBody({
       >
         <div
           ref={printComponentRef}
-          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[740px] md:flex-row"
+          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[95vh] md:w-[800px] md:flex-row print:block print:h-auto print:w-full print:border-none print:p-0 print:shadow-none"
         >
           {/* Action Buttons */}
-          {!isPublic && (
-            <div className="mt-6 flex w-full flex-wrap items-center justify-center print:hidden">
-              <div className="flex w-full flex-wrap items-center justify-center gap-3 md:gap-4">
+          {!isPublic && isShowEdit && (
+            <div className="mt-6 flex w-full flex-col items-center gap-3 print:hidden">
+              {/* Row 1 — main actions */}
+              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                 {/* Edit Link */}
-                <Link
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                  href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
-                >
-                  <SquarePen className="h-4 w-4" />
-                  <span className="hidden md:inline">Edit</span>
-                </Link>
+                {isShowEdit && (
+                  <Tooltip
+                    title={
+                      canEdit ? "Edit" : "You don't have permission to edit"
+                    }
+                  >
+                    <span
+                      className={
+                        !canEdit ? "cursor-not-allowed opacity-50" : undefined
+                      }
+                    >
+                      <Link
+                        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                        href={
+                          canEdit
+                            ? `/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`
+                            : "#"
+                        }
+                        onClick={(e) => {
+                          if (!canEdit) e.preventDefault();
+                        }}
+                        aria-disabled={!canEdit}
+                        tabIndex={!canEdit ? -1 : undefined}
+                        style={!canEdit ? { pointerEvents: "none" } : undefined}
+                      >
+                        <PencilLineIcon className="h-4 w-4 md:h-5 md:w-5" />
+                        {/* <span className="hidden md:inline">Edit</span> */}
+                      </Link>
+                    </span>
+                  </Tooltip>
+                )}
 
                 {/* Communications Link */}
-                <Link
-                  href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
-                  className="group relative flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                >
-                  <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
-                  <span className="invisible absolute bottom-full left-1/2 mb-3 w-max -translate-x-1/2 transform rounded-lg bg-slate-800 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
-                    Communications
-                  </span>
-                </Link>
-
-                {/* Print Button */}
-                <button
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                  onClick={handlePrint}
-                >
-                  <svg
-                    fill="#ffffff"
-                    viewBox="0 0 32 32"
-                    height="18"
-                    width="18"
+                <Tooltip title="Communications" placement="top">
+                  <Link
+                    href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                   >
-                    <path d="M30 13.75h-2.75v-7.75c0-0 0-0.001 0-0.001 0-0.345-0.14-0.657-0.365-0.883l-4-4c-0.226-0.226-0.539-0.366-0.885-0.366-0 0-0 0-0 0h-17c-0.69 0-1.25 0.56-1.25 1.25v0 11.75h-1.75c-0.69 0-1.25 0.56-1.25 1.25v0 9c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-7.75h25.5v7.75c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-9c-0-0.69-0.56-1.25-1.25-1.25h-0zM6.25 3.25h15.232l3.268 3.268v7.232h-18.5zM26 20.75h-20c-0.69 0-1.25 0.56-1.25 1.25v8c0 0.69 0.56 1.25 1.25 1.25h20c0.69-0.001 1.249-0.56 1.25-1.25v-8c-0.001-0.69-0.56-1.249-1.25-1.25h-0zM24.75 28.75h-17.5v-5.5h17.5zM26.879 17.62c-0.228-0.228-0.544-0.37-0.893-0.37-0.168 0-0.329 0.033-0.475 0.093l0.008-0.003c-0.16 0.060-0.295 0.156-0.399 0.279l-0.001 0.001c-0.119 0.109-0.213 0.242-0.277 0.392l-0.003 0.007c-0.059 0.142-0.095 0.306-0.1 0.479l-0 0.002c0.002 0.346 0.147 0.657 0.378 0.878l0 0c0.226 0.223 0.537 0.361 0.88 0.361s0.654-0.138 0.88-0.361l-0 0c0.233-0.222 0.378-0.533 0.381-0.878v-0c-0.005-0.174-0.041-0.339-0.103-0.49l0.003 0.009c-0.066-0.158-0.161-0.291-0.28-0.399l-0.001-0.001z" />
-                  </svg>
-                  <span className="hidden md:inline">Print</span>
-                </button>
+                    <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
+                  </Link>
+                </Tooltip>
 
-                {/* Download PDF Component Wrapper */}
-                <button className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base">
-                  {client && (
-                    <DownloadPDF
-                      id={invoice.id}
-                      invoice={invoice}
-                      client={client}
-                      vehicle={vehicle}
-                      companyDetails={company}
-                      authorizedName={authorizedName}
-                      signImageUrl={signImage ?? undefined}
-                      isStripe={
-                        (gatewayInfo?.success &&
-                          (gatewayInfo?.hasStripe ||
-                            gatewayInfo?.hasAuthorizeNet) &&
-                          parseFloat(Number(invoice?.due ?? 0).toFixed(2)) >
-                            0) ??
-                        false
-                      }
+                {/* Export Group — Print/PDF */}
+                <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-1 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                  <button
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                    onClick={() =>
+                      setOpenGroup((p) => (p === "export" ? null : "export"))
+                    }
+                  >
+                    <FileDown className="h-4 w-4" />
+                    <span className="hidden md:inline">Export</span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${
+                        isExportOpen ? "rotate-180" : ""
+                      }`}
                     />
-                  )}
-                </button>
+                  </button>
 
-                {/* Share Section Wrapper */}
-                <div className="flex items-center gap-x-2 rounded-xl border border-slate-200 bg-slate-50/50 pl-4 pr-0.5 dark:border-slate-700 dark:bg-slate-800/50">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 md:text-xs">
-                    Share
-                  </span>
-
-                  <Popconfirm
-                    onConfirm={handleEmail}
-                    title="Send via Email?"
-                    okText="Yes"
-                    cancelText="No"
+                  {/* Animated expand */}
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      isExportOpen
+                        ? "grid-cols-[1fr] opacity-100"
+                        : "grid-cols-[0fr] opacity-0"
+                    }`}
                   >
-                    <button className="flex items-center justify-center gap-2 rounded-lg bg-[#6571FF] px-3 py-1.5 my-0.5 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95">
-                      <Mail className="h-5 w-5" strokeWidth={2} />
-                      <span className="hidden md:inline">Email</span>
-                    </button>
-                  </Popconfirm>
-
-                  {twilioCredentials && (
-                    <Popconfirm
-                      onConfirm={handleSms}
-                      title="Send via SMS?"
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <button className="flex items-center justify-center gap-2 rounded-lg bg-[#6571FF] px-3 py-1.5 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95">
-                        <svg
-                          fill="#ffffff"
-                          height="20"
-                          width="20"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12,1C5.37,1,0,5.58,0,10.55c0,2.92,1.86,5.95,4.72,7.59L3,23l5.85-3.32C9.86,19.88,10.91,20,12,20c6.63,0,12-4.48,12-9.45 C24,5.58,18.63,1,12,1z" />
-                        </svg>
-                        <span className="hidden md:inline">SMS</span>
-                      </button>
-                    </Popconfirm>
-                  )}
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1 pl-1">
+                        {client ? (
+                          // Print and PDF share one generated document, so
+                          // printing outputs the same file the PDF button saves.
+                          <InvoicePdfActions
+                            id={invoice.id}
+                            invoice={invoice}
+                            client={client}
+                            vehicle={vehicle}
+                            companyDetails={company}
+                            authorizedName={authorizedName}
+                            signImageUrl={signImage ?? undefined}
+                            isStripe={
+                              (gatewayInfo?.success &&
+                                (gatewayInfo?.hasStripe ||
+                                  gatewayInfo?.hasAuthorizeNet) &&
+                                parseFloat(
+                                  Number(invoice?.due ?? 0).toFixed(2),
+                                ) > 0) ??
+                              false
+                            }
+                          />
+                        ) : (
+                          <button
+                            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                            onClick={handlePrint}
+                          >
+                            <Printer className="h-4 w-4" />
+                            <span className="hidden md:inline">Print</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Copy Link Button */}
-                <button
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                  onClick={handleCopyLink}
-                >
-                  <svg
-                    viewBox="0 0 32 32"
-                    height="18"
-                    width="18"
-                    fill="currentColor"
+                {/* Share Group — Email/SMS */}
+                <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                  <button
+                    className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-primary dark:text-slate-400 md:text-xs"
+                    onClick={() =>
+                      setOpenGroup((p) => (p === "share" ? null : "share"))
+                    }
                   >
-                    <path d="m24.110782 0 5.889218 8.76607872v19.23392128h-4v4h-24v-28h4v-4zm-18.110782 6h-2v24h20v-2h-18z" />
-                  </svg>
-                  <span className="hidden md:inline">Copy Link</span>
-                </button>
+                    Share
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${
+                        isShareOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      isShareOpen
+                        ? "grid-cols-[1fr] opacity-100"
+                        : "grid-cols-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1 pl-2">
+                        <Popconfirm
+                          onConfirm={handleEmail}
+                          title="Send via Email?"
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                            <Mail className="h-4 w-4" />
+                            <span className="hidden md:inline">Email</span>
+                          </button>
+                        </Popconfirm>
+
+                        {twilioCredentials && (
+                          <Popconfirm
+                            onConfirm={handleSms}
+                            title="Send via SMS?"
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                              <MessageCircle className="h-4 w-4" />
+                              <span className="hidden md:inline">SMS</span>
+                            </button>
+                          </Popconfirm>
+                        )}
+
+                        {/* Copy Link Button */}
+                        <button
+                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                          onClick={handleCopyLink}
+                        >
+                          <Copy className="h-4 w-4" />
+                          <span className="hidden md:inline">Copy Link</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Create Appointment Button */}
+                <Tooltip title="Create Appointment" placement="top">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base print:hidden"
+                    onClick={() => setIsAppointmentModalOpen(true)}
+                  >
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5" />
+                  </button>
+                </Tooltip>
+
+                <AppointmentCreateOrEdit
+                  clientId={invoice.clientId}
+                  vehicleId={invoice.vehicleId}
+                  draftEstimateId={invoice.id}
+                  isModalOpen={isAppointmentModalOpen}
+                  setIsModalOpen={setIsAppointmentModalOpen}
+                  onAppointmentCreated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                  onAppointmentUpdated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                />
               </div>
+            </div>
+          )}
+
+          {/* Download and Copy Link buttons for public invoice */}
+          {isPublic && client && (
+            <div className="mt-6 flex w-full justify-center gap-2 print:hidden">
+              <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                <DownloadPDF
+                  id={invoice.id}
+                  invoice={invoice}
+                  client={client}
+                  vehicle={vehicle}
+                  companyDetails={company}
+                  authorizedName={authorizedName}
+                  signImageUrl={signImage ?? undefined}
+                  isStripe={
+                    (gatewayInfo?.success &&
+                      (gatewayInfo?.hasStripe ||
+                        gatewayInfo?.hasAuthorizeNet) &&
+                      parseFloat(Number(invoice?.due ?? 0).toFixed(2)) > 0) ??
+                    false
+                  }
+                />
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                onClick={handleCopyLink}
+              >
+                <Copy className="h-4 w-4" />
+                <span>Copy Link</span>
+              </button>
             </div>
           )}
 
@@ -519,7 +731,7 @@ export default function InvoiceModalBody({
 
             {/* Contact Information with Clean Hierarchy */}
             <div className="flex flex-col text-right">
-              <h2 className="mb-1.5 text-sm font-black uppercase tracking-[0.2em] text-[#6571FF] dark:text-indigo-400">
+              <h2 className="mb-1.5 text-sm font-black uppercase tracking-[0.2em] text-primary dark:text-indigo-400">
                 Contact Information
               </h2>
 
@@ -535,7 +747,7 @@ export default function InvoiceModalBody({
                   <br className="md:hidden" />
                   {company?.city && company?.state && ", "}
                   {company?.state && `${company.state}`}
-                  {company?.state && company?.zip && " "}
+                  {company?.state && company?.zip && " - "}
                   {company?.zip && `${company.zip}`}
                 </p>
 
@@ -543,7 +755,7 @@ export default function InvoiceModalBody({
                   <p className="flex items-center gap-1.5 font-bold text-slate-500 dark:text-slate-300">
                     {company?.phone}
                   </p>
-                  <p className="max-w-[200px] break-words italic text-slate-500 dark:text-slate-500">
+                  <p className="whitespace-nowrap text-slate-500 dark:text-slate-500">
                     {company?.email}
                   </p>
                 </div>
@@ -552,11 +764,19 @@ export default function InvoiceModalBody({
           </div>
 
           <DialogClose
-            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${
-              isPublic ? "hidden" : ""
-            }`}
+            className={`absolute z-50 flex items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 print:hidden ${
+              fromCollaboration
+                ? "right-1 top-1 h-6 w-6"
+                : "right-2 top-2 h-8 w-8 md:right-3 md:top-3"
+            } ${isPublic ? "hidden" : ""}`}
           >
-            <X className="h-5 w-5 stroke-[2.5px]" />
+            <X
+              className={
+                fromCollaboration
+                  ? "h-3.5 w-3.5 stroke-[2.5px]"
+                  : "h-5 w-5 stroke-[2.5px]"
+              }
+            />
             <span className="sr-only">Close</span>
           </DialogClose>
 
@@ -583,7 +803,7 @@ export default function InvoiceModalBody({
                       }`}
                     >
                       {isActive && (
-                        <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
+                        <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee]" />
                       )}
                       <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
@@ -596,7 +816,15 @@ export default function InvoiceModalBody({
                 !window.matchMedia("(max-width: 768px)").matches) && (
                 <>
                   <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
-                    {invoice?.type?.toUpperCase()}
+                    {parseFloat(
+                      calculateDue(
+                        Number(invoice.grandTotal),
+                        Number(invoice.totalPayment),
+                        Number(invoice.deposit),
+                      ).toFixed(2),
+                    ) === 0
+                      ? "RECEIPT"
+                      : invoice?.type?.toUpperCase()}
                   </h1>
 
                   {/* Client Info */}
@@ -638,14 +866,26 @@ export default function InvoiceModalBody({
                     <h2 className="font-bold text-slate-500">
                       Vehicle Details:
                     </h2>
-                    <div className="flex flex-row flex-wrap gap-2">
-                      <p>{vehicle?.year || ""}</p>
-                      <p>{vehicle?.make}</p>
-                      <p>{vehicle?.model}</p>
-                      {vehicle?.other && <p>{vehicle?.other}</p>}
+                    <div>
+                      <p>
+                        {[
+                          vehicle?.year,
+                          vehicle?.make,
+                          vehicle?.model,
+                          vehicle?.other,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      </p>
                     </div>
-                    <p>{vehicle?.submodel}</p>
-                    <p>{vehicle?.type}</p>
+                    {vehicle?.submodel && <p>{vehicle.submodel}</p>}
+                    {vehicle?.type && <p>{vehicle.type}</p>}
+                    {vehicle?.vin && (
+                      <>
+                        <p>Vin Number</p>
+                        <p>{vehicle.vin}</p>
+                      </>
+                    )}
                   </div>
 
                   {/* Estimate Details */}
@@ -653,7 +893,14 @@ export default function InvoiceModalBody({
                     <h2 className="font-bold text-slate-500">
                       Estimate Details:
                     </h2>
-                    <p>{invoice.id}</p>
+                    <div className="flex flex-col items-start">
+                      <p>{invoice.id}</p>
+                      {invoice.isShopBooking && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary my-1.5">
+                          Virtual Shop
+                        </span>
+                      )}
+                    </div>
                     <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
                     <p>Bill Status</p>
                     <p
@@ -666,7 +913,30 @@ export default function InvoiceModalBody({
                       {invoice.column?.title}
                     </p>
 
-                    {invoice.isViewed && (
+                    <p>
+                      {parseFloat(
+                        calculateDue(
+                          Number(invoice.grandTotal),
+                          Number(invoice.totalPayment),
+                          Number(invoice.deposit),
+                        ).toFixed(2),
+                      ) === 0 && <span>Payment Status</span>}
+                    </p>
+                    <p className="pt-1">
+                      {parseFloat(
+                        calculateDue(
+                          Number(invoice.grandTotal),
+                          Number(invoice.totalPayment),
+                          Number(invoice.deposit),
+                        ).toFixed(2),
+                      ) === 0 && (
+                        <span className="text-green-500 bg-green-200 rounded-md  px-4 py-[1px] text-xs font-semibold md:mt-1">
+                          PAID
+                        </span>
+                      )}
+                    </p>
+
+                    {invoice.isViewed && !isPublic && (
                       <div className="mt-1 flex items-center gap-1">
                         <Eye className="h-4 w-4 text-green-500" />
                         <span className="text-xs text-green-500">Viewed</span>
@@ -687,28 +957,36 @@ export default function InvoiceModalBody({
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
                         {invoice.photos.map((x, index) => {
                           const allImageUrls = invoice.photos.map(
-                            (photo) => photo.photo
+                            (photo) => photo.photo,
                           );
                           const urlsParam = encodeURIComponent(
-                            JSON.stringify(allImageUrls)
+                            JSON.stringify(allImageUrls),
                           );
-                          return (
+                          const image = (
+                            <Image
+                              src={x.photo}
+                              alt="attachment"
+                              fill
+                              className="cursor-pointer rounded-md object-cover"
+                            />
+                          );
+                          return isPublic ? (
                             <Link
-                              href={
-                                isPublic
-                                  ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                                  : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                              }
+                              href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                               key={x.id}
                               className="relative mx-auto aspect-square w-full max-w-[120px]"
                             >
-                              <Image
-                                src={x.photo}
-                                alt="attachment"
-                                fill
-                                className="cursor-pointer rounded-md object-cover"
-                              />
+                              {image}
                             </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              key={x.id}
+                              onClick={() => setLightboxIndex(index)}
+                              className="relative mx-auto aspect-square w-full max-w-[120px]"
+                            >
+                              {image}
+                            </button>
                           );
                         })}
                       </div>
@@ -743,8 +1021,9 @@ export default function InvoiceModalBody({
               {(
                 [
                   ["subtotal", invoice.subtotal],
-                  ["discount", invoice.discount],
+                  ["total discount", invoice.discount],
                   ["tax", invoice.tax],
+                  // ["vehicle extra cost", invoice.vehicleExtraCost],
                   ["shop supplies", invoice?.serviceFee],
                   ["grand total", invoice.grandTotal],
                   ["deposit", invoice.deposit],
@@ -754,7 +1033,7 @@ export default function InvoiceModalBody({
                     calculateDue(
                       Number(invoice.grandTotal),
                       Number(invoice.totalPayment),
-                      Number(invoice.deposit)
+                      Number(invoice.deposit),
                     ),
                   ],
                   ["Refunded", refundAmount],
@@ -763,23 +1042,24 @@ export default function InvoiceModalBody({
                 <div key={key}>
                   {key === "tax" || key === "shop supplies" ? (
                     Number(value) > 0 && (
-                      <div className="flex rounded border border-solid border-[#6571FF]">
-                        <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
+                      <div className="flex rounded border border-solid border-primary">
+                        <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-primary">
                           {key}
                         </span>
-                        <div className="basis-30 shrink-0 rounded bg-[#6571FF] px-2 text-white">
+                        <div className="shrink-0 w-[10rem] rounded bg-primary px-2 text-white">
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
                               {" "}
-                              |
+                              |{" "}
                               {formatCurrency(
                                 (Number(
-                                  (invoice.subtotal as any) -
-                                    (invoice.discount as any)
+                                  key === "tax"
+                                    ? totalMaterialSell
+                                    : (invoice.subtotal as any),
                                 ) *
                                   Number(value)) /
-                                  100
+                                  100,
                               )}
                             </span>
                           )}
@@ -787,11 +1067,11 @@ export default function InvoiceModalBody({
                       </div>
                     )
                   ) : (
-                    <div className="flex rounded border border-solid border-[#6571FF]">
-                      <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
+                    <div className="flex rounded border border-solid border-primary">
+                      <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-primary">
                         {key}
                       </span>
-                      <div className="shrink-0 basis-20 rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
+                      <div className="shrink-0 w-[10rem] rounded bg-gradient-to-br from-primary from-60% to-[#4A55E2] px-2 text-white">
                         {formatCurrency(parseFloat("" + value))}
                       </div>
                     </div>
@@ -806,6 +1086,138 @@ export default function InvoiceModalBody({
               isPrinting={isPrinting}
               items={invoice.invoiceItems}
             />
+          </div>
+
+          {/* payment info  */}
+          <div className="space-y-2">
+            <h2 className="font-bold text-slate-600">Payment Info</h2>
+
+            {paymentEntries.length === 0 && (
+              <div className="rounded-md border border-dashed p-3 text-xs text-slate-500">
+                Make a payment to see info
+              </div>
+            )}
+
+            {paymentEntries.length > 0 && (
+              <>
+                <div className="hidden overflow-x-auto rounded-md border md:block">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50">
+                      <tr className="border-b">
+                        <th className="px-3 py-2 text-left">Date</th>
+                        <th className="px-3 py-2 text-left">Method</th>
+                        <th className="px-3 py-2 text-left">Amount</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentEntries.reverse().map((payment, index) => {
+                        const refundedAmount = payment.Refund.reduce(
+                          (sum, refund) => sum + Number(refund.amount || 0),
+                          0,
+                        );
+
+                        return (
+                          <tr
+                            key={payment.id}
+                            className={
+                              index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                            }
+                          >
+                            <td className="px-3 py-2">
+                              {moment(payment.date || payment.createdAt).format(
+                                "MM.DD.YYYY",
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              {getPaymentMethodText(payment)}
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex flex-col">
+                                <span>
+                                  {formatCurrency(Number(payment.amount || 0))}
+                                </span>
+                                {refundedAmount > 0 && (
+                                  <span className="text-[11px] text-red-600">
+                                    Refunded: {formatCurrency(refundedAmount)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              {invoice.column?.title || "-"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid gap-2 md:hidden">
+                  {paymentEntries.map((payment, index) => {
+                    const refundedAmount = payment.Refund.reduce(
+                      (sum, refund) => sum + Number(refund.amount || 0),
+                      0,
+                    );
+
+                    return (
+                      <div
+                        key={payment.id}
+                        className={`rounded-md border p-3 text-xs ${
+                          index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-semibold text-slate-700">
+                            {getPaymentMethodText(payment)}
+                          </p>
+                          <p className="font-semibold text-primary">
+                            {formatCurrency(Number(payment.amount || 0))}
+                          </p>
+                        </div>
+                        {refundedAmount > 0 && (
+                          <p className="mt-1 text-[11px] text-red-600">
+                            Refunded: {formatCurrency(refundedAmount)}
+                          </p>
+                        )}
+                        <div className="mt-2 space-y-1 text-slate-600">
+                          <p>
+                            <span className="font-semibold">Date:</span>{" "}
+                            {moment(payment.date || payment.createdAt).format(
+                              "MM.DD.YYYY",
+                            )}
+                          </p>
+                          <p>
+                            <span className="font-semibold">
+                              Cash Received:
+                            </span>{" "}
+                            {payment.cash?.receivedCash || "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Due After:</span>{" "}
+                            {payment.dueAfterPayment !== null &&
+                            payment.dueAfterPayment !== undefined
+                              ? formatCurrency(Number(payment.dueAfterPayment))
+                              : "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Status:</span>{" "}
+                            {invoice.column?.title || "-"}
+                          </p>
+                          {payment.notes && (
+                            <p>
+                              <span className="font-semibold">Notes:</span>{" "}
+                              {payment.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Terms, Policies */}
@@ -823,9 +1235,11 @@ export default function InvoiceModalBody({
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="font-bold text-slate-600">{invoice.company.name}</p>
-              <p className="font-medium">
-                {invoice.user.firstName} {invoice.user.lastName}
-              </p>
+              {invoice?.user && (
+                <p className="font-medium">
+                  {invoice?.user?.firstName} {invoice?.user?.lastName}
+                </p>
+              )}
             </div>
             <div className="mt-4 space-y-2 md:mt-0">
               {showAuthorizedName && (
@@ -847,31 +1261,7 @@ export default function InvoiceModalBody({
                       <X size={20} className="text-white p-1" />
                     </button>
                   </div>
-                  <button
-                    // onClick={async () => {
-                    //   const res = await authorizeInvoice(
-                    //     invoice.id,
-                    //     authorizedNameInput,
-                    //     invoice.type
-                    //   );
-                    //   if (res?.type === "success") {
-                    //     successToast("Invoice Authorized");
-                    //     await authorizedLeadsConvertion(invoice.id);
-                    //     setAuthorizedName(authorizedNameInput);
-
-                    //     // Update the invoice object in state to reflect the change
-                    //     setInvoice((prev) => {
-                    //       if (!prev) return prev;
-                    //       return {
-                    //         ...prev,
-                    //         authorizedName: authorizedNameInput,
-                    //       };
-                    //     });
-                    //   }
-                    //   setShowAuthorizedName(false);
-                    // }}
-                    className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden"
-                  >
+                  <button className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden">
                     Authorize
                   </button>
                 </div>
@@ -882,40 +1272,9 @@ export default function InvoiceModalBody({
 
                   <hr className="border-slate-500 bg-slate-500" />
                   <div className="flex items-center gap-x-4">
-                    <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                    <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                       Authorized
                     </span>
-                    {/* <button
-                      className="text-lg text-[#6571ff] print:hidden"
-                      onClick={async () => {
-                        setShowAuthorizedName(true);
-                      }}
-                    >
-                      <MdEdit />
-                    </button>
-                    <button
-                      className="text-lg text-red-500 print:hidden"
-                      onClick={async () => {
-                        const res = await deleteInvoiceAuthorize(invoice.id);
-                        if (res?.type === "success") {
-                          successToast("Deleted Invoice Authorize");
-
-                          // Update the invoice object in state to reflect the change
-                          setInvoice((prev) => {
-                            if (!prev) return prev;
-                            return {
-                              ...prev,
-                              authorizedName: "",
-                            };
-                          });
-
-                          setAuthorizedName("");
-                          setAuthorizedNameInput("");
-                        }
-                      }}
-                    >
-                      <MdOutlineDelete />
-                    </button> */}
                   </div>
                 </div>
               )}
@@ -927,7 +1286,7 @@ export default function InvoiceModalBody({
                       // setShowAuthorizedName(true);
                       setShowSignaturePad(true);
                     }}
-                    className="rounded-xl pt-1 bg-gradient-to-r from-70% from-[#6571FF] to-[#5a66ee] px-8 pb-2 text-white print:hidden"
+                    className="rounded-xl pt-1 bg-gradient-to-r from-70% from-primary to-[#5a66ee] px-8 pb-2 text-white print:hidden"
                   >
                     {invoice?.wasAuthorized ? "Re-Authorize" : "Authorize"}
                   </button>
@@ -980,7 +1339,7 @@ export default function InvoiceModalBody({
                     onClick={() => {
                       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
                         errorToast(
-                          "Please provide your signature before saving."
+                          "Please provide your signature before saving.",
                         );
                         return;
                       }
@@ -992,14 +1351,14 @@ export default function InvoiceModalBody({
                       setShowAuthorizedName(false);
                       setShowSignaturePad(false);
                     }}
-                    className="flex-[2] rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
+                    className="flex-[2] rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
                   >
                     Save
                   </button>
                 </div>
               </div>
             )}
-            {sigImageURL && (
+            {sigImageURL ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={sigImageURL}
@@ -1008,12 +1367,11 @@ export default function InvoiceModalBody({
                   alt="signature"
                   className="border border-gray-300 rounded-md"
                 />
-                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                   Authorized
                 </span>
               </div>
-            )}
-            {invoice?.signatureImage && (
+            ) : invoice?.signatureImage ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={invoice?.signatureImage}
@@ -1022,10 +1380,12 @@ export default function InvoiceModalBody({
                   alt="signature"
                   className="border border-gray-300 rounded-md"
                 />
-                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                   Authorized
                 </span>
               </div>
+            ) : (
+              <></>
             )}
           </div>
           {!isPrinting && (
@@ -1037,23 +1397,25 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     companyId={invoice.companyId}
                     due={parseFloat(
-                      Number(invoice?.due ?? 0).toFixed(2)
+                      Number(invoice?.due ?? 0).toFixed(2),
                     ).toString()}
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
                     gatewayInfo={{
-                      paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
+                      paymentGateway: (gatewayInfo.paymentGateway ||
+                        "STRIPE") as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
                       hasStripe: gatewayInfo.hasStripe,
                       hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
+                      tipEnabled: gatewayInfo.tipEnabled ?? false,
                     }}
                   />
                 )}
             </div>
           )}
-          <p className="font-semibold">Powered by Autoworx.</p>
+          <p className="font-semibold">Powered by Autoworx</p>
         </div>
 
-        <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[90vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
+        <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[95vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
           <div className="#shadow-lg hidden h-[calc(100%-50px)] flex-1 overflow-y-auto rounded-md border bg-background p-3 md:p-6 md:block">
             {/* Desktop tabs are here */}
             <div className="hidden w-fit mx-auto md:mb-4 md:flex md:justify-center md:gap-2 border border-gray-200 rounded-2xl p-1 bg-white/70 dark:bg-slate-900/60">
@@ -1076,7 +1438,7 @@ export default function InvoiceModalBody({
                     }`}
                   >
                     {isActive && (
-                      <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
+                      <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee]" />
                     )}
                     <span className="whitespace-nowrap">{tab.label}</span>
                   </button>
@@ -1093,28 +1455,36 @@ export default function InvoiceModalBody({
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
                   {invoice.photos.map((x, index) => {
                     const allImageUrls = invoice.photos.map(
-                      (photo) => photo.photo
+                      (photo) => photo.photo,
                     );
                     const urlsParam = encodeURIComponent(
-                      JSON.stringify(allImageUrls)
+                      JSON.stringify(allImageUrls),
                     );
-                    return (
+                    const image = (
+                      <Image
+                        src={x.photo}
+                        alt="attachment"
+                        fill
+                        className="cursor-pointer object-cover object-center"
+                      />
+                    );
+                    return isPublic ? (
                       <Link
-                        href={
-                          isPublic
-                            ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                            : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                        }
+                        href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                         key={x.id}
                         className="relative aspect-square size-36 md:h-full md:w-full"
                       >
-                        <Image
-                          src={x.photo}
-                          alt="attachment"
-                          fill
-                          className="cursor-pointer"
-                        />
+                        {image}
                       </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        key={x.id}
+                        onClick={() => setLightboxIndex(index)}
+                        className="relative aspect-square size-36 md:h-full md:w-full"
+                      >
+                        {image}
+                      </button>
                     );
                   })}
                   {invoice.photos.length === 0 && (
@@ -1124,6 +1494,16 @@ export default function InvoiceModalBody({
                   )}
                 </div>
               </>
+            )}
+
+            {!isPublic && lightboxIndex !== null && (
+              <ComponentsLightbox
+                getItems={invoice.photos.map((photo) => ({
+                  src: photo.photo,
+                }))}
+                startIndex={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+              />
             )}
 
             {/* Inspections Tab Content - Desktop */}
@@ -1149,7 +1529,7 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     onWorkOrderCreated={async () => {
                       const updatedInvoice = await getIsWorkorderCreated(
-                        invoice.id
+                        invoice.id,
                       );
                       setInvoice((prevInvoice) => {
                         if (!prevInvoice) return prevInvoice;
@@ -1160,7 +1540,7 @@ export default function InvoiceModalBody({
                       });
                     }}
                     buttonChild={
-                      <button className="w-full rounded bg-[#6571FF] px-4 py-2 text-white">
+                      <button className="w-full rounded bg-primary px-4 py-2 text-white">
                         {invoice?.isWorkOrder
                           ? "View Work Order"
                           : "Create Work Order"}
@@ -1170,7 +1550,7 @@ export default function InvoiceModalBody({
                 )}
               {/* <button
                 onClick={handleEmail}
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-background py-2 text-[#6571FF]"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-background py-2 text-primary"
               >
                 Share Invoice
                 <svg
@@ -1180,11 +1560,11 @@ export default function InvoiceModalBody({
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
                     {" "}
@@ -1204,6 +1584,8 @@ export default function InvoiceModalBody({
             </>
           )}
         </div>
+
+        <InventoryShortageDialog {...inventoryShortageDialogProps} />
       </DialogContentBlank>
     </DialogPortal>
   );

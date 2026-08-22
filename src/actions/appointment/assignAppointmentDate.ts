@@ -25,11 +25,27 @@ export async function assignAppointmentDate({
 }: {
   id: number;
   date: Date | string;
-  startTime: string;
-  endTime: string;
+  startTime: string | null;
+  endTime: string | null;
   timezone: string;
 }): Promise<ServerAction> {
   try {
+    // Preserve multi-day duration when an appointment is dragged to a new
+    // start date: shift endDate by the same delta as the new start date.
+    const existing = await db.appointment.findUnique({
+      where: { id },
+      select: { date: true, endDate: true },
+    });
+
+    let shiftedEndDate: Date | null | undefined = undefined;
+    if (existing?.endDate && existing?.date) {
+      const oldStart = new Date(existing.date).setUTCHours(0, 0, 0, 0);
+      const oldEnd = new Date(existing.endDate).setUTCHours(0, 0, 0, 0);
+      const durationMs = oldEnd - oldStart;
+      const newStartMs = new Date(date).setUTCHours(0, 0, 0, 0);
+      shiftedEndDate = new Date(newStartMs + durationMs);
+    }
+
     // Update the appointment in the database
     let updatedAppointment = await db.appointment.update({
       where: {
@@ -37,6 +53,7 @@ export async function assignAppointmentDate({
       },
       data: {
         date: new Date(date),
+        ...(shiftedEndDate !== undefined ? { endDate: shiftedEndDate } : {}),
         startTime,
         endTime,
       },
@@ -158,11 +175,6 @@ export async function assignAppointmentDate({
     };
   } catch (error) {
     console.error("Error assigning appointment date:", error);
-
-    // Return an error action
-    // return {
-    //   type: "error",
-    // };
-    throw error;
+    return { type: "error" };
   }
 }

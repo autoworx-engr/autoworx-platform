@@ -53,6 +53,7 @@ export async function fetchTaskPageData(month: string) {
     tasks = await db.task.findMany({
       where: {
         companyId,
+        status: "pending",
       },
     });
   } else {
@@ -77,6 +78,7 @@ export async function fetchTaskPageData(month: string) {
     tasks = await db.task.findMany({
       where: {
         companyId,
+        status: "pending",
         OR: [
           {
             taskUser: {
@@ -195,6 +197,7 @@ export async function fetchTaskPageData(month: string) {
           in: taskUsers.map((taskUser) => taskUser.taskId),
         },
         companyId,
+        status: "pending",
       },
     });
 
@@ -279,6 +282,11 @@ export async function fetchTaskPageData(month: string) {
     },
   });
 
+  const categories = await db.category.findMany({
+    where: { companyId },
+    orderBy: { name: "asc" },
+  });
+
   // weekends add with holidays
   const calenderSettings = await db.calendarSettings.findFirst({
     where: {
@@ -323,5 +331,6 @@ export async function fetchTaskPageData(month: string) {
     templates: emailTemplates,
     appointmentsFull,
     user,
+    categories,
   };
 }

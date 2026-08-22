@@ -1,5 +1,6 @@
 "use server";
 
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import moment from "moment-timezone";
@@ -7,35 +8,45 @@ import { revalidatePath } from "next/cache";
 
 export async function clockIn({ timezone }: { timezone: string }) {
   try {
+    console.log("Clocking in with timezone:", timezone);
     const user = await getUser();
+    console.log("User info:", user);
+    const now = companyNow(timezone);
     const clockedIn = await db.clockInOut.create({
       data: {
         userId: user?.id,
         companyId: user?.companyId,
-        clockIn: new Date(),
+        clockIn: now,
         timezone,
+        createdAt: now,
+        updatedAt: now,
       },
     });
+    console.log("Clock-in record created:", clockedIn);
 
     //  Automatically schedule the clock-out at 7:00 PM
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/auto-clockout/schedule`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auto-clockout/schedule`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            clockInOutId: clockedIn?.id,
+            userId: user?.id,
+            companyId: user?.companyId,
+            clockIn: clockedIn?.clockIn,
+            timezone,
+          }),
         },
-        body: JSON.stringify({
-          clockInOutId: clockedIn?.id,
-          userId: user?.id,
-          companyId: user?.companyId,
-          clockIn: clockedIn?.clockIn,
-          timezone,
-        }),
-      }
-    );
+      );
+    } catch (error) {
+      console.error("Failed to schedule auto-clockout:", error);
+    }
 
-    revalidatePath("/");
+    revalidatePath("/dashboard");
 
     return { success: true, message: "Clocked In", data: clockedIn };
   } catch (error) {
@@ -65,7 +76,7 @@ export async function getLastClockInOutForUser({
 
   if (lastClockInOut) {
     const clockInDay = moment(lastClockInOut.clockIn).tz(
-      lastClockInOut?.timezone || moment.tz.guess()
+      lastClockInOut?.timezone || moment.tz.guess(),
     );
 
     const now = moment.tz(timezone);

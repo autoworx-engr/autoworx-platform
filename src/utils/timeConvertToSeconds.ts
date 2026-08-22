@@ -14,7 +14,7 @@ export function convertTimeToSeconds(timeString: string): number {
 
   // Regex to capture value and unit, allowing for decimals
   const match = timeString.match(
-    /^(\d*\.?\d+)\s+(second|minute|hour|day|month|year)s?$/i
+    /^(\d*\.?\d+)\s+(second|minute|hour|day|month|year)s?$/i,
   );
 
   if (!match) {

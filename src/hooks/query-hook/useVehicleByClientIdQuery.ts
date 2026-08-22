@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function useVehicleByClientIdQuery(
   clientId: number,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: queryKeys.vehicleByClientId(clientId),

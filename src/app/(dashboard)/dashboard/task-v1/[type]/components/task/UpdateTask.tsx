@@ -1,5 +1,6 @@
 "use client";
 
+import { editTask } from "@/actions/task/editTask.ts";
 import {
   Dialog,
   DialogClose,
@@ -12,22 +13,21 @@ import Submit from "@/components/Submit";
 import { usePopupStore } from "@/stores/popup";
 import type { CalendarTask } from "@/types/db";
 import type { Priority, User } from "@prisma/client";
-import { editTask } from "@/actions/task/editTask.ts";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 // @ts-ignore
 import { deleteTask } from "@/actions/task/deleteTask.ts";
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
-import { useFormErrorStore } from "@/stores/form-error";
-import { addOneHour } from "@/utils/time";
-import moment from "moment";
-import AssignTaskDropDown from "./AssignTaskDropDown";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useFormErrorStore } from "@/stores/form-error";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { addOneHour } from "@/utils/time";
 import { Select } from "antd";
 import { Check, Trash2 } from "lucide-react";
+import moment from "moment";
+import AssignTaskDropDown from "./AssignTaskDropDown";
 
 export default function UpdateTask() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function UpdateTask() {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [assignedUsers, setAssignedUsers] = useState<number[]>(
-    task?.assignedUsers?.map((user) => user.id) || []
+    task?.assignedUsers?.map((user) => user.id) || [],
   );
   const { clearError, showError } = useFormErrorStore();
   const [priority, setPriority] = useState<Priority>(task.priority);
@@ -51,7 +51,7 @@ export default function UpdateTask() {
   const [startTime, setStartTime] = useState<string>(task.startTime || "");
   const [endTime, setEndTime] = useState<string>(task.endTime || "");
   const [date, setDate] = useState<string>(
-    moment.utc(task.date).format("YYYY-MM-DD")
+    moment.utc(task.date).format("YYYY-MM-DD"),
   );
 
   // Add state for minimum date and time validation
@@ -64,7 +64,7 @@ export default function UpdateTask() {
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -141,6 +141,7 @@ export default function UpdateTask() {
           //   ? new Date(date).toISOString()
           //   : new Date().toISOString(),
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          createdBy: "user",
         },
       });
       if (res.type === "globalError") {
@@ -228,7 +229,7 @@ export default function UpdateTask() {
                         onChange={(value) =>
                           handleTimeChange(
                             { target: { value } } as any,
-                            "start"
+                            "start",
                           )
                         }
                         style={{ width: "100%", height: 34 }}
@@ -288,7 +289,7 @@ export default function UpdateTask() {
 
             <div className="flex items-center gap-5">
               <button
-                className="relative flex w-full items-center justify-center rounded-md bg-[#6571FF] p-2 text-white"
+                className="relative flex w-full items-center justify-center rounded-md bg-primary p-2 text-white"
                 onClick={() => setPriority("Low")}
                 type="button"
               >
@@ -339,7 +340,7 @@ export default function UpdateTask() {
                 Cancel
               </DialogClose>
               <Submit
-                className="mb-1 rounded-md border bg-[#6571FF] px-4 py-1 text-white md:mb-0"
+                className="mb-1 rounded-md border bg-primary px-4 py-1 text-white md:mb-0"
                 formAction={handleSubmit}
               >
                 Save

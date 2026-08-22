@@ -8,9 +8,9 @@ export default function AnalyticsVisibility({
 }) {
   const isDesktop = useIsDesktop();
 
-  // if (!isDesktop) {
-  //   return null;
-  // }
+  if (!isDesktop) {
+    return null;
+  }
 
   return <>{children}</>;
 }

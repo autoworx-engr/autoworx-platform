@@ -1,4 +1,9 @@
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { db } from "@/lib/db";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
@@ -37,7 +42,7 @@ export async function POST(request: Request) {
     if (!from || !to) {
       return NextResponse.json(
         { error: "Missing 'from' or 'to' parameters." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,17 +58,18 @@ export async function POST(request: Request) {
     if (!infobipConfig) {
       return NextResponse.json(
         { error: "Infobip credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Try to find the client
+    const phoneLookup = phoneLookupWhereClause(from);
     let client = await db.client.findFirst({
       where: {
         companyId: infobipConfig?.companyId,
-        mobile: {
-          contains: from.replace("+", ""),
-        },
+        ...(phoneLookup
+          ? { OR: phoneLookup }
+          : { mobile: { contains: from.replace("+", "") } }),
       },
     });
 
@@ -73,8 +79,9 @@ export async function POST(request: Request) {
         data: {
           firstName: "Unknown",
           lastName: "Caller",
-          mobile: from,
+          mobile: normalizePhoneForStorage(from),
           companyId: infobipConfig.companyId,
+          isSalesAgent: true,
         },
       });
     }
@@ -93,6 +100,13 @@ export async function POST(request: Request) {
       },
     });
 
+    // Bump the client to the top of the communication hub, same as an SMS.
+    await updateCallChatTrack({
+      clientId: client.id,
+      status: "ringing",
+      direction: "inbound",
+    });
+
     return NextResponse.json({
       success: true,
       callId,
@@ -103,7 +117,7 @@ export async function POST(request: Request) {
     console.error("Error handling incoming call:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

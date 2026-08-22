@@ -7,7 +7,7 @@ import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { TAttachments } from "@/types/automation";
 import { Box, Paper, Switch, Typography } from "@mui/material";
 import { Company, InfobipConfig, Tag, TwilioCredentials } from "@prisma/client";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import ActiveTemplate from "./ActiveTemplate";
 import CustomRadioGroup from "./CustomRadioGroup";
 import MultiSelect from "./MultiSelect";
@@ -30,12 +30,12 @@ import {
   convertSecondsToTime,
   convertTimeToSeconds,
 } from "@/utils/timeConvertToSeconds";
-import { Spin } from "antd";
+import CarLoading from "@/components/common/CarLoading";
 import InfoCard from "./InfoCard";
 import { getConditionHelp, TipBox } from "./TagautomationHelper";
 import { TEMPLATE_VARIABLES } from "./TemplateVariable";
 import TooltipLabel from "./ToolTipLabel";
-// import { CircleQuestionMark } from 'lucide-react';
+
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
   id?: string | null;
@@ -51,7 +51,6 @@ type Rule = {
   title: string;
   pipelineType: "SALES" | "SHOP" | "";
   tagIds: number[];
-  // funnel: string;
   timeDelay: number | null | string;
   condition_type: "pipeline" | "communication" | "post_tag" | "";
   targetColumnId: number | number[] | null;
@@ -76,12 +75,12 @@ const TagRuleForm = ({
   company,
   twilio,
 }: RuleFormProps) => {
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     companyId: companyId,
     title: "",
     pipelineType: "",
     tagIds: [],
-    // funnel: "",
     timeDelay: null,
     condition_type: "",
     targetColumnId: null,
@@ -104,12 +103,17 @@ const TagRuleForm = ({
   const { length, isLimitExceeded } = useCharacterLimit(
     // safe fallback to avoid non-null assertions
     (formData.emailBody || formData.smsBody || "") as string,
-    maxLength
+    maxLength,
   );
 
   const helpContent = getConditionHelp(formData.condition_type);
   const [showGuide, setShowGuide] = useState(true);
   const [error, setError] = useState<Record<string, string>>({});
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
   const {
     stages,
     fetchStages,
@@ -119,7 +123,7 @@ const TagRuleForm = ({
   const { mutate: createRule, isPending: isCreatePending } =
     useCreateTagAutomationRule();
   const { data, isLoading, isFetching } = useFindOneTagAutomationRule(
-    Number(id)
+    Number(id),
   );
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
@@ -160,7 +164,7 @@ const TagRuleForm = ({
           payload.tagAutomationCommunication || {};
         const tagAutomationPipeline = payload.tagAutomationPipeline || {};
         const tagAutomationPostTag = payload.PostTagAutomationColumn || {};
-        setFormData({
+        const initialData: Rule = {
           companyId: payload.companyId ?? companyId,
           title: payload.title ?? "",
           pipelineType: pipelineTypeValue,
@@ -187,20 +191,22 @@ const TagRuleForm = ({
           smsBody: tagAutomationCommunication?.smsBody ?? "",
           attachments: tagAutomationCommunication?.attachments ?? [],
           ruleType: payload.ruleType ?? "",
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
 
         setActiveTemplate(
-          tagAutomationCommunication?.communicationType === "BOTH"
+          tagAutomationCommunication?.communicationType === "BOTH" ||
+            !tagAutomationCommunication?.communicationType
             ? "SMS"
-            : tagAutomationCommunication?.communicationType
+            : tagAutomationCommunication.communicationType,
         );
       } else {
-        setFormData({
+        const initialData: Rule = {
           companyId: companyId,
           title: "",
           pipelineType: "",
           tagIds: [],
-          // funnel: "",
           timeDelay: null,
           condition_type: "",
           targetColumnId: null,
@@ -214,7 +220,9 @@ const TagRuleForm = ({
           smsBody: "",
           attachments: [],
           ruleType: "",
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
       }
     };
 
@@ -272,23 +280,23 @@ const TagRuleForm = ({
         });
       }
     } catch (e) {
-      console.log(e);
+      errorToast("Something went wrong!");
     }
   });
 
   // If editing, allow tags already present on the current rule
   const currentRuleTagIds = new Set<number>(
-    (data?.data?.tag || []).map((t: any) => Number(t.id))
+    (data?.data?.tag || []).map((t: any) => Number(t.id)),
   );
 
   const filteredSalesTagOptions = salesTagOptions.filter(
     (opt) =>
-      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id)),
   );
 
   const filteredShopTagOptions = shopTagOptions.filter(
     (opt) =>
-      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id)),
   );
 
   // Stage options for post-tag condition_type (stages are fetched based on pipelineType)
@@ -297,10 +305,6 @@ const TagRuleForm = ({
     title: s.title || s.name,
   }));
 
-  console.log("stages ==>", stages);
-
-  console.log("stageOptions ==>", stageOptions);
-
   // Handle form field changes
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => {
@@ -308,7 +312,6 @@ const TagRuleForm = ({
 
       // Normalize targetColumnId / columnIds value depending on the field source
       if (field === "targetColumnId") {
-        console.log("targe column ==>", formData.targetColumnId);
         // If the incoming value is an array (from MultiSelect), use it directly
         if (Array.isArray(value)) {
           newState.targetColumnId = value;
@@ -350,7 +353,6 @@ const TagRuleForm = ({
 
       // If pipelineType changed, reset selected tags so selections don't leak between pipelines
       if (field === "pipelineType" && prev.pipelineType !== value) {
-        console.log("target columg id==>", formData.targetColumnId);
         newState.tagIds = [];
         // also reset any pipeline-specific selections
         newState.targetColumnId = null;
@@ -363,6 +365,10 @@ const TagRuleForm = ({
     if (field === "communicationType") {
       if (value === "EMAIL") setActiveTemplate("EMAIL");
       else if (value === "SMS") setActiveTemplate("SMS");
+    }
+
+    if (field === "condition_type" && value === "communication") {
+      setActiveTemplate((prev) => (prev === "EMAIL" ? "EMAIL" : "SMS"));
     }
 
     if (error[field]) {
@@ -393,7 +399,7 @@ const TagRuleForm = ({
   // Handle file attachment
   const handleFileAttachment = async (
     e: ChangeEvent<HTMLInputElement>,
-    type: string
+    type: string,
   ) => {
     handleFileSelection({
       event: e,
@@ -420,9 +426,6 @@ const TagRuleForm = ({
     if (!Array.isArray(formData.tagIds) || formData.tagIds.length === 0) {
       newErrors.tagIds = "At least one tag is required.";
     }
-    // if (!formData.funnel) {
-    //   newErrors.funnel = "Funnel is required.";
-    // }
     if (!formData.condition_type) {
       newErrors.condition_type = "Condition is required.";
     }
@@ -506,7 +509,7 @@ const TagRuleForm = ({
         }
 
         if (twilio === null) {
-          newErrors.twilio = "";
+          newErrors.twilio = "SMS gateway not configured";
           errorToast(newErrors.twilio);
         }
       }
@@ -528,7 +531,7 @@ const TagRuleForm = ({
       const match = invoiceTimeDelays.find(
         (o: any) =>
           String(optId(o)) === String(value) ||
-          String(optTitle(o)) === String(value)
+          String(optTitle(o)) === String(value),
       );
       if (match) {
         const idVal = optId(match);
@@ -546,7 +549,7 @@ const TagRuleForm = ({
 
     try {
       const uploadedAttachments = await uploadAllAttachments(
-        formData.attachments!
+        formData.attachments!,
       );
 
       const images = uploadedAttachments.map((img) => ({ fileUrl: img })) || [];
@@ -597,7 +600,7 @@ const TagRuleForm = ({
         createRule(finalData);
       }
     } catch (err) {
-      console.error(err);
+      errorToast("Something went wrong!");
     }
     setError({});
   };
@@ -605,7 +608,7 @@ const TagRuleForm = ({
   if (isLoading || isFetching || stagesLoading || isAllTagRuleLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }
@@ -832,7 +835,7 @@ const TagRuleForm = ({
                     checked={activeTemplate === "EMAIL"}
                     onChange={() =>
                       handleTemplateToggle(
-                        activeTemplate === "SMS" ? "EMAIL" : "SMS"
+                        activeTemplate === "SMS" ? "EMAIL" : "SMS",
                       )
                     }
                   />
@@ -912,7 +915,6 @@ const TagRuleForm = ({
               />
               <CustomRadioGroup
                 name="ruleType"
-                // label="Rule Type"
                 value={formData.ruleType}
                 onChange={handleChange}
                 options={[
@@ -929,9 +931,17 @@ const TagRuleForm = ({
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isCreatePending || isUpdatePending || isLimitExceeded}
+              disabled={
+                isCreatePending ||
+                isUpdatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
+              }
               className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                isUpdatePending || isCreatePending || isLimitExceeded
+                isUpdatePending ||
+                isCreatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
                   ? "cursor-not-allowed bg-indigo-300"
                   : "bg-indigo-500 hover:bg-indigo-600"
               }`}

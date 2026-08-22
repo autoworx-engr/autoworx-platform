@@ -2,9 +2,7 @@ import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { authOptions } from "@/authOptions";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
-import { normalizeSearch } from "@/utils/normalizeSearch";
 import { Invoice, Prisma, Refund } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
 import moment from "moment-timezone";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
@@ -14,9 +12,15 @@ import Analytics from "./Analytics";
 import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics - Revenue",
+  description: "Analyze your shop's revenue and profitability",
+};
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -28,7 +32,7 @@ type TProps = {
     filterRevenue?: string;
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
 export type TSliderData = {
@@ -71,12 +75,101 @@ export type TInvoice = Prisma.InvoiceGetPayload<{
   };
 }>;
 
-export default async function RevenueReportPage({ searchParams }: TProps) {
+export default async function RevenueReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) throw new Error("Unauthorized");
   const { timezone } = (await getCompanyTimezone()) || {
     timezone: moment.tz.guess(),
   };
-  const filterOR: any = [];
+
+  const ci = (value: string): Prisma.StringFilter => ({
+    contains: value,
+    mode: "insensitive",
+  });
+
+  const searchTerm = searchParams.search?.trim();
+
+  // Bare 4-digit year, e.g. "2025" -> match vehicle.year directly
+  const yearOnly =
+    searchTerm && /^\d{4}$/.test(searchTerm) ? parseInt(searchTerm, 10) : null;
+
+  const buildVehicleCombinations = (
+    term: string,
+  ): Prisma.InvoiceWhereInput[] => {
+    if (!term.includes(" ")) return [];
+    const parts = term.split(/\s+/);
+    const results: Prisma.InvoiceWhereInput[] = [];
+    const yearNum = /^\d{4}$/.test(parts[0]) ? parseInt(parts[0], 10) : null;
+    const rest = yearNum !== null ? parts.slice(1) : parts;
+
+    for (let i = 1; i < rest.length; i++) {
+      const make = rest.slice(0, i).join(" ");
+      const model = rest.slice(i).join(" ");
+      const andClauses =
+        yearNum !== null
+          ? [{ year: yearNum }, { make: ci(make) }, { model: ci(model) }]
+          : [{ make: ci(make) }, { model: ci(model) }];
+      results.push({
+        vehicle: { is: { AND: andClauses } },
+      } as Prisma.InvoiceWhereInput);
+    }
+
+    if (yearNum !== null && rest.length > 0) {
+      const restStr = rest.join(" ");
+      results.push({
+        vehicle: { is: { AND: [{ year: yearNum }, { make: ci(restStr) }] } },
+      } as Prisma.InvoiceWhereInput);
+      results.push({
+        vehicle: { is: { AND: [{ year: yearNum }, { model: ci(restStr) }] } },
+      } as Prisma.InvoiceWhereInput);
+    }
+
+    return results;
+  };
+
+  // Try every first/last name split point, not just first-word-only
+  const buildClientNameFilter = (term: string): Prisma.InvoiceWhereInput[] => {
+    if (!term.includes(" ")) return [];
+    const parts = term.split(/\s+/);
+    const results: Prisma.InvoiceWhereInput[] = [];
+
+    for (let i = 1; i < parts.length; i++) {
+      const first = parts.slice(0, i).join(" ");
+      const last = parts.slice(i).join(" ");
+      results.push({
+        client: {
+          is: { AND: [{ firstName: ci(first) }, { lastName: ci(last) }] },
+        },
+      } as Prisma.InvoiceWhereInput);
+    }
+
+    return results;
+  };
+
+  const searchFilter: Prisma.InvoiceWhereInput | undefined = searchTerm
+    ? {
+        OR: [
+          { id: ci(searchTerm) },
+          { client: { is: { firstName: ci(searchTerm) } } },
+          { client: { is: { lastName: ci(searchTerm) } } },
+          { vehicle: { is: { make: ci(searchTerm) } } },
+          { vehicle: { is: { model: ci(searchTerm) } } },
+          { vehicle: { is: { submodel: ci(searchTerm) } } },
+          { vehicle: { is: { other: ci(searchTerm) } } },
+          ...(yearOnly !== null
+            ? [
+                {
+                  vehicle: { is: { year: yearOnly } },
+                } as Prisma.InvoiceWhereInput,
+              ]
+            : []),
+          ...buildVehicleCombinations(searchTerm),
+          ...buildClientNameFilter(searchTerm),
+        ],
+      }
+    : undefined;
 
   const defaultTake = 50;
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
@@ -86,7 +179,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const invoicesPromise = db.invoice.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
       type: "Invoice",
       column: {
         companyId: session?.user?.companyId,
@@ -113,7 +206,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
               }
             : undefined,
       },
-      OR: filterOR.length > 0 ? filterOR : undefined,
+      ...(searchFilter || {}),
     },
     include: {
       Refund: true,
@@ -160,7 +253,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const servicesPromise = db.service.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
     },
     include: {
       category: true,
@@ -169,7 +262,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const categoriesPromise = db.category.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
     },
   });
 
@@ -179,29 +272,8 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     categoriesPromise,
   ]);
 
-  let filteredInvoicesWithOutDate: Invoice[] = [];
-  let filteredInvoices =
-    searchParams?.search && invoices
-      ? invoices.filter((invoice) => {
-          if (!invoice.client && !invoice.id) {
-            return false;
-          }
-
-          const fullName = `${invoice?.client?.firstName} ${invoice?.client?.lastName}`;
-          const vehicle = `${invoice.vehicle?.make} ${invoice.vehicle?.model} ${invoice.vehicle?.submodel}`;
-          return (
-            normalizeSearch(fullName)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            ) ||
-            normalizeSearch(invoice.id)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            ) ||
-            normalizeSearch(vehicle)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            )
-          );
-        })
-      : invoices;
+  let filteredInvoicesWithOutDate: TInvoice[] = [];
+  let filteredInvoices = invoices;
 
   if (searchParams.startDate && searchParams.endDate) {
     const formattedStartDate = searchParams.startDate
@@ -234,24 +306,18 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         invoiceDate.isBetween(convertedStart, convertedEnd, null, "[]")
       );
     });
-
-    // filterOR.push({
-    //   deliveredAt: {
-    //     gte:
-    //       formattedStartDate && new Date(`${formattedStartDate}T00:00:00.000Z`), // Start of the day
-    //     lte: formattedEndDate && new Date(`${formattedEndDate}T23:59:59.999Z`), // End of the day
-    //   },
-    // });
   }
 
-  const getService = services.map((service) => service.name);
-  const getCategory = categories.map((category) => category.name);
-  const maxPrice = Math.max(
-    ...filteredInvoices.map((invoice) => Number(invoice.grandTotal))
+  const getService = services
+    .map((service) => service.name.trim())
+    .filter((name) => name.length > 0);
+  const getCategory = categories
+    .map((category) => category.name.trim())
+    .filter((name) => name.length > 0);
+  const maxPrice = filteredInvoices.reduce(
+    (max, invoice) => Math.max(max, Number(invoice.grandTotal)),
+    0,
   );
-
-  let maxCost = 0;
-  let maxProfit = 0;
 
   const filteredInvoice = filteredInvoices.filter((invoice) => {
     const laborCost = invoice?.technician.reduce((acc, technician) => {
@@ -259,11 +325,6 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       return acc;
     }, 0);
 
-    // Calculate inventory losses (lost products from inventory)
-    // const inventoryLossAmount = invoice.InventoryProductHistory?.reduce(
-    //   (total, item) => total + Number(item.price) * Number(item.quantity),
-    //   0
-    // ) || 0;
     const inventoryLossAmount = 0;
 
     const {
@@ -280,15 +341,14 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
             materials: true;
             labor: true;
           };
-        }>
+        }>,
       ) => {
         const materialCostPrice = cur.materials.reduce(
           (acc, cur) =>
             acc + Number(cur?.cost || 0) * Number(cur?.quantity || 0),
-          0
+          0,
         );
 
-        // Calculate material loss and track material names with losses
         const { totalMaterialLoss, lossDetails } = cur.materials.reduce(
           (acc, material) => {
             const materialCost =
@@ -319,20 +379,9 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
               loss: number;
               isFromInventory: boolean;
             }[],
-          }
+          },
         );
 
-        // Calculate labor loss (when technician amount > labor charge)
-        // let laborLoss = 0;
-        // if (cur.labor) {
-        //   const laborRevenue = (Number(cur.labor.charge || 0) * Number(cur.labor.hours || 0)) - Number(cur.labor.discount || 0);
-        //   // Find technician costs for this labor
-        //   const technicianCosts = invoice.technician
-        //     .filter(tech => tech.invoiceItemId === cur.id)
-        //     .reduce((sum, tech) => sum + Number(tech.amount || 0), 0);
-        //
-        //   laborLoss = technicianCosts > laborRevenue ? technicianCosts - laborRevenue : 0;
-        // }
         const laborLoss = 0;
 
         const costPrice = materialCostPrice;
@@ -352,15 +401,12 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
           loss: number;
           isFromInventory: boolean;
         }[],
-      }
+      },
     );
 
-    // Calculate total costs and profit correctly
     const totalCostPrice = costPrice + laborCost;
-    // const totalLossAmount = inventoryLossAmount + materialLossAmount + laborLossAmount;
-    const totalLossAmount = materialLossAmount; // Only material loss
+    const totalLossAmount = materialLossAmount;
 
-    // Profit = Revenue - Total Costs
     const finalProfitPrice = Number(invoice.grandTotal) - totalCostPrice;
 
     (invoice as any).costPrice = totalCostPrice;
@@ -370,51 +416,57 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     (invoice as any).laborLossAmount = laborLossAmount;
     (invoice as any).totalLossAmount = totalLossAmount;
     (invoice as any).materialLossDetails = materialLossDetails;
-    maxCost = Math.max(maxCost, costPrice);
-    maxProfit = Math.max(maxProfit, profitPrice);
 
-    // Filter based on filterRevenue selection (Profit filter should show only profitable invoices)
     if (searchParams.filterRevenue === "Profit" && finalProfitPrice <= 0) {
-      return false; // Exclude invoices with zero or negative profit
+      return false;
     }
 
     if (!searchParams.price && !searchParams.cost && !searchParams.profit) {
       return true;
     }
-    // filter by price of invoice
+
+    let matches = true;
+
     if (searchParams.price) {
       const [minPrice, maxPrice] = searchParams.price.split("-").map(Number);
-      if (
+      matches =
+        matches &&
         Number(invoice?.grandTotal) >= minPrice &&
-        Number(invoice?.grandTotal) <= maxPrice
-      ) {
-        return true;
-      }
+        Number(invoice?.grandTotal) <= maxPrice;
     }
-    // filter by cost of invoice
+
     if (searchParams.cost) {
       const [minCost, maxCost] = searchParams.cost.split("-").map(Number);
-      if (costPrice >= minCost && costPrice <= maxCost) {
-        return true;
-      }
+      matches =
+        matches && totalCostPrice >= minCost && totalCostPrice <= maxCost;
     }
-    // filter by profit of invoice
+
     if (searchParams.profit) {
       const [minProfit, maxProfit] = searchParams.profit.split("-").map(Number);
-      if (profitPrice >= minProfit && profitPrice <= maxProfit) {
-        return true;
-      }
+      matches =
+        matches &&
+        finalProfitPrice >= minProfit &&
+        finalProfitPrice <= maxProfit;
     }
+
+    return matches;
   });
 
-  // multiple filters
+  const maxCost = filteredInvoices.reduce(
+    (max, invoice) => Math.max(max, Number((invoice as any).costPrice || 0)),
+    0,
+  );
+  const maxProfit = filteredInvoices.reduce(
+    (max, invoice) => Math.max(max, Number((invoice as any).profitPrice || 0)),
+    0,
+  );
+
   const filterMultipleSliders: TSliderData[] = [
     {
       id: 1,
       type: "price",
       min: 0,
       max: maxPrice,
-      // defaultValue: [50, 250],
     },
     {
       id: 2,
@@ -430,13 +482,9 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     },
   ];
 
-  // Calculate the total week profit (Invoice has a `profit` field)
   const now = moment.tz(timezone);
 
-  // Start of the week (Sunday)
   const startOfWeek = now.clone().startOf("week");
-
-  // End of the week (Saturday)
   const endOfWeek = now.clone().endOf("week");
 
   const weeklyInvoices = (
@@ -456,15 +504,12 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const totalWeekProfit = weeklyInvoices.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
-  // Calculate the total month profit (Invoice has a `profit` field)
-  // Start and end of the current month
   const startOfMonth = now.clone().startOf("month");
   const endOfMonth = now.clone().endOf("month");
 
-  // Filter invoices within the current month
   const monthlyInvoices = (
     searchParams.startDate && searchParams.endDate
       ? filteredInvoicesWithOutDate
@@ -482,38 +527,34 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const totalMonthProfit = monthlyInvoices.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
-  // Calculate the all time profit (Invoice has a `profit` field)
   const totalProfit = invoices.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
-  // Calculate total revenue (sum of profits) for all invoices
   const totalRevenue = filteredInvoice.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
-  // Calculate filtered revenue only when date range is applied
   let filteredRevenue =
     searchParams?.startDate && searchParams?.endDate
       ? filteredInvoice.reduce(
           (total, invoice) =>
             total + Number((invoice as Invoice).grandTotal || 0),
-          0
+          0,
         )
-      : totalRevenue; // Use total revenue when no date filter
+      : totalRevenue;
 
   let getFilteredCategoryId = categories.find(
-    (category) => category.name === searchParams.category
+    (category) => category.name === searchParams.category,
   )?.id;
 
   let filterByValue = 0;
 
-  //filter based on the filterRevenue query - use the filtered invoice data
   if (searchParams?.filterRevenue) {
     filterByValue = filteredInvoice.reduce((total, invoice) => {
       if (searchParams?.filterRevenue === "Price") {
@@ -521,12 +562,11 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       } else if (searchParams?.filterRevenue === "Cost") {
         return total + (Number((invoice as any)?.costPrice) || 0);
       } else if (searchParams?.filterRevenue === "Profit") {
-        // Only sum positive profits since we've already filtered out losses
         const refundedAmount =
           invoice?.Refund?.reduce(
-            (acc, refund) => acc.plus(refund.amount || new Decimal(0)),
-            new Decimal(0)
-          ) || new Decimal(0);
+            (acc, refund) => acc.plus(refund.amount || new Prisma.Decimal(0)),
+            new Prisma.Decimal(0),
+          ) || new Prisma.Decimal(0);
 
         const totalProfit =
           Number((invoice as any).profitPrice) - Number(refundedAmount);
@@ -541,29 +581,20 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
   if (searchParams.category) {
     let filteredInvoiceItems = [];
 
+    const categoryServiceIds = new Set(
+      services
+        .filter((service) => service.categoryId === getFilteredCategoryId)
+        .map((service) => service.id),
+    );
+
     for (const invoice of filteredInvoices) {
       for (const item of invoice.invoiceItems) {
         let serviceId: any = item?.serviceId;
-        if (serviceId) {
-          const services = await db.service.findMany({
-            where: {
-              categoryId: getFilteredCategoryId,
-              id: serviceId,
-              companyId: session?.user?.companyId,
-            },
-            select: {
-              id: true,
-            },
-          });
-          for (const service of services) {
-            if (service.id === serviceId) {
-              filteredInvoiceItems.push(item);
-            }
-          }
+        if (serviceId && categoryServiceIds.has(serviceId)) {
+          filteredInvoiceItems.push(item);
         }
       }
     }
-    // Calculate total material cost and labor cost for filtered invoic
     let totalMaterialCost = 0;
     let totalLaborCost = 0;
 
@@ -583,19 +614,16 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
   }
 
   if (searchParams.service) {
-    // If category is not specified, set filteredRevenue to 0
     if (!searchParams.category) {
       filteredRevenue = 0;
     }
     let filteredInvoiceItems = [];
 
-    // Find the service ID for the selected service name
     const selectedService = services.find(
-      (service) => service.name === searchParams.service?.trim()
+      (service) => service.name === searchParams.service?.trim(),
     );
 
     if (selectedService) {
-      // Loop through filtered invoices to find invoice items with the selected service
       for (const invoice of filteredInvoices) {
         for (const item of invoice.invoiceItems) {
           if (item.serviceId === selectedService.id) {
@@ -604,38 +632,40 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         }
       }
 
-      // Calculate total material cost and labor cost for filtered invoice items
       let totalMaterialCost = 0;
       let totalLaborCost = 0;
 
       filteredInvoiceItems.forEach((item: any) => {
-        // Calculate labor cost
         if (item.labor) {
           totalLaborCost +=
             item.labor.hours * item.labor.charge - item.labor.discount;
         }
 
-        // Calculate material cost
         item.materials.forEach((material: any) => {
           const materialCost =
             material.quantity * material.sell - material.discount;
           totalMaterialCost += materialCost;
         });
       });
-      // Set filtered revenue to the sum of material and labor costs for the selected service
       filteredRevenue = filteredRevenue + (totalMaterialCost + totalLaborCost);
     } else {
-      // If service not found, set filtered revenue to 0
       filteredRevenue = 0;
     }
   }
+
+  const filteredTotalCount = filteredInvoice.length;
+  const startIndex = (page - 1) * take;
+  const paginatedFilteredInvoice = filteredInvoice.slice(
+    startIndex,
+    startIndex + take,
+  );
 
   return (
     <div className="space-y-5">
       <div
         className={cn(
           "grid grid-cols-1 md:grid-cols-2 gap-4",
-          searchParams.filterRevenue ? "lg:grid-cols-5" : "lg:grid-cols-4"
+          searchParams.filterRevenue ? "lg:grid-cols-5" : "lg:grid-cols-4",
         )}
       >
         <Calculation content="WEEK" amount={totalWeekProfit} />
@@ -663,17 +693,15 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
           />
         )}
       </div>
-      {/* filter section */}
       <FilterHeader
         searchParams={searchParams}
         filterMultipleSliders={filterMultipleSliders}
         getCategory={getCategory}
         getService={getService}
       />
-      {/* Conditional Rendering Based on Device */}
       <RevenueDisplay
         filteredInvoice={
-          filteredInvoice as (TInvoice & {
+          paginatedFilteredInvoice as (TInvoice & {
             refund: Refund;
             costPrice: number;
             profitPrice: number;
@@ -688,11 +716,11 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
             }[];
           })[]
         }
+        total={filteredTotalCount}
         timezone={timezone}
         page={page}
         take={take}
       />{" "}
-      {/* Analytics will only be loaded and rendered on desktop */}
       <Suspense fallback="loading...">
         <AnalyticsVisibility>
           <Analytics

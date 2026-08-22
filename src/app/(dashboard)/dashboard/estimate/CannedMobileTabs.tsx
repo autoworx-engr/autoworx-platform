@@ -7,10 +7,27 @@ import CannedServices from "./CannedServices";
 
 type Props = {
   labors: (Labor & { category: Category })[];
+  laborTotal: number;
+  laborPage: number;
+  laborTake: number;
   services: (Service & { category: Category })[];
+  serviceTotal: number;
+  servicePage: number;
+  serviceTake: number;
+  categories: Category[];
 };
 
-const CannedMobileTabs = ({ labors, services }: Props) => {
+const CannedMobileTabs = ({
+  labors,
+  laborTotal,
+  laborPage,
+  laborTake,
+  services,
+  serviceTotal,
+  servicePage,
+  serviceTake,
+  categories,
+}: Props) => {
   const [activeTab, setActiveTab] = useState<"labor" | "service">("labor");
 
   return (
@@ -42,9 +59,21 @@ const CannedMobileTabs = ({ labors, services }: Props) => {
 
       <div className="flex flex-col flex-1 h-full">
         {activeTab === "labor" ? (
-          <CannedLabor labors={labors} />
+          <CannedLabor
+            labors={labors}
+            total={laborTotal}
+            page={laborPage}
+            take={laborTake}
+            categories={categories}
+          />
         ) : (
-          <CannedServices services={services} />
+          <CannedServices
+            services={services}
+            total={serviceTotal}
+            page={servicePage}
+            take={serviceTake}
+            categories={categories}
+          />
         )}
       </div>
     </div>

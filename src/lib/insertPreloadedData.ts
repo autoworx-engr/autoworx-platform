@@ -1,11 +1,15 @@
 import { db } from "./db";
 import { preloadedCategories } from "./preloadedDataCanned";
+import { Prisma } from "@prisma/client";
 
-export const insertPreloadedData = async (companyId: number) => {
-  // console.log("insertPreloadedData companyId", companyId);
+export const insertPreloadedData = async (
+  companyId: number,
+  tx?: Prisma.TransactionClient,
+) => {
+  const client = tx ?? db;
   // Insert preloaded categories
-  const categories = await db.category.createMany({
-    data: preloadedCategories.map(category => ({
+  const categories = await client.category.createMany({
+    data: preloadedCategories.map((category) => ({
       ...category,
       companyId,
     })),

@@ -1,14 +1,14 @@
 "use client";
 import { deleteCoupon } from "@/actions/coupon/new";
 import { Coupon } from "@prisma/client";
+import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
+import { PencilLineIcon, X } from "lucide-react";
 import moment from "moment";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useMediaQuery } from "react-responsive";
 import EditCoupon from "./EditCoupon";
 import NewCoupon from "./NewCoupon";
 import QrCodeForCoupon from "./QrCodeForCoupon";
-import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
-import { useMediaQuery } from "react-responsive";
-import { SquarePen, X } from "lucide-react";
 
 // Define the props for the CouponTable component
 interface CouponTableProps {
@@ -43,7 +43,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
 
   const paginatedCoupons = coupons.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    currentPage * pageSize,
   );
 
   const handleCouponQr = (coupon: Coupon) => {
@@ -61,7 +61,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
     e.stopPropagation();
     await deleteCoupon(coupon.id);
     setCoupons(
-      (prevCoupons) => prevCoupons?.filter((c) => c.id !== coupon.id) || null
+      (prevCoupons) => prevCoupons?.filter((c) => c.id !== coupon.id) || null,
     );
     setSelectedCoupon(null);
     setShowQr(false);
@@ -71,8 +71,8 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
     setCoupons(
       (prevCoupons) =>
         prevCoupons?.map((coupon) =>
-          coupon.id === updatedCoupon.id ? updatedCoupon : coupon
-        ) || null
+          coupon.id === updatedCoupon.id ? updatedCoupon : coupon,
+        ) || null,
     );
   };
 
@@ -157,7 +157,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                           className="text-left text-2xl text-blue-600"
                           onClick={(e) => handleEdit(e, coupon)}
                         >
-                          <SquarePen className="w-5 h-5 text-[#6571FF]" />
+                          <PencilLineIcon className="w-5 h-5 text-primary" />
                         </button>
                         <Popconfirm
                           title="Delete the Coupon"
@@ -190,7 +190,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
             {paginatedCoupons.map((coupon, index) => (
               <div key={index} className="space-y-4">
                 <div
-                  className={`w-full rounded-lg border p-4 transition-all duration-200 ${index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"} ${selectedCoupon?.id === coupon.id ? "border-2 border-[#6571FF]" : ""}`}
+                  className={`w-full rounded-lg border p-4 transition-all duration-200 ${index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"} ${selectedCoupon?.id === coupon.id ? "border-2 border-primary" : ""}`}
                   onClick={() => handleCouponQr(coupon)}
                 >
                   <div className="flex items-center justify-between">
@@ -200,7 +200,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                         className="text-left text-2xl text-blue-600"
                         onClick={(e) => handleEdit(e, coupon)}
                       >
-                        <SquarePen className="w-5 h-5 text-[#6571FF]" />
+                        <PencilLineIcon className="w-5 h-5 text-primary" />
                       </button>
                       <Popconfirm
                         title="Delete the Coupon"

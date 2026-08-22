@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 const resources = [
   {
@@ -104,7 +104,7 @@ export default function Sidebar() {
               "-translate-x-full": !isSidebarOpen,
               "sm:ml-14 md:ml-14 lg:ml-14": isSidebarOpen, // Margin applied when sidebar is open
               "sm:ml-0 md:ml-0": !isSidebarOpen, // No margin when sidebar is closed
-            }
+            },
           )}
         >
           <div className="flex items-end justify-end align-middle bg-background">
@@ -124,8 +124,9 @@ export default function Sidebar() {
                 href={r.link}
                 className={cn(
                   "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
-                  `${path === r.link && "font-medium text-[#6571FF]"}`
+                  `${path === r.link && "font-medium text-primary"}`,
                 )}
+                onClick={toggleSidebar}
               >
                 {toTitleCase(r.label)}
               </Link>
@@ -143,8 +144,8 @@ export default function Sidebar() {
               className={cn(
                 "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900 rounded-xl",
                 {
-                  "font-medium text-[#6571FF]": path === r.link,
-                }
+                  "font-medium text-primary": path === r.link,
+                },
               )}
             >
               {toTitleCase(r.label)}

@@ -42,7 +42,7 @@ const pump = promisify(pipeline);
  */
 // Helper function to convert Web Stream to Node.js Readable stream
 function webStreamToNodeStream(
-  webStream: ReadableStream<Uint8Array>
+  webStream: ReadableStream<Uint8Array>,
 ): Readable {
   const reader = webStream.getReader();
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!recipient) {
       return NextResponse.json(
         { success: false, error: "Missing required form data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const form = new FormData();
     form.append(
       "from",
-      `${company?.name} <${company?.id}@${process.env.MAILGUN_DOMAIN}>`
+      `${company?.name} <${company?.id}@${process.env.MAILGUN_DOMAIN}>`,
     );
     form.append("to", client.email!);
     form.append("subject", `New message from ${company?.name}`);
@@ -122,13 +122,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       `${text}
 
     -------------------------
-    To unsubscribe, click here: ${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?email=${encodeURIComponent(client.email!)}`
+    To unsubscribe, click here: ${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?email=${encodeURIComponent(client.email!)}`,
     );
     form.append("h:Reply-To", `${company?.id}@${process.env.MAILGUN_DOMAIN}`);
 
     form.append(
       "h:List-Unsubscribe",
-      `<mailto:unsubscribe@${process.env.MAILGUN_DOMAIN}?subject=unsubscribe>, <${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe>`
+      `<mailto:unsubscribe@${process.env.MAILGUN_DOMAIN}?subject=unsubscribe>, <${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe>`,
     );
 
     // Add In-Reply-To and References headers if this is a reply
@@ -181,11 +181,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           Authorization:
             "Basic " +
             Buffer.from(
-              `${process.env.MAILGUN_USERNAME}:${process.env.MAILGUN_API_KEY}`
+              `${process.env.MAILGUN_USERNAME}:${process.env.MAILGUN_API_KEY}`,
             ).toString("base64"),
         },
         body: form,
-      }
+      },
     );
 
     const response: any = await sendMail.json();
@@ -216,7 +216,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           {
             method: "POST",
             body: formData2,
-          }
+          },
         );
 
         if (!uploadRes.ok) {

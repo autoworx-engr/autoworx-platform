@@ -12,9 +12,10 @@ import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
 import { Invoice } from "@prisma/client";
-import { Checkbox, message } from "antd";
+import { Checkbox } from "antd";
 import { useEffect, useState } from "react";
 import FleetSubHeading from "./FleetSubHeading";
+import { errorToast, successToast } from "@/lib/toast";
 
 const CreateStatementModal = ({
   unPaidInvoices,
@@ -59,12 +60,12 @@ const CreateStatementModal = ({
 
   const handleCreate = async () => {
     if (selectedItems.length === 0) {
-      message.error("Please select at least one invoice");
+      errorToast("Please select at least one invoice");
       return;
     }
 
     if (!fleetId) {
-      message.error("Fleet ID is required to create a statement");
+      errorToast("Fleet ID is required to create a statement");
       return;
     }
 
@@ -76,7 +77,7 @@ const CreateStatementModal = ({
       });
 
       if (result.type === "success") {
-        message.success(result.message || "Statement created successfully");
+        successToast(result.message || "Statement created successfully");
 
         // Close modal first
         setOpen(false);
@@ -89,11 +90,11 @@ const CreateStatementModal = ({
           onStatementCreated();
         }
       } else {
-        message.error(result.message || "Failed to create statement");
+        errorToast(result.message || "Failed to create statement");
       }
     } catch (error) {
       console.error("Error creating statement:", error);
-      message.error("Failed to create statement");
+      errorToast("Failed to create statement");
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ const CreateStatementModal = ({
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
+          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/40 transition-all duration-300 hover:from-[#505aff] hover:to-primary hover:shadow-xl">
             Create Statement
           </button>
         </DialogTrigger>
@@ -126,7 +127,7 @@ const CreateStatementModal = ({
           </DialogHeader>
 
           {/* Table Container with Scroll */}
-          <div className="thin-scrollbar flex-1 overflow-y-auto scroll-smooth">
+          <div className="flex-1 overflow-y-auto scroll-smooth">
             {unPaidInvoices.length > 0 ? (
               <table className="w-full">
                 <thead className="sticky top-0 z-10 bg-background">
@@ -158,7 +159,7 @@ const CreateStatementModal = ({
                       key={invoice.id}
                       className={cn(
                         "cursor-pointer rounded-md border py-3",
-                        index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                        index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                       )}
                     >
                       <td className="px-3 py-3">
@@ -169,7 +170,7 @@ const CreateStatementModal = ({
                           }
                         />
                       </td>
-                      <td className="border-b px-4 py-2 text-left text-[#6571FF]">
+                      <td className="border-b px-4 py-2 text-left text-primary">
                         <InvoiceModal
                           invoiceId={invoice?.id}
                           buttonChild={<button>{invoice?.id}</button>}
@@ -230,7 +231,7 @@ const CreateStatementModal = ({
               <button
                 className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

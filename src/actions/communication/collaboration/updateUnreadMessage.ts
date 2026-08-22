@@ -26,10 +26,10 @@ export const updateCollaborationUnreadMessageToRead = async (
 
     // Trigger real-time update for the receiver to refresh their unread counts
     if (updatedTracks.count > 0) {
-      pusher.trigger(`track-${userId}`, "chat-track-read", { 
-        senderId, 
+      pusher.trigger(`track-${userId}`, "chat-track-read", {
+        senderId,
         userId,
-        section: "collaboration" 
+        section: "collaboration",
       });
     }
 

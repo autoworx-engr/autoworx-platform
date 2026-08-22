@@ -5,14 +5,18 @@ import { ChatTrack, Group, Message, User } from "@prisma/client";
 import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 import List from "./List";
-import UsersArea from "./UsersArea";
+import UsersArea, { ChatListItem } from "./UsersArea";
+
+type TUser = User & { unreadCount: number; latestMessage?: Message | null };
+type TGroup = Group & { users: User[] };
 
 export type TBodyProps = {
-  users: (User & { unreadCount: number; latestMessage?: Message | null })[];
+  users: TUser[];
   currentUser: Session["user"];
-  groups: (Group & { users: User[] })[];
+  groups: TGroup[];
   userChatTrack: (ChatTrack & { message?: Message | null })[];
-  selectedUser: (User & { unreadCount: number; latestMessage?: Message | null }) | null;
+  selectedUser: TUser | null;
+  selectedGroup?: TGroup | null;
   messages?: Message[];
 };
 
@@ -22,114 +26,146 @@ export default function Body({
   groups,
   userChatTrack,
   selectedUser,
+  selectedGroup,
   messages = [],
 }: TBodyProps) {
-  // Unified chat list instead of separate user and group lists
-  const [chatList, setChatList] = useState<Array<{
-    id: string;
-    type: 'user' | 'group';
-    data: any;
-    timestamp: number;
-  }>>(
-    selectedUser ? [{
-      id: `user-${selectedUser.id}`,
-      type: 'user' as const,
-      data: selectedUser,
-      timestamp: Date.now()
-    }] : []
-  );
-
-  // Derived state for backward compatibility
-  const usersList = chatList.filter(chat => chat.type === 'user').map(chat => chat.data);
-  const groupsList = chatList.filter(chat => chat.type === 'group').map(chat => chat.data);
-
-  // Legacy setters for backward compatibility - they now update the unified list
-  const setUsersList = (updater: any) => {
-    if (typeof updater === 'function') {
-      setChatList(currentList => {
-        const currentUsers = currentList.filter(chat => chat.type === 'user').map(chat => chat.data);
-        const newUsers = updater(currentUsers);
-        const userChats = newUsers.map((user: any, index: number) => ({
-          id: `user-${user.id}`,
-          type: 'user' as const,
-          data: user,
-          timestamp: currentList.find(chat => chat.id === `user-${user.id}`)?.timestamp || Date.now() + index
-        }));
-        
-        // Keep non-user chats and replace user chats
-        const nonUserChats = currentList.filter(chat => chat.type !== 'user');
-        return [...userChats, ...nonUserChats].slice(0, 4);
+  const [chatList, setChatList] = useState<ChatListItem[]>(() => {
+    const initial: ChatListItem[] = [];
+    if (selectedUser) {
+      initial.push({
+        id: `user-${selectedUser.id}`,
+        type: "user",
+        data: selectedUser,
+        timestamp: Date.now(),
       });
     }
-  };
-
-  const setGroupsList = (updater: any) => {
-    if (typeof updater === 'function') {
-      setChatList(currentList => {
-        const currentGroups = currentList.filter(chat => chat.type === 'group').map(chat => chat.data);
-        const newGroups = updater(currentGroups);
-        const groupChats = newGroups.map((group: any, index: number) => ({
-          id: `group-${group.id}`,
-          type: 'group' as const,
-          data: group,
-          timestamp: currentList.find(chat => chat.id === `group-${group.id}`)?.timestamp || Date.now() + index
-        }));
-        
-        // Keep non-group chats and replace group chats
-        const nonGroupChats = currentList.filter(chat => chat.type !== 'group');
-        return [...nonGroupChats, ...groupChats].slice(0, 4);
+    if (selectedGroup) {
+      initial.push({
+        id: `group-${selectedGroup.id}`,
+        type: "group",
+        data: selectedGroup,
+        timestamp: Date.now(),
       });
     }
-  };
+    return initial;
+  });
 
-  // Helper function to add chat items with proper positioning
-  const addChatItem = (item: any, type: 'user' | 'group') => {
-    setChatList(currentList => {
-      const chatId = `${type}-${item.id}`;
-      const existingIndex = currentList.findIndex(chat => chat.id === chatId);
-      
-      if (existingIndex !== -1) {
-        // Item exists, just update it without changing position
-        const updated = [...currentList];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          data: type === 'user' ? { ...item, unreadCount: 0 } : item
-        };
-        return updated;
-      }
-      
-      // New item - add to list
-      const newChat = {
-        id: chatId,
-        type,
-        data: type === 'user' ? { ...item, unreadCount: 0 } : item,
-        timestamp: Date.now()
-      };
-      
-      if (currentList.length >= 4) {
-        // Replace the last item (4th position) - keep first 3 fixed
-        const updated = [...currentList];
-        updated[3] = newChat;
-        return updated;
-      } else {
-        // Add to the end
-        return [...currentList, newChat];
-      }
+  const usersList = chatList
+    .filter(
+      (chat): chat is Extract<ChatListItem, { type: "user" }> =>
+        chat.type === "user",
+    )
+    .map((chat) => chat.data);
+  const groupsList = chatList
+    .filter(
+      (chat): chat is Extract<ChatListItem, { type: "group" }> =>
+        chat.type === "group",
+    )
+    .map((chat) => chat.data);
+
+  const setUsersList: React.Dispatch<React.SetStateAction<TUser[]>> = (
+    updater,
+  ) => {
+    setChatList((currentList) => {
+      const currentUsers = currentList
+        .filter(
+          (c): c is Extract<ChatListItem, { type: "user" }> =>
+            c.type === "user",
+        )
+        .map((c) => c.data);
+      const newUsers =
+        typeof updater === "function"
+          ? (updater as (prev: TUser[]) => TUser[])(currentUsers)
+          : updater;
+      const userChats: ChatListItem[] = newUsers.map((user, index) => ({
+        id: `user-${user.id}`,
+        type: "user",
+        data: user,
+        timestamp:
+          currentList.find((c) => c.id === `user-${user.id}`)?.timestamp ||
+          Date.now() + index,
+      }));
+      const nonUserChats = currentList.filter((c) => c.type !== "user");
+      return [...userChats, ...nonUserChats].slice(0, 4);
     });
   };
 
-  // for mobile responsive
+  const setGroupsList: React.Dispatch<React.SetStateAction<TGroup[]>> = (
+    updater,
+  ) => {
+    setChatList((currentList) => {
+      const currentGroups = currentList
+        .filter(
+          (c): c is Extract<ChatListItem, { type: "group" }> =>
+            c.type === "group",
+        )
+        .map((c) => c.data);
+      const newGroups =
+        typeof updater === "function"
+          ? (updater as (prev: TGroup[]) => TGroup[])(currentGroups)
+          : updater;
+      const groupChats: ChatListItem[] = newGroups.map((group, index) => ({
+        id: `group-${group.id}`,
+        type: "group",
+        data: group,
+        timestamp:
+          currentList.find((c) => c.id === `group-${group.id}`)?.timestamp ||
+          Date.now() + index,
+      }));
+      const nonGroupChats = currentList.filter((c) => c.type !== "group");
+      return [...nonGroupChats, ...groupChats].slice(0, 4);
+    });
+  };
+
+  const addChatItem = (item: TUser | TGroup, type: "user" | "group") => {
+    setChatList((currentList) => {
+      const chatId = `${type}-${item.id}`;
+      const existingIndex = currentList.findIndex((c) => c.id === chatId);
+
+      const data =
+        type === "user"
+          ? ({ ...(item as TUser), unreadCount: 0 } as TUser)
+          : (item as TGroup);
+      const newChat: ChatListItem =
+        type === "user"
+          ? {
+              id: chatId,
+              type: "user",
+              data: data as TUser,
+              timestamp: Date.now(),
+            }
+          : {
+              id: chatId,
+              type: "group",
+              data: data as TGroup,
+              timestamp: Date.now(),
+            };
+
+      if (existingIndex !== -1) {
+        const updated = [...currentList];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          data: newChat.data,
+        } as ChatListItem;
+        return updated;
+      }
+      if (currentList.length >= 4) {
+        const updated = [...currentList];
+        updated[3] = newChat;
+        return updated;
+      }
+      return [...currentList, newChat];
+    });
+  };
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 600) {
-        // For mobile, keep only the first chat
-        setChatList(currentList => currentList.slice(0, 1));
+        setChatList((currentList) => currentList.slice(0, 1));
       }
     };
     window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const totalLengthOfUsersAndGroups = usersList.length + groupsList.length;
@@ -137,7 +173,9 @@ export default function Body({
   return (
     <>
       <List
-        className={cn(totalLengthOfUsersAndGroups === 0 ? "block" : "hidden")}
+        className={cn(
+          totalLengthOfUsersAndGroups === 0 ? "block" : "hidden lg:block",
+        )}
         groups={groups}
         users={users}
         groupsList={groupsList}
@@ -149,7 +187,9 @@ export default function Body({
         messages={messages}
       />
       <UsersArea
-        className={cn(totalLengthOfUsersAndGroups === 0 ? "hidden" : "block")}
+        className={cn(
+          totalLengthOfUsersAndGroups === 0 ? "hidden lg:hidden" : "block",
+        )}
         usersList={usersList}
         setUsersList={setUsersList}
         currentUser={currentUser}

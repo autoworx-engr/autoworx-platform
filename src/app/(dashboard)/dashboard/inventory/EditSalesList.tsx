@@ -13,18 +13,18 @@ import FormError from "@/components/FormError";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
+import { useFormErrorStore } from "@/stores/form-error";
 import {
   Client,
   InventoryProductHistory,
   InventoryProductType,
   Vendor,
 } from "@prisma/client";
-import { useEffect, useState, useTransition, useRef } from "react";
-import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
-import { useFormErrorStore } from "@/stores/form-error";
+import { PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
-import { SquarePen } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
 
 interface EditSalesListProps {
   productId: number;
@@ -46,7 +46,7 @@ export default function EditSalesList({
 }: EditSalesListProps) {
   const [open, setOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
-    history?.invoiceId || null
+    history?.invoiceId || null,
   );
 
   const companyTz = useCompanyTimezone();
@@ -61,7 +61,7 @@ export default function EditSalesList({
 
   const [date, setDate] = useState<string>(formatForInput(history?.date));
   const [quantity, setQuantity] = useState<string>(
-    history?.quantity?.toString() || ""
+    history?.quantity?.toString() || "",
   );
   // Keep original quantity stable for diff calcs
   const originalQuantityRef = useRef<number>(Number(history?.quantity ?? 0));
@@ -157,8 +157,8 @@ export default function EditSalesList({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="flex w-full items-center justify-end text-[#6571FF] md:justify-center">
-          <SquarePen size={20} />
+        <button className="flex w-full items-center justify-end text-primary md:justify-center">
+          <PencilLineIcon size={20} />
         </button>
       </DialogTrigger>
 
@@ -225,7 +225,7 @@ export default function EditSalesList({
             Cancel
           </DialogClose>
           <Submit
-            className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white disabled:bg-slate-400 md:mb-0"
+            className="mb-2 flex items-center justify-center rounded-lg border bg-primary px-5 py-2 text-white disabled:bg-slate-400 md:mb-0"
             formAction={(_fd: FormData) => {
               startTransition(() => handleSubmit(_fd));
               return Promise.resolve();

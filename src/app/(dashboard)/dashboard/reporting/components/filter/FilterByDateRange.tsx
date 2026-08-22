@@ -1,19 +1,20 @@
 "use client";
-import { format } from "date-fns";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
-import { DateRangePicker } from "react-date-range";
-import "react-date-range/dist/styles.css"; // main style file
-import "react-date-range/dist/theme/default.css"; // theme css file
-import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
+import { cn } from "@/lib/cn";
+import { format, isValid, parse } from "date-fns";
 import { Calendar } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { DateRangePicker } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 type TProps = {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   modalName: string;
   closeModal: (modalName: string) => void;
   toggleModal: (modalName: string) => void;
-  activeModal: TFilterModalState;
+  activeModal: Record<string, boolean>;
+  queryDateFormat?: string;
 };
 export default function FilterDateRange({
   startDate,
@@ -22,11 +23,23 @@ export default function FilterDateRange({
   toggleModal,
   activeModal,
   modalName,
+  queryDateFormat = "MM/dd/yyyy",
 }: TProps) {
+  const parseFromQuery = (value?: string) => {
+    if (!value || value === "undefined") return null;
+    const parsed = parse(value, queryDateFormat, new Date());
+    return isValid(parsed) ? parsed : null;
+  };
+
+  const parsedStart = parseFromQuery(startDate);
+  const parsedEnd = parseFromQuery(endDate);
+  const initialStartDate = parsedStart || new Date();
+  const initialEndDate = parsedEnd || new Date();
+
   const [state, setState] = useState({
     selection: {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: initialStartDate,
+      endDate: initialEndDate,
       key: "selection",
     },
   });
@@ -34,9 +47,10 @@ export default function FilterDateRange({
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
-  // const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
-  const [isRangeSelected, setIsRangeSelected] = useState(false);
+  const [isRangeSelected, setIsRangeSelected] = useState(
+    Boolean(parsedStart && parsedEnd),
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,7 +67,7 @@ export default function FilterDateRange({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [closeModal, modalName]);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -69,15 +83,16 @@ export default function FilterDateRange({
 
   const handleOk = () => {
     const searchParams = new URLSearchParams(params!);
-    const formattedStart = format(tempRange.startDate, "MM/dd/yyyy");
-    const formattedEnd = format(tempRange.endDate, "MM/dd/yyyy");
+    const formattedStart = format(tempRange.startDate, queryDateFormat);
+    const formattedEnd = format(tempRange.endDate, queryDateFormat);
     if (tempRange.startDate && tempRange.endDate) {
-      searchParams.set("startDate", encodeURIComponent(formattedStart));
-      searchParams.set("endDate", encodeURIComponent(formattedEnd));
+      searchParams.set("startDate", formattedStart);
+      searchParams.set("endDate", formattedEnd);
     } else {
       searchParams.delete("startDate");
       searchParams.delete("endDate");
     }
+    searchParams.delete("page");
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.push(newPath);
     setState({ selection: tempRange });
@@ -86,25 +101,20 @@ export default function FilterDateRange({
   };
 
   const formatRange = (start: Date, end: Date) => {
-    const formattedStart = format(start, "MM/dd/yyyy");
-    const formattedEnd = format(end, "MM/dd/yyyy");
-    if (startDate !== "undefined" && endDate !== "undefined") {
-      return `${startDate} - ${endDate}`;
-    } else if (isRangeSelected) {
-      return `${formattedStart} - ${formattedEnd}`;
-    } else {
-      return "Date Range";
+    if (!isRangeSelected) {
+      return "Select Date Range";
     }
+    return `${format(start, "MM/dd/yyyy")} - ${format(end, "MM/dd/yyyy")}`;
   };
 
   const handleClear = () => {
     const searchParams = new URLSearchParams(params!);
     searchParams.delete("startDate");
     searchParams.delete("endDate");
+    searchParams.delete("page");
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
 
-    // Reset both state and temporary range
     const resetSelection = {
       startDate: new Date(),
       endDate: new Date(),
@@ -113,32 +123,45 @@ export default function FilterDateRange({
 
     setState({ selection: resetSelection });
     setTempRange(resetSelection);
-    closeModal(modalName);
     setIsRangeSelected(false);
   };
   return (
-    <div className="relative w-full md:w-auto">
+    <div className="relative w-full lg:w-fit">
       <button
         ref={buttonRef}
         onClick={togglePicker}
-        className={`
-          flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
-          ${
-            activeModal[modalName as keyof TFilterModalState]
-              ? "bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900"
-              : "bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700"
-          }
-        `}
+        className={cn(
+          "w-full flex items-center justify-center gap-x-2 text-base lg:gap-x-2",
+          "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
+          "bg-white dark:bg-slate-900",
+          "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
+          activeModal[modalName]
+            ? "ring-2 ring-[#6470fd] shadow-[0_20px_40px_-12px_rgba(100,112,253,0.10)]"
+            : "",
+          "md:w-44",
+          activeModal[modalName] ? "rounded-md" : "rounded-xl",
+          isRangeSelected ? "border-2 border-[#6470fd]" : "border",
+        )}
       >
         <span
-          className={`font-medium truncate ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
+          className={cn(
+            "truncate max-w-[10rem]",
+            isRangeSelected
+              ? "text-slate-600 dark:text-slate-200"
+              : "text-slate-400",
+          )}
         >
           {formatRange(state.selection.startDate, state.selection.endDate)}
         </span>
-        <Calendar className={`w-4 h-4`} />
+        <Calendar
+          className={cn(
+            "w-4 h-4 text-slate-500 dark:text-slate-300",
+            activeModal[modalName] ? "text-[#6470fd]" : "",
+          )}
+        />
       </button>
 
-      {activeModal[modalName as keyof TFilterModalState] && (
+      {activeModal[modalName] && (
         <div
           ref={dropdownRef}
           className="fixed left-1/2 right-auto top-[38%] z-50 mt-2 w-[338px] -translate-x-1/2 -translate-y-1/2 transform overflow-y-auto rounded-lg border border-gray-300 bg-background p-4 shadow-lg md:absolute md:left-auto md:right-auto md:top-full md:w-auto md:translate-x-0 md:translate-y-0 md:transform-none"
@@ -152,7 +175,7 @@ export default function FilterDateRange({
               direction="horizontal"
               preventSnapRefocus={true}
               calendarFocus="forwards"
-              className={`[&_.rdrDayStartPreview]:!color-transparent [&_.rdrDayEndPreview]:!color-transparent [&_.rdrDateDisplayItem]:p-2 [&_.rdrDateDisplayItem_input]:text-sm [&_.rdrDateDisplayWrapper]:!w-[300px] [&_.rdrDateDisplay]:text-sm [&_.rdrDayEndPreview]:!border-0 [&_.rdrDayHovered]:!border-0 [&_.rdrDayHovered]:!bg-transparent [&_.rdrDayInPreview]:!border-0 [&_.rdrDayInPreview]:!bg-transparent [&_.rdrDayNumber]:text-sm [&_.rdrDayStartPreview]:!border-0 [&_.rdrDayToday]:!bg-[#6571FF] [&_.rdrDayToday]:after:hidden [&_.rdrDayToday_.rdrDayNumber]:!text-white [&_.rdrDay]:!bg-transparent [&_.rdrDay_today]:!border-0 [&_.rdrDay_today]:!bg-transparent [&_.rdrDefinedRangesWrapper]:hidden md:[&_.rdrDefinedRangesWrapper]:block [&_.rdrMonthAndYearWrapper]:!w-[300px] [&_.rdrMonthName]:text-sm [&_.rdrMonthPicker]:text-sm [&_.rdrMonth]:!w-[300px] [&_.rdrMonths]:!w-[300px] [&_.rdrNextPrevButton]:h-8 [&_.rdrNextPrevButton]:w-8 [&_.rdrWeekDay]:text-xs [&_.rdrYearPicker]:text-sm`}
+              className={`[&_.rdrDayStartPreview]:!color-transparent [&_.rdrDayEndPreview]:!color-transparent [&_.rdrDateDisplayItem]:p-2 [&_.rdrDateDisplayItem_input]:text-sm [&_.rdrDateDisplayWrapper]:!w-[300px] [&_.rdrDateDisplay]:text-sm [&_.rdrDayEndPreview]:!border-0 [&_.rdrDayHovered]:!border-0 [&_.rdrDayHovered]:!bg-transparent [&_.rdrDayInPreview]:!border-0 [&_.rdrDayInPreview]:!bg-transparent [&_.rdrDayNumber]:text-sm [&_.rdrDayStartPreview]:!border-0 [&_.rdrDayToday]:!bg-primary [&_.rdrDayToday]:after:hidden [&_.rdrDayToday_.rdrDayNumber]:!text-white [&_.rdrDay]:!bg-transparent [&_.rdrDay_today]:!border-0 [&_.rdrDay_today]:!bg-transparent [&_.rdrDefinedRangesWrapper]:hidden md:[&_.rdrDefinedRangesWrapper]:block [&_.rdrMonthAndYearWrapper]:!w-[300px] [&_.rdrMonthName]:text-sm [&_.rdrMonthPicker]:text-sm [&_.rdrMonth]:!w-[300px] [&_.rdrMonths]:!w-[300px] [&_.rdrNextPrevButton]:h-8 [&_.rdrNextPrevButton]:w-8 [&_.rdrWeekDay]:text-xs [&_.rdrYearPicker]:text-sm`}
             />
           </div>
 
@@ -171,7 +194,7 @@ export default function FilterDateRange({
             </button>
             <button
               onClick={handleOk}
-              className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+              className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
             >
               Apply Filter
             </button>

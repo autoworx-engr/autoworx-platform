@@ -61,7 +61,7 @@ export const getFromNumber = async (companyId?: number) => {
 };
 
 export const getTwilioCredentials = async (
-  companyId?: number
+  companyId?: number,
 ): Promise<{
   success: boolean;
   data?: TwilioCredentials | null;
@@ -89,8 +89,8 @@ export const createTwilioCredentials = async ({
   apiKeySid,
   apiKeySecret,
   phoneNumberSid,
-  notifyServiceSid,
-  voipPushCredentialSid,
+  fcmPushCredentialSid,
+  apnPushCredentialSid,
 }: {
   companyId: number;
   accountSid: string;
@@ -98,8 +98,8 @@ export const createTwilioCredentials = async ({
   apiKeySid: string;
   apiKeySecret: string;
   phoneNumberSid: string;
-  notifyServiceSid?: string;
-  voipPushCredentialSid?: string;
+  fcmPushCredentialSid?: string;
+  apnPushCredentialSid?: string;
 }) => {
   console.log("🚀 ~ createTwilioCredentials ~ companyId:", companyId);
   try {
@@ -116,8 +116,8 @@ export const createTwilioCredentials = async ({
         apiKeySecret,
         companyId: companyId as number,
         phoneNumberSid,
-        notifyServiceSid,
-        voipPushCredentialSid,
+        fcmPushCredentialSid,
+        apnPushCredentialSid,
       },
       update: {
         accountSid,
@@ -125,8 +125,8 @@ export const createTwilioCredentials = async ({
         apiKeySid,
         apiKeySecret,
         phoneNumberSid,
-        notifyServiceSid,
-        voipPushCredentialSid,
+        fcmPushCredentialSid,
+        apnPushCredentialSid,
       },
     });
 
@@ -145,7 +145,7 @@ export const createTwilioCredentials = async ({
       });
 
       let companyIds: string[] | number[] | string = companies?.map(
-        (c) => c.companyId
+        (c) => c.companyId,
       );
       companyIds.sort();
       companyIds = companyIds?.join(",");
@@ -155,7 +155,7 @@ export const createTwilioCredentials = async ({
         twilioCredential.apiKeySecret,
         {
           accountSid: twilioCredential.accountSid,
-        }
+        },
       );
 
       for (const company of companies) {
@@ -168,7 +168,10 @@ export const createTwilioCredentials = async ({
         });
       }
 
-      const twimlAppName = "Autoworx_TwiML_App";
+      const appHost = new URL(
+        process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost",
+      ).hostname;
+      const twimlAppName = `Autoworx_TwiML_App_${companyId}_${appHost}`;
 
       const existingApps = await cuurentClient.applications.list({
         friendlyName: twimlAppName,
@@ -239,7 +242,7 @@ export const buyTwilioNumber = async (companyId?: number) => {
 
     const parentClient = Twilio(
       process.env.TWILIO_ACCOUNT_SID!,
-      process.env.TWILIO_AUTH_TOKEN!
+      process.env.TWILIO_AUTH_TOKEN!,
     );
 
     // 1. Create subaccount for the company
@@ -250,7 +253,7 @@ export const buyTwilioNumber = async (companyId?: number) => {
     const subClient = Twilio(
       process.env.TWILIO_ACCOUNT_SID!,
       process.env.TWILIO_AUTH_TOKEN!,
-      { accountSid: subaccount.sid }
+      { accountSid: subaccount.sid },
     );
 
     // 2. Create API key for that subaccount (optional, but good practice)
@@ -307,7 +310,7 @@ export const deleteTwilioSubaccount = async () => {
   try {
     const parentClient = Twilio(
       process.env.TWILIO_ACCOUNT_SID!,
-      process.env.TWILIO_AUTH_TOKEN!
+      process.env.TWILIO_AUTH_TOKEN!,
     );
 
     // Close the subaccount (sets status to 'closed')

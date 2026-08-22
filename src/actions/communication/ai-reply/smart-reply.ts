@@ -1,10 +1,14 @@
 "use server";
 
 import { db } from "@/lib/db";
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 import crypto from "crypto";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
+const deepseek = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY!,
+  baseURL: "https://api.deepseek.com",
+});
 
 export type SmartSuggestion = {
   text: string;
@@ -102,6 +106,11 @@ export async function getSmartReplies({
   draft?: string;
   context?: "sms" | "email";
 }): Promise<SmartSuggestion[]> {
+  const entitlements = await getCompanyEntitlements(companyId);
+  if (!entitlements.aiSmartReplies) {
+    return [];
+  }
+
   // 1) Fetch context in parallel
   const client = await db.client.findUnique({
     where: { id: clientId },
@@ -167,7 +176,7 @@ export async function getSmartReplies({
           .reverse()
           .map(
             (m: any) =>
-              `${m.emailBy === "CLIENT" ? "Client" : "Shop"}: ${m.subject ? `[${m.subject}] ` : ""}${m.text.trim().slice(0, 500)}` // Limit text length
+              `${m.emailBy === "CLIENT" ? "Client" : "Shop"}: ${m.subject ? `[${m.subject}] ` : ""}${m.text.trim().slice(0, 500)}`, // Limit text length
           )
           .join("\n")
       : (recentMessages as any[])
@@ -175,7 +184,7 @@ export async function getSmartReplies({
           .reverse()
           .map(
             (m: any) =>
-              `${m.sentBy === "Client" ? "Client" : "Shop"}: ${m.message.trim().slice(0, 320)}` // Limit message length
+              `${m.sentBy === "Client" ? "Client" : "Shop"}: ${m.message.trim().slice(0, 320)}`, // Limit message length
           )
           .join("\n");
 
@@ -319,17 +328,21 @@ DO NOT:
 
 Each suggestion should be a complete, ready-to-send reply that makes sense as the next message.`;
 
-  // 4) Call Groq (OpenAI-compatible chat API)
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile", // Higher quality model for better context understanding
+  // 4) Call DeepSeek (OpenAI-compatible chat API)
+  // Thinking mode is on by default on deepseek-v4-flash, which ignores
+  // `temperature` and adds chain-of-thought latency neither reply suggestions
+  // nor draft edits need — disable it for fast, temperature-controlled output.
+  const completion = await deepseek.chat.completions.create({
+    model: "deepseek-v4-flash",
     temperature: isEnhance ? 0.4 : 0.7, // Slightly higher temperature for more creative, context-aware suggestions
     max_tokens: 400, // Reduced from 512 to save costs (sufficient for 3 suggestions)
     response_format: { type: "json_object" },
+    thinking: { type: "disabled" },
     messages: [
       { role: "system", content: system },
       { role: "user", content: userBlock },
     ],
-  });
+  } as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming);
 
   const raw =
     completion.choices?.[0]?.message?.content?.toString() ??
@@ -347,7 +360,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
     parsed = JSON.parse(cleaned);
     console.log(
       "[AI Reply] Parsed successfully, suggestions count:",
-      parsed?.suggestions?.length
+      parsed?.suggestions?.length,
     );
   } catch (error) {
     console.log("[AI Reply] Initial parse failed:", (error as Error).message);
@@ -364,7 +377,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
         console.log("[AI Reply] Double unescape successful!");
       } catch {
         console.log(
-          "[AI Reply] Double unescape failed, trying regex extraction"
+          "[AI Reply] Double unescape failed, trying regex extraction",
         );
       }
     }
@@ -411,7 +424,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
       if (finalText.startsWith('{"') || finalText.startsWith("{")) {
         try {
           console.log(
-            "[AI Reply] Detected JSON-like text, attempting to parse..."
+            "[AI Reply] Detected JSON-like text, attempting to parse...",
           );
           const innerParsed = JSON.parse(finalText);
 
@@ -423,7 +436,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
             console.log(
               "[AI Reply] WARNING: Text field contains nested JSON with",
               innerParsed.suggestions.length,
-              "suggestions, extracting them all"
+              "suggestions, extracting them all",
             );
             return innerParsed.suggestions
               .filter((innerS: any) => innerS?.text)
@@ -431,7 +444,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
               .map((innerS: any) => ({
                 text: String(innerS.text).slice(
                   0,
-                  context === "email" ? 2000 : 320
+                  context === "email" ? 2000 : 320,
                 ),
                 rationale: innerS.rationale,
                 confidence: innerS.confidence,
@@ -453,7 +466,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
   console.log("[AI Reply] Parsed suggestions count:", suggestions.length);
   console.log(
     "[AI Reply] First suggestion:",
-    suggestions[0]?.text.substring(0, 100)
+    suggestions[0]?.text.substring(0, 100),
   );
 
   // Cache the results

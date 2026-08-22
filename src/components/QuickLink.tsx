@@ -7,6 +7,7 @@ import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useW
 import { Card, CardContent } from "@/components/ui/card";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { stateStore } from "@/stores/stateStore";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { Appointment, Lead } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -91,6 +92,8 @@ const QuickLink = () => {
     setIsVehiclePromptOpen(true);
   };
 
+  const canCreateEstimate = useCanAccessRoute("/dashboard/estimate/create");
+
   const actions = [
     {
       icon: FileUser,
@@ -107,6 +110,7 @@ const QuickLink = () => {
         router.push("/dashboard/estimate/create");
         setIsDropdownOpen(false);
       },
+      hidden: !canCreateEstimate,
     },
     {
       icon: CalendarPlus,
@@ -134,7 +138,7 @@ const QuickLink = () => {
   ];
 
   const handleAppointmentCreate = async (
-    newAppointment: Appointment & { lead: Lead | null }
+    newAppointment: Appointment & { lead: Lead | null },
   ) => {
     try {
       queryClient.invalidateQueries({
@@ -175,65 +179,67 @@ const QuickLink = () => {
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="flex items-center"
       >
-        <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
+        <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-primary" />
       </button>
       {isDropdownOpen && (
         <Card className="custom-scrollbar absolute top-10 -right-16 md:right-0 z-30 w-72 sm:w-80 max-h-80 overflow-y-auto shadow-xl">
           <CardContent className="pt-4">
             <div className="space-y-2">
-              {actions.map((action, idx) => (
-                <div key={idx}>
-                  {action.label === "Create Estimate" ? (
-                    <Link
-                      href={"/dashboard/estimate/create"}
-                      onClick={() => setIsDropdownOpen(false)}
-                      className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]"
-                    >
-                      <action.icon className="h-5 w-5 text-[#6571FF]" />
-                      <span className="text-sm font-medium text-gray-700">
-                        {action.label}
-                      </span>
-                    </Link>
-                  ) : action.label === "Create Client" ? (
-                    <div>
-                      <NewCustomer
-                        onClientCreated={handleClientCreated} // PASS THE NEW HANDLER
-                        buttonElement={
+              {actions
+                .filter((action) => !action.hidden)
+                .map((action, idx) => (
+                  <div key={idx}>
+                    {action.label === "Create Estimate" ? (
+                      <Link
+                        href={"/dashboard/estimate/create"}
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]"
+                      >
+                        <action.icon className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {action.label}
+                        </span>
+                      </Link>
+                    ) : action.label === "Create Client" ? (
+                      <div>
+                        <NewCustomer
+                          onClientCreated={handleClientCreated} // PASS THE NEW HANDLER
+                          buttonElement={
+                            <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition text-center hover:bg-[#F4F6FF]">
+                              <action.icon className="h-5 w-5 text-primary" />
+                              <span className="text-sm font-medium text-gray-700">
+                                {action.label}
+                              </span>
+                            </div>
+                          }
+                        />
+                      </div>
+                    ) : action.label === "Create Lead" ? (
+                      <AddLeads
+                        buttonChild={
                           <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">
-                            <action.icon className="h-5 w-5 text-[#6571FF]" />
+                            <action.icon className="h-5 w-5 text-primary" />
                             <span className="text-sm font-medium text-gray-700">
                               {action.label}
                             </span>
                           </div>
                         }
+                        isLeadOpen={isLeadOpen}
+                        setIsLeadOpen={setIsLeadOpen}
                       />
-                    </div>
-                  ) : action.label === "Create Lead" ? (
-                    <AddLeads
-                      buttonChild={
-                        <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">
-                          <action.icon className="h-5 w-5 text-[#6571FF]" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {action.label}
-                          </span>
-                        </div>
-                      }
-                      isLeadOpen={isLeadOpen}
-                      setIsLeadOpen={setIsLeadOpen}
-                    />
-                  ) : (
-                    <div
-                      onClick={action.onClick}
-                      className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]"
-                    >
-                      <action.icon className="h-5 w-5 text-[#6571FF]" />
-                      <span className="text-sm font-medium text-gray-700">
-                        {action.label}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    ) : (
+                      <div
+                        onClick={action.onClick}
+                        className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]"
+                      >
+                        <action.icon className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {action.label}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>

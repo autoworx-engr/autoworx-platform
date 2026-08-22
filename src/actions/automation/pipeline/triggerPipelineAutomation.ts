@@ -37,11 +37,17 @@ export async function updatePipelineAutomationTrigger({
           leadId,
           columnId,
         }),
-      }
+      },
     );
 
     const data = await response.json();
     // Revalidate the specific path or use tag-based revalidation if applicable
+    console.log("pipeline automation triggered", {
+      condition,
+      companyId,
+      leadId,
+      columnId,
+    });
     if (
       condition === "MESSAGE_SENT_CLIENT" ||
       condition === "MESSAGE_RECEIVED_CLIENT"
@@ -51,6 +57,7 @@ export async function updatePipelineAutomationTrigger({
 
     if (data.statusCode === 401) {
       console.error("Error updating pipeline automation trigger:", data.errors);
+      throw new Error(data.errors);
     }
 
     return {
@@ -101,7 +108,7 @@ export async function updatePipelineAutomationTriggerWithToken({
           leadId,
           columnId,
         }),
-      }
+      },
     );
 
     const data = await response.json();

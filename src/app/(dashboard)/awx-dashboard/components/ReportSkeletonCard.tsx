@@ -12,10 +12,9 @@ const ReportSkeletonCard = () => {
             <div className="h-3 w-5/6 rounded bg-gray-200" />
           </div>
         </div>
-        
       </div>
-      <div className="absolute right-1 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-3xl bg-[#6571FF]/50" />
-      <div className="ml-2 mt-4 h-8 w-20 rounded bg-[#6571FF]/50" />
+      <div className="absolute right-1 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-3xl bg-primary/50" />
+      <div className="ml-2 mt-4 h-8 w-20 rounded bg-primary/50" />
     </div>
   );
 };

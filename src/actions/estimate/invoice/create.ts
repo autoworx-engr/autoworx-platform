@@ -41,6 +41,7 @@ type TCreateInvoiceProps = {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost?: number;
   deposit: number;
   depositNotes: string;
   depositMethod: string;
@@ -52,6 +53,7 @@ type TCreateInvoiceProps = {
   policy: string;
   customerNotes: string;
   customerComments: string;
+  isShopBooking?: boolean;
 
   photos: { id?: number; photo?: string }[];
   items: {
@@ -67,6 +69,9 @@ type TCreateInvoiceProps = {
   columnId?: number;
   inspections: InspectionType[];
   damageNotes: string | null;
+
+  forceCompanyId?: number;
+  allowInsufficientInventory?: boolean;
 };
 
 export async function createInvoice({
@@ -78,6 +83,7 @@ export async function createInvoice({
   discount,
   tax,
   serviceFee,
+  vehicleExtraCost,
   deposit,
   depositNotes,
   depositMethod,
@@ -98,6 +104,10 @@ export async function createInvoice({
   columnId,
   inspections,
   damageNotes,
+  isShopBooking = false,
+
+  forceCompanyId,
+  allowInsufficientInventory = false,
 }: TCreateInvoiceProps): Promise<ServerAction | TErrorHandler> {
   try {
     // Step 1: Validate input data using Zod schema
@@ -112,6 +122,7 @@ export async function createInvoice({
       discount,
       tax,
       serviceFee,
+      vehicleExtraCost,
       deposit,
       depositNotes,
       depositMethod,
@@ -132,14 +143,19 @@ export async function createInvoice({
       columnId,
       inspections,
       damageNotes,
+      isShopBooking,
     });
 
     // Step 2: Get authenticated session and company ID
-    const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    let companyId = forceCompanyId;
+    let session: Awaited<ReturnType<typeof getServerSession>> | null = null;
 
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      session = await getServerSession(authOptions);
+      companyId = (session as any)?.user?.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create an email template.");
+      }
     }
 
     const invoice = await db.$transaction(async (db) => {
@@ -203,7 +219,7 @@ export async function createInvoice({
       const totalCost = items.reduce((acc, item) => {
         const materialCostPrice = item.materials.reduce(
           (acc, cur) => acc + Number(cur?.cost) * Number(cur?.quantity),
-          0
+          0,
         );
         const laborCostPrice =
           Number(item.labor?.charge) * Number(item.labor?.hours);
@@ -223,6 +239,7 @@ export async function createInvoice({
           discount,
           tax,
           serviceFee,
+          vehicleExtraCost,
           deposit,
           grandTotal,
           due,
@@ -232,12 +249,13 @@ export async function createInvoice({
           customerNotes,
           customerComments,
           companyId,
-          userId: session.user.id as any,
+          userId: (session as any)?.user?.id as any,
           columnId: finalColumnId,
           isWorkOrder,
           workOrderCreatedAt: isWorkOrder ? new Date() : null,
           convertedAt: new Date(),
           damageNotes,
+          isShopBooking,
         },
         include: {
           client: {
@@ -283,11 +301,14 @@ export async function createInvoice({
                 notes: inspection.notes,
               },
             });
-          })
+          }),
         );
       }
       // Check if inventory product quantities are available when status is not "Pending"
-      if (newInvoice.type === InvoiceType.Invoice) {
+      if (
+        newInvoice.type === InvoiceType.Invoice &&
+        !allowInsufficientInventory
+      ) {
         // merge all the same products and sum the quantity
         let materials: Material[] = [];
 
@@ -295,46 +316,48 @@ export async function createInvoice({
           const itemMaterials = items[item].materials;
 
           if (itemMaterials) {
-            // @ts-ignore
-            materials = [...materials, ...itemMaterials];
+            // filter out any null/undefined materials to ensure proper typing
+            materials = [
+              ...materials,
+              ...(itemMaterials.filter(Boolean) as Material[]),
+            ];
           }
         }
 
         // Aggregate all materials to calculate total quantities for each product
         const productsWithQuantity = getProductWithQuantity(materials);
 
-        await Promise.all(
-          productsWithQuantity.map(async (product) => {
-            if (!product.id) return;
-            const findInventoryProduct = await db.inventoryProduct.findUnique({
-              where: { id: product.id },
-            });
-            if (!findInventoryProduct) {
-              return;
-            }
+        const productIds = productsWithQuantity
+          .map((p) => p.id)
+          .filter(Boolean) as number[];
+        if (productIds.length > 0) {
+          const dbProducts = await db.inventoryProduct.findMany({
+            where: { id: { in: productIds } },
+          });
+          for (const product of productsWithQuantity) {
+            if (!product.id) continue;
+            const dbProduct = dbProducts.find((p) => p.id === product.id);
             if (
-              product.quantity > Number(findInventoryProduct?.quantity || 0)
+              dbProduct &&
+              product.quantity > Number(dbProduct.quantity || 0)
             ) {
               throw new Error(
-                `The quantity "${product.name}" is not enough in the inventory`
+                `The quantity "${product.name}" is not enough in the inventory`,
               );
             }
-            return null;
-          })
-        );
+          }
+        }
       }
 
       // Step 7: Process and upload photos
-      await Promise.all(
-        photos.map(async (photo) => {
-          return db.invoicePhoto.create({
-            data: {
-              invoiceId: newInvoice.id,
-              photo: photo.photo ?? "",
-            },
-          });
-        })
-      );
+      if (photos && photos.length > 0) {
+        await db.invoicePhoto.createMany({
+          data: photos.map((photo) => ({
+            invoiceId: newInvoice.id,
+            photo: photo.photo ?? "",
+          })),
+        });
+      }
 
       // Step 8: Process invoice items (services, materials, labor, tags)
       const serviceIndex: (number | undefined)[] = [];
@@ -362,16 +385,14 @@ export async function createInvoice({
             });
 
             // Create labor tags
-            await Promise.all(
-              labor.tags.map(async (tag) => {
-                return db.laborTag.create({
-                  data: {
-                    laborId: newLabor.id,
-                    tagId: tag.id,
-                  },
-                });
-              })
-            );
+            if (labor.tags && labor.tags.length > 0) {
+              await db.laborTag.createMany({
+                data: labor.tags.map((tag) => ({
+                  laborId: newLabor.id,
+                  tagId: tag.id,
+                })),
+              });
+            }
 
             laborId = newLabor.id;
           }
@@ -416,32 +437,28 @@ export async function createInvoice({
                 },
               });
               // Create material tag
-              await Promise.all(
-                material.tags.map(async (tag) => {
-                  return db.materialTag.create({
-                    data: {
-                      materialId: newMat.id,
-                      tagId: tag.id,
-                    },
-                  });
-                })
-              );
+              if (material.tags && material.tags.length > 0) {
+                await db.materialTag.createMany({
+                  data: material.tags.map((tag) => ({
+                    materialId: newMat.id,
+                    tagId: tag.id,
+                  })),
+                });
+              }
               return null;
-            })
+            }),
           );
 
           // Process tags
-          await Promise.all(
-            tags.map(async (tag) => {
-              return db.itemTag.create({
-                data: {
-                  itemId: invoiceItem.id,
-                  tagId: tag.id,
-                },
-              });
-            })
-          );
-        })
+          if (tags && tags.length > 0) {
+            await db.itemTag.createMany({
+              data: tags.map((tag) => ({
+                itemId: invoiceItem.id,
+                tagId: tag.id,
+              })),
+            });
+          }
+        }),
       );
 
       await db.invoice.update({
@@ -472,27 +489,29 @@ export async function createInvoice({
           },
         });
       }
+
+      // Create associated tasks
+      const validTasks = tasks.filter((t) => t);
+      if (validTasks.length > 0) {
+        await db.task.createMany({
+          data: validTasks.map((task) => {
+            const taskSplit = task.task.split(":");
+            return {
+              title: taskSplit[0].trim(),
+              description: taskSplit.length > 1 ? taskSplit[1].trim() : "",
+              priority: "Medium",
+              invoiceId: newInvoice.id,
+              clientId,
+              companyId,
+              userId: parseInt((session as any)?.user?.id || "0") || null,
+              createdBy: "user",
+            };
+          }),
+        });
+      }
+
       return newInvoice;
     });
-
-    // Create associated tasks
-    await Promise.all(
-      tasks.map(async (task) => {
-        if (!task) return;
-
-        const taskSplit = task.task.split(":");
-
-        return createTask({
-          title: taskSplit[0].trim(),
-          description: taskSplit.length > 1 ? taskSplit[1].trim() : "",
-          priority: "Medium",
-          assignedUsers: [],
-          invoiceId: invoice.id,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          clientId,
-        });
-      })
-    );
 
     // send notification for invoice creation
     sendEstimateCreateNotification({
@@ -500,14 +519,18 @@ export async function createInvoice({
       invoiceId: invoice.id,
       invoiceType: invoice.type,
       clientName: invoice.client?.firstName + " " + invoice.client?.lastName,
-    });
+    }).catch((err) =>
+      console.error("sendEstimateCreateNotification failed", err),
+    );
 
     if (invoice.type == "Invoice") {
-      await updateServiceAutomationTrigger({
+      updateServiceAutomationTrigger({
         companyId: invoice?.companyId,
         estimateId: invoice?.id,
         columnId: invoice?.columnId!,
-      });
+      }).catch((err) =>
+        console.error("updateServiceAutomationTrigger failed", err),
+      );
 
       updateTagAutomationTrigger({
         columnId: invoice?.columnId!,
@@ -515,7 +538,9 @@ export async function createInvoice({
         pipelineType: "SHOP",
         conditionType: "post_tag",
         invoiceId: invoice?.id,
-      });
+      }).catch((err) =>
+        console.error("updateTagAutomationTrigger failed", err),
+      );
     }
 
     // If newly invoice created invoice automation trigger
@@ -524,10 +549,17 @@ export async function createInvoice({
       invoiceId: invoice?.id!,
       columnId: invoice?.columnId!,
       type: invoice?.type!,
-    });
+    }).catch((err) =>
+      console.error("updateInvoiceAutomationTrigger failed", err),
+    );
 
     // Step 12: Revalidate the estimate page
-    revalidatePath("/estimate");
+
+    try {
+      revalidatePath("/estimate");
+    } catch {
+      // no-op: cache revalidation is best-effort outside request context
+    }
 
     // Return success response
     return {

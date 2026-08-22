@@ -2,9 +2,10 @@ import Image from "next/image";
 import ChatHead from "../conversations/ChatHead";
 import MailGunEmail from "../conversations/mailgun/MailgunEmail";
 import SMS from "./sms/SMS";
+import Messenger from "./messenger/Messenger";
+import Instagram from "./instagram/Instagram";
 import { getClientById } from "../../_actions/getClientById";
 import Phone from "../phone/Phone";
-import NoClientFound from "../NoClientFound";
 import DetailsBtn from "./DetailsBtn";
 import BackDetailsBtn from "./BackDetailsBtn";
 import { getCompanyId } from "@/lib/companyId";
@@ -35,6 +36,12 @@ export default async function ConversationsBox({
     case "SMS":
       MessageBox = <SMS clientId={clientId} />;
       break;
+    case "MESSENGER":
+      MessageBox = <Messenger clientId={clientId} />;
+      break;
+    case "INSTAGRAM":
+      MessageBox = <Instagram clientId={clientId} />;
+      break;
     case "EMAIL":
       MessageBox = <MailGunEmail clientId={clientId} />;
     default:
@@ -45,7 +52,7 @@ export default async function ConversationsBox({
   const showChatClass =
     showChat === "true" && showDetails !== "true" ? "" : "hidden xl:block";
 
-  if (!client) return <NoClientFound />;
+  if (!client) return null;
 
   return (
     <div
@@ -53,7 +60,7 @@ export default async function ConversationsBox({
         "app-shadow relative rounded-lg bg-background",
         "h-[calc(100dvh-56px)] lg:h-[90vh]",
         "ring-1 ring-zinc-200/60 dark:ring-white/10",
-        showChatClass
+        showChatClass,
       )}
     >
       {/* Column layout */}
@@ -65,7 +72,7 @@ export default async function ConversationsBox({
             // modern teal gradient + subtle blur over scroll
             "bg-gradient-to-r from-[#006D77] to-[#008c99]",
             "ring-1 ring-teal-500/60 text-white",
-            "md:rounded-t-md backdrop-blur supports-[backdrop-filter]:bg-[#006D77]/90"
+            "md:rounded-t-md backdrop-blur supports-[backdrop-filter]:bg-[#006D77]/90",
           )}
         >
           {/* Left: identity */}
@@ -88,25 +95,25 @@ export default async function ConversationsBox({
               className="size-12 rounded-full object-cover ring-2 ring-white/70"
             />
 
-            <div className="ml-3 flex min-w-0 flex-col">
-              <p className="flex items-center gap-1 text-sm font-semibold leading-5">
-                <span className="truncate">
-                  {client?.firstName} {client?.lastName}
-                </span>
+            <div className="ml-3 flex min-w-0 flex-1 flex-col">
+              <p className="min-w-0 truncate text-sm font-semibold leading-5">
+                {client?.firstName} {client?.lastName}
+              </p>
+
+              <div className="flex items-center gap-2">
+                <p className="truncate text-[11px] opacity-90">
+                  {client?.customerCompany}
+                </p>
                 {client?.isStarred && (
                   <span
-                    className="inline-flex items-center rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] leading-none text-yellow-300 ring-1 ring-white/30 ml-2"
+                    className="mt-0.5 inline-flex w-fit shrink-0 items-center rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] leading-none text-yellow-300 ring-1 ring-white/30"
                     title="Favorite client"
                   >
                     <Star className="mr-0.5 w-2.5 h-2.5 fill-yellow-400" />
                     Starred
                   </span>
                 )}
-              </p>
-
-              <p className="truncate text-[11px] opacity-90">
-                {client?.customerCompany}
-              </p>
+              </div>
             </div>
           </div>
 

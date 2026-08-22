@@ -1,12 +1,12 @@
 "use client";
 
-import type React from "react";
-import { useState, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import SelectCategory from "./Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import { ChevronDown, Plus, X } from "lucide-react";
+import type React from "react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import SelectCategory from "./Lists/SelectCategory";
 
 export type SelectorWithAddProps = {
   label?: ReactNode;
@@ -24,7 +24,7 @@ export type SelectorWithAddProps = {
   allowClear?: boolean;
   allowAddNew?: boolean;
   addNewLabel?: string;
-  onAddNew?: (newItem: string, category?: Category) => void;
+  onAddNew?: (newItem: string, category?: Category | null) => void;
   addNewPlaceholder?: string;
   selectCategory?: boolean;
 };
@@ -70,7 +70,7 @@ export function MultiSelectorWithAdd({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addNewInputRef = useRef<HTMLInputElement>(null);
 
-  const [category, setCategory] = useState<Category | undefined>(undefined);
+  const [category, setCategory] = useState<Category | null>(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   useEffect(() => {
@@ -93,10 +93,10 @@ export function MultiSelectorWithAdd({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (isOpen && isSearch && searchInputRef.current && !isAddingNew)
-      searchInputRef.current.focus();
-  }, [isOpen, isSearch, isAddingNew]);
+  // useEffect(() => {
+  //   if (isOpen && isSearch && searchInputRef.current && !isAddingNew)
+  //     searchInputRef.current.focus();
+  // }, [isOpen, isSearch, isAddingNew]);
 
   useEffect(() => {
     if (isAddingNew && addNewInputRef.current) addNewInputRef.current.focus();
@@ -116,7 +116,7 @@ export function MultiSelectorWithAdd({
 
   const filteredOptions = searchTerm
     ? normalizedOptions.filter((opt) =>
-        opt.title.toLowerCase().includes(searchTerm.toLowerCase())
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     : normalizedOptions;
 
@@ -159,7 +159,7 @@ export function MultiSelectorWithAdd({
     if (newItemValue.trim() && onAddNew) {
       onAddNew(newItemValue.trim(), category);
       setNewItemValue("");
-      setCategory(undefined);
+      setCategory(null);
       setIsAddingNew(false);
       setIsOpen(false);
       setCategoryOpen(false);
@@ -172,7 +172,7 @@ export function MultiSelectorWithAdd({
     else if (e.key === "Escape") {
       setIsAddingNew(false);
       setNewItemValue("");
-      setCategory(undefined);
+      setCategory(null);
       setCategoryOpen(false);
     }
   };
@@ -180,11 +180,11 @@ export function MultiSelectorWithAdd({
   const handleAddNewCancel = () => {
     setIsAddingNew(false);
     setNewItemValue("");
-    setCategory(undefined);
+    setCategory(null);
     setCategoryOpen(false);
   };
 
-  const handleCategoryChange = (newCategory: Category | undefined) =>
+  const handleCategoryChange = (newCategory: Category | null) =>
     setCategory(newCategory);
 
   const hasValue = selectedValues.length > 0;
@@ -202,7 +202,7 @@ export function MultiSelectorWithAdd({
           className={cn(
             "flex w-full items-center justify-between rounded-sm border border-slate-400 bg-background px-2 py-0.5 text-left leading-6 outline-none",
             error && "border-red-500 focus:border-red-500",
-            disabled && "cursor-not-allowed bg-gray-100 opacity-50"
+            disabled && "cursor-not-allowed bg-gray-100 opacity-50",
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
@@ -271,7 +271,7 @@ export function MultiSelectorWithAdd({
                     <button
                       onClick={handleAddNewSubmit}
                       disabled={!newItemValue.trim()}
-                      className="h-6 text-xs bg-[#6571FF] px-2 text-white rounded-md"
+                      className="h-6 text-xs bg-primary px-2 text-white rounded-md"
                     >
                       Add
                     </button>
@@ -294,8 +294,8 @@ export function MultiSelectorWithAdd({
                         className={cn(
                           "cursor-pointer px-3 py-2 hover:bg-slate-100",
                           selectedValues.some(
-                            (v) => v.id.toString() === opt.id.toString()
-                          ) && "bg-blue-50 text-blue-700"
+                            (v) => v.id.toString() === opt.id.toString(),
+                          ) && "bg-blue-50 text-blue-700",
                         )}
                         onClick={() => handleSelect(opt.id.toString())}
                       >

@@ -1,4 +1,4 @@
-import {  useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export const useAutoRefreshRoute = (ms: number = 5000) => {

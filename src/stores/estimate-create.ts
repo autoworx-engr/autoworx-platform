@@ -33,6 +33,7 @@ interface EstimateCreateStore {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost: number;
   deposit: number;
   grandTotal: number;
   type: string;
@@ -52,12 +53,18 @@ interface EstimateCreateStore {
   inspections: InspectionType[];
   damageNotes: string | null;
   template?: InvoiceTemplate | null;
+  templateSnapshot?:
+    | (Partial<EstimateCreateStore> & { status?: Column | null })
+    | null;
+  paymentModalOpen: boolean;
+  setPaymentModalOpen: (paymentModalOpen: boolean) => void;
   setInvoiceId: (invoiceId: string) => void;
   setType: (type: string) => void;
   setSubtotal: (subtotal: number) => void;
   setDiscount: (discount: number) => void;
   setTax: (tax: number) => void;
   setServiceFee: (serviceFee: number) => void;
+  setVehicleExtraCost: (vehicleExtraCost: number) => void;
   setGrandTotal: (grandTotal: number) => void;
   setDue: (due: number) => void;
   setDeposit: (deposit: number) => void;
@@ -95,10 +102,12 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   type: "",
   title: "",
   template: null,
+  templateSnapshot: null,
   subtotal: 0,
   discount: 0,
   tax: 0,
   serviceFee: 0,
+  vehicleExtraCost: 0,
   deposit: 0,
   grandTotal: 0,
   due: 0,
@@ -121,13 +130,16 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
     notes: "",
   })),
   damageNotes: "",
+  paymentModalOpen: false,
 
+  setPaymentModalOpen: (paymentModalOpen: boolean) => set({ paymentModalOpen }),
   setInvoiceId: (invoiceId: string) => set({ invoiceId }),
   setType: (type: string) => set({ type }),
   setSubtotal: (subtotal: number) => set({ subtotal }),
   setDiscount: (discount: number) => set({ discount }),
   setTax: (tax: number) => set({ tax }),
   setServiceFee: (serviceFee: number) => set({ serviceFee }),
+  setVehicleExtraCost: (vehicleExtraCost: number) => set({ vehicleExtraCost }),
   setGrandTotal: (grandTotal: number) => set({ grandTotal }),
   setDue: (due: number) => set({ due }),
   setDeposit: (deposit: number) => set({ deposit }),
@@ -172,11 +184,13 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
       invoiceId: "",
       title: "",
       template: null,
+      templateSnapshot: null,
       subtotal: 0,
       discount: 0,
       deposit: 0,
       tax: 0,
       serviceFee: 0,
+      vehicleExtraCost: 0,
       grandTotal: 0,
       totalPayment: 0,
       due: 0,
@@ -197,7 +211,9 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
         notes: "",
       })),
       damageNotes: "",
+      paymentModalOpen: false,
     }),
+
   removeMaterial({ itemIndex, materialIndex }) {
     set((state) => {
       const items = state.items.map((item, index) => {

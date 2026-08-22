@@ -1,9 +1,9 @@
 "use client";
 
 import { Dialog, DialogTrigger } from "@/components/Dialog";
-import { useState } from "react";
 import { User } from "@prisma/client";
-import { Settings, SquarePen } from "lucide-react";
+import { PencilLineIcon, Settings } from "lucide-react";
+import { useState } from "react";
 import EditClientModalBody from "./EditEmployeeModalBody";
 
 export default function EditEmployee({
@@ -18,7 +18,7 @@ export default function EditEmployee({
   return (
     <Dialog
       open={open}
-      onOpenChange={isOpen => {
+      onOpenChange={(isOpen) => {
         if (!isOpen) setOpen(false);
         setOpen(isOpen);
       }}
@@ -26,12 +26,12 @@ export default function EditEmployee({
       <DialogTrigger asChild>
         <div className="mt-1 flex justify-end">
           <button
-            className={`${settingIcon ? "text-gray-600" : ""} text-[#6571FF]"`}
+            className={`${settingIcon ? "text-gray-600" : ""} text-primary"`}
           >
             {settingIcon ? (
-              <Settings className="w-4 h-4 text-[#6571FF]" />
+              <Settings className="w-4 h-4 text-primary" />
             ) : (
-              <SquarePen className="w-5 h-5 text-[#6571FF]" />
+              <PencilLineIcon className="w-5 h-5 text-primary" />
             )}
           </button>
         </div>

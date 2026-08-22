@@ -1,17 +1,16 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import {
   Attachment,
   Company,
-  Message as DbMessage,
+  CollaborationMessage as DbMessage,
   User,
 } from "@prisma/client";
 import { Session } from "next-auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import List from "./List";
-import UsersArea from "./UsersArea";
-import { useUnreadCollaborationMessages } from "./hooks/useUnreadCollaborationMessages";
+import CompanyArea from "./CompanyArea";
+import { useSearchParams } from "next/navigation";
 
 export default function Collaboration({
   companyWithAdmin,
@@ -20,42 +19,73 @@ export default function Collaboration({
   messages,
   isCollaborators,
 }: {
-  companyWithAdmin: Partial<User>[];
+  companyWithAdmin: any;
   companies: (Company & { users: User[] })[];
   currentUser: Session["user"];
   messages: (DbMessage & { attachment: Attachment[] | null })[];
   isCollaborators: boolean | null | undefined;
 }) {
-  const [selectedUsersList, setSelectedUsersList] = useState<User[]>([]);
-  const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);
+  const searchParams = useSearchParams();
+  const companyId = searchParams.get("companyId");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companyAdmins, setCompanyAdmins] = useState<any[]>([]);
 
-  // Use the hook to get real-time unread message counts
-  const unreadCounts = useUnreadCollaborationMessages(
-    parseInt(currentUser?.id)
-  );
+  useEffect(() => {
+    setCompanyAdmins(companyWithAdmin);
+  }, [companyWithAdmin]);
+
+  useEffect(() => {
+    if (companyId) {
+      const selected: any = companies.find((c) => c.id === Number(companyId));
+
+      setSelectedCompany(selected);
+    }
+  }, [companyId, companies]);
 
   return (
-    <div className="flex gap-5 sm:mt-5">
-      <List
-        className={cn(selectedUsersList.length === 0 ? "block" : "hidden")}
-        selectedUsersList={selectedUsersList}
-        companyAdmins={companyAdmins}
-        setCompanyAdmins={setCompanyAdmins}
-        companies={companies}
-        setSelectedUsersList={setSelectedUsersList}
-        unreadCounts={unreadCounts}
-        currentUserId={parseInt(currentUser?.id)}
-        companyId={currentUser?.companyId}
-        isCollaborators={isCollaborators}
-      />
-      <UsersArea
-        className={cn(selectedUsersList.length === 0 ? "hidden" : "grid")}
-        previousMessages={messages}
-        currentUser={currentUser}
-        totalMessageBoxLength={selectedUsersList.length}
-        selectedUsersList={selectedUsersList}
-        setSelectedUsersList={setSelectedUsersList}
-      />
-    </div>
+    <>
+      {/* ✅ Small device */}
+      <div className="md:hidden sm:mt-5">
+        <div className={selectedCompany ? "hidden" : "block"}>
+          <List
+            companies={companies}
+            selectedCompany={selectedCompany}
+            setSelectedCompany={setSelectedCompany}
+            isCollaborators={isCollaborators}
+            companyAdmins={companyAdmins}
+            setCompanyAdmins={setCompanyAdmins}
+            companyId={currentUser?.companyId}
+          />
+        </div>
+
+        <div className={selectedCompany ? "block" : "hidden"}>
+          <CompanyArea
+            selectedCompany={selectedCompany}
+            currentUser={currentUser}
+            previousMessages={messages}
+            setSelectedCompany={setSelectedCompany}
+          />
+        </div>
+      </div>
+
+      {/* ✅ Medium & Large device — existing code */}
+      <div className="hidden md:flex gap-5 sm:mt-5">
+        <List
+          companies={companies}
+          selectedCompany={selectedCompany}
+          setSelectedCompany={setSelectedCompany}
+          isCollaborators={isCollaborators}
+          companyAdmins={companyAdmins}
+          setCompanyAdmins={setCompanyAdmins}
+          companyId={currentUser?.companyId}
+        />
+
+        <CompanyArea
+          selectedCompany={selectedCompany}
+          currentUser={currentUser}
+          previousMessages={messages}
+        />
+      </div>
+    </>
   );
 }

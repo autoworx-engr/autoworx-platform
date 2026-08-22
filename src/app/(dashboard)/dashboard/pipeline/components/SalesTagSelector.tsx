@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
 import { Tag, User } from "@prisma/client";
+import { Popconfirm } from "antd";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { INVOICE_COLORS } from "@/lib/consts";
-import { useFormErrorStore } from "@/stores/form-error";
+import {
+  createSalesTag,
+  deleteSalesTag,
+  getSalesTags,
+} from "@/actions/pipelines/leadTag";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,14 +16,11 @@ import {
 } from "@/components/DropdownMenu";
 import FormError from "@/components/FormError";
 import Submit from "@/components/Submit";
-import {
-  getSalesTags,
-  createSalesTag,
-  deleteSalesTag,
-} from "@/actions/pipelines/leadTag";
-import getUser from "@/lib/getUser";
-import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { INVOICE_COLORS } from "@/lib/consts";
+import getUser from "@/lib/getUser";
+import { useFormErrorStore } from "@/stores/form-error";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -81,8 +82,8 @@ export function SalesTagSelector({
   const filteredTags = useMemo(() => {
     return search
       ? tags.filter((tag) =>
-        tag.name.toLowerCase().includes(search.toLowerCase())
-      )
+          tag.name.toLowerCase().includes(search.toLowerCase()),
+        )
       : tags;
   }, [search, tags]);
 
@@ -119,8 +120,8 @@ export function SalesTagSelector({
             />
             <input
               type="text"
-              placeholder="Search sales tags..."
-              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+              placeholder="Search Sales Tags..."
+              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
               value={search}
               onKeyDown={(e) => e.stopPropagation()}
               onChange={(e) => setSearch(e.target.value)}
@@ -134,10 +135,10 @@ export function SalesTagSelector({
           </div>
 
           {/* Tag List */}
-          <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
+          <div className="my-1 max-h-[200px] overflow-y-auto px-2">
             {filteredTags
               .filter(
-                (el) => !leadTags.map((tag) => tag.tag.name).includes(el.name)
+                (el) => !leadTags.map((tag) => tag.tag.name).includes(el.name),
               )
               .map((tagItem) => (
                 <div
@@ -157,18 +158,46 @@ export function SalesTagSelector({
                   >
                     {tagItem.name}
                   </button>
-                  <button
-                    disabled={disable}
-                    onClick={() => handleDeleteTag(tagItem.id)}
-                    className={cn(
-                      "ml-1.5 transition-transform hover:scale-110",
-                      isRestrictedUser ? "hidden" : ""
-                    )}
-                  >
-                    <div className="rounded-full bg-white/20 p-0.5 hover:bg-white/40">
-                      <X size={16} strokeWidth={2.5} />
-                    </div>
-                  </button>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Popconfirm
+                      title="Delete Tag"
+                      description="Are you sure you want to remove this tag?"
+                      okText="Delete"
+                      cancelText="Cancel"
+                      onConfirm={() => handleDeleteTag(tagItem.id)}
+                      onPopupClick={(e) => e.stopPropagation()}
+                      overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                      okButtonProps={{
+                        className:
+                          "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                      }}
+                      cancelButtonProps={{
+                        className:
+                          "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        disabled={disable}
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          "ml-1.5 transition-transform hover:scale-110",
+                          isRestrictedUser ? "hidden" : "",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "rounded-full p-0.5",
+                            tagItem.bgColor
+                              ? "bg-white/20 hover:bg-white/40"
+                              : "border border-slate-200 hover:bg-slate-100",
+                          )}
+                        >
+                          <X size={16} strokeWidth={2.5} />
+                        </div>
+                      </button>
+                    </Popconfirm>
+                  </div>
                 </div>
               ))}
           </div>
@@ -207,8 +236,8 @@ export function SalesTagSelector({
                     className={cn(
                       "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
-                        ? "ring-2 ring-[#6571FF] ring-offset-1"
-                        : "ring-1 ring-transparent"
+                        ? "ring-2 ring-primary ring-offset-1"
+                        : "ring-1 ring-transparent",
                     )}
                   >
                     Aa
@@ -258,7 +287,7 @@ function QuickAddSalesTagForm({
           type="text"
           required
           placeholder="New tag name..."
-          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-slate-400"
           onKeyDown={(e) => e.stopPropagation()}
         />
       </div>
@@ -273,7 +302,7 @@ function QuickAddSalesTagForm({
       </button>
 
       <Submit
-        className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+        className="h-10 shrink-0 rounded-lg bg-primary px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
         formAction={handleSubmit}
       >
         Quick Add

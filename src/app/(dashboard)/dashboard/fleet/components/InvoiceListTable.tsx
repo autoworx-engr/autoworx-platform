@@ -31,15 +31,15 @@ const InvoiceListTable = ({
         .map((item: any, index: number) => [
           item.column.id,
           { status: item.column?.title, id: index },
-        ])
-    ).values()
+        ]),
+    ).values(),
   );
 
   const filteredData = invoiceData.filter((item: any) => {
     const paymentMatch =
       paymentFilters.length === 0 ||
       paymentFilters.includes(
-        item?.grandTotal > 0 && item?.due == 0 ? "Paid" : "Unpaid"
+        item?.grandTotal > 0 && item?.due == 0 ? "Paid" : "Unpaid",
       );
 
     const statusMatch =
@@ -78,8 +78,8 @@ const InvoiceListTable = ({
   };
 
   return (
-    <div className="mt-5 rounded-md bg-background p-4 shadow-md">
-      <div className="thin-scrollbar hidden h-[200px] overflow-y-auto scroll-smooth md:block">
+    <div className="mt-5 rounded-md bg-background p-4 shadow-md min-h-[500px]">
+      <div className="hidden max-h-[60vh] overflow-y-auto scroll-smooth md:block">
         <div className="">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-background">
@@ -111,7 +111,7 @@ const InvoiceListTable = ({
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Paid", checked)
                           }
-                          className={`${paymentFilters.includes("Paid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
+                          className={`${paymentFilters.includes("Paid") ? "bg-gradient-to-r from-primary to-[#8088FF] text-white" : ""}`}
                         >
                           Paid
                         </DropdownMenuCheckboxItem>
@@ -120,7 +120,7 @@ const InvoiceListTable = ({
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Unpaid", checked)
                           }
-                          className={`${paymentFilters.includes("Unpaid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
+                          className={`${paymentFilters.includes("Unpaid") ? "bg-gradient-to-r from-primary to-[#8088FF] text-white" : ""}`}
                         >
                           Unpaid
                         </DropdownMenuCheckboxItem>
@@ -131,7 +131,7 @@ const InvoiceListTable = ({
                 <th className="border-b px-4 py-2 text-left">
                   {" "}
                   <div className="flex items-center gap-2">
-                    Status
+                    Invoice Status
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="h-6 w-6 p-0">
@@ -146,17 +146,17 @@ const InvoiceListTable = ({
                           <DropdownMenuCheckboxItem
                             key={index}
                             checked={statusFilters.includes(
-                              status?.status as string
+                              status?.status as string,
                             )}
                             onCheckedChange={(checked) =>
                               handleStatusFilter(
                                 status?.status as string,
-                                checked
+                                checked,
                               )
                             }
                             className={`${
                               statusFilters.includes(status?.status as string)
-                                ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white"
+                                ? "bg-gradient-to-r from-primary to-[#8088FF] text-white"
                                 : ""
                             }`}
                           >
@@ -177,10 +177,10 @@ const InvoiceListTable = ({
                     key={item.id}
                     className={cn(
                       "cursor-pointer rounded-md border py-3",
-                      index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]/40"
+                      index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]/40",
                     )}
                   >
-                    <td className="border-b px-4 py-2 text-left text-[#6571FF]">
+                    <td className="border-b px-4 py-2 text-left text-primary">
                       <InvoiceModal
                         invoiceId={item?.id}
                         buttonChild={<button>{item?.id}</button>}
@@ -211,7 +211,7 @@ const InvoiceListTable = ({
                     <td className="border-b px-4 py-2 text-left">
                       <span
                         className={`rounded px-2 py-1 text-xs font-medium ${getPaymentBadgeClasses(
-                          item
+                          item,
                         )}`}
                       >
                         {item?.grandTotal > 0 && item?.due == 0
@@ -222,7 +222,7 @@ const InvoiceListTable = ({
                     <td className="border-b px-4 py-2 text-left">
                       <span
                         className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(
-                          item.column?.title
+                          item.column?.title,
                         )}`}
                       >
                         {item.column?.title}
@@ -270,7 +270,7 @@ const InvoiceListTable = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                Status
+                Invoice Status
                 <ChevronDown className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
@@ -297,7 +297,7 @@ const InvoiceListTable = ({
               key={item.id}
               className={cn(
                 "cursor-pointer border",
-                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
               )}
             >
               <CardContent className="p-4">
@@ -311,7 +311,7 @@ const InvoiceListTable = ({
                   <div className="flex flex-col items-end gap-2">
                     <span
                       className={`rounded px-2 py-1 text-xs font-medium ${getPaymentBadgeClasses(
-                        item
+                        item,
                       )}`}
                     >
                       {item?.grandTotal > 0 && item?.due == 0
@@ -320,7 +320,7 @@ const InvoiceListTable = ({
                     </span>
                     <span
                       className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(
-                        item.column?.title
+                        item.column?.title,
                       )}`}
                     >
                       {item.column?.title}

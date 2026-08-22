@@ -1,19 +1,22 @@
 import detectBrowser from "@/utils/detectBrowser";
-import { env } from "next-runtime-env";
-import { IOneSignalOneSignal } from "react-onesignal";
-import {  successToast } from "../toast";
+import OneSignal from "react-onesignal";
+import { successToast } from "../toast";
 import { isIosPwa } from "@/utils/isIosPwa";
 import { showOneSignalErrorToast } from "@/components/ui/CustomToast";
 
 // Environment validation
-const ONESIGNAL_APP_ID = env("NEXT_PUBLIC_ONESIGNAL_APP_ID") as string;
-const ONESIGNAL_SAFARI_WEB_ID = env(
-  "NEXT_PUBLIC_ONESIGNAL_SAFARI_WEB_ID"
-) as string;
+const ONESIGNAL_APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID as string;
+const ONESIGNAL_SAFARI_WEB_ID = process.env
+  .NEXT_PUBLIC_ONESIGNAL_SAFARI_WEB_ID as string;
 
 if (!ONESIGNAL_APP_ID) {
   console.error("OneSignal App ID is not configured");
 }
+
+// Guard against calling OneSignal.init() more than once per session
+let isOneSignalInitialized = false;
+
+export const isOneSignalReady = (): boolean => isOneSignalInitialized;
 
 function isWebPushSupported(): boolean {
   return (
@@ -55,72 +58,57 @@ function getNotificationTexts() {
 
 async function initializeOneSignal(
   userId: number,
-  isMobile?: boolean
+  isMobile?: boolean,
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!window.OneSignalDeferred) {
-      reject(new Error("OneSignal script not loaded"));
-      return;
-    }
-
-    window.OneSignalDeferred.push(async (OneSignal: IOneSignalOneSignal) => {
-      try {
-        if (!OneSignal) {
-          throw new Error("OneSignal SDK not available");
-        }
-
-        // Initialize OneSignal
-        await OneSignal.init({
-          appId: ONESIGNAL_APP_ID,
-          autoResubscribe: true,
-          autoRegister: true,
-          safari_web_id: ONESIGNAL_SAFARI_WEB_ID,
-          persistNotification: true,
-          allowLocalhostAsSecureOrigin: process.env.NODE_ENV === "development",
-          requiresUserPrivacyConsent: false,
-          notifyButton: {
-            enable: true,
-            prenotify: true,
-            showCredit: false,
-            displayPredicate: () => true,
-            size: isMobile ? "small" : "medium",
-            offset: {
-              bottom: "20px",
-              right: "65px",
-              left: "auto",
-            },
-            text: getNotificationTexts(),
-          },
-        });
-
-        // Set up user identification
-        const externalUserId = `user-${userId}`;
-        await OneSignal.login(externalUserId);
-
-        // Add browser tag
-        OneSignal.User.addTag("browser", detectBrowser());
-
-        // Set log level based on environment
-        OneSignal.Debug.setLogLevel(
-          process.env.NODE_ENV === "development" ? "debug" : "error"
-        );
-
-        console.log("OneSignal initialized successfully");
-        console.log("User opted in:", OneSignal.User.PushSubscription.optedIn);
-        console.log("External ID:", OneSignal.User.externalId);
-
-        resolve();
-      } catch (error) {
-        console.error("OneSignal initialization failed:", error);
-        reject(error);
-      }
+  // Only call init once — react-onesignal throws if called a second time
+  if (!isOneSignalInitialized) {
+    await OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      autoResubscribe: true,
+      autoRegister: true,
+      safari_web_id: ONESIGNAL_SAFARI_WEB_ID,
+      persistNotification: true,
+      allowLocalhostAsSecureOrigin: process.env.NODE_ENV === "development",
+      requiresUserPrivacyConsent: false,
+      notifyButton: {
+        enable: true,
+        prenotify: true,
+        showCredit: false,
+        displayPredicate: () => true,
+        size: isMobile ? "small" : "medium",
+        offset: {
+          bottom: "20px",
+          right: "65px",
+          left: "auto",
+        },
+        text: getNotificationTexts(),
+      },
     });
-  });
+    isOneSignalInitialized = true;
+  }
+
+  // Set up user identification
+  const externalUserId = `user-${userId}`;
+  await OneSignal.login(externalUserId);
+
+  console.log("OneSignal logged in successfully", externalUserId);
+
+  // Add browser tag
+  OneSignal.User.addTag("browser", detectBrowser());
+
+  // Set log level based on environment
+  OneSignal.Debug.setLogLevel(
+    process.env.NODE_ENV === "development" ? "debug" : "error",
+  );
+
+  console.log("OneSignal initialized successfully");
+  console.log("User opted in:", OneSignal.User.PushSubscription.optedIn);
+  console.log("External ID:", OneSignal.User.externalId);
 }
 
 export const initOneSignal = async (
   userId: number,
-  isMobile?: boolean
+  isMobile?: boolean,
 ): Promise<void> => {
   try {
     // Early return for server-side rendering
@@ -141,7 +129,7 @@ export const initOneSignal = async (
     // Check for iOS PWA early
     if (isIosPwa()) {
       console.log(
-        "iOS PWA detected - notifications may have limited functionality"
+        "iOS PWA detected - notifications may have limited functionality",
       );
       successToast("iOS PWA detected");
     }
@@ -154,7 +142,6 @@ export const initOneSignal = async (
       // errorToast(message);
       return;
     }
-
     // Check service worker status
     const isServiceWorkerActive = await checkServiceWorkerStatus();
     if (!isServiceWorkerActive) {

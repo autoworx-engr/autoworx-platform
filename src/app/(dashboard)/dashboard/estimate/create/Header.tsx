@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { SelectClient } from "@/components/Lists/SelectClient";
@@ -9,6 +10,7 @@ import {
   Column,
   Invoice,
   InvoiceTemplate,
+  RequestEstimate,
   Vehicle,
 } from "@prisma/client";
 import { customAlphabet } from "nanoid";
@@ -28,6 +30,7 @@ export default function Header({
   isAllServicesCompleted,
   isEdit = false,
   selectedTemplate,
+  requestEstimate,
 }: {
   id?: string;
   vehicle?: Vehicle;
@@ -37,6 +40,7 @@ export default function Header({
   isAllServicesCompleted?: boolean;
   isEdit?: boolean;
   selectedTemplate?: InvoiceTemplate | null;
+  requestEstimate?: any;
 }) {
   const {
     invoiceId,
@@ -45,7 +49,7 @@ export default function Header({
     title,
     template,
     setTemplate,
-    items,
+    grandTotal,
   } = useEstimateCreateStore();
   const { status: selectedStatus } = useListsStore();
 
@@ -60,6 +64,7 @@ export default function Header({
   const pathname = usePathname();
   const isTemplate = pathname.includes("templates");
   const isEstimateCreate = pathname.includes("estimate/create");
+  const isEstimateEdit = pathname.includes("estimate/edit");
 
   useEffect(() => {
     if (!id) setInvoiceId(customAlphabet("1234567890", 10)());
@@ -68,15 +73,20 @@ export default function Header({
   useEffect(() => {
     if (client) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingClientId = params.get("clientId");
+      if (existingClientId === client.id.toString()) return;
       params.set("clientId", client.id.toString());
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, []);
+
   useEffect(() => {
     if (template) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingTemplateId = params.get("templateId");
+      if (existingTemplateId === template.id) return;
       params.set("templateId", template?.id);
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, [template]);
 
@@ -112,22 +122,26 @@ export default function Header({
   ]);
 
   return (
-    <div className="app-shadow col-start-1 flex flex-wrap items-center gap-3 rounded-md p-3">
-      <div className="mr-auto flex gap-1">
-        <p>{invoiceId || template?.id}</p>
+    <div className="col-start-1 flex flex-wrap items-center gap-3 rounded-md">
+      <div className="rounded-lg bg-stone-200/80 px-3 py-1 font-mono font-semibold text-slate-600/70">
+        {invoiceId || template?.id}
       </div>
 
-      {!isTemplate && (
-        <CreateEstimateActionsButtons status={status! || selectedStatus} />
+      {!isTemplate && isEstimateEdit && (
+        <CreateEstimateActionsButtons
+          status={status! || selectedStatus}
+          requestEstimate={requestEstimate}
+        />
       )}
 
       <div className="flex basis-full flex-wrap items-end gap-3">
         {isTemplate ? (
           <SlimInput
             name="title"
-            className="py-2"
+            className="py-[5px] mx-0.5 rounded-lg"
             required
             value={title}
+            placeholder="Enter a Title"
             onChange={(e) => setTitle(e.target.value)}
           />
         ) : (
@@ -137,6 +151,7 @@ export default function Header({
               openDropdown={clientOpenDropdown}
               setOpenDropdown={setClientOpenDropdown}
               invoice={invoice}
+              confirmOnChange={isEdit}
             />
             <SelectVehicle
               value={vehicle}
@@ -150,13 +165,16 @@ export default function Header({
         )}
 
         <SelectStatus
+          key={template ? template.id : "no-template"}
           value={status || selectedStatus}
           open={statusOpenDropdown}
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}
         />
         {!isTemplate &&
-          (isEstimateCreate || (!isTemplate && items.length === 0)) && (
+          (isEstimateCreate ||
+            (isEstimateEdit && template) ||
+            (isEstimateEdit && grandTotal === 0)) && (
             <SelectTemplate
               openDropdown={templateOpenDropdown}
               setOpenDropdown={setTemplateOpenDropdown}

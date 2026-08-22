@@ -54,8 +54,6 @@ const CustomLabel = (props: any) => {
   );
 };
 
-
-
 const CustomTooltip = ({ active, payload, isMobile, labe }: any) => {
   if (active && payload && payload.length) {
     const { payload: data } = payload[0];
@@ -68,13 +66,14 @@ const CustomTooltip = ({ active, payload, isMobile, labe }: any) => {
         : formatCurrency(salePrice);
 
     return (
-      <div className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}>
+      <div
+        className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}
+      >
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-800 truncate">
             {data?.categoryName || "Unknown Category"}
           </p>
           <div className="border-t border-gray-200 pt-2">
-
             <p className="text-lg font-bold text-[#03A7A2]">{displayValue}</p>
             {salePrice >= 1000 && (
               <p className="text-xs text-gray-500 mt-1">
@@ -113,11 +112,13 @@ const InventoryBarChartContainer = ({ chartData, yAxisLabel }: TProps) => {
   };
 
   // Format the purchasesData to ensure salePrice values have toFixed(2) applied
-  const formattedChartData = chartData.map((item) => ({
-    categoryName: item.categoryName || "Uncategorized",
-    salePrice: Number(Number(item.salePrice).toFixed(2)),
-
-  }));
+  const formattedChartData =
+    chartData && chartData.length > 0
+      ? chartData.map((item) => ({
+          categoryName: item?.categoryName || "Uncategorized",
+          salePrice: Number(Number(item?.salePrice || 0).toFixed(2)),
+        }))
+      : [{ categoryName: "No Data", salePrice: 0 }];
 
   // State to track window resize for ResponsiveContainer
   const [key, setKey] = useState(0);

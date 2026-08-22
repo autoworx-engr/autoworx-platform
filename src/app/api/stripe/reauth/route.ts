@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   if (!companyId) {
     return Response.json(
       { success: false, message: "Missing Company ID" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   const company = await db.company.findUnique({
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
   if (!company?.stripeAccountId) {
     return Response.json(
       { success: false, error: "Stripe account not found" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   try {

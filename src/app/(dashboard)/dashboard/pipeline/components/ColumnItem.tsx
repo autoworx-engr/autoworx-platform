@@ -1,7 +1,6 @@
 import { GripVertical, Lock, X } from "lucide-react";
 import React from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { LocalColumn } from "./ManagePipelines";
 
 interface DragItem {
   index: number;
@@ -18,7 +17,7 @@ export default function ColumnItem({
   handleDeleteColumn,
   inputRef,
 }: Readonly<{
-  column: LocalColumn;
+  column: any;
   index: number;
   moveColumn: (dragIndex: number, hoverIndex: number) => void;
   handleColumnChange: (index: number, newName: string) => void;
@@ -43,17 +42,18 @@ export default function ColumnItem({
     }),
   });
 
-  const ref = React.useRef(null);
-  drag(drop(ref));
   const isRestricted = column.isRestricted;
   return (
- <div
-      ref={ref}
-      className={`group flex items-center gap-3 rounded-lg bg-white border border-slate-200 p-3 transition-all ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${
-        isDragging 
-          ? "opacity-50 shadow-lg scale-105" 
+    <div
+      ref={(node) => {
+        drag(node);
+        drop(node);
+      }}
+      className={`group flex items-center gap-3 rounded-lg bg-white border border-slate-200 p-3 transition-all ${isDragging ? "cursor-grabbing" : "cursor-grab"} ${
+        isDragging
+          ? "opacity-50 shadow-lg scale-105"
           : "opacity-100 hover:border-slate-300 hover:shadow-md"
-      } ${isRestricted ? 'bg-slate-50' : ''}`}
+      } ${isRestricted ? "bg-slate-50" : ""}`}
     >
       {/* Drag Handle */}
       <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors">
@@ -69,8 +69,8 @@ export default function ColumnItem({
           onChange={(e) => handleColumnChange(index, e.target.value)}
           className={`w-full px-3 py-2 text-sm font-medium rounded-lg border transition-all outline-none ${
             isRestricted
-              ? 'bg-slate-100 border-slate-200 text-slate-600 cursor-grab'
-              : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+              ? "bg-slate-100 border-slate-200 text-slate-600 cursor-grab"
+              : "bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           }`}
           disabled={isRestricted}
         />

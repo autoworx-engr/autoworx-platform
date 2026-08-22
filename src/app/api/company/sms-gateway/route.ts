@@ -36,7 +36,7 @@ export async function GET() {
     console.error("Get SMS gateway error:", error);
     return NextResponse.json(
       { error: "Failed to get SMS gateway" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

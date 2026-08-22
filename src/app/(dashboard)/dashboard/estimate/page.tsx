@@ -9,19 +9,26 @@ import { getServerSession } from "next-auth";
 import Header from "./Header";
 import NavigationTabs from "./NavigationTabs";
 import Table from "./Table";
+import { Metadata } from "next";
 
-export default async function EstimatesPage({
-  searchParams,
-}: Readonly<{
-  searchParams: {
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-    searchTerm?: string;
-    page?: string;
-    take?: string;
-  };
-}>) {
+export const metadata: Metadata = {
+  title: "Invoices - Estimates",
+  description: "View and manage all your estimates.",
+};
+
+export default async function EstimatesPage(
+  props: Readonly<{
+    searchParams: Promise<{
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      searchTerm?: string;
+      page?: string;
+      take?: string;
+    }>;
+  }>,
+) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
   const { timezone } = await getCompanyTimezone();
@@ -32,7 +39,7 @@ export default async function EstimatesPage({
     InvoiceType.Estimate,
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
 
   const categoriesPromise = db.category.findMany({
@@ -69,7 +76,11 @@ export default async function EstimatesPage({
 
       {/* Use the NavigationTabs component with the 'a-estimate' tab as active */}
       <NavigationTabs activeTab="a-estimate">
-        <Table estimateData={estimates} />
+        <Table
+          estimateData={estimates}
+          page={searchParams.page}
+          take={searchParams.take}
+        />
       </NavigationTabs>
     </div>
   );

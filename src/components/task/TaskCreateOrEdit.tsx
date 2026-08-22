@@ -4,7 +4,8 @@ import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useState } from "react";
 import TaskContentModal from "./TaskContentModal";
 import { Task } from "@prisma/client";
-import { Plus, SquarePen } from "lucide-react";
+import { Plus, PencilLineIcon } from "lucide-react";
+import { Button } from "../ui/button";
 
 type NewTaskProps = {
   onlyOneUser?: boolean;
@@ -20,22 +21,8 @@ type NewTaskProps = {
   onTaskCreated?: (task: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDelete?: (taskId: number) => void;
+  revalidateOnDelete?: boolean;
 };
-
-// **Helper Class for Primary CTA Styling**
-const primaryCtaClasses = `
-  flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
-
-  // Gradient Background (Blue/Indigo)
-  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-
-  // Subtle Lift and Shadow Glow on Hover
-  shadow-md shadow-[#6571FF]/50
-  hover:-translate-y-0.5
-  hover:scale-[1.01]
-  hover:shadow-lg hover:shadow-[#6571FF]/60
-  dark:shadow-[#6571FF]/50 dark:hover:shadow-[#6571FF]/60
-`;
 
 export default function TaskCreateOrEdit({
   onlyOneUser = false,
@@ -51,6 +38,7 @@ export default function TaskCreateOrEdit({
   onTaskCreated,
   onTaskUpdated,
   onTaskDelete,
+  revalidateOnDelete = true,
 }: NewTaskProps) {
   const state = useState(false);
 
@@ -60,17 +48,13 @@ export default function TaskCreateOrEdit({
 
   let openButtonIcon = null;
 
-  // --- Context-Aware Button Rendering ---
-
   if (isClientTask) {
     // 1. Client Task Context (likely a button in a client detail view)
     openButtonIcon = (
-      <button
-        className={`${primaryCtaClasses} rounded-full`} // Full rounded shape for high visibility
-      >
+      <Button className="rounded-lg">
         <Plus size={20} />
         <span>Add Task</span>
-      </button>
+      </Button>
     );
   } else if (triggerIcon) {
     // 2. Custom Trigger Context (used by TaskListBox, etc.) - No change, uses provided trigger.
@@ -78,24 +62,25 @@ export default function TaskCreateOrEdit({
   } else {
     // 3. Default/Edit Context (General-purpose button)
     openButtonIcon = (
-      // Compact, professional design
-      <button
-        className={`${primaryCtaClasses} rounded-xl w-full px-4 py-2`} // Modern rounded-xl shape
-      >
+      <Button className="w-full rounded-lg">
         {fromEdit ? (
-          // Icon for edit action (using SquarePen, with subtle color change to match theme)
-          <SquarePen className="h-5 w-5 text-white" />
+          // Icon for edit action (using PencilLineIcon, with subtle color change to match theme)
+          <PencilLineIcon className="h-5 w-5 text-white" />
         ) : (
           <Plus size={20} />
         )}
         <span className="block">{fromEdit ? "Update Task" : "Add Task"}</span>
-      </button>
+      </Button>
     );
   }
 
+  // When the parent fully controls open state (setIsModalOpen) without giving
+  // us a triggerIcon, it opens the modal itself and doesn't want a visible button.
+  const showTrigger = Boolean(triggerIcon) || !setIsModalOpen;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {!setIsModalOpen && (
+      {showTrigger && (
         <DialogTrigger
           asChild
           onClick={(e) => {
@@ -113,6 +98,7 @@ export default function TaskCreateOrEdit({
           onTaskCreated={onTaskCreated}
           onTaskUpdated={onTaskUpdated}
           onTaskDeleted={onTaskDelete}
+          revalidateOnDelete={revalidateOnDelete}
           clientId={clientId}
           fromEdit={fromEdit}
           onClose={() => setOpen(false)}

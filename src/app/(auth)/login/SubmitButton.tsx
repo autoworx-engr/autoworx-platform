@@ -3,13 +3,11 @@
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { getSession, signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { checkLoginWithTwoFactor } from "./actions/checkLoginWithTwoFactor";
 import { useLoginStore } from "@/stores/LoginStore";
 
 export default function SubmitButton() {
   const { showError } = useFormErrorStore();
-  const router = useRouter();
   const { setShowTwoFactor, setEmail, setPassword } = useLoginStore();
 
   const handler = async (formData: FormData) => {
@@ -39,12 +37,7 @@ export default function SubmitButton() {
         });
         const session = await getSession();
         const isSuperAdmin = session?.user?.isSuperAdmin;
-        if (isSuperAdmin) {
-          router.push("/awx-dashboard");
-        } else {
-          router.push("/dashboard");
-        }
-        router.refresh();
+        window.location.href = isSuperAdmin ? "/awx-dashboard" : "/dashboard";
       }
     } catch (err) {
       console.log("log in page error", err);
@@ -52,7 +45,7 @@ export default function SubmitButton() {
   };
   return (
     <Submit
-      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-10 py-2 text-white border-0 outline-none focus:outline-none active:outline-none min-h-[42px] flex items-center justify-center"
+      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-10 py-2 text-white border-0 outline-none focus:outline-none active:outline-none min-h-[42px] flex items-center justify-center"
       formAction={handler}
     >
       Login

@@ -1,5 +1,6 @@
 "use client";
 
+import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
 import {
   Dialog,
   DialogClose,
@@ -9,17 +10,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
+import FormError from "@/components/FormError";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useEffect, useState } from "react";
-import FormError from "@/components/FormError";
-import { useFormErrorStore } from "@/stores/form-error";
-import { addTemplate } from "../../actions/appointment/addTemplate";
-import { EmailTemplate, EmailTemplateType } from "@prisma/client";
-import { useListsStore } from "@/stores/lists";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
+import { cn } from "@/lib/cn";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { EmailTemplate, EmailTemplateType } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
+import { useEffect, useState } from "react";
+import { addTemplate } from "../../actions/appointment/addTemplate";
 
 type TNewTemplateProps = {
   type: EmailTemplateType;
@@ -45,11 +46,14 @@ export default function NewTemplate({
   const { data: templates = [] } = useTemplatesQuery();
   const queryClient = useQueryClient();
 
-  const [subject, setSubject] = useState(
+  // Hint text only — the field starts empty so the user isn't misled into
+  // thinking a subject has already been entered.
+  const subjectPlaceholder =
     type === "Confirmation"
       ? "Appointment Confirmation"
-      : "Appointment Reminder"
-  );
+      : "Appointment Reminder";
+
+  const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -86,7 +90,7 @@ export default function NewTemplate({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="text-xs text-[#6571FF]">
+        <button type="button" className="text-xs text-primary">
           + Add New Template
         </button>
       </DialogTrigger>
@@ -105,6 +109,7 @@ export default function NewTemplate({
           <SlimInput
             name="subject"
             value={subject}
+            placeholder={subjectPlaceholder}
             onChange={(e) => setSubject(e.target.value)}
             required
           />
@@ -123,8 +128,11 @@ export default function NewTemplate({
               name="message"
               rows={5}
               maxLength={160} // ✅ Enforce SMS strictness
-              className={`${slimInputClassName} ${message.length > 160 ? "border-red-500" : ""
-                }`}
+              className={cn(
+                slimInputClassName,
+                "h-auto min-h-[100px]",
+                message.length > 160 && "border-red-500",
+              )}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
@@ -133,17 +141,19 @@ export default function NewTemplate({
         </div>
 
         <DialogFooter className="px-1">
-          <DialogClose className="
+          <DialogClose
+            className="
                 rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
-              ">
+              "
+          >
             Cancel
           </DialogClose>
           <Submit
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
@@ -205,10 +215,11 @@ export const AppointmentTemplateVariable = ({
           <div
             key={variable.name}
             onClick={() => copyToClipboard(variable.name)}
-            className={`flex flex-col rounded-md border cursor-pointer p-3 ${copiedVar === variable.name
-              ? "border-green-400 bg-green-50"
-              : "border-gray-200 hover:border-indigo-300"
-              }`}
+            className={`flex flex-col rounded-md border cursor-pointer p-3 ${
+              copiedVar === variable.name
+                ? "border-green-400 bg-green-50"
+                : "border-gray-200 hover:border-indigo-300"
+            }`}
           >
             {/* Display the variable name */}
             <span className="mb-1 text-xs font-bold text-blue-600">

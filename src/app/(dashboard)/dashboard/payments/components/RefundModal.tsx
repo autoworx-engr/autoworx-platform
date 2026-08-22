@@ -10,15 +10,15 @@ import {
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
+import { useQueryClient } from "@tanstack/react-query";
+import { Settings, Trash2 } from "lucide-react";
 import moment from "moment";
 import Image from "next/image";
-import React, { useState, useTransition, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
-import { Settings, Trash2 } from "lucide-react";
+import React, { useEffect, useState, useTransition } from "react";
 
 function TabTrigger({
   value,
@@ -32,7 +32,7 @@ function TabTrigger({
   return (
     <Tabs.Trigger
       value={value}
-      className="flex items-center gap-1 rounded-md bg-[#6571FF] p-1 px-5 text-white transition-all"
+      className="flex items-center gap-1 rounded-md bg-primary p-1 px-5 text-white transition-all"
       style={{
         backgroundColor: tab === value ? "#6571FF" : "transparent",
         border: tab === value ? "none" : "1px solid #6571FF",
@@ -122,7 +122,7 @@ export default function RefundModal({
       }
       if (roundedAmount > totalAmount) {
         errorToast(
-          `Refund amount cannot exceed original payment amount: $${totalAmount.toFixed(2)}`
+          `Refund amount cannot exceed original payment amount: $${totalAmount.toFixed(2)}`,
         );
         return;
       }
@@ -156,7 +156,7 @@ export default function RefundModal({
             "message" in res.errorSource[0] &&
             typeof (res.errorSource[0] as any).message === "string"
             ? (res.errorSource[0] as any).message
-            : (res as any).message
+            : (res as any).message,
         );
       }
     } catch (err) {
@@ -164,7 +164,7 @@ export default function RefundModal({
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -199,7 +199,7 @@ export default function RefundModal({
             "message" in res.errorSource[0] &&
             typeof (res.errorSource[0] as any).message === "string"
             ? (res.errorSource[0] as any).message
-            : (res as any).message
+            : (res as any).message,
         );
       }
     } catch (err) {
@@ -207,7 +207,7 @@ export default function RefundModal({
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -236,21 +236,25 @@ export default function RefundModal({
             onClick={openRefundDialog}
             type="button"
             className={`
-                flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0
+                flex w-max items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-300 shadow-sm hover:shadow-md active:translate-y-0
                 ${isDisabled ? "cursor-not-allowed opacity-50" : ""} 
-                ${hasRefund
-                ? "border border-slate-200 bg-white text-slate-700 hover:text-[#6571FF] hover:border-[#6571FF]"
-                : "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] text-white shadow-[#6571FF]/20"
-              }
+                ${
+                  hasRefund
+                    ? "border border-slate-200 bg-white text-slate-700 hover:text-primary hover:border-primary"
+                    : "bg-gradient-to-r from-primary to-[#5a66ee] text-white shadow-primary/20"
+                }
             `}
             disabled={isDisabled}
           >
             <span>{hasRefund ? "Manage Refund" : "Refund"}</span>
-            {hasRefund && <Settings size={16} color="#6571FF" />}
+            {hasRefund && <Settings size={14} color="#6571FF" />}
           </button>
         </DialogTrigger>
 
-        <DialogContent className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6">
+        <DialogContent
+          className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <form>
             <DialogHeader>
               <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-lg sm:text-xl text-gray-600">
@@ -280,8 +284,16 @@ export default function RefundModal({
                     name="date"
                     type="date"
                     label="Date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    onFocus={(e) => {
+                      // Prevent the default focus behavior to avoid opening the calendar popup
+                      e.preventDefault();
+                    }}
+                    value={moment.utc(date).format("YYYY-MM-DD")}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setDate(new Date(`${e.target.value}T00:00:00Z`));
+                      }
+                    }}
                   />
                 </div>
                 <div className="w-full">
@@ -310,11 +322,11 @@ export default function RefundModal({
                     width="24"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                     <g
                       id="SVGRepo_tracerCarrier"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     ></g>
                     <g id="SVGRepo_iconCarrier">
                       {" "}
@@ -398,7 +410,7 @@ export default function RefundModal({
                   Cancel
                 </button>
                 <button
-                  className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] p-2.5 px-8 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] p-2.5 px-8 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                   formAction={() => startTransition(handleSubmit)}
                   disabled={pending}
                   type="submit"

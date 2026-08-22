@@ -30,11 +30,11 @@ export async function addUser({
 
   const encPassword = await bcrypt.hash(password, 10);
   const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+  const companyId = session?.user.companyId;
 
-    if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
-    }
+  if (!companyId) {
+    throw new Error("Company ID is required to create an email template.");
+  }
 
   await db.user.create({
     data: {

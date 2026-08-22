@@ -34,30 +34,32 @@ export default async function Analytics({
   types,
 }: TProps) {
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) return null;
   let last30Days = moment().subtract(30, "days").toDate();
   let today = moment().toDate();
 
   const formattedLast30Days = FormatUtcToTimezone(
     last30Days,
     timezone,
-    "YYYY-MM-DD"
+    "YYYY-MM-DD",
   );
   const formattedToday = FormatUtcToTimezone(today, timezone, "YYYY-MM-DD");
 
   const inventoryProducts = await db.inventoryProduct.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
       type: types as InventoryProductType | undefined,
       InventoryProductHistory: {
         some: {
           date: {
             gte:
-              startDate !== "undefined"
-                ? moment.utc(startDate!, "MM/DD/YYYY").toDate()
+              startDate && startDate !== "undefined"
+                ? moment.utc(startDate, "MM/DD/YYYY").toDate()
                 : new Date(`${formattedLast30Days}T00:00:00.000Z`),
             lte:
-              endDate !== "undefined"
-                ? moment.utc(endDate!, "MM/DD/YYYY").endOf("day").toDate()
+              endDate && endDate !== "undefined"
+                ? moment.utc(endDate, "MM/DD/YYYY").endOf("day").toDate()
                 : new Date(`${formattedToday}T23:59:59.999Z`),
           },
         },
@@ -70,12 +72,12 @@ export default async function Analytics({
         where: {
           date: {
             gte:
-              startDate !== "undefined"
-                ? moment.utc(startDate!, "MM/DD/YYYY").toDate()
+              startDate && startDate !== "undefined"
+                ? moment.utc(startDate, "MM/DD/YYYY").toDate()
                 : new Date(`${formattedLast30Days}T00:00:00.000Z`),
             lte:
-              endDate !== "undefined"
-                ? moment.utc(endDate!, "MM/DD/YYYY").endOf("day").toDate()
+              endDate && endDate !== "undefined"
+                ? moment.utc(endDate, "MM/DD/YYYY").endOf("day").toDate()
                 : new Date(`${formattedToday}T23:59:59.999Z`),
           },
         },
@@ -85,9 +87,8 @@ export default async function Analytics({
 
   // find unique categories for sales
   const getCategory = Array.from(
-    new Set(inventoryProducts.map((inventory) => inventory?.category?.name))
+    new Set(inventoryProducts.map((inventory) => inventory?.category?.name)),
   );
-  console.log("getCategory", getCategory);
   // sales data by category
   const salesData = getCategory.map((category) => {
     return inventoryProducts.reduce(
@@ -104,7 +105,7 @@ export default async function Analytics({
         acc.salePrice = Number(acc.salePrice.toFixed(2));
         return acc;
       },
-      { categoryName: category, salePrice: 0 }
+      { categoryName: category, salePrice: 0 },
     );
   });
   // console.log("salesData", salesData);
@@ -116,7 +117,7 @@ export default async function Analytics({
       acc[day] = { day: day, purchase: 0, sales: 0 };
       return acc;
     },
-    {} as Record<string, { day: string; purchase: number; sales: 0 }>
+    {} as Record<string, { day: string; purchase: number; sales: 0 }>,
   );
 
   inventoryProducts.forEach((inventory) => {
@@ -163,7 +164,7 @@ export default async function Analytics({
           acc.salePrice = Number(acc.salePrice.toFixed(2));
           return acc;
         },
-        { categoryName: category, salePrice: 0 }
+        { categoryName: category, salePrice: 0 },
       );
     });
     leftSideChart = (

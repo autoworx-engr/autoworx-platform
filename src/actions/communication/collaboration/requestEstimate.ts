@@ -12,207 +12,153 @@ type TEstimateData = {
   serviceRequest: string;
   dueDate: string;
   notes: string;
-  receiverId: number;
   receiverCompanyId: number;
-  senderId: number;
   senderCompanyId: number;
   messageText?: string;
+  senderId?: number;
 };
 
 export const requestEstimate = async (
   formDataForPhoto: FormData,
-  requestEstimateData: TEstimateData
+  requestEstimateData: TEstimateData,
 ) => {
   try {
-    // const isAlreadyExistsEstimate = await db.client.findFirst({
-    //   where: {
-    //     companyId: requestEstimateData.receiverCompanyId,
-    //   },
-    // });
+    // Upload photos BEFORE opening the transaction. Holding a DB connection
+    // open during a slow HTTP upload caused Prisma to time out the tx (~5s).
+    let photoPaths: string[] = [];
+    const files = formDataForPhoto.getAll("file");
+    const hasFiles =
+      files.length > 0 &&
+      files.some((f) => f instanceof Blob && (f as Blob).size > 0);
 
-    // if (!!isAlreadyExistsEstimate) {
-    //   throw new Error("Estimate for this client already exists");
-    // }
-
-    const { requestEstimateFromDB } = await db.$transaction(async prisma => {
-      const origin = headers().get("origin");
-
-      const receiverCompanyDataFormDB = await prisma.company.findUnique({
-        where: {
-          id: requestEstimateData.receiverCompanyId,
-        },
-        select: {
-          name: true,
-        },
-      });
-
-      const senderCompanyDataFormDB = await prisma.company.findUnique({
-        where: {
-          id: requestEstimateData.senderCompanyId,
-        },
-        select: {
-          name: true,
-          email: true,
-          phone: true,
-        },
-      });
-
-      const clientInfo = {
-        companyId: requestEstimateData.receiverCompanyId,
-        firstName: senderCompanyDataFormDB?.name!,
-        lastName: "",
-        fromRequest: true,
-        fromRequestedCompanyId: requestEstimateData.senderCompanyId,
-        email: senderCompanyDataFormDB?.email,
-        mobile: senderCompanyDataFormDB?.phone,
-      };
-
-      // if the client already exist
-      let client = await prisma.client.findFirst({
-        where: {
-          fromRequestedCompanyId: requestEstimateData.senderCompanyId,
-        },
-      });
-      if (!client) {
-        // create client in the db
-        client = await prisma.client.create({
-          data: clientInfo,
-        });
-      }
-
-      const vehicleInfo = {
-        model: requestEstimateData.model,
-        make: requestEstimateData.make,
-        year: requestEstimateData.year,
-        companyId: requestEstimateData.receiverCompanyId,
-        clientId: client?.id,
-        fromRequest: true,
-        fromRequestedCompanyId: requestEstimateData.senderCompanyId,
-      };
-
-      // create vehicle in the db
-      const vehicle = await prisma.vehicle.create({
-        data: vehicleInfo,
-      });
-
-      let finalColumnId: number;
-      const defaultColumn = await db.column.findFirst({
-        where: {
-          title: "Pending",
-          type: "shop",
-          companyId: requestEstimateData.receiverCompanyId,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (defaultColumn) {
-        finalColumnId = defaultColumn.id;
-      } else {
-        throw new Error("Default column not found");
-      }
-
-      const estimateInfo = {
-        id: customAlphabet("1234567890", 10)(),
-        vehicleId: vehicle.id,
-        userId: requestEstimateData.receiverId,
-        companyId: requestEstimateData.receiverCompanyId,
-        internalNotes: requestEstimateData.notes,
-        type: InvoiceType.Estimate,
-        fromRequest: true,
-        fromRequestedCompanyId: requestEstimateData.senderCompanyId,
-        clientId: client?.id,
-        columnId: finalColumnId,
-      };
-
-      // create a invoice estimate in db
-      const estimate = await prisma.invoice.create({ data: estimateInfo });
-
-      // create a service for estimate
-      const service = await prisma.service.create({
-        data: {
-          name: requestEstimateData.serviceRequest,
-          companyId: requestEstimateData.receiverCompanyId,
-          fromRequest: true,
-          fromRequestedCompanyId: requestEstimateData.senderCompanyId,
-        },
-      });
-
-      // create invoice in db or set service id or invoice id
-      await prisma.invoiceItem.create({
-        data: {
-          invoiceId: estimate.id,
-          serviceId: service?.id,
-        },
-      });
-
-      const requestedEstimateInfo = {
-        invoiceId: estimate.id,
-        senderId: requestEstimateData.senderId,
-        senderCompanyId: requestEstimateData.senderCompanyId,
-        receiverId: requestEstimateData.receiverId,
-        receiverCompanyId: requestEstimateData.receiverCompanyId,
-        serviceId: service.id,
-        vehicleId: vehicle.id,
-      };
-      // create a new request for estimate
-      const requestEstimateFromDB = await prisma.requestEstimate.create({
-        data: requestedEstimateInfo,
-      });
-
-      // update invoice with request estimate id
-      await prisma.invoice.update({
-        where: {
-          id: estimate.id,
-        },
-        data: {
-          requestEstimateId: requestEstimateFromDB.id,
-        },
-      });
-
-      //  upload image
-      const photoPaths = [];
+    if (hasFiles) {
+      const origin = (await headers()).get("origin");
       const res = await fetch(`${origin}/api/upload`, {
         method: "POST",
         body: formDataForPhoto,
       });
-
-      if (!res.ok) {
-        console.error("Failed to upload photos");
-        throw new Error("Failed to upload photos");
-      }
-
+      if (!res.ok) throw new Error("Failed to upload photos");
       const json = await res.json();
-      const data = json.data;
+      photoPaths = json.data ?? [];
+    }
 
-      photoPaths.push(...data);
+    const { requestEstimateFromDB } = await db.$transaction(
+      async (prisma) => {
+        const senderCompanyDataFromDB = await prisma.company.findUnique({
+          where: { id: requestEstimateData.senderCompanyId },
+          select: { name: true, email: true, phone: true },
+        });
 
-      await Promise.all(
-        photoPaths.map(photoPath =>
-          prisma.invoicePhoto.create({
+        // Reuse existing fromRequest client when present
+        let client = await prisma.client.findFirst({
+          where: {
+            fromRequestedCompanyId: requestEstimateData.senderCompanyId,
+          },
+        });
+        if (!client) {
+          client = await prisma.client.create({
             data: {
-              invoiceId: estimate?.id,
-              photo: photoPath,
+              companyId: requestEstimateData.receiverCompanyId,
+              firstName: senderCompanyDataFromDB?.name ?? "",
+              lastName: "",
+              fromRequest: true,
+              fromRequestedCompanyId: requestEstimateData.senderCompanyId,
+              email: senderCompanyDataFromDB?.email,
+              mobile: senderCompanyDataFromDB?.phone,
+              isSalesAgent: true,
             },
-          })
-        )
-      );
+          });
+        }
 
-      return { requestEstimateFromDB };
-    });
+        const vehicle = await prisma.vehicle.create({
+          data: {
+            model: requestEstimateData.model,
+            make: requestEstimateData.make,
+            year: requestEstimateData.year,
+            companyId: requestEstimateData.receiverCompanyId,
+            clientId: client.id,
+            fromRequest: true,
+            fromRequestedCompanyId: requestEstimateData.senderCompanyId,
+          },
+        });
+
+        const defaultColumn = await prisma.column.findFirst({
+          where: {
+            title: "Pending",
+            type: "shop",
+            companyId: requestEstimateData.receiverCompanyId,
+          },
+          select: { id: true },
+        });
+        if (!defaultColumn) {
+          throw new Error("Default column not found");
+        }
+
+        const estimate = await prisma.invoice.create({
+          data: {
+            id: customAlphabet("1234567890", 10)(),
+            vehicleId: vehicle.id,
+            companyId: requestEstimateData.receiverCompanyId,
+            internalNotes: requestEstimateData.notes,
+            type: InvoiceType.Estimate,
+            fromRequest: true,
+            fromRequestedCompanyId: requestEstimateData.senderCompanyId,
+            clientId: client.id,
+            columnId: defaultColumn.id,
+          },
+        });
+
+        const service = await prisma.service.create({
+          data: {
+            name: requestEstimateData.serviceRequest,
+            companyId: requestEstimateData.receiverCompanyId,
+            fromRequest: true,
+            fromRequestedCompanyId: requestEstimateData.senderCompanyId,
+          },
+        });
+
+        await prisma.invoiceItem.create({
+          data: { invoiceId: estimate.id, serviceId: service.id },
+        });
+
+        const requestEstimateFromDB = await prisma.requestEstimate.create({
+          data: {
+            invoiceId: estimate.id,
+            senderCompanyId: requestEstimateData.senderCompanyId,
+            receiverCompanyId: requestEstimateData.receiverCompanyId,
+            serviceId: service.id,
+            vehicleId: vehicle.id,
+          },
+        });
+
+        await prisma.invoice.update({
+          where: { id: estimate.id },
+          data: { requestEstimateId: requestEstimateFromDB.id },
+        });
+
+        if (photoPaths.length > 0) {
+          await prisma.invoicePhoto.createMany({
+            data: photoPaths.map((photo) => ({
+              invoiceId: estimate.id,
+              photo,
+            })),
+          });
+        }
+
+        return { requestEstimateFromDB };
+      },
+      { timeout: 15000 },
+    );
 
     return { status: 200, data: { requestEstimateFromDB } };
-  } catch (err: any) {
+  } catch (err) {
     if (
       err instanceof Prisma.PrismaClientUnknownRequestError ||
       err instanceof Prisma.PrismaClientKnownRequestError
     ) {
       throw new Error("something went wrong from db");
     }
-    console.error(err);
-    throw new Error(`Error: ${err.message}`);
-  } finally {
-    await db.$disconnect();
+    const message = err instanceof Error ? err.message : "Unknown error";
+    throw new Error(`Error: ${message}`);
   }
 };

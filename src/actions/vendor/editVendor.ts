@@ -29,7 +29,7 @@ export async function editVendor({
   company?: string;
   website?: string;
   notes?: string;
-  countryCode?:string;
+  countryCode?: string;
 }): Promise<ServerAction> {
   const updatedVendor = await db.vendor.update({
     where: { id },
@@ -44,7 +44,7 @@ export async function editVendor({
       companyName: company,
       website,
       notes,
-      countryCode:countryCode,
+      countryCode: countryCode,
     },
   });
 

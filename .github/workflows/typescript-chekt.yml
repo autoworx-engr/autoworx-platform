@@ -2,9 +2,9 @@ name: TypeScript Check
 
 on:
   pull_request:
-    branches: [master, development]
+    branches: [main, development]
   push:
-    branches: [master, development]
+    branches: [main, development]
 
 jobs:
   typescript-check:
@@ -18,16 +18,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           # Change from "18" to "20" (or "22" for the current LTS)
-          node-version: "20"
+          node-version: "22"
           cache: "yarn"
 
       - name: Install Dependencies
-        # 2. Combined redundant steps and used --frozen-lockfile for CI integrity
-        # Use 'yarn install --immutable' if you are using Yarn Berry (v2+)
         run: yarn install --frozen-lockfile
 
+      - name: Prisma Generate
+        run: yarn prisma generate
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+          DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+
       - name: TypeScript check
-        # 3. Using yarn to execute the local tsc binary
         run: yarn tsc --noEmit
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+          DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres"

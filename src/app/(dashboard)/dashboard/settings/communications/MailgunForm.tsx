@@ -88,7 +88,7 @@ const MailgunForm: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || mgCredentials?.isVerified}
-              className="CO mr-3 rounded-md bg-[#6571FF] p-2 px-10 py-1.5 text-right text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="CO mr-3 rounded-md bg-primary p-2 px-10 py-1.5 text-right text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Add Domain
             </button>
@@ -105,7 +105,7 @@ const MailgunForm: React.FC = () => {
               }
               await fetchDnsRecords();
             }}
-            className="rounded-md bg-[#6571FF] p-2 px-10 py-1.5 text-right text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="rounded-md bg-primary p-2 px-10 py-1.5 text-right text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             {mgCredentials?.isVerified ? "Verified" : "Verify"}
           </button>

@@ -1,14 +1,15 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { getProductWithQuantity } from '@/lib/getProductWithQuantity';
-import { lowInventoryNotification } from '@/lib/notification/inventory-notify';
-import { InvoiceType, Material } from '@prisma/client';
+import { db } from "@/lib/db";
+import { getProductWithQuantity } from "@/lib/getProductWithQuantity";
+import { lowInventoryNotification } from "@/lib/notification/inventory-notify";
+import { InvoiceType, Material } from "@prisma/client";
 
 type TUpdateInventoryProps = {
   invoiceId: string;
   companyId: number;
   materials: Material[];
+  allowInsufficientInventory?: boolean;
 };
 
 // this function is used to update the inventory when the invoice is updated and create sales history
@@ -19,9 +20,10 @@ export async function updateInventoryOrCreateHistory({
   invoiceId,
   companyId,
   materials,
+  allowInsufficientInventory = false,
 }: TUpdateInventoryProps) {
   try {
-    await db.$transaction(async db => {
+    await db.$transaction(async (db) => {
       // get previous product
       // Unused service material history remove and return to the inventory
       const productsWithQuantity = getProductWithQuantity(materials);
@@ -34,15 +36,15 @@ export async function updateInventoryOrCreateHistory({
             {
               productId: {
                 notIn: materials
-                  .filter(p => p?.productId)
-                  .map(product => product?.productId!),
+                  .filter((p) => p?.productId)
+                  .map((product) => product?.productId!),
               },
             },
             {
               invoiceItemId: {
                 notIn: materials
-                  .filter(p => p?.invoiceItemId)
-                  .map(product => product?.invoiceItemId!),
+                  .filter((p) => p?.invoiceItemId)
+                  .map((product) => product?.invoiceItemId!),
               },
             },
           ],
@@ -51,7 +53,7 @@ export async function updateInventoryOrCreateHistory({
 
       // unused materials in invoice removed and unused materials quantity added to inventory
       const inventoryHistoryIds = await Promise.all(
-        findUnUsedMaterialsInInvoice.map(async material => {
+        findUnUsedMaterialsInInvoice.map(async (material) => {
           if (!material.productId) return;
           await db.inventoryProduct.update({
             where: {
@@ -70,7 +72,7 @@ export async function updateInventoryOrCreateHistory({
               where: {
                 companyId: companyId,
                 productId: material.productId,
-                type: 'Sale',
+                type: "Sale",
                 invoiceId: invoiceId,
               },
             });
@@ -82,24 +84,24 @@ export async function updateInventoryOrCreateHistory({
           });
 
           return findInventoryProductHistory?.id;
-        })
+        }),
       );
 
       const uniqueInventoryHistoryIds = Array.from(
-        new Set(inventoryHistoryIds.filter(Boolean))
+        new Set(inventoryHistoryIds.filter(Boolean)),
       );
 
       await Promise.all(
-        uniqueInventoryHistoryIds.map(async id => {
+        uniqueInventoryHistoryIds.map(async (id) => {
           await db.inventoryProductHistory.delete({
             where: { id: id! },
           });
-        })
+        }),
       );
 
       // update or remove inventory product
       await Promise.all(
-        productsWithQuantity.map(async product => {
+        productsWithQuantity.map(async (product) => {
           if (!product.id) return;
 
           const inventoryProduct = await db.inventoryProduct.findUnique({
@@ -127,7 +129,7 @@ export async function updateInventoryOrCreateHistory({
             (acc: number, material: Material) => {
               return acc + (Number(material.quantity) || 0);
             },
-            0
+            0,
           );
 
           const diffQuantity = oldQuantity - product.quantity;
@@ -140,9 +142,9 @@ export async function updateInventoryOrCreateHistory({
           }
 
           //  low inventory check
-          if (updatedQuantity < 0) {
+          if (updatedQuantity <= 0 && !allowInsufficientInventory) {
             throw new Error(
-              `The quantity of "${product.name}" is not enough in the inventory`
+              `The quantity of "${product.name}" is not enough in the inventory`,
             );
           }
 
@@ -153,7 +155,7 @@ export async function updateInventoryOrCreateHistory({
               where: {
                 companyId: companyId,
                 productId: inventoryProduct.id,
-                type: 'Sale',
+                type: "Sale",
                 invoiceId: invoiceId,
               },
             });
@@ -180,7 +182,7 @@ export async function updateInventoryOrCreateHistory({
                 price: (
                   Number(product?.totalSellPrice ?? 0) / product.quantity
                 ).toFixed(2),
-                type: 'Sale',
+                type: "Sale",
                 invoiceId: invoiceId,
               },
             });
@@ -203,7 +205,7 @@ export async function updateInventoryOrCreateHistory({
             productName: updatedProduct.name,
             productId: updatedProduct.id,
           });
-        })
+        }),
       );
     });
   } catch (err) {
@@ -225,23 +227,34 @@ type updateInventoryOnEstimateConversionProps = {
   }[];
   invoiceId: string;
   companyId: number;
+  allowInsufficientInventory?: boolean;
 };
 export async function updateInventoryOnEstimateConversion({
   productsWithQuantity,
   invoiceId,
   companyId,
+  allowInsufficientInventory = false,
 }: updateInventoryOnEstimateConversionProps) {
   try {
-    await db.$transaction(async db => {
+    // Collect updated products outside the transaction so lowInventoryNotification
+    // doesn't hold the DB connection open while doing its own getUsersByRole query.
+    const updatedProducts: {
+      lowInventoryAlert: number | null;
+      quantity: unknown;
+      name: string;
+      id: number;
+    }[] = [];
+
+    await db.$transaction(async (db) => {
       const findInvoice = await db.invoice.findUnique({
         where: { id: invoiceId },
       });
 
       if (!findInvoice) {
-        throw new Error('Invoice not found');
+        throw new Error("Invoice not found");
       }
       await Promise.all(
-        productsWithQuantity.map(async product => {
+        productsWithQuantity.map(async (product) => {
           if (!product.id) return;
           const findInventoryProduct = await db.inventoryProduct.findUnique({
             where: { id: product.id },
@@ -255,10 +268,10 @@ export async function updateInventoryOnEstimateConversion({
               where: {
                 companyId: companyId,
                 productId: product.id,
-                type: 'Sale',
+                type: "Sale",
                 invoiceId,
               },
-            }
+            },
           );
 
           // if find inventory product history first delete it or not find to create a new inventory product history
@@ -277,14 +290,17 @@ export async function updateInventoryOnEstimateConversion({
                 price: (
                   Number(product?.totalSellPrice ?? 0) / product.quantity
                 ).toFixed(2),
-                type: 'Sale',
+                type: "Sale",
                 invoiceId,
               },
             });
           }
-          if (product.quantity > Number(findInventoryProduct?.quantity || 0)) {
+          if (
+            product.quantity > Number(findInventoryProduct?.quantity || 0) &&
+            !allowInsufficientInventory
+          ) {
             throw new Error(
-              `The quantity "${product.name}" is not enough in the inventory`
+              `The quantity "${product.name}" is not enough in the inventory`,
             );
           }
           // update the inventory product quantity
@@ -299,16 +315,24 @@ export async function updateInventoryOnEstimateConversion({
             },
           });
 
-          await lowInventoryNotification({
-            companyId,
-            lowInventoryAlert: updatedProduct.lowInventoryAlert || 0,
-            currentQuantity: Number(updatedProduct.quantity) || 0,
-            productName: updatedProduct.name,
-            productId: updatedProduct.id,
-          });
-        })
+          updatedProducts.push(updatedProduct);
+        }),
       );
     });
+
+    // Run low-inventory notifications after the transaction commits so they
+    // don't hold the DB connection open during getUsersByRole queries.
+    await Promise.all(
+      updatedProducts.map((updatedProduct) =>
+        lowInventoryNotification({
+          companyId,
+          lowInventoryAlert: updatedProduct.lowInventoryAlert || 0,
+          currentQuantity: Number(updatedProduct.quantity) || 0,
+          productName: updatedProduct.name,
+          productId: updatedProduct.id,
+        }),
+      ),
+    );
   } catch (err) {
     throw err;
   }
@@ -329,9 +353,9 @@ export async function updateInventoryOnInvoiceDelete({
   invoiceId,
 }: TUpdateInventoryOnDelete) {
   try {
-    await db.$transaction(async db => {
+    await db.$transaction(async (db) => {
       await Promise.all(
-        productsWithQuantity.map(async product => {
+        productsWithQuantity.map(async (product) => {
           if (!product.id) return;
           const findInventoryProduct = await db.inventoryProduct.findUnique({
             where: { id: product.id },
@@ -344,10 +368,10 @@ export async function updateInventoryOnInvoiceDelete({
               where: {
                 companyId: findInventoryProduct.companyId,
                 productId: product.id,
-                type: 'Sale',
+                type: "Sale",
                 invoiceId,
               },
-            }
+            },
           );
           // if find inventory product history first delete it or not find to create a new inventory product history
           if (findProductHistory) {
@@ -368,7 +392,7 @@ export async function updateInventoryOnInvoiceDelete({
               },
             },
           });
-        })
+        }),
       );
     });
   } catch (err) {
@@ -382,6 +406,7 @@ type TUpdateInventoryWhenInvoiceCreate = {
   invoiceId: string;
   invoiceType: InvoiceType;
   companyId: number;
+  allowInsufficientInventory?: boolean;
 };
 
 export async function updateInventoryWhenInvoiceCreate({
@@ -389,6 +414,7 @@ export async function updateInventoryWhenInvoiceCreate({
   invoiceType,
   invoiceId,
   companyId,
+  allowInsufficientInventory = false,
 }: TUpdateInventoryWhenInvoiceCreate) {
   try {
     // step 11: check invoice status and then inventory update without status pending
@@ -411,6 +437,7 @@ export async function updateInventoryWhenInvoiceCreate({
         companyId,
         invoiceId,
         productsWithQuantity,
+        allowInsufficientInventory,
       });
     }
   } catch (err) {

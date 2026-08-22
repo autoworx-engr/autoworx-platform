@@ -10,17 +10,17 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
+import { CircleUserRound, PencilLineIcon } from "lucide-react";
+import type { JSX } from "react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
-import Image from "next/image";
-import { successToast } from "@/lib/toast";
-import { CircleUserRound, SquarePen } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
 
 export default function NewFleet({
   fleet,
@@ -45,35 +45,41 @@ export default function NewFleet({
   );
 
   const { showError, clearError } = useFormErrorStore();
+  const [fleetName, setFleetName] = useState(fleet?.fleet?.fleetName ?? "");
+  const [contactName, setContactName] = useState(
+    fleet?.fleet?.contactName ?? "",
+  );
+  const [email, setEmail] = useState(fleet?.email ?? "");
+  const [address, setAddress] = useState(fleet?.address ?? "");
+  const [city, setCity] = useState(fleet?.city ?? "");
+  const [state, setState] = useState(fleet?.state ?? "");
   const [mobile, setMobile] = useState("+1");
   const [countryCode, setCountryCode] = useState("");
   const [countryIsoCode, setCountryIsoCode] = useState("");
+  const [zip, setZip] = useState(fleet?.zip ?? "");
 
   useEffect(() => {
     if (isEdit && fleet && open) {
+      setFleetName(fleet?.fleet?.fleetName ?? "");
+      setContactName(fleet?.fleet?.contactName ?? "");
+      setEmail(fleet?.email ?? "");
+      setAddress(fleet?.address ?? "");
+      setCity(fleet?.city ?? "");
+      setState(fleet?.state ?? "");
       setMobile(fleet?.mobile!);
       setProfilePic(fleet ? fleet.photo : null);
       setPreferredPaymentTerm(
         fleet ? fleet?.fleet!.preferredPaymentTerm : null,
       );
+      setZip(fleet?.zip ?? "");
     }
   }, [isEdit, fleet, open]);
 
   async function handleSubmit() {
     clearError();
     let photo;
-    const fleetName = document.querySelector<HTMLInputElement>("#fleetName")
-      ?.value as string;
-    const contactName =
-      document.querySelector<HTMLInputElement>("#contactName")?.value;
-    const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
     const phone =
       countryCode && mobile ? `${countryCode}${mobile}` : mobile || "";
-    const address = document.querySelector<HTMLInputElement>("#address")?.value;
-    const city = document.querySelector<HTMLInputElement>("#city")?.value;
-    const state = document.querySelector<HTMLInputElement>("#state")?.value;
-    const zip = document.querySelector<HTMLInputElement>("#zip")?.value;
 
     if (!fleetName?.trim()) {
       showError({
@@ -100,6 +106,15 @@ export default function NewFleet({
       showError({
         field: "mobile",
         message: "Mobile is required.",
+      });
+      return;
+    }
+
+    // Validate zip code — digits only
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code must contain digits only.",
       });
       return;
     }
@@ -169,17 +184,32 @@ export default function NewFleet({
         newAddedCustomer: res.data,
       }));
       setClient && setClient(res?.data);
-      setMobile("+1");
-      clearError();
+      resetForm();
       setOpen(false);
       successToast(`Fleet ${isEdit ? "updated" : "created"} successfully`);
     }
   }
 
-  const handleClose = () => {
-    clearError(); // ✅ Reset form errors when closing
-    setProfilePic(null); // ✅ Reset profile picture
+  const resetForm = () => {
+    clearError();
+    setFleetName("");
+    setContactName("");
+    setEmail("");
+    setAddress("");
+    setCity("");
+    setState("");
     setMobile("+1");
+    setCountryCode("");
+    setCountryIsoCode("");
+    setZip("");
+    setProfilePic(null);
+    setTag(undefined);
+    setPreferredPaymentTerm(null);
+    setTagOpenDropdown(false);
+  };
+
+  const handleClose = () => {
+    resetForm();
     setOpen(false);
   };
 
@@ -194,19 +224,20 @@ export default function NewFleet({
   return (
     <Dialog
       open={open}
-      onOpenChange={isOpen => {
+      onOpenChange={(isOpen) => {
         if (!isOpen) handleClose();
         setOpen(isOpen);
       }}
     >
       <DialogTrigger asChild>
         {buttonElement ? (
-          <span className="text-[#6571FF]">{buttonElement}</span>
+          <span className="text-primary">{buttonElement}</span>
         ) : (
-          <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
+          <button className="text-xs text-primary">+ Add New Fleet</button>
         )}
       </DialogTrigger>
       <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         // form
       >
@@ -235,9 +266,9 @@ export default function NewFleet({
               </div>
               <label
                 htmlFor="profilePicture"
-                className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer transition-colors"
+                className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
               >
-                <SquarePen className="w-3 h-3 text-white" />
+                <PencilLineIcon className="w-3 h-3 text-white" />
               </label>
               <input
                 type="file"
@@ -245,7 +276,7 @@ export default function NewFleet({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -260,7 +291,7 @@ export default function NewFleet({
                     rounded-full pl-4 pr-2 py-1.5
                     bg-white dark:bg-slate-800
                     border border-dashed border-slate-300 dark:border-slate-600
-                    hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+                    hover:border-primary hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
                     transition-all duration-300
                 "
               htmlFor="profilePicture"
@@ -271,7 +302,7 @@ export default function NewFleet({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -279,11 +310,11 @@ export default function NewFleet({
                 }}
               />
               <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">
                   Upload Photo
                 </span>
               </div>
-              <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+              <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-primary group-hover:bg-white transition-colors">
                 <CircleUserRound size={32} strokeWidth={2} />
               </div>
             </label>
@@ -292,18 +323,16 @@ export default function NewFleet({
 
         <FormError />
 
-        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="fleetName"
               label="Fleet Name"
               required
-              defaultValue={fleet?.fleet?.fleetName!}
-              onChange={e => {
-                const value = e.target.value;
-
-                // Validate on input change
-                if (!value.trim() && isEdit == false) {
+              value={fleetName}
+              onChange={(e) => {
+                setFleetName(e.target.value);
+                if (!e.target.value.trim() && !isEdit) {
                   showError({
                     field: "fleetName",
                     message: "Fleet name is required.",
@@ -315,8 +344,9 @@ export default function NewFleet({
             />
             <SlimInput
               name="contactName"
-              defaultValue={fleet?.fleet?.contactName!}
-              label="Name of contact"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              label="Name of Contact"
               required={true}
             />
           </div>
@@ -326,20 +356,8 @@ export default function NewFleet({
               name="email"
               label="Email Address"
               required
-              defaultValue={fleet?.email!}
-              onChange={e => {
-                const value = e.target.value;
-
-                // Validate on input change
-                // if (!value.trim()) {
-                //   showError({
-                //     field: "email",
-                //     message: "Email is required.",
-                //   });
-                // } else {
-                //   clearError();
-                // }
-              }}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <div>
               <PhoneInput
@@ -362,7 +380,8 @@ export default function NewFleet({
               rootClassName="flex-1"
               name="address"
               required={false}
-              defaultValue={fleet?.address!}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
             />
           </div>
 
@@ -370,14 +389,33 @@ export default function NewFleet({
             <SlimInput
               name="city"
               required={false}
-              defaultValue={fleet?.city!}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
             />
             <SlimInput
               name="state"
               required={false}
-              defaultValue={fleet?.state!}
+              value={state}
+              onChange={(e) => setState(e.target.value)}
             />
-            <SlimInput name="zip" required={false} defaultValue={fleet?.zip!} />
+            {/* Controlled zip input with digits-only validation */}
+            <SlimInput
+              name="zip"
+              required={false}
+              value={zip}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || /^\d+$/.test(value)) {
+                  setZip(value);
+                  clearError();
+                } else {
+                  showError({
+                    field: "zip",
+                    message: "Zip code must contain digits only.",
+                  });
+                }
+              }}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -386,12 +424,14 @@ export default function NewFleet({
                 label="Payment Term"
                 items={paymentTerms}
                 value={preferredPaymentTerm}
-                onChange={value => setPreferredPaymentTerm(value)}
+                onChange={(value) => setPreferredPaymentTerm(value)}
               />
             </div>
 
             <div className="w-full">
-              <p className="mb-1 font-medium">Tag</p>
+              <p className="mb-1 font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
+                Tag
+              </p>
               <SelectClientTags
                 value={tag}
                 setValue={setTag}
@@ -406,14 +446,11 @@ export default function NewFleet({
         <DialogFooter>
           <DialogClose
             className="
-              rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+              rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500
               hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
               transition-colors border
             "
-            onClick={() => {
-              clearError();
-              setOpen(false);
-            }}
+            onClick={handleClose}
           >
             Cancel
           </DialogClose>
@@ -423,7 +460,7 @@ export default function NewFleet({
             onClick={() => startTransition(handleSubmit)}
             className="
               rounded-xl px-6 py-2.5 text-sm font-medium text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              bg-gradient-to-r from-primary to-[#5a66ee]
               shadow-lg shadow-indigo-500/30
               hover:shadow-xl hover:shadow-indigo-500/40
               hover:-translate-y-0.5 hover:scale-[1.02]

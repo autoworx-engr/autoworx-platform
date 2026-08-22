@@ -2,11 +2,107 @@ import { updateCommunicationAutomationTrigger } from "@/actions/automation/commu
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
 import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
+import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
 import { db } from "@/lib/db";
 import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
-import { NextRequest, NextResponse } from "next/server";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
+import { NextRequest } from "next/server";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, X-TOKEN",
+};
+
+function jsonResponse(data: unknown, status: number) {
+  const res = Response.json(data, { status });
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.headers.set(k, v));
+  return res;
+}
+
+function parseClientName(name: string) {
+  const parts = name.trim().split(" ");
+  return { firstName: parts.shift() ?? "", lastName: parts.join(" ") };
+}
+
+function parseVehicleInfo(vehicleInfo: string) {
+  const parts = vehicleInfo.split(/\s+/);
+  return {
+    year: parseInt(parts[0]) || undefined,
+    make: parts[1] || parts[0] || "",
+    model: parts.slice(2).join(" ") || "",
+  };
+}
+
+async function upsertClient(
+  companyId: number,
+  leadId: number,
+  data: {
+    firstName: string;
+    lastName: string;
+    email?: string;
+    mobile?: string;
+  },
+) {
+  const phoneLookup = phoneLookupWhereClause(data.mobile);
+  const existing = phoneLookup
+    ? await db.client.findFirst({ where: { OR: phoneLookup, companyId } })
+    : null;
+
+  const normalizedData = {
+    ...data,
+    mobile: data.mobile ? normalizePhoneForStorage(data.mobile) : data.mobile,
+  };
+
+  if (!existing) {
+    return db.client.create({
+      data: { ...normalizedData, companyId, leadId, isSalesAgent: true },
+    });
+  }
+
+  return db.client.update({
+    where: { id: existing.id, companyId },
+    data: { ...normalizedData, companyId, leadId },
+  });
+}
+
+async function triggerAutomation(
+  companyId: number,
+  leadId: number,
+  columnId: number,
+  generatedToken: string,
+) {
+  try {
+    await updatePipelineAutomationTrigger({
+      companyId,
+      condition: "TIME_DELAY",
+      leadId,
+      columnId,
+    });
+  } catch {}
+
+  await updateCommunicationAutomationTrigger({
+    companyId,
+    leadId,
+    columnId,
+    generatedToken,
+  });
+
+  updateTagAutomationTrigger({
+    columnId,
+    companyId,
+    pipelineType: "SALES",
+    leadId,
+    conditionType: "post_tag",
+    generatedToken,
+  });
+}
 
 /**
  * @swagger
@@ -41,236 +137,61 @@ import { NextRequest, NextResponse } from "next/server";
  *       500:
  *         description: Server error
  */
+
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("X-TOKEN");
-    // console.log("🚀 ~ POST ~ token:", token);
+    if (!token) return jsonResponse({ error: "Invalid token" }, 401);
 
-    if (!token) {
-      return NextResponse.json("Invalid token", { status: 401 });
-    }
-
-    // Check if there any company with the token
     const company = await db.company.findFirst({
-      where: {
-        zapierToken: token,
-      },
+      where: { zapierToken: token },
     });
-    // console.log("🚀 ~ POST ~ company:", company);
 
-    if (!company) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
+    if (!company) return jsonResponse({ error: "Invalid token" }, 401);
 
-    // take data from the body
     const body = await request.json();
-    // console.log("🚀 ~ POST ~ body:", body);
+    const {
+      name: clientName,
+      email: clientEmail,
+      phone: clientPhone,
+      countryCode,
+      customer_country: customerCountry,
+      serviceId: rawServiceId,
+      opportunity_source: opportunity,
+      message: crmMsg,
+      multiServices: rawMultiServices,
+    } = body;
 
-    const clientName = body.name;
-    // console.log("🚀 ~ POST ~ clientName:", clientName);
-    const clientEmail = body?.email;
-    const clientPhone = body?.phone;
-    const countryCode = body?.countryCode;
-    // console.log("🚀 ~ POST ~ clientPhone:", clientPhone);
-    const customerCountry = body.customer_country;
-    // console.log("🚀 ~ POST ~ customerCountry:", customerCountry);
-    const serviceId = +body.serviceId;
-    // console.log("🚀 ~ POST ~ serviceId:", serviceId);
-    const opportunity = body.opportunity_source;
-    // console.log("🚀 ~ POST ~ opportunity:", opportunity);
-    const crmMsg = body.message;
-    const multipleServices = body.multiServices as number[] | undefined;
-    // now extract the source, services and vehicle info from opportunity
-    // the format is this: (source) vehicle | service
-    const source = opportunity.split(")")[0].replace("(", "").trim();
-    // console.log("🚀 ~ POST ~ source:", source);
-    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
-    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
-    const services = opportunity.split(")")[1].split("|")[1].trim();
-    // console.log("🚀 ~ POST ~ services:", services);
-    // console.log("crmMsg", crmMsg);
-    //check if crm company
-    const isCRMCompany = company.isCRMEnabled || false;
-    // console.log("🚀 ~ POST ~ isCRMCompany:", isCRMCompany);
-    if (isCRMCompany) {
-      // For demo requests
-      const source = body.source || "Marketing Site";
+    // Parse opportunity string: "(source) vehicleInfo | services"
+    const [sourcePart = "", afterParen = ""] = (opportunity ?? "").split(")");
+    const parsedSource = sourcePart.replace("(", "").trim();
+    const [parsedVehicleInfo = "", parsedServices = ""] = afterParen
+      .split("|")
+      .map((s: string) => s.trim());
 
-      // Create lead with demo-specific handling
-      const newLead = await db.lead.create({
-        data: {
-          clientName,
-          clientEmail,
-          clientPhone,
-          vehicleInfo: vehicleInfo || "N/A",
-          services: services || crmMsg || "Service Request",
-          countryCode,
-          source,
-          serviceId: null,
-          companyId: company.id,
-          columnId: (
-            await db.column.findFirst({
-              where: {
-                title: "New Leads",
-                companyId: company.id,
-                type: "sales",
-              },
-            })
-          )?.id,
-          multipleServices:
-            multipleServices && multipleServices.length > 0
-              ? {
-                  connect: multipleServices.map((service: any) => ({
-                    id: Number(service.id),
-                  })),
-                }
-              : undefined,
-        },
-      });
+    const isCRM = company.isCRMEnabled ?? false;
+    const source = isCRM ? body.source || "Marketing Site" : parsedSource;
+    const vehicleInfo = isCRM ? parsedVehicleInfo || "N/A" : parsedVehicleInfo;
+    const services = isCRM
+      ? parsedServices || crmMsg || "Service Request"
+      : parsedServices;
+    const serviceId = isCRM ? null : +rawServiceId;
 
-      const clientNameParts = clientName.trim().split(" ");
-      const firstName = clientNameParts.shift() || "";
-      const lastName = clientNameParts.join(" ");
-
-      let newClient = clientPhone
-        ? await db.client.findFirst({
-            where: {
-              mobile: clientPhone,
-              companyId: company.id,
-            },
-          })
-        : null;
-
-      if (!newClient) {
-        newClient = await db.client.create({
-          data: {
-            firstName: firstName,
-            lastName: lastName,
-            email: clientEmail,
-            mobile: clientPhone,
-            companyId: company.id,
-            leadId: newLead.id,
-          },
-        });
-        await db.lead.update({
-          where: {
-            id: newLead.id,
-          },
-          data: {
-            clientId: newClient.id,
-          },
-        });
-      } else {
-        let updatedClient = await db.client.update({
-          where: {
-            id: newClient.id,
-            companyId: company.id,
-          },
-          data: {
-            leadId: newLead.id,
-            firstName: firstName,
-            lastName: lastName,
-            email: clientEmail,
-            mobile: clientPhone,
-            companyId: company.id,
-          },
-        });
-        await db.lead.update({
-          where: {
-            id: newLead.id,
-          },
-          data: {
-            clientId: updatedClient.id,
-          },
-        });
-      }
-
-      try {
-        if (newLead) {
-          await updatePipelineAutomationTrigger({
-            companyId: newClient.companyId,
-            condition: "TIME_DELAY",
-            leadId: newLead.id,
-            columnId: +(newLead?.columnId ?? 0),
-          });
-        }
-      } catch (error) {}
-
-      // communication automation trigger
-      await updateCommunicationAutomationTrigger({
-        companyId: newLead.companyId,
-        leadId: newLead.id,
-        columnId: +(newLead?.columnId ?? 0),
-        generatedToken: token,
-      });
-
-      updateTagAutomationTrigger({
-        columnId: +(newLead?.columnId ?? 0),
-        companyId: newLead.companyId,
-        pipelineType: "SALES",
-        leadId: newLead.id,
-        conditionType: "post_tag",
-        generatedToken: token,
-      });
-
-      // send a notification for new lead added
-      await sendCRMDemoNotification({
-        companyId: company.id,
-        clientName: newLead.clientName,
-      });
-
-      // send a notification for new lead added
-      await sendNewLeadNotification({
-        companyId: company.id,
-        leadClientName: newLead.clientName,
-      });
-
-      return Response.json(
-        {
-          id: newLead.id,
-          name: clientName,
-          email: clientEmail,
-          phone: clientPhone,
-          type: "demo_request",
-          opportunity_source: opportunity,
-          countryCode: countryCode,
-        },
-        { status: 201 },
-      );
+    if (!isCRM && (!clientName || !vehicleInfo || !services || !source)) {
+      return jsonResponse({ error: "Invalid input" }, 400);
     }
 
-    // check if the required fields are provided
-    if (!clientName || !vehicleInfo || !services || !source) {
-      console.log(
-        "name vehicle services source missing",
-        clientName,
-        vehicleInfo,
-        services,
-        source,
-      );
-      return Response.json({ error: "Invalid input" }, { status: 400 });
-    }
-
-    const companyId = company.id;
-    // console.log("🚀 ~ POST ~ companyId:", companyId);
-    // Fetch the ID of the "New Leads" column
-    const newLeadsColumn = await db.column.findFirst({
-      where: {
-        title: "New Leads",
-        companyId: companyId,
-        type: "sales",
-      },
+    const column = await db.column.findFirst({
+      where: { title: "New Leads", companyId: company.id, type: "sales" },
     });
-    console.log("🚀 ~ POST ~ newLeadsColumn:", newLeadsColumn);
+    if (!column)
+      return jsonResponse({ error: "New Leads column not found" }, 404);
 
-    if (!newLeadsColumn) {
-      return new Response(
-        JSON.stringify({ error: "New Leads column not found" }),
-        { status: 404 },
-      );
-    }
+    const multipleServices =
+      rawMultiServices?.length > 0
+        ? { connect: rawMultiServices.map((s: any) => ({ id: Number(s.id) })) }
+        : undefined;
 
-    // Save the leads
     const newLead = await db.lead.create({
       data: {
         clientName,
@@ -280,186 +201,114 @@ export async function POST(request: NextRequest) {
         services,
         source,
         serviceId,
+        countryCode,
         companyId: company.id,
-        columnId: newLeadsColumn.id,
-        multipleServices:
-          multipleServices && multipleServices.length > 0
-            ? {
-                connect: multipleServices.map((service: any) => ({
-                  id: Number(service.id),
-                })),
-              }
-            : undefined,
+        columnId: column.id,
+        multipleServices,
       },
     });
-    // console.log("🚀 ~ POST ~ newLead:", newLead);
 
-    //naming correction for the client from lead
-    const clientNameParts = clientName.trim().split(" ");
-    const firstName = clientNameParts.shift() || "";
-    const lastName = clientNameParts.join(" ");
+    const { firstName, lastName } = parseClientName(clientName);
+    const client = await upsertClient(company.id, newLead.id, {
+      firstName,
+      lastName,
+      email: clientEmail,
+      mobile: clientPhone,
+    });
 
-    let newClient = clientPhone
-      ? await db.client.findFirst({
-          where: {
-            mobile: clientPhone,
-            companyId: company.id,
-          },
-        })
-      : null;
-
-    if (!newClient) {
-      newClient = await db.client.create({
-        data: {
-          firstName: firstName,
-          lastName: lastName,
-          email: clientEmail,
-          mobile: clientPhone,
-          companyId: company.id,
-          leadId: newLead.id,
-        },
-      });
-      await db.lead.update({
-        where: {
-          id: newLead.id,
-        },
-        data: {
-          clientId: newClient.id,
-        },
-      });
-    } else {
-      let updatedClient = await db.client.update({
-        where: {
-          id: newClient.id,
-          companyId: company.id,
-        },
-        data: {
-          leadId: newLead.id,
-          firstName: firstName,
-          lastName: lastName,
-          email: clientEmail,
-          mobile: clientPhone,
-          companyId: company.id,
-        },
-      });
-      await db.lead.update({
-        where: {
-          id: newLead.id,
-        },
-        data: {
-          clientId: updatedClient.id,
-        },
-      });
-    }
-
-    const vehicleParts = vehicleInfo?.split(/\s+/) || [];
-    const year = parseInt(vehicleParts[0]) || undefined;
-    const make = vehicleParts[1] || "";
-
-    const model = vehicleParts.slice(2).join(" ") || "";
-    const newVehicle = await db.vehicle.create({
-      data: {
-        year: year,
-        make: make ? make : vehicleParts?.length > 0 ? vehicleParts[0] : "",
-        model: model,
-        companyId: company.id,
-        clientId: newClient.id,
-      },
+    const { year, make, model } = parseVehicleInfo(vehicleInfo);
+    const vehicle = await db.vehicle.create({
+      data: { year, make, model, companyId: company.id, clientId: client.id },
     });
 
     await db.lead.update({
-      where: {
-        companyId: company.id,
-        id: newLead.id,
-      },
-      data: {
-        vehicleId: newVehicle.id,
-      },
+      where: { companyId: company.id, id: newLead.id },
+      data: { clientId: client.id, vehicleId: vehicle.id },
     });
 
-    await initialCreateClientChatTrack(newClient.id);
+    if (!isCRM) await initialCreateClientChatTrack(client.id);
 
-    // send a notification for new lead added
+    const automationToken = isCRM
+      ? token
+      : await companyWithUser({ companyId: newLead.companyId });
+
+    await triggerAutomation(company.id, newLead.id, column.id, automationToken);
+
     await sendNewLeadNotification({
       companyId: company.id,
       leadClientName: newLead.clientName,
     });
 
-    const newToken = await companyWithUser({ companyId: newLead.companyId });
+    if (isCRM) {
+      await sendCRMDemoNotification({
+        companyId: company.id,
+        clientName: newLead.clientName,
+      });
+    }
 
-    try {
-      if (newLead) {
-        await updatePipelineAutomationTrigger({
-          companyId: newClient.companyId,
-          condition: "TIME_DELAY",
-          leadId: newLead.id,
-          columnId: +(newLead?.columnId ?? 0),
+    const personality = await db.aiPersonality.findFirst({
+      where: {
+        companyId: newLead.companyId,
+      },
+    });
+
+    console.log("[lead-generate] opening message check", {
+      companyId: newLead.companyId,
+      clientId: client?.id,
+      clientMobile: client?.mobile,
+      smsGateway: company?.smsGateway,
+      personalityFound: !!personality,
+      openingMessage: personality?.openingMessage ?? null,
+    });
+
+    if (personality?.openingMessage && client) {
+      if (company?.smsGateway === "TWILIO") {
+        console.log("[lead-generate] sending opening message via Twilio");
+        await sendTwilioMessage({
+          companyId: newLead.companyId,
+          clientId: client.id,
+          message: personality.openingMessage,
+          attachments: [],
+          systemCall: true,
+          shouldSalesAgentStop: false,
+        });
+      } else {
+        console.log("[lead-generate] sending opening message via Infobip");
+        await sendInfobipMessage({
+          companyId: newLead.companyId,
+          clientId: client.id,
+          message: personality.openingMessage,
+          attachments: [],
+          systemCall: true,
+          shouldSalesAgentStop: false,
         });
       }
-    } catch (error) {}
+      console.log("[lead-generate] opening message sent successfully");
+    } else {
+      console.log(
+        "[lead-generate] skipping opening message — personality or openingMessage missing",
+      );
+    }
 
-    // communication automation trigger
-    await updateCommunicationAutomationTrigger({
-      companyId: newLead.companyId,
-      leadId: newLead.id,
-      columnId: +(newLead?.columnId ?? 0),
-      generatedToken: newToken,
-    });
-
-    updateTagAutomationTrigger({
-      columnId: +(newLead?.columnId ?? 0),
-      companyId: newLead.companyId,
-      pipelineType: "SALES",
-      leadId: newLead.id,
-      conditionType: "post_tag",
-      generatedToken: newToken,
-    });
-
-    // return success response
-    const response = Response.json(
+    return jsonResponse(
       {
         id: newLead.id,
         name: clientName,
         email: clientEmail,
         phone: clientPhone,
-        customer_country: customerCountry,
+        ...(isCRM
+          ? { type: "demo_request" }
+          : { customer_country: customerCountry }),
         opportunity_source: opportunity,
-        countryCode: countryCode,
+        countryCode,
       },
-      { status: 201 },
+      201,
     );
-    // Add CORS headers
-    response.headers.set("Access-Control-Allow-Origin", "*");
-    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    response.headers.set(
-      "Access-Control-Allow-Headers",
-      "Content-Type, X-TOKEN",
-    );
-
-    return response;
   } catch (error: any) {
-    // check if this is json parse error
-    const errorResponse = Response.json(
-      { error: error.message },
-      { status: 500 },
-    );
-    errorResponse.headers.set("Access-Control-Allow-Origin", "*");
-    return errorResponse;
-    // if (error instanceof SyntaxError) {
-    //   return Response.json({ error: 'Invalid input' }, { status: 400 });
-    // } else {
-    //   return Response.json({ error: error.message }, { status: 500 });
-    // }
+    return jsonResponse({ error: error.message }, 500);
   }
 }
 
-export async function OPTIONS(request: NextRequest) {
-  return new Response(null, {
-    status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, X-TOKEN",
-    },
-  });
+export async function OPTIONS() {
+  return new Response(null, { status: 200, headers: CORS_HEADERS });
 }

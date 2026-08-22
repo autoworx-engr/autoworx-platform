@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.awx.autoworx",
+      "sha256_cert_fingerprints": [
+        "AB:AE:C0:74:D5:A6:B3:E2:33:57:CC:ED:CC:C7:E7:55:2B:4B:D5:E7:E8:90:10:54:A9:A7:C9:C1:12:41:73:A4",
+        "46:8A:0D:EA:F3:B1:3A:3C:06:6B:65:29:13:88:7B:EB:2D:ED:19:65:33:7E:11:A1:62:A8:7B:A9:D6:7D:C6:23"
+      ]
+    }
+  }
+]

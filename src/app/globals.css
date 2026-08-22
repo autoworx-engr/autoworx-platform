@@ -1,9 +1,21 @@
 @import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
 
 @import "simplebar-react/dist/simplebar.min.css";
+@import "react-date-range/dist/styles.css";
+@import "react-date-range/dist/theme/default.css";
+
+/* Remove italic from Quill editor placeholder */
+.ql-container .ql-editor.ql-blank::before {
+  font-style: normal !important;
+  /* Optional: you can also change the color or font family here */
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html {
+  scrollbar-gutter: stable;
+}
 
 /* Hide Arrows From Input Number start here */
 input::-webkit-outer-spin-button,
@@ -17,26 +29,52 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Firefox */
-.thin-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #b1bdf9 #fcfcfc; /* #a2a6ac #f1f1f1;  thumb and track */
-}
-
 /* Hide Arrows From Input Number end here */
 
-.thin-scrollbar::-webkit-scrollbar {
-  width: 4px;
+/* ── Scrollbars ──────────────────────────────────────────────────────────────
+ * One thin scrollbar for the entire site. Do NOT add per-section scrollbar
+ * styling — every scrollable element picks this up automatically.
+ * Elements that want no scrollbar at all still use `.no-visible-scrollbar`
+ * (or Tailwind's `[&::-webkit-scrollbar]:hidden`); class specificity beats the
+ * universal selector below, so those overrides keep working.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b1bdf9 transparent; /* thumb and track */
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
   height: 8px;
 }
 
-.thin-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #b1bdf9; /* Scrollbar color */
-  border-radius: 4px;
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.thin-scrollbar::-webkit-scrollbar-track {
-  background-color: #fcfcfc; /* Track color */
+*::-webkit-scrollbar-thumb {
+  background-color: #b1bdf9;
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #8f9df7;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.dark * {
+  scrollbar-color: #475569 transparent;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: #475569;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b;
 }
 
 /* SimpleBar React CSS for notification scrollbar */
@@ -65,19 +103,21 @@ input[type="number"] {
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
 
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
+    /* Brand primary — #6571FF (indigo) */
+    --primary: 234 100% 70%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    /* Subtle brand-tinted hover/accent */
+    --accent: 234 100% 96%;
+    --accent-foreground: 234 60% 40%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 0 0% 3.9%;
+    --ring: 234 100% 70%;
 
     --radius: 0.5rem;
 
@@ -99,7 +139,7 @@ input[type="number"] {
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 0 0% 14.9%;
+    --accent: 234 40% 20%;
     --accent-foreground: 0 0% 98%;
 
     --popover: 0 0% 3.9%;
@@ -111,8 +151,9 @@ input[type="number"] {
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    /* Brand primary — #6571FF (indigo) */
+    --primary: 234 100% 70%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
@@ -120,7 +161,7 @@ input[type="number"] {
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 0 0% 83.1%;
+    --ring: 234 100% 70%;
 
     --radius: 0.5rem;
 
@@ -363,54 +404,31 @@ html body[data-scroll-locked] {
 }
 
 @media print {
+  @page {
+    size: auto;
+    margin: 5mm;
+  }
   html,
   body {
-    height: 100vh; /* Use 100% here to support printing more than a single page*/
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden;
+    overflow: visible !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 
-/* Custom scrollbar for elements with the class 'custom-scrollbar' */
+/*
+ * `.custom-scrollbar` no longer styles the scrollbar — that is global now (see
+ * the Scrollbars block above). It only remains because callers rely on it to
+ * make the element scrollable in the first place.
+ */
 .custom-scrollbar {
-  overflow-y: auto; /* Enable vertical scrolling */
-  scroll-behavior: smooth; /* Smooth scrolling */
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 12px; /* Width of the scrollbar */
-  border-radius: 10px; /* Rounded scrollbar container */
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #fcfcfc; /* Light gray track background */
-  border-radius: 10px; /* Fully rounded track */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    #9cadff,
-    #9cadff /* #a9a9a9,
-    #808080 */
-  ); /* Gray gradient thumb */
-  border-radius: 12px; /* Fully rounded scrollbar */
-  transition: background-color 0.3s ease; /* Smooth transition on hover */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    #9cadff,
-    #9cadff /*808080  #696969 */
-  ); /* Darker gray on hover */
-}
-
-/* Scrollbar for Firefox */
-.custom-scrollbar {
-  scrollbar-width: thin; /* Thin scrollbar */
-  scrollbar-color: #b1bdf9 #fcfcfc; /* Gray thumb and light gray track */
+  overflow-y: auto;
+  scroll-behavior: smooth;
 }
 
 /* landing page css */

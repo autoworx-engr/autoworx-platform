@@ -1,11 +1,12 @@
 "use server";
 
-import { authOptions } from "@/authOptions";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
+import { getEssentials } from "@/lib/auth-utils";
 import { getDateRanges, growthRate } from "./lib";
 import { getSalaryPayouts } from "./getSalaryPayouts";
+import { TECHNICIAN_STATUS } from "@/lib/consts";
 
 /**
  * Get technician information including performance, monthly payout, and current projects.
@@ -38,6 +39,18 @@ export interface CurrentProject {
   totalPayout: number;
   dueDate: Date | null;
   startDate: Date | null;
+  status: {
+    id: number;
+    name: string;
+    textColor: string;
+    bgColor: string;
+  } | null;
+  column: {
+    id: number;
+    title: string;
+    textColor: string | null;
+    bgColor: string | null;
+  } | null;
 }
 export async function getCurrentProjects(
   currentUserId?: number,
@@ -46,13 +59,10 @@ export async function getCurrentProjects(
   let userId = currentUserId;
   let companyId = currentCompanyId;
 
-  if (!userId) {
+  if (!userId || !companyId) {
     const data = await getEssentials();
-    userId = data?.userId;
-  }
-  if (!companyId) {
-    const data = await getEssentials();
-    companyId = data?.companyId;
+    if (!userId) userId = data?.userId;
+    if (!companyId) companyId = data?.companyId;
   }
 
   // Get all invoices where the technician is the current user and the status is "In Progress"
@@ -79,6 +89,8 @@ export async function getCurrentProjects(
         },
       },
       vehicle: true,
+      status: true,
+      column: true,
     },
   });
 
@@ -124,6 +136,22 @@ export async function getCurrentProjects(
       totalPayout,
       dueDate: earliestDueDate, // Now using technician due date instead of invoice due date
       startDate: earliestStartDate,
+      status: invoice.status
+        ? {
+            id: invoice.status.id,
+            name: invoice.status.name,
+            textColor: invoice.status.textColor,
+            bgColor: invoice.status.bgColor,
+          }
+        : null,
+      column: invoice.column
+        ? {
+            id: invoice.column.id,
+            title: invoice.column.title,
+            textColor: invoice.column.textColor,
+            bgColor: invoice.column.bgColor,
+          }
+        : null,
     };
   });
 
@@ -151,6 +179,7 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
   const currentMonthJobs = await db.technician.findMany({
     where: {
       userId,
+      status: TECHNICIAN_STATUS.COMPLETE,
       date: {
         gte: currentMonthStart,
         lte: currentMonthEnd,
@@ -160,9 +189,13 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
 
   // Calculate on-time completion rate for the current month
   const onTimeJobs = currentMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!,
+    (job) =>
+      job.status === TECHNICIAN_STATUS.COMPLETE && job.dateClosed! <= job.due!,
   );
-  const onTimeCompletionRate = onTimeJobs.length / currentMonthJobs.length;
+  const onTimeCompletionRate =
+    currentMonthJobs.length > 0
+      ? onTimeJobs.length / currentMonthJobs.length
+      : 0;
 
   // Get all jobs for the previous month
   const previousMonthJobs = await db.technician.findMany({
@@ -177,10 +210,13 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
 
   // Calculate on-time completion rate for the previous month
   const previousOnTimeJobs = previousMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!,
+    (job) =>
+      job.status === TECHNICIAN_STATUS.COMPLETE && job.dateClosed! <= job.due!,
   );
   const previousOnTimeCompletionRate =
-    previousOnTimeJobs.length / previousMonthJobs.length;
+    previousMonthJobs.length > 0
+      ? previousOnTimeJobs.length / previousMonthJobs.length
+      : 0;
 
   // Get redo jobs for the current and previous months
   const currentMonthRedoJobs = await db.invoiceRedo.count({
@@ -249,7 +285,7 @@ export async function getMonthlyPayout(
         gte: currentMonthStart,
         lte: currentMonthEnd,
       },
-      status: "Complete",
+      status: TECHNICIAN_STATUS.COMPLETE,
     },
   });
 
@@ -267,7 +303,7 @@ export async function getMonthlyPayout(
         lte: currentMonthEnd,
       },
       status: {
-        notIn: ["Complete", "Cancel"],
+        notIn: [TECHNICIAN_STATUS.COMPLETE, TECHNICIAN_STATUS.CANCEL],
       },
     },
   });
@@ -285,7 +321,7 @@ export async function getMonthlyPayout(
         gte: previousMonthStart,
         lte: previousMonthEnd,
       },
-      status: "Complete",
+      status: TECHNICIAN_STATUS.COMPLETE,
     },
   });
 
@@ -298,20 +334,5 @@ export async function getMonthlyPayout(
     totalPayout,
     pendingPayout,
     growth: growthRate(totalPayout, previousTotalPayout),
-  };
-}
-
-/**
- * Get essential information including companyId and userId.
- */
-export async function getEssentials() {
-  const companyId = await getCompanyId();
-  const session = await getServerSession(authOptions);
-
-  const userId = Number(session?.user?.id as string);
-
-  return {
-    companyId,
-    userId,
   };
 }

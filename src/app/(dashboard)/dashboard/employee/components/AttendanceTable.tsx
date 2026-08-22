@@ -22,6 +22,7 @@ interface AttendanceRecord {
   hours: string;
   extraHours: string;
   totalBreaks: string;
+  dayType?: "WEEKEND";
 }
 
 interface AttendanceData {
@@ -76,6 +77,7 @@ const Dashboard = () => {
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [hasManualDateRange, setHasManualDateRange] = useState(false);
 
   const params = useParams();
   const employeeId = Number(params?.id);
@@ -214,8 +216,8 @@ const Dashboard = () => {
 
     if (isCurrentlyEditing) {
       return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <input
               type="time"
               value={editingState.value}
@@ -250,7 +252,7 @@ const Dashboard = () => {
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <span className="min-w-[80px]">
           {typeof data[field] === "string"
             ? data[field]
@@ -283,13 +285,7 @@ const Dashboard = () => {
         return decimalHoursToHHMM(total);
       })(),
 
-      percentage: (() => {
-        const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
-        if (rate === null || rate === undefined || isNaN(Number(rate))) {
-          return "0%";
-        }
-        return rate;
-      })(),
+      percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
       isPositive:
         attendanceInfo?.growthRateTotalHoursWorked?.isPositive || false,
     },
@@ -303,11 +299,15 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="my-4 box-border flex flex-col lg:w-1/2">
+    <div className="my-4 box-border flex w-full flex-col lg:w-1/2">
       <h2 className="mb-2 text-xl font-bold">Attendance</h2>
-      <div className="relative flex h-auto w-full flex-col gap-8 rounded border bg-background p-1 lg:p-6">
+      <div className="relative flex flex-1 w-full flex-col gap-8 rounded-lg border bg-background p-1 lg:p-6">
         <div className="left-3 top-3 w-fit">
           <DateRange
+            dateRange={[
+              hasManualDateRange && startDate ? new Date(startDate) : null,
+              hasManualDateRange && endDate ? new Date(endDate) : null,
+            ]}
             onOk={(start: any, end: any) => {
               let startDateObj: Date;
               let endDateObj: Date;
@@ -351,16 +351,6 @@ const Dashboard = () => {
                 endDateObj = moment.tz(timezone).endOf("week").toDate();
               }
 
-              // Convert the dates to proper format for server
-              // When user selects dates from DateRangePicker, they're in local browser time
-              // We need to ensure these dates are interpreted correctly by the server
-              // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
-              // const formattedStartDate = moment
-              //   .utc(startDateObj)
-              //   .format("YYYY-MM-DD");
-              // const formattedEndDate = moment
-              //   .utc(endDateObj)
-              //   .format("YYYY-MM-DD");
               const formattedStartDate =
                 moment(startDateObj).format("YYYY-MM-DD");
               const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
@@ -369,9 +359,11 @@ const Dashboard = () => {
 
               setStartDate(formattedStartDate);
               setEndDate(formattedEndDate);
+              setHasManualDateRange(true);
             }}
             onCancel={() => {
-              // Reset to current week
+              // Clear manual filter in UI and keep fallback current week data
+              setHasManualDateRange(false);
               if (timezone) {
                 const currentWeekStart = moment.tz(timezone).startOf("week");
                 const currentWeekEnd = moment.tz(timezone).endOf("week");
@@ -440,6 +432,8 @@ const Dashboard = () => {
                             : convertDuration(
                                 Number(data.hours) - Number(data.totalBreaks),
                               );
+
+                          const workedOnWeekend = data.dayType === "WEEKEND";
                           return (
                             <tr
                               key={index}
@@ -450,7 +444,19 @@ const Dashboard = () => {
                               }`}
                             >
                               <td className="bg-background px-2 py-2 font-medium sm:px-4">
-                                {dayAbbr}-{dayDate}
+                                <div className="flex flex-col items-center leading-tight">
+                                  <span>
+                                    {dayAbbr}-{dayDate}
+                                  </span>
+                                  {workedOnWeekend && (
+                                    <span
+                                      className="text-[10px] font-semibold uppercase text-amber-600 dark:text-amber-400"
+                                      title="Worked on weekend"
+                                    >
+                                      Weekend
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-2 py-2 sm:px-4">
                                 {renderTimeCell(data, "clockedIn", index)}

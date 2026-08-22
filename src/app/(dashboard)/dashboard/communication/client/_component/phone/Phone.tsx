@@ -2,6 +2,7 @@ import { getFromNumber } from "@/actions/communication/client/createTwilioCreden
 import { getFromNumberInfobip } from "@/actions/communication/client/createInfobipConfig";
 import { getSmsGateway } from "@/actions/communication/client/createInfobipConfig";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { getClientById } from "../../_actions/getClientById";
 import { CallList } from "./CallList";
 import SendCall from "./SendCall";
@@ -45,10 +46,18 @@ export default async function Phone({ clientId }: { clientId: number }) {
   });
 
   if (!client) return null;
+
+  const entitlements = await getCompanyEntitlements(client.companyId);
+  const canUseVoice = entitlements?.canUseVoice ?? false;
   return (
     <div className=" overflow-y-auto h-full w-full  rounded-2xl bg-gradient-to-br from-white via-slate-50/50 to-white  shadow-lg ring-1 ring-slate-900/5 flex flex-col px-4 pt-4">
-      <CallList data={enrichedCalls} twilioNumber={phoneNumber ?? ""} />
-      <SendCall client={client} phoneNumber={phoneNumber} provider={provider} />
+      <CallList data={enrichedCalls} clientId={clientId} />
+      <SendCall
+        client={client}
+        phoneNumber={phoneNumber}
+        provider={provider}
+        canUseVoice={canUseVoice}
+      />
     </div>
   );
 }

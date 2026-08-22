@@ -6,10 +6,9 @@ import FormError from "@/components/FormError";
 import Image from "next/image";
 import { Metadata } from "next";
 
-
-
 export const metadata: Metadata = {
   title: "Register",
+  description: "Create a new account.",
 };
 
 export default function Page() {
@@ -29,76 +28,136 @@ export default function Page() {
               width={120}
               height={120}
               className="mx-auto relative z-10"
-              style={{ filter: "drop-shadow(0 0 20px rgba(101, 113, 255, 0.1))" }}
+              style={{
+                filter: "drop-shadow(0 0 20px rgba(101, 113, 255, 0.1))",
+              }}
             />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Create your account</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Start your journey with Autoworx.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Create your account
+          </h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Start your journey with Autoworx.
+          </p>
         </div>
 
         <FormError />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="group transition-all duration-300">
-            <label htmlFor="firstName" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">First Name</label>
+            <label
+              htmlFor="firstName"
+              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              First Name <span className="text-destructive">*</span>
+            </label>
             <Input
               type="text"
               name="firstName"
+              placeholder="John"
               autoFocus
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
           <div className="group transition-all duration-300">
-            <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
+            <label
+              htmlFor="lastName"
+              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Last Name
+            </label>
             <Input
               type="text"
               name="lastName"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              placeholder="Doe"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
           <div className="group transition-all duration-300">
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+            <label
+              htmlFor="email"
+              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Email <span className="text-destructive">*</span>
+            </label>
             <Input
               type="email"
               name="email"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+              placeholder="john@example.com"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
             />
           </div>
 
           <div className="group transition-all duration-300">
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-            <Password
-              name="password"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
-            />
-          </div>
-
-          <div className="group transition-all duration-300">
-            <label htmlFor="company" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Company</label>
+            <label
+              htmlFor="company"
+              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Company <span className="text-destructive">*</span>
+            </label>
             <Input
               type="text"
               name="company"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              placeholder="Autoworx LLC"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
           <div className="group transition-all duration-300">
-            <label htmlFor="access" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Access Code</label>
-            <Input
-              name="access"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            <label
+              htmlFor="password"
+              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Password <span className="text-destructive">*</span>
+            </label>
+            <Password
+              name="password"
+              placeholder="••••••••"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
-          <div className="md:col-span-2"></div>
+
+          <div className="group transition-all duration-300">
+            <label
+              htmlFor="confirmPassword"
+              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Confirm Password <span className="text-destructive">*</span>
+            </label>
+            <Password
+              name="confirmPassword"
+              placeholder="••••••••"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          </div>
+
+          <div className="group transition-all duration-300 md:col-span-2">
+            <label
+              htmlFor="access"
+              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Access Code <span className="text-destructive">*</span>
+            </label>
+            <Input
+              name="access"
+              placeholder="Enter your access code"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          </div>
         </div>
 
         <SubmitButton />
 
         <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
           Already registered?{" "}
-          <Link href="/login" className="font-semibold text-[#6571FF] transition-colors hover:text-[#5059d4] hover:underline">Login</Link>
+          <Link
+            href="/login"
+            className="font-semibold text-primary transition-colors hover:text-[#5059d4] hover:underline"
+          >
+            Login
+          </Link>
         </p>
       </form>
     </div>

@@ -8,19 +8,34 @@ import FormError from "@/components/FormError";
 import NewClientSource from "@/components/Lists/NewClientSource";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import { useClientSourcePicker } from "@/components/Lists/useClientSourcePicker";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
-import { DEFAULT_IMAGE_URL } from "@/lib/consts";
+import { DEFAULT_IMAGE_URL, isDefaultClientSourceName } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
+import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { CircleUserRound as UserIcon, SquarePen, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
-import { useClientFilterStore } from "@/stores/clientFilter";
-import PhoneInput from "@/components/PhoneInput";
+import useClientByIdQuery, {
+  CLIENT_DETAIL_KEY,
+} from "./_hook/useClientQueryById";
+
+const CLIENT_SOURCES_KEY = "client-sources";
+
+function useClientSourcesQuery() {
+  return useQuery({
+    queryKey: [CLIENT_SOURCES_KEY],
+    queryFn: async () => {
+      return getSources();
+    },
+  });
+}
 
 type TEditClientModalBodyProps = {
   client: Client & {
@@ -34,9 +49,24 @@ export default function EditClientModalBody({
   client,
   onClose,
 }: TEditClientModalBodyProps) {
+  const { data: clientData, isLoading } = useClientByIdQuery(client.id);
+  const { data: queryClientSources = [] } = useClientSourcesQuery();
+
+  const resolvedClient = clientData ?? client;
+  // console.log("Resolved client data:", resolvedClient); // Debug log to check client data
+  // console.log("Client: ", client); // Debug log to check initial client prop
   const [clientSource, setClientSource] = useState<Source | null>(
-    client.source
+    resolvedClient.source,
   );
+
+  // resolvedClient.source is only correct once clientData has loaded
+  // (the list-row client prop doesn't include the source relation).
+  useEffect(() => {
+    if (clientData) {
+      setClientSource(clientData.source ?? null);
+    }
+  }, [clientData]);
+
   const [pending, startTransition] = useTransition();
 
   const queryClient = useQueryClient();
@@ -44,42 +74,45 @@ export default function EditClientModalBody({
 
   const [openClientSource, setOpenClientSource] = useState(false);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
-  const [tag, setTag] = useState<Tag | undefined>(client.tag!);
-  const [isPremium, setIsPremium] = useState<boolean>(client.isFleet!);
+  const [tag, setTag] = useState<Tag | undefined>(
+    resolvedClient.tag ?? undefined,
+  );
+  const [isPremium, setIsPremium] = useState<boolean>(
+    resolvedClient.isFleet ?? false,
+  );
   const [profilePic, setProfilePic] = useState<string | null>(
-    client.photo !== DEFAULT_IMAGE_URL ? client.photo : null
+    resolvedClient.photo !== DEFAULT_IMAGE_URL ? resolvedClient.photo : null,
   );
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
-  const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
-  const phoneDataRef = useRef({
-    phoneNumber: "",
-    countryCode: "",
-    isoCode: "",
-  });
-  useEffect(() => {
-    setIsPremium(client?.isFleet!);
-    setTag(client.tag || undefined);
-    setClientSource(client.source || null);
-    setProfilePic(client.photo !== DEFAULT_IMAGE_URL ? client.photo : null);
-  }, [client]);
+  const [zip, setZip] = useState(resolvedClient.zip ?? "");
 
-  async function getClientSources() {
-    const data = await getSources();
-    setClientSources(data);
-  }
+  // Initialize ref with existing client data so submit works without touching the field
+  const phoneDataRef = useRef({
+    phoneNumber: resolvedClient.mobile ?? "",
+    countryCode: "",
+    isoCode: resolvedClient.countryCode ?? "",
+  });
 
   async function deleteClientSource(id: number) {
     await deleteSource(id);
-
-    setClientSources((prev: Source[]) => {
-      return prev.filter((source) => source.id !== id);
-    });
-
+    queryClient.setQueryData<Source[]>([CLIENT_SOURCES_KEY], (prev = []) =>
+      prev.filter((source) => source.id !== id),
+    );
     if (clientSource?.id === id) {
       setClientSource(null);
     }
   }
+
+  const { displaySources, isCreatingSource, selectClientSource } =
+    useClientSourcePicker({
+      sources: queryClientSources,
+      setSources: (updater) =>
+        queryClient.setQueryData<Source[]>([CLIENT_SOURCES_KEY], (prev = []) =>
+          updater(prev),
+        ),
+      setClientSource,
+    });
 
   async function handleSubmit() {
     clearError();
@@ -89,7 +122,6 @@ export default function EditClientModalBody({
     const lastName =
       document.querySelector<HTMLInputElement>("#lastName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
     const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
     const mobile =
       countryCode && phoneNumber
@@ -100,12 +132,9 @@ export default function EditClientModalBody({
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
-    const zip = document.querySelector<HTMLInputElement>("#zip")?.value;
+
     if (!firstName?.trim()) {
-      showError({
-        field: "firstName",
-        message: "First name is required.",
-      });
+      showError({ field: "firstName", message: "First name is required." });
       return;
     }
 
@@ -116,23 +145,18 @@ export default function EditClientModalBody({
       });
       return;
     }
-    // For email
-    // if (!email?.trim()) {
-    //   showError({
-    //     field: "email",
-    //     message: "Email is required.",
-    //   });
-    //   return;
-    // }
-    // delete the old photo
-    if (newProfilePic && profilePic !== DEFAULT_IMAGE_URL) {
-      await fetch("/api/upload", {
-        method: "DELETE",
-        body: JSON.stringify({ filePath: profilePic }),
+
+    // Final guard: ensure no non-digit slipped through
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code must contain digits only.",
       });
+      return;
     }
 
-    // update photo
+    // Upload new photo first — delete old only after confirmed success
+    // (Prevents data loss: if upload fails, old photo must remain intact)
     if (newProfilePic) {
       const formData = new FormData();
       formData.append("file", newProfilePic);
@@ -143,16 +167,24 @@ export default function EditClientModalBody({
       });
 
       if (!uploadRes.ok) {
-        console.error("Failed to upload photos");
+        console.error("Failed to upload photo");
         return uploadRes.json();
       }
 
       const json = await uploadRes.json();
       photo = json.data[0];
+
+      // Only delete the old photo now that the new one is safely stored
+      if (profilePic && profilePic !== DEFAULT_IMAGE_URL) {
+        await fetch("/api/upload", {
+          method: "DELETE",
+          body: JSON.stringify({ filePath: profilePic }),
+        });
+      }
     }
 
     const res = await editClient({
-      id: client.id,
+      id: resolvedClient.id,
       firstName,
       lastName,
       email,
@@ -182,18 +214,20 @@ export default function EditClientModalBody({
       queryClient.invalidateQueries({
         queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
       });
+      queryClient.invalidateQueries({
+        queryKey: [CLIENT_DETAIL_KEY, resolvedClient?.id],
+      });
       clearError();
       onClose();
       successToast("Client updated successfully");
     }
   }
 
-  useEffect(() => {
-    getClientSources();
-  }, []);
-
   return (
-    <DialogContent className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]">
+    <DialogContent
+      className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
+      onOpenAutoFocus={(e) => e.preventDefault()}
+    >
       <div className="mt-8 flex items-center justify-between px-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
@@ -218,14 +252,13 @@ export default function EditClientModalBody({
                 alt="profile"
                 className="h-full w-full object-cover"
                 unoptimized={newProfilePic !== null}
-                crossOrigin="anonymous"
               />
             </div>
             <label
               htmlFor="profilePicture"
-              className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer hover:bg-gray-100 transition-colors"
+              className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer  transition-colors"
             >
-              <SquarePen className="w-3 h-3 text-white" />
+              <PencilLineIcon className="w-3 h-3 text-white" />
             </label>
             <input
               type="file"
@@ -235,22 +268,20 @@ export default function EditClientModalBody({
               accept="image/*"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) {
-                  setNewProfilePic(file);
-                }
+                if (file) setNewProfilePic(file);
               }}
             />
           </div>
         ) : (
           <label
             className="
-                    group flex cursor-pointer items-center justify-center gap-x-3 
-                    rounded-full pl-4 pr-2 py-1.5
-                    bg-white dark:bg-slate-800
-                    border border-dashed border-slate-300 dark:border-slate-600
-                    hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
-                    transition-all duration-300
-                "
+              group flex cursor-pointer items-center justify-center gap-x-3
+              rounded-full pl-4 pr-2 py-1.5
+              bg-white dark:bg-slate-800
+              border border-dashed border-slate-300 dark:border-slate-600
+              hover:border-primary hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+              transition-all duration-300
+            "
             htmlFor="profilePicture"
           >
             <input
@@ -261,17 +292,15 @@ export default function EditClientModalBody({
               accept="image/*"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) {
-                  setNewProfilePic(file);
-                }
+                if (file) setNewProfilePic(file);
               }}
             />
             <div className="flex flex-col items-end">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">
                 Upload Photo
               </span>
             </div>
-            <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+            <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-primary group-hover:bg-white transition-colors">
               <UserIcon size={32} strokeWidth={2} />
             </div>
           </label>
@@ -286,11 +315,9 @@ export default function EditClientModalBody({
             name="firstName"
             label="First Name"
             required
-            defaultValue={client.firstName!}
+            defaultValue={resolvedClient?.firstName!}
             onChange={(e) => {
               const value = e.target.value;
-
-              // Validate on input change
               if (!value.trim()) {
                 showError({
                   field: "firstName",
@@ -305,7 +332,7 @@ export default function EditClientModalBody({
             name="lastName"
             label="Last Name"
             required={false}
-            defaultValue={client.lastName!}
+            defaultValue={resolvedClient?.lastName!}
           />
         </div>
 
@@ -313,38 +340,43 @@ export default function EditClientModalBody({
           <SlimInput
             name="email"
             label="Email"
-            defaultValue={client.email!}
-            onChange={(e) => {
-              const value = e.target.value;
-
-              // Validate on input change
-              // if (!value.trim()) {
-              //   showError({
-              //     field: "email",
-              //     message: "Email is required.",
-              //   });
-              // } else {
-              //   clearError();
-              // }
-            }}
+            defaultValue={resolvedClient?.email!}
           />
           <div className="w-full">
-            <PhoneInput
-              label="Mobile"
-              placeholder="1234567890"
-              required
-              defaultValue={client.mobile!}
-              // value={phoneNumber}
-              defaultIsoCode={client.countryCode!}
-              onChange={(phone, code, iso) => {
-                phoneDataRef.current = {
-                  phoneNumber: phone,
-                  countryCode: code,
-                  isoCode: iso || "",
-                };
-                clearError();
-              }}
-            />
+            {clientData ? (
+              <PhoneInput
+                key={`mobile-${clientData.id}`}
+                label="Mobile"
+                placeholder="1234567890"
+                required
+                defaultValue={clientData.mobile!}
+                defaultIsoCode={clientData.countryCode!}
+                onChange={(phone, code, iso) => {
+                  phoneDataRef.current = {
+                    phoneNumber: phone,
+                    countryCode: code,
+                    isoCode: iso || "",
+                  };
+                  clearError();
+                }}
+              />
+            ) : (
+              <div className="w-full">
+                <label className="flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300">
+                  Mobile
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div className="mt-1.5 py-1 flex items-center rounded-lg border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900">
+                  <input
+                    type="tel"
+                    value=""
+                    readOnly
+                    aria-label="Mobile"
+                    className="w-full px-4 py-[2px] bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -353,31 +385,51 @@ export default function EditClientModalBody({
             rootClassName="flex-1"
             name="address"
             required={false}
-            defaultValue={client.address!}
+            defaultValue={resolvedClient?.address!}
           />
         </div>
 
         <div className="flex items-center justify-between gap-x-2">
-          <SlimInput name="city" required={false} defaultValue={client.city!} />
+          <SlimInput
+            name="city"
+            required={false}
+            defaultValue={resolvedClient?.city!}
+          />
           <SlimInput
             name="state"
             required={false}
-            defaultValue={client.state!}
+            defaultValue={resolvedClient?.state!}
           />
-          <SlimInput name="zip" required={false} defaultValue={client.zip!} />
+          {/* Controlled zip — blocks non-digit input */}
+          <SlimInput
+            name="zip"
+            required={false}
+            value={zip}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || /^\d+$/.test(value)) {
+                setZip(value);
+                clearError();
+              } else {
+                showError({
+                  field: "zip",
+                  message: "Zip code must contain digits only.",
+                });
+              }
+            }}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-x-4">
           <SlimInput
             name="customerCompany"
             required={false}
-            defaultValue={client.customerCompany!}
+            defaultValue={resolvedClient?.customerCompany!}
             label="Company"
           />
 
           <div className="w-full">
             <p className="mb-1 font-medium text-slate-600">Client Source</p>
-            {/* TODO: use `Selector` component and make the hieght auto */}
             <SelectClientSource
               clickabled={false}
               label={(clientSrc) =>
@@ -385,50 +437,57 @@ export default function EditClientModalBody({
               }
               newButton={
                 <NewClientSource
-                  setClientSources={setClientSources}
+                  setClientSources={(updater) => {
+                    queryClient.setQueryData<Source[]>(
+                      [CLIENT_SOURCES_KEY],
+                      (prev = []) =>
+                        typeof updater === "function" ? updater(prev) : updater,
+                    );
+                  }}
                   setClientSource={setClientSource}
                   setOpenClientSource={setOpenClientSource}
                 />
               }
-              items={clientSources}
+              items={displaySources}
               displayList={(clientSource: Source) => (
                 <div className="flex">
                   <button
                     className="w-full text-left text-sm font-bold"
                     onClick={() => {
-                      setClientSource(clientSource);
+                      selectClientSource(clientSource);
                       setOpenClientSource(false);
                     }}
                     type="button"
                   >
                     {clientSource.name}
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        deleteClientSource(clientSource.id);
-                      }}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
+                  {clientSource.id >= 0 &&
+                    !isDefaultClientSourceName(clientSource.name) && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => deleteClientSource(clientSource.id)}
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                 </div>
               )}
               selectedItem={clientSource}
               setSelectedItem={setClientSource}
-              onSearch={(search: string) => {
-                return clientSources.filter((clientSource: Source) =>
-                  clientSource.name.toLowerCase().includes(search.toLowerCase())
-                );
-              }}
+              onSearch={(search: string) =>
+                displaySources.filter((s: Source) =>
+                  s.name.toLowerCase().includes(search.toLowerCase()),
+                )
+              }
               openState={[openClientSource, setOpenClientSource]}
             />
           </div>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
           <div className="w-full">
-            {/* BUG: when making the root `form`, this dropdown doesn't work */}
             <p className="mb-1 font-medium text-slate-600">Tag</p>
             <SelectClientTags
               value={tag}
@@ -444,7 +503,7 @@ export default function EditClientModalBody({
                   type="checkbox"
                   checked={isPremium}
                   onChange={(e) => setIsPremium(e.target.checked)}
-                  className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#6571FF] checked:bg-[#6571FF] hover:border-[#6571FF]"
+                  className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-primary checked:bg-primary hover:border-primary"
                 />
                 <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
                   <svg
@@ -461,7 +520,7 @@ export default function EditClientModalBody({
                   </svg>
                 </div>
               </div>
-              <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+              <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">
                 Add as a Fleet
               </span>
             </label>
@@ -472,10 +531,10 @@ export default function EditClientModalBody({
       <DialogFooter>
         <DialogClose
           className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+            rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
+            hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+            transition-colors border
+          "
           onClick={() => {
             clearError();
             onClose();
@@ -484,18 +543,19 @@ export default function EditClientModalBody({
           Cancel
         </DialogClose>
         <button
-          disabled={pending}
+          disabled={pending || isLoading || isCreatingSource}
           type="button"
           onClick={() => startTransition(handleSubmit)}
           className="
-                rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-lg shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200
-              "
+            rounded-xl px-6 py-2.5 text-sm font-medium text-white
+            bg-gradient-to-r from-primary to-[#5a66ee]
+            shadow-lg shadow-indigo-500/30
+            hover:shadow-xl hover:shadow-indigo-500/40
+            hover:-translate-y-0.5 hover:scale-[1.02]
+            active:translate-y-0 active:scale-100
+            transition-all duration-200
+            disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100
+          "
         >
           {pending ? (
             <div className="flex flex-col items-center justify-center">

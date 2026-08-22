@@ -14,6 +14,14 @@ type TNewAppointmentNotification = {
   clientName?: string;
   sendRoles?: EmployeeType[];
 };
+type TNewTaskNotification = {
+  title: string;
+  appointmentDate?: Date | null;
+  startTime: string;
+  companyId?: number;
+  clientName?: string;
+  sendRoles?: EmployeeType[];
+};
 
 // send notification for new Appointment create
 export const sendNewAppointmentNotification = async ({
@@ -45,16 +53,103 @@ export const sendNewAppointmentNotification = async ({
     }
 
     const formattedDate = moment(appointmentDate).format("MM-DD-YYYY");
-    const formattedTime = moment(startTime, "HH:mm").format("hh:mm A");
+    const timeMoment = moment(startTime, "HH:mm");
+    const timeText = timeMoment.isValid()
+      ? ` at ${timeMoment.format("hh:mm A")}`
+      : "";
     const description = clientName
-      ? `Appointment with ${clientName} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`
-      : `Appointment ${title} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`;
+      ? `Appointment with ${clientName} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`
+      : `Appointment ${title} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`;
 
     const sendNotiInfo = {
       title: "New Appointment",
       companyId: companyUniqueId,
       type: "task",
-      redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
+      redirectUrl: `/dashboard/task/day?date=${formattedDate}${
+        timeMoment.isValid() ? `&time=${timeMoment.format("HH:mm")}` : ""
+      }`,
+      description: description,
+    };
+
+    const uniqueUsersToNotify = new Map<number, any>();
+
+    for (const user of getUsers) {
+      uniqueUsersToNotify.set(user.id, user);
+    }
+
+    // Add assigned sales, checking for duplicates
+    for (const salesId of assignSalesIds) {
+      if (!uniqueUsersToNotify.has(salesId)) {
+        const assignUser = await getUser(salesId);
+        uniqueUsersToNotify.set(salesId, {
+          id: salesId,
+          firstName: assignUser.firstName,
+          lastName: assignUser.lastName,
+          email: assignUser.email,
+          phone: assignUser.phone,
+        });
+      }
+    }
+
+    for (const user of uniqueUsersToNotify.values()) {
+      sendUserNotifications({
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        userEmail: user.email || "",
+        userPhoneNo: user.phone || "",
+        companyId: companyUniqueId,
+        iconType: sendNotiInfo.type as "task",
+        title: sendNotiInfo.title,
+        description,
+        type: "APPOINTMENT_CREATED",
+        redirectUrl: sendNotiInfo.redirectUrl,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+// send notification for new task create
+export const sendNewTaskNotification = async ({
+  companyId,
+  title,
+  clientName,
+  appointmentDate,
+  startTime,
+  sendRoles = ["Admin", "Manager"],
+}: TNewTaskNotification) => {
+  try {
+    const companyUniqueId = companyId || (await getCompanyId());
+    // update technician status to complete
+    // get all company admins and managers
+    const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+    });
+
+    const date = moment(appointmentDate);
+    const formattedDate = date.isValid()
+      ? date.format("MM-DD-YYYY")
+      : moment().format("MM-DD-YYYY");
+    const timeMoment = moment(startTime, "HH:mm");
+    const timeText = timeMoment.isValid()
+      ? ` at ${timeMoment.format("hh:mm A")}`
+      : "";
+    const description = clientName
+      ? `Task with ${clientName} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`
+      : `Task ${title} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`;
+
+    const sendNotiInfo = {
+      title: "New Task",
+      companyId: companyUniqueId,
+      type: "task",
+      redirectUrl: `/dashboard/task/day?date=${formattedDate}${
+        timeMoment.isValid() ? `&time=${timeMoment.format("HH:mm")}` : ""
+      }`,
       description: description,
     };
 
@@ -72,25 +167,6 @@ export const sendNewAppointmentNotification = async ({
         redirectUrl: sendNotiInfo.redirectUrl,
       });
     }
-
-    // send notification to assigned sales
-    await Promise.all(
-      assignSalesIds.map(async (salesId) => {
-        const assignUser = await getUser(salesId);
-        sendUserNotifications({
-          userId: salesId,
-          userName: `${assignUser.firstName} ${assignUser.lastName}`,
-          userEmail: assignUser.email || "",
-          iconType: sendNotiInfo.type as "task",
-          userPhoneNo: assignUser.phone || "",
-          companyId: companyUniqueId,
-          title: sendNotiInfo.title,
-          description,
-          type: "APPOINTMENT_CREATED",
-          redirectUrl: sendNotiInfo.redirectUrl,
-        });
-      }),
-    );
   } catch (err) {
     console.error(err);
     throw err;
@@ -133,20 +209,45 @@ export const sendAppointmentUpdateNotification = async ({
     }
 
     const formattedDate = moment(appointmentDate).format("YYYY-MM-DD");
-    const formattedTime = moment(startTime, "HH:mm").format("hh:mm A");
+    const timeMoment = moment(startTime, "HH:mm");
+    const timeText = timeMoment.isValid()
+      ? ` at ${timeMoment.format("hh:mm A")}`
+      : "";
 
     // new description
     const sendNotiInfo = {
       title: "Update Appointment",
       companyId: companyId,
       type: "task",
-      redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
+      redirectUrl: `/dashboard/task/day?date=${formattedDate}${
+        timeMoment.isValid() ? `&time=${timeMoment.format("HH:mm")}` : ""
+      }`,
       description: clientName
-        ? `Appointment with ${clientName} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`
-        : `Appointment ${title} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`,
+        ? `Appointment with ${clientName} on ${formattedDate}${timeText} has been updated. Check your Autoworx calendar.`
+        : `Appointment ${title} on ${formattedDate}${timeText} has been updated. Check your Autoworx calendar.`,
     };
 
+    const uniqueUsersToNotify = new Map<number, any>();
+
     for (const user of getUsers) {
+      uniqueUsersToNotify.set(user.id, user);
+    }
+
+    // Add assigned sales, checking for duplicates
+    for (const salesId of assignSalesIds) {
+      if (!uniqueUsersToNotify.has(salesId)) {
+        const salesUser = await getUser(salesId);
+        uniqueUsersToNotify.set(salesId, {
+          id: salesId,
+          firstName: salesUser.firstName,
+          lastName: salesUser.lastName,
+          email: salesUser.email,
+          phone: salesUser.phone,
+        });
+      }
+    }
+
+    for (const user of uniqueUsersToNotify.values()) {
       sendUserNotifications({
         userId: user.id,
         userName: `${user.firstName} ${user.lastName}`,
@@ -160,25 +261,6 @@ export const sendAppointmentUpdateNotification = async ({
         redirectUrl: sendNotiInfo.redirectUrl,
       });
     }
-
-    // send notification to assigned sales
-    await Promise.all(
-      assignSalesIds.map(async (salesId) => {
-        const salesUser = await getUser(salesId);
-        sendUserNotifications({
-          userId: salesUser.id,
-          userName: `${salesUser.firstName} ${salesUser.lastName}`,
-          userEmail: salesUser.email || "",
-          iconType: sendNotiInfo.type as "task",
-          userPhoneNo: salesUser.phone || "",
-          companyId,
-          title: sendNotiInfo.title,
-          description: sendNotiInfo.description,
-          type: "APPOINTMENT_UPDATED",
-          redirectUrl: sendNotiInfo.redirectUrl,
-        });
-      }),
-    );
   } catch (err) {
     console.log("client email error", err);
     throw err;
@@ -208,7 +290,7 @@ export const sendNewTaskAssignNotification = async ({
   try {
     // update technician status to complete
     // get all company admins and managers
-    const formattedDate = moment(taskDate).format("DD MMMM YYYY");
+    const formattedDate = moment(taskDate).format("MMMM DD, YYYY");
 
     if (!assignTaskUser.id) {
       return;
@@ -254,7 +336,7 @@ export const sendTaskCompleteNotification = async ({
   taskTitle,
   taskDate,
   assignTaskUserId,
-  sendRoles = [],
+  sendRoles = ["Admin", "Manager", "Sales"],
 }: TTaskCompleteNotification) => {
   try {
     // Notify users by roles
@@ -266,41 +348,35 @@ export const sendTaskCompleteNotification = async ({
       phone: true,
     });
 
-    // new description
-    const roleDescription = `Task "${taskTitle}" has been marked complete. Review it in your Autoworx dashboard.`;
+    const description = `Task "${taskTitle}" has been marked complete. Review it in your Autoworx dashboard.`;
 
-    // const roleDescription = `The task "${taskTitle}" scheduled for ${formattedDate} has been completed.`;
+    const uniqueUsersToNotify = new Map<number, { user: any; title: string }>();
 
     for (const user of roleUsers) {
+      uniqueUsersToNotify.set(user.id, { user, title: "Task Completed" });
+    }
+
+    // Notify assigned task users
+    for (const userId of assignTaskUserId) {
+      if (!uniqueUsersToNotify.has(userId)) {
+        const assignUser = await getUser(userId);
+        uniqueUsersToNotify.set(userId, {
+          user: assignUser,
+          title: "Assigned Task Completed",
+        });
+      }
+    }
+
+    for (const { user, title } of uniqueUsersToNotify.values()) {
       sendUserNotifications({
         userId: user.id,
         userName: `${user.firstName} ${user.lastName}`,
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         iconType: "task",
-        companyId: user.companyId,
-        title: "Task Completed",
-        description: roleDescription,
-        type: "TASK_FINISHED",
-        redirectUrl: "/",
-      });
-    }
-
-    // Notify assigned task users
-    const assignDescription = `Task "${taskTitle}" has been marked complete. Review it in your Autoworx dashboard.`;
-    const assignTitle = "Assigned Task Completed";
-
-    for (const userId of assignTaskUserId) {
-      const assignUser = await getUser(userId);
-      sendUserNotifications({
-        userId: assignUser.id,
-        userName: `${assignUser.firstName} ${assignUser.lastName}`,
-        userEmail: assignUser.email || "",
-        userPhoneNo: assignUser.phone || "",
-        iconType: "task",
-        companyId: assignUser.companyId,
-        title: assignTitle,
-        description: assignDescription,
+        companyId: user.companyId || companyId,
+        title,
+        description,
         type: "TASK_FINISHED",
         redirectUrl: "/",
       });

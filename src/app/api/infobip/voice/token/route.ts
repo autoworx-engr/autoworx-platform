@@ -1,4 +1,9 @@
 import { getInfobipCredentials } from "@/actions/communication/client/sendInfobipMessage";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import {
+  assertCompanyAccess,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -29,15 +34,26 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Server error
  */
 export async function POST(request: NextRequest) {
-  const { identity, companyId } = await request.json();
+  const { identity, companyId: rawCompanyId } = await request.json();
+  const companyId = Number(rawCompanyId);
+
+  const entitlements = await getCompanyEntitlements(companyId);
+  if (!entitlements.canUseVoice) {
+    return NextResponse.json(
+      { error: "Voice calling is not enabled for this plan." },
+      { status: 403 },
+    );
+  }
 
   try {
-    const infobipCredentials = await getInfobipCredentials({ companyId });
+    const infobipCredentials = await getInfobipCredentials({
+      companyId,
+    });
 
     if (!infobipCredentials?.data) {
       return NextResponse.json(
         { error: "Infobip credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -50,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (!infobipApiKey || !infobipBaseUrl || !infobipApplicationId) {
       return NextResponse.json(
         { error: "Infobip configuration not found" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -80,7 +96,7 @@ export async function POST(request: NextRequest) {
           },
           timeToLive: 3600, // Token valid for 1 hour
         }),
-      }
+      },
     );
     console.log("🚀 ~ POST ~ tokenResponse:", tokenResponse);
 
@@ -89,7 +105,7 @@ export async function POST(request: NextRequest) {
       console.error("Infobip token error:", errorData);
       return NextResponse.json(
         { error: `Failed to generate token: ${JSON.stringify(errorData)}` },
-        { status: tokenResponse.status }
+        { status: tokenResponse.status },
       );
     }
 

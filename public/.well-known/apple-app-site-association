@@ -1,0 +1,62 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "HD3DRJP77N.com.awx.autoworx",
+        "components": [
+          {
+            "/": "/internal/*",
+            "comment": "Only open the app for this specific finished route"
+          },
+          {
+            "/": "/client/*",
+            "comment": "Only open the app for this specific finished route"
+          },
+          {
+            "/": "/collaboration/*",
+            "comment": "Only open the app for this specific finished route"
+          },
+          {
+            "/": "/reset-password*"
+          },
+          {
+            "/": "/pipeline/sales*",
+            "comment": "Sales pipeline"
+          },
+          {
+            "/": "/pipeline/shop*",
+            "comment": "Shop pipeline"
+          },
+          {
+            "/": "/dashboard/estimate/*",
+            "comment": "Estimate detail → Invoices screen"
+          },
+          {
+            "/": "/dashboard/invoice/*",
+            "comment": "Invoice detail → Invoices screen"
+          },
+          {
+            "/": "/dashboard/task*",
+            "comment": "Task activity screen"
+          },
+          {
+            "/": "/*",
+            "exclude": true,
+            "comment": "Default: Do not open the app for any other routes"
+          }
+        ]
+      }
+    ]
+  },
+  "activitycontinuation": {
+    "apps": [
+      "HD3DRJP77N.com.awx.autoworx"
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "HD3DRJP77N.com.awx.autoworx"
+    ]
+  }
+}

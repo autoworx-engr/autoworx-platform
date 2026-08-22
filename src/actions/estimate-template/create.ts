@@ -106,7 +106,7 @@ export async function createEstimateTemplate({
             throw new Error("Default column not found");
           }
         }
-        // Step 6: Create the main invoice record
+        // Step 6: Create the main template record
         const newTemplate = await db.invoiceTemplate.create({
           data: {
             id: templateId,
@@ -147,7 +147,7 @@ export async function createEstimateTemplate({
                   notes: inspection.notes,
                 },
               });
-            })
+            }),
           );
         }
         // Step 7: Process and upload photos
@@ -164,7 +164,7 @@ export async function createEstimateTemplate({
             console.log("templatePhoto", templatePhoto);
 
             return templatePhoto;
-          })
+          }),
         );
 
         // Step 8: Process invoice items (services, materials, labor, tags)
@@ -201,7 +201,7 @@ export async function createEstimateTemplate({
                       tagId: tag.id,
                     },
                   });
-                })
+                }),
               );
 
               laborId = newLabor.id;
@@ -250,10 +250,10 @@ export async function createEstimateTemplate({
                         tagId: tag.id,
                       },
                     });
-                  })
+                  }),
                 );
                 return null;
-              })
+              }),
             );
 
             // Process tags
@@ -265,9 +265,9 @@ export async function createEstimateTemplate({
                     tagId: tag.id,
                   },
                 });
-              })
+              }),
             );
-          })
+          }),
         );
 
         await db.invoiceTemplate.update({
@@ -279,7 +279,7 @@ export async function createEstimateTemplate({
           },
         });
         return newTemplate;
-      }
+      },
     );
 
     // Create associated tasks
@@ -296,8 +296,9 @@ export async function createEstimateTemplate({
           assignedUsers: [],
           invoiceTemplateId: template.id,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          createdBy: "user",
         });
-      })
+      }),
     );
 
     // Step 12: Revalidate the estimate page

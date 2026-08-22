@@ -1,27 +1,28 @@
 "use client";
 
-import React, { memo, useState, useRef, useEffect } from "react";
-import { removeLeadFromPipeline } from "@/actions/pipelines/updateLeadSalesUser";
-import { updateLeadColumn } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
   useColumnDispatch,
   useColumnState,
 } from "@/context/sales-pipeline.context";
+import {
+  useRemoveLeadMutation,
+  useUpdateLeadColumnMutation,
+} from "@/hooks/pipeline/usePipelineLeads";
 import { cn } from "@/lib/cn";
-import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { Popconfirm } from "antd";
 import { errorToast, successToast } from "@/lib/toast";
-import ColumnDropdown from "./ColumnDropdown";
-import LeadActions from "./LeadActions";
-import LeadTags from "./LeadTags";
-import { ArrowRightLeft, X } from "lucide-react";
+import { LeadWithSalesUser } from "@/types/invoiceLead";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
-
+import { Popconfirm } from "antd";
+import { ArrowRightLeft, X } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
+import ColumnDropdown from "./ColumnDropdown";
+import LeadActions from "./LeadActions";
+import LeadTags from "./LeadTags";
 
 type LeadCardProps = {
   leadData: LeadWithSalesUser;
@@ -35,7 +36,6 @@ type LeadCardProps = {
 export default memo(function LeadCard({
   leadData,
   highlight = false,
-  index,
   columnIndex,
   isDragDisabled,
   leadIndex,
@@ -47,15 +47,19 @@ export default memo(function LeadCard({
   const [isDropTarget, setIsDropTarget] = useState(false);
   const cardRef = useRef<HTMLLIElement>(null);
 
+  const { mutateAsync: removeLead } = useRemoveLeadMutation();
+  const { mutateAsync: updateColumn } = useUpdateLeadColumnMutation();
+
   const handleRemoveLead = async (leadId: number, columnId: number) => {
     try {
-      await removeLeadFromPipeline(leadId);
+      await removeLead(leadId);
       dispatch({
         type: actionTypes.REMOVE_LEAD,
         payload: { leadId, columnId },
       });
     } catch (error) {
       console.error(error);
+      errorToast("Failed to remove lead.");
     }
   };
 
@@ -65,19 +69,23 @@ export default memo(function LeadCard({
       return;
     }
 
+    const currentColumnIndex = pipelineColumns.findIndex(
+      (col) => col.id === leadData.columnId,
+    );
+    const destinationColumnIndex = pipelineColumns.findIndex(
+      (col) => col.id === parseInt(newColumnId),
+    );
+    if (currentColumnIndex === -1 || destinationColumnIndex === -1) return;
+
+    const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(
+      (l) => l.id === leadData.id,
+    );
+    // Capture original destination length before the optimistic dispatch
+    const originalDestLength =
+      pipelineColumns[destinationColumnIndex].leads.length;
+
     try {
-      const currentColumnIndex = pipelineColumns.findIndex(
-        (col) => col.id === leadData.columnId
-      );
-      const destinationColumnIndex = pipelineColumns.findIndex(
-        (col) => col.id === parseInt(newColumnId)
-      );
-      if (currentColumnIndex === -1 || destinationColumnIndex === -1) return;
-
-      const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(
-        (l) => l.id === leadData.id
-      );
-
+      // Optimistic update
       dispatch({
         type: actionTypes.DRAG_END,
         payload: {
@@ -87,16 +95,34 @@ export default memo(function LeadCard({
           },
           destination: {
             droppableId: destinationColumnIndex.toString(),
-            index: pipelineColumns[destinationColumnIndex].leads.length,
+            index: originalDestLength,
           },
           draggableId: leadData.id.toString(),
         },
       });
 
-      await updateLeadColumn(leadData.id, parseInt(newColumnId));
+      await updateColumn({
+        leadId: leadData.id,
+        columnId: parseInt(newColumnId),
+      });
       setShowColumnSelect(false);
       successToast("Job moved successfully");
     } catch (error) {
+      // Rollback: move lead back to its original column and position
+      dispatch({
+        type: actionTypes.DRAG_END,
+        payload: {
+          source: {
+            droppableId: destinationColumnIndex.toString(),
+            index: originalDestLength,
+          },
+          destination: {
+            droppableId: currentColumnIndex.toString(),
+            index: leadIndex,
+          },
+          draggableId: leadData.id.toString(),
+        },
+      });
       errorToast("Failed to move job.");
     }
   };
@@ -134,7 +160,7 @@ export default memo(function LeadCard({
         onDragEnter: () => setIsDropTarget(true),
         onDragLeave: () => setIsDropTarget(false),
         onDrop: () => setIsDropTarget(false),
-      })
+      }),
     );
   }, [leadData.id, columnIndex, leadIndex, isDragDisabled]);
 
@@ -156,7 +182,7 @@ export default memo(function LeadCard({
         "max-w-auto relative mx-1 my-1 h-fit rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing",
         highlight && "bg-yellow-100",
         isDragging && "opacity-20 grayscale bg-slate-200 ",
-        isDropTarget && "ring-2 ring-blue-500 bg-blue-50"
+        isDropTarget && "ring-2 ring-blue-500 bg-blue-50",
       )}
     >
       <div className="relative flex justify-between">
@@ -196,7 +222,7 @@ export default memo(function LeadCard({
       <p className="text-xs text-blue-500">{leadData.services}</p>
       <p className="text-xs">{leadData.source}</p>
       <p className="mb-2 text-xs">
-        {new Date(leadData.createdAt).toLocaleDateString()}
+        {new Date(leadData.createdAt).toLocaleDateString("en-US")}
       </p>
 
       <LeadActions lead={leadData} />

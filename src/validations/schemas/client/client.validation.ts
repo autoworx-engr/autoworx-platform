@@ -1,6 +1,4 @@
-import {
-  optionalEmailValidationSchema
-} from "@/validations/utils/email.validation";
+import { optionalEmailValidationSchema } from "@/validations/utils/email.validation";
 import { phoneValidationSchema } from "@/validations/utils/phone.validation";
 import { z } from "zod";
 

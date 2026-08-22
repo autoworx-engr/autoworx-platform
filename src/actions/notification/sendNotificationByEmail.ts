@@ -44,7 +44,7 @@ const INFOBIP_BASE_URL = process.env.INFOBIP_BASE_URL || "api.infobip.com";
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY;
 
 async function sendInfobipEmailAPI(
-  emailData: InfobipEmailRequest
+  emailData: InfobipEmailRequest,
 ): Promise<InfobipEmailResponse> {
   try {
     // Create FormData instead of JSON
@@ -79,7 +79,7 @@ async function sendInfobipEmailAPI(
         formData.append(`attachmentName[${index}]`, attachment.name);
         formData.append(
           `attachmentContentType[${index}]`,
-          attachment.contentType
+          attachment.contentType,
         );
       });
     }
@@ -156,7 +156,7 @@ export default async function sendNotificationByEmail({
         };
       } else {
         throw new Error(
-          `Email failed with status: ${message.status.description}`
+          `Email failed with status: ${message.status.description}`,
         );
       }
     } else {

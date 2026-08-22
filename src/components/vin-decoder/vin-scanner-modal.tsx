@@ -1,19 +1,18 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { useState } from "react";
-import BarcodeScanTab from "./barcode-scan-tab";
-import TextScanTab from "./text-scan-tab";
 import {
-  CAR_VIN_DECODER_QUERY_KEY,
-  useCarVinDecoder,
-} from "@/hooks/useCarData";
-import { useQueryClient } from "@tanstack/react-query";
-import { getCarVinDecoder } from "@/service/car/api";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/Dialog";
+import { SlimInput } from "@/components/SlimInput";
+import { CAR_VIN_DECODER_QUERY_KEY } from "@/hooks/useCarData";
 import { errorToast } from "@/lib/toast";
+import { getCarVinDecoder } from "@/service/car/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import TextScanTab from "./text-scan-tab";
 
 interface VINScannerModalProps {
   isOpen: boolean;
@@ -26,7 +25,6 @@ export default function VINScannerModal({
   onClose,
   onScanComplete,
 }: VINScannerModalProps) {
-  const [activeTab, setActiveTab] = useState<"barcode" | "text">("barcode");
   const [manualInput, setManualInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [verbose] = useState(false);
@@ -41,8 +39,6 @@ export default function VINScannerModal({
           queryKey: [CAR_VIN_DECODER_QUERY_KEY, verbose, allTrims],
           queryFn: () => getCarVinDecoder(manualInput),
         });
-        console.log("Submitting VIN:", manualInput);
-        console.log("Decoded Data:", data);
         onScanComplete(manualInput, data);
         setManualInput("");
         onClose();
@@ -56,10 +52,9 @@ export default function VINScannerModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-xl rounded-2xl p-0 shadow-2xl">
         <div className="relative rounded-2xl bg-white p-6">
-
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-slate-900">
               Scan VIN
@@ -67,36 +62,11 @@ export default function VINScannerModal({
           </DialogHeader>
 
           <div className="mt-6">
-            <div className="mb-6 flex gap-2 border-b">
-              <button
-                type="button"
-                onClick={() => setActiveTab("barcode")}
-                className={`pb-3 px-4 font-medium transition-colors ${activeTab === "barcode"
-                  ? "border-b-2 border-indigo-600 text-indigo-700"
-                  : "text-gray-500 hover:text-indigo-700"
-                  }`}
-              >
-                Barcode Scan
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("text")}
-                className={`pb-3 px-4 font-medium transition-colors ${activeTab === "text"
-                  ? "border-b-2 border-indigo-600 text-indigo-700"
-                  : "text-gray-500 hover:text-indigo-700"
-                  }`}
-              >
-                Text Input
-              </button>
-            </div>
-
-            {activeTab === "barcode" && (
+            {/* {activeTab === "barcode" && (
               <BarcodeScanTab onDetectedValue={vin => setManualInput(vin)} />
-            )}
+            )} */}
 
-            {activeTab === "text" && (
-              <TextScanTab onDetectedValue={vin => setManualInput(vin)} />
-            )}
+            <TextScanTab onDetectedValue={(vin) => setManualInput(vin)} />
 
             <div className="mt-8 border-t border-gray-200 pt-6">
               <p className="mb-4 text-sm font-medium text-gray-700">
@@ -111,8 +81,7 @@ export default function VINScannerModal({
                   type="text"
                   value={manualInput}
                   autoFocus
-                  onFocus={() => setActiveTab("text")}
-                  onChange={e => setManualInput(e.target.value.toUpperCase())}
+                  onChange={(e) => setManualInput(e.target.value.toUpperCase())}
                   placeholder="Enter VIN (17 characters max)"
                   maxLength={17}
                   autoComplete="off"
@@ -124,19 +93,21 @@ export default function VINScannerModal({
                   disabled={manualInput.length < 5 || isLoading}
                   className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white cursor-pointer
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
                 transition-all duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
               "
                 >
                   Submit
                 </button>
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                A VIN is 17 characters long and contains both numbers and letters.
+                A VIN is 17 characters long and contains both numbers and
+                letters.
               </p>
             </div>
           </div>

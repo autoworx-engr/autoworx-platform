@@ -19,12 +19,17 @@ import { CreateTab } from "./tabs/CreateTab";
 import PaymentTab from "./tabs/PaymentTab";
 import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
 import DynamicTemplateLoader from "../DynamicTemplateLoader";
+import { Metadata } from "next";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { clientId?: string; templateId?: string };
+export const metadata: Metadata = {
+  title: "Invoices - Create Estimates",
+  description: "Create new estimate",
+};
+
+export default async function Page(props: {
+  searchParams: Promise<{ clientId?: string; templateId?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const companyId = await getCompanyId();
   const clientId = searchParams.clientId
     ? parseInt(searchParams.clientId)
@@ -37,8 +42,8 @@ export default async function Page({
 
   const client = clientId
     ? await db.client.findUnique({
-      where: { id: clientId },
-    })
+        where: { id: clientId },
+      })
     : null;
 
   const customers = await db.client.findMany({ where: { companyId } });
@@ -69,9 +74,9 @@ export default async function Page({
   });
 
   // spread all `tag` objects into `tags` array
-  products.forEach(product => {
+  products.forEach((product) => {
     (product as unknown as { tags: Tag[] }).tags = product.tags.map(
-      tag => tag.tag
+      (tag) => tag.tag,
     );
   });
 
@@ -87,24 +92,26 @@ export default async function Page({
   });
 
   // spread all `tag` objects into `tags` array
-  labors.forEach(labor => {
-    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(tag => tag.tag);
+  labors.forEach((labor) => {
+    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(
+      (tag) => tag.tag,
+    );
   });
 
   let materials = [] as any[];
 
   materials.push(
-    ...products.map(product => ({
+    ...products.map((product) => ({
       ...product,
       cost: product.price,
       tags: product.tags,
       productId: product.id,
-    }))
+    })),
   );
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
-      <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:h-full xl:min-h-0 xl:flex xl:space-y-0 px-1">
+      <div className="w-full xl:min-w-[68%] flex flex-col gap-4 xl:min-h-0">
         <Title>Estimate</Title>
 
         <SyncLists
@@ -127,7 +134,7 @@ export default async function Page({
 
         <Tabs
           defaultValue="create"
-          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip flex-1"
+          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] xl:min-h-0 flex-col overflow-clip flex-1"
         >
           <TabsList className="grid grid-cols-4 md:inline-flex -ml-4 rounded-bl-none p-0">
             <TabsTriggerCreate value="payments" className="order-4 md:order-1">
@@ -150,18 +157,30 @@ export default async function Page({
             </TabsTriggerCreate>
           </TabsList>
 
-          <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="create"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto p-2"
+          >
             <CreateTab />
           </TabsContent>
 
-          <TabsContent value="attachment" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="attachment"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto p-2"
+          >
             <AttachmentTab />
           </TabsContent>
 
-          <TabsContent value="inspections" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="inspections"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto p-2"
+          >
             <EstimateInspectionsTab />
           </TabsContent>
-          <TabsContent value="payments" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="payments"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto p-2"
+          >
             <PaymentTab
               clientId={
                 searchParams.clientId
@@ -173,7 +192,7 @@ export default async function Page({
         </Tabs>
       </div>
 
-      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
+      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto">
         <div>
           <ConvertButton
             type={InvoiceType.Estimate}
@@ -188,6 +207,8 @@ export default async function Page({
             template ? Number(template?.serviceFee) > 0 : true
           }
           isEstimateTax={template ? Number(template?.tax) > 0 : true}
+          storedTax={template ? Number(template.tax) : undefined}
+          storedServiceFee={template ? Number(template.serviceFee) : undefined}
         />
       </div>
     </div>

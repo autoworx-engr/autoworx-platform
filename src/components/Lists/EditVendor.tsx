@@ -1,7 +1,6 @@
 "use client";
 
-import { Vendor } from "@prisma/client";
-import { useRef, useState } from "react";
+import { editVendor } from "@/actions/vendor/editVendor";
 import {
   Dialog,
   DialogClose,
@@ -11,23 +10,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "../SlimInput";
-import { useListsStore } from "@/stores/lists";
-import { editVendor } from "@/actions/vendor/editVendor";
-import { SlimTextarea } from "../SlimTextarea";
 import FormError from "@/components/FormError";
-import { useFormErrorStore } from "@/stores/form-error";
 import { successToast } from "@/lib/toast";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Vendor } from "@prisma/client";
+import type { JSX } from "react";
+import { useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
+import { SlimInput } from "../SlimInput";
+import { SlimTextarea } from "../SlimTextarea";
 
 type ServerAction =
   | { type: "success"; data: Vendor }
   | { type: "error"; message: string }
   | {
-    type: "globalError";
-    errorSource?: { message: string }[];
-    message?: string;
-  };
+      type: "globalError";
+      errorSource?: { message: string }[];
+      message?: string;
+    };
 
 export default function EditVendor({
   button,
@@ -53,10 +54,10 @@ export default function EditVendor({
 
     // Get values directly from DOM using document.querySelector
     const name = document.querySelector<HTMLInputElement>(
-      "[name='contactName']"
+      "[name='contactName']",
     )?.value as string;
     const company = document.querySelector<HTMLInputElement>(
-      "[name='companyName']"
+      "[name='companyName']",
     )?.value;
     // const phone =
     //   document.querySelector<HTMLInputElement>("[name='phone']")?.value;
@@ -127,7 +128,7 @@ export default function EditVendor({
     if (
       website &&
       !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-        website
+        website,
       )
     ) {
       showError({
@@ -201,7 +202,10 @@ export default function EditVendor({
     >
       <DialogTrigger asChild>{button}</DialogTrigger>
 
-      <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+      <DialogContent
+        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Edit Vendor</DialogTitle>
         </DialogHeader>
@@ -341,7 +345,7 @@ export default function EditVendor({
                 if (
                   value &&
                   !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-                    value
+                    value,
                   )
                 ) {
                   showError({
@@ -378,7 +382,7 @@ export default function EditVendor({
           <button
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

@@ -1,4 +1,4 @@
-'use server'
+"use server";
 import { db } from "@/lib/db";
 
 export async function getClientTask(clientId: number, companyId: number) {

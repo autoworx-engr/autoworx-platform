@@ -11,7 +11,12 @@ export default async function getClientByUnreadMsg(companyId: number) {
           },
           {
             conversationsTrack: {
-              OR: [{ smsIsRead: false }, { emailIsRead: false }],
+              OR: [
+                { smsIsRead: false },
+                { emailIsRead: false },
+                { messengerIsRead: false },
+                { instagramIsRead: false },
+              ],
             },
           },
         ],

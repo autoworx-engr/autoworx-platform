@@ -8,13 +8,14 @@ import {
 } from "@/components/Dialog";
 import { cn } from "@/lib/cn";
 import { Invoice } from "@prisma/client";
-import { Checkbox, message } from "antd";
+import { Checkbox } from "antd";
 import { useEffect, useState } from "react";
 import FleetSubHeading from "./FleetSubHeading";
 
 import { editFleetStatement } from "@/actions/fleet/statement/editFleetStatement";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
+import { errorToast, successToast } from "@/lib/toast";
 
 interface EditFleetStatementModalProps {
   isOpen: boolean;
@@ -35,19 +36,23 @@ const EditFleetStatementModal = ({
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const { allInvoices } = useFleetInvoiceStore();
 
+  const isUnpaid = (invoice: any) => Number(invoice?.due || 0) > 0;
+
   // Initialize selected items with current invoices
   useEffect(() => {
     if (isOpen) {
-      setSelectedItems(currentInvoices.map((invoice) => invoice.id));
+      setSelectedItems(
+        currentInvoices.filter(isUnpaid).map((invoice) => invoice.id),
+      );
     }
   }, [isOpen, currentInvoices]);
 
   const invoices = [
     ...currentInvoices,
     ...allInvoices.filter(
-      (inv) => !currentInvoices.some((curr) => curr.id === inv.id)
+      (inv) => !currentInvoices.some((curr) => curr.id === inv.id),
     ),
-  ];
+  ].filter(isUnpaid);
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
@@ -67,7 +72,7 @@ const EditFleetStatementModal = ({
 
   const handleUpdate = async () => {
     if (selectedItems.length === 0) {
-      message.error("Please select at least one invoice");
+      errorToast("Please select at least one invoice");
       return;
     }
 
@@ -79,16 +84,16 @@ const EditFleetStatementModal = ({
       });
 
       if (result.type === "success") {
-        // message.success(result.message);
+        successToast(result.message || "Statement updated successfully");
         onClose();
         if (onStatementUpdated) {
           onStatementUpdated();
         }
       } else {
-        message.error(result.message || "Failed to update statement");
+        errorToast(result.message || "Failed to update statement");
       }
     } catch (error) {
-      message.error("Failed to update statement");
+      errorToast("Failed to update statement");
     } finally {
       setLoading(false);
     }
@@ -98,13 +103,18 @@ const EditFleetStatementModal = ({
     onClose();
   };
 
-  const isAllSelected = selectedItems.length === allInvoices.length;
+  // ✅ Fixed: use `invoices.length` instead of `allInvoices.length`
+  const isAllSelected =
+    selectedItems.length === invoices.length && invoices.length > 0;
   const isIndeterminate =
-    selectedItems.length > 0 && selectedItems.length < allInvoices.length;
+    selectedItems.length > 0 && selectedItems.length < invoices.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[80vh] w-[95vw] max-w-4xl flex-col overflow-hidden sm:w-full [&>button]:hidden">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="flex max-h-[80vh] w-[95vw] max-w-4xl flex-col overflow-hidden sm:w-full [&>button]:hidden"
+      >
         <DialogHeader>
           <DialogTitle>
             <FleetSubHeading text="Edit Fleet Statement" />
@@ -112,7 +122,7 @@ const EditFleetStatementModal = ({
         </DialogHeader>
 
         {/* Table Container with Scroll */}
-        <div className="thin-scrollbar flex-1 overflow-y-auto scroll-smooth">
+        <div className="flex-1 overflow-y-auto scroll-smooth">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-background">
               <tr className="h-10">
@@ -143,7 +153,7 @@ const EditFleetStatementModal = ({
                   key={invoice.id}
                   className={cn(
                     "cursor-pointer rounded-md border py-3",
-                    index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                    index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                   )}
                 >
                   <td className="px-3 py-3">
@@ -154,7 +164,7 @@ const EditFleetStatementModal = ({
                       }
                     />
                   </td>
-                  <td className="border-b px-4 py-2 text-left text-[#6571FF]">
+                  <td className="border-b px-4 py-2 text-left text-primary">
                     <InvoiceModal
                       invoiceId={invoice?.id}
                       buttonChild={<button>{invoice?.id}</button>}
@@ -201,9 +211,8 @@ const EditFleetStatementModal = ({
               Cancel
             </button>
             <button
-              className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={handleUpdate}
-              // disabled={selectedItems.length === 0 || loading}
               disabled={loading}
             >
               {loading ? "Updating..." : "Update"}

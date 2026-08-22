@@ -337,7 +337,7 @@ export function TimeInput({
             )}
           >
             <div className="grid grid-cols-3 gap-1 p-2">
-              <div className="thin-scrollbar h-[200px] overflow-y-auto">
+              <div className="h-[200px] overflow-y-auto">
                 {hours.map((hour) => {
                   // Check if the hour should be completely disabled
                   const isDisabled = shouldDisableHour(hour);
@@ -349,7 +349,7 @@ export function TimeInput({
                       className={cn(
                         "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                         isSelected("hour", hour) &&
-                          "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                          "bg-primary text-white hover:bg-primary",
                         isDisabled &&
                           "cursor-not-allowed text-gray-300 hover:bg-background",
                       )}
@@ -493,7 +493,7 @@ export function TimeInput({
                   );
                 })}
               </div>
-              <div className="thin-scrollbar h-[200px] overflow-y-auto">
+              <div className="h-[200px] overflow-y-auto">
                 {minutes.map((minute) => {
                   const [hours = "12", _, period = "AM"] = (
                     formatTo12Hour(value) || "12:00 AM"
@@ -521,7 +521,7 @@ export function TimeInput({
                           className={cn(
                             "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                             isSelected("minute", minute) &&
-                              "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                              "bg-primary text-white hover:bg-primary",
                             "cursor-not-allowed text-gray-300 hover:bg-background",
                           )}
                         >
@@ -556,7 +556,7 @@ export function TimeInput({
                       className={cn(
                         "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                         isSelected("minute", minute) &&
-                          "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                          "bg-primary text-white hover:bg-primary",
                         isDisabled &&
                           "cursor-not-allowed text-gray-300 hover:bg-background",
                       )}
@@ -605,7 +605,7 @@ export function TimeInput({
                       className={cn(
                         "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                         isSelected("period", period) &&
-                          "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                          "bg-primary text-white hover:bg-primary",
                         isDisabled &&
                           "cursor-not-allowed text-gray-300 hover:bg-background",
                       )}

@@ -1,5 +1,6 @@
 "use client";
 
+import AppointmentTitleSelectAndAdd from "@/components/appointment/AppointmentTitleSelectAndAdd";
 import {
   Dialog,
   DialogClose,
@@ -11,7 +12,6 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { formatTime } from "@/utils/taskAndActivity";
-import AppointmentTitleSelectAndAdd from "@/components/appointment/AppointmentTitleSelectAndAdd";
 
 import { SelectClient } from "@/components/Lists/SelectClient";
 import { SelectVehicle } from "@/components/Lists/SelectVehicle";
@@ -19,17 +19,16 @@ import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { cn } from "@/lib/cn";
-import { Select } from "antd";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import type {
   Appointment,
   Client,
-  Column,
   EmailTemplate,
   User,
   Vehicle,
 } from "@prisma/client";
+import { Select } from "antd";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -37,16 +36,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // @ts-ignore
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import getDataForNewAppointment from "@/actions/pipelines/getDataForNewAppointment";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { Reminder } from "@/app/(dashboard)/dashboard/task-v1/[type]/components/appointment/Reminder";
 import Avatar from "@/components/Avatar";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
-import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import { Calendar1, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 enum Tab {
   Schedule = 0,
@@ -80,7 +79,7 @@ export function NewAppointmentPipeline({
   }) => void;
   onUpdateAppointmentInLead?: (
     appointment: Appointment,
-    columnInfo: { leadId: number; columnId: number }
+    columnInfo: { leadId: number; columnId: number },
   ) => void;
   // settings: CalendarSettings;
   // employees: User[];
@@ -93,7 +92,7 @@ export function NewAppointmentPipeline({
   const { data: newAppointmentData } = useServerGet(
     getDataForNewAppointment,
     clientId,
-    vehicleId
+    vehicleId,
   );
 
   const { showError } = useFormErrorStore();
@@ -101,7 +100,7 @@ export function NewAppointmentPipeline({
     (value: boolean) => {
       value ? open("ADD_TASK") : close();
     },
-    [open, close]
+    [open, close],
   );
   const { estimates } = useListsStore();
 
@@ -109,7 +108,7 @@ export function NewAppointmentPipeline({
   const [title, setTitle] = useState<string>("");
 
   const [date, setDate] = useState<string | undefined>(
-    moment().toISOString().split("T")[0]
+    moment().toISOString().split("T")[0],
   );
   const [startTime, setStartTime] = useState("00:00");
   const [endTime, setEndTime] = useState("00:00");
@@ -118,10 +117,10 @@ export function NewAppointmentPipeline({
   const [allDay, setAllDay] = useState(false);
 
   const [client, setClient] = useState<Client | null>(
-    newAppointmentData?.client ? newAppointmentData.client : null
+    newAppointmentData?.client ? newAppointmentData.client : null,
   );
   const [vehicle, setVehicle] = useState<Vehicle | null>(
-    newAppointmentData?.vehicle ? newAppointmentData.vehicle : null
+    newAppointmentData?.vehicle ? newAppointmentData.vehicle : null,
   );
   const [draft, setDraft] = useState<string | null>(null);
   const [draftEstimates, setDraftEstimates] = useState<string[]>([]);
@@ -233,7 +232,7 @@ export function NewAppointmentPipeline({
     if (estimates) {
       // filter all estimates where clientId is client.id
       const filteredEstimates = estimates.filter(
-        (estimate) => estimate.clientId === client?.id
+        (estimate) => estimate.clientId === client?.id,
       );
       // map the filtered estimates to get the id
       const estimateIds = filteredEstimates.map((estimate) => estimate.id);
@@ -252,7 +251,7 @@ export function NewAppointmentPipeline({
 
       if (date && (!startTime || !endTime)) {
         return errorToast(
-          "Start time and End time are required when a date is selected!"
+          "Start time and End time are required when a date is selected!",
         );
       }
 
@@ -262,6 +261,19 @@ export function NewAppointmentPipeline({
         return errorToast("No reminder template is selected");
       }
 
+      // An enabled reminder with no scheduled times would silently send
+      // nothing, so require at least one time/date pair to be added.
+      if (
+        client &&
+        reminderTemplateStatus &&
+        reminderTemplate &&
+        times.length === 0
+      ) {
+        return errorToast(
+          "Add at least one reminder time and date, or turn the reminder off.",
+        );
+      }
+
       if (
         client &&
         reminderTemplateStatus &&
@@ -269,7 +281,7 @@ export function NewAppointmentPipeline({
         !company?.timezone
       ) {
         return errorToast(
-          "Set company timezone in Settings > Business Profile to send client reminders."
+          "Set company timezone in Settings > Business Profile to send client reminders.",
         );
       }
 
@@ -441,7 +453,7 @@ export function NewAppointmentPipeline({
     // data.reset();
     setTimeout(() => {
       router.push(
-        `${pathname}?view=pipelines&clientId=${clientId}${params.get("details") ? "&chat=true&details=true" : ""} `
+        `${pathname}?view=pipelines&clientId=${clientId}${params.get("details") ? "&chat=true&details=true" : ""} `,
       );
     }, 500);
   };
@@ -460,7 +472,7 @@ export function NewAppointmentPipeline({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -577,7 +589,7 @@ export function NewAppointmentPipeline({
           employee.employeeType === "Sales" &&
           !assignedUsers.find((user) => user.id === employee.id)
         );
-      }
+      },
     );
     setFilteredSales(filteredSalesPersons);
 
@@ -587,7 +599,7 @@ export function NewAppointmentPipeline({
           employee.employeeType === "Technician" &&
           !assignedUsers.find((user) => user.id === employee.id)
         );
-      }
+      },
     );
     setFilteredTechnicians(filteredTechnicians);
   }, [newAppointmentData, assignedUsers]);
@@ -643,7 +655,7 @@ export function NewAppointmentPipeline({
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Schedule && "bg-background"
+                tab === Tab.Schedule && "bg-background",
               )}
               onClick={() => setTab(Tab.Schedule)}
             >
@@ -655,7 +667,7 @@ export function NewAppointmentPipeline({
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Reminder && "bg-background"
+                tab === Tab.Reminder && "bg-background",
               )}
               onClick={() => setTab(Tab.Reminder)}
             >
@@ -665,13 +677,13 @@ export function NewAppointmentPipeline({
                 fill="currentColor"
                 className="h-6 w-6 inline mr-2"
                 stroke="currentColor"
-                stroke-width="0.41600000000000004"
+                strokeWidth="0.41600000000000004"
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   {" "}
@@ -796,7 +808,7 @@ export function NewAppointmentPipeline({
                       <button
                         onClick={() => {
                           let filteredAssignedUser = assignedUsers.filter(
-                            (assignedUser) => user.id != assignedUser.id
+                            (assignedUser) => user.id != assignedUser.id,
                           );
                           setAssignedUsers(filteredAssignedUser);
                         }}
@@ -883,7 +895,7 @@ export function NewAppointmentPipeline({
                       <button
                         onClick={() => {
                           let filteredAssignedUser = assignedUsers.filter(
-                            (assignedUser) => user.id != assignedUser.id
+                            (assignedUser) => user.id != assignedUser.id,
                           );
                           setAssignedUsers(filteredAssignedUser);
                         }}
@@ -966,7 +978,7 @@ export function NewAppointmentPipeline({
               openState={[draftOpen, setDraftOpen]}
               newButton={
                 <button
-                  className="text-[#6571FF] disabled:text-zinc-400"
+                  className="text-primary disabled:text-zinc-400"
                   onClick={() => {
                     setDraft(customAlphabet("1234567890", 10)());
                     setDraftOpen(false);
@@ -980,10 +992,10 @@ export function NewAppointmentPipeline({
               items={draftEstimates}
               selectedItem={draft}
               setSelectedItem={setDraft}
-              displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
+              displayList={(item) => <p className="text-primary">{item}</p>}
               onSearch={(search) => {
                 return draftEstimates.filter((draft) =>
-                  draft.toLowerCase().includes(search.toLowerCase())
+                  draft.toLowerCase().includes(search.toLowerCase()),
                 );
               }}
             />
@@ -1085,7 +1097,7 @@ export function NewAppointmentPipeline({
             </button>
           </DialogClose>
           <Submit
-            className="rounded-md border bg-[#6571FF] px-4 py-1 text-white"
+            className="rounded-md border bg-primary px-4 py-1 text-white"
             formAction={handleSubmit}
           >
             Save

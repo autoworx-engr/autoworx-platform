@@ -1,13 +1,13 @@
 "use client";
 
 import { deleteEmployee } from "@/actions/employee/delete";
+import { errorToast, successToast } from "@/lib/toast";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
 import { X } from "lucide-react";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
-import { errorToast, successToast } from "@/lib/toast";
 
 export default function DeleteEmployee({ employee }: { employee: User }) {
   const { dateRange, search, type, currentPage, pageSize } =
@@ -41,6 +41,7 @@ export default function DeleteEmployee({ employee }: { employee: User }) {
       description="Are you sure to delete this employee?"
       okText="Yes"
       cancelText="No"
+      placement="topLeft"
       onConfirm={() => {
         handleEmployeeDelete(employee?.id);
       }}

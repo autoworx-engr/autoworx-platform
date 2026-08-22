@@ -3,6 +3,7 @@
 .vscode/
 .prettierignore
 
+graphify-out
 # dependencies
 /node_modules
 /.pnp
@@ -66,3 +67,8 @@ __MACOSX/
 bun.lock
 .pnpm-lock.yaml
 pnpm-workspace.yaml
+.claude
+
+
+CLAUDE.md
+.memsearch

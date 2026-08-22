@@ -1,9 +1,9 @@
 "use client";
 
 import { getSmartReplies } from "@/actions/communication/ai-reply/smart-reply";
-import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, MessageSquare, Wand2 } from "lucide-react";
+import { ArrowDown, MessageSquare, Sparkles, Wand2, X } from "lucide-react";
 import * as React from "react";
 
 type Props = {
@@ -12,16 +12,7 @@ type Props = {
   onPick: (text: string) => void;
   draft?: string;
   context?: "sms" | "email";
-};
-
-export type Permission = {
-  id: number;
-  companyId: number;
-  permission_name: string;
-  title: string;
-  enabled: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  isAllowed?: boolean;
 };
 
 const suggestionVariants = {
@@ -47,36 +38,53 @@ const suggestionVariants = {
   },
 };
 
-
 export default function SmartReplyBar({
   clientId,
   companyId,
   onPick,
   draft,
   context = "sms",
+  isAllowed = true,
 }: Props) {
   const [loading, setLoading] = React.useState<null | "suggest" | "enhance">(
-    null
+    null,
   );
   const [items, setItems] = React.useState<{ text: string }[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isClosing, setIsClosing] = React.useState(false);
-  const { data, isFetching } = useGetCompanyPermissions(companyId);
-  // if feature is not enabled, don't show the smart reply bar
-  const permission = data?.data?.find(
-    (perm: Permission) => perm?.permission_name === "aiSmartReplies"
-  );
+  const [showUpgradeBanner, setShowUpgradeBanner] = React.useState(false);
 
-  if (!permission?.enabled) {
-    return null;
+  if (!isAllowed) {
+    return (
+      <div className="flex w-full flex-col items-end gap-2">
+        <button
+          type="button"
+          onClick={() => setShowUpgradeBanner((prev) => !prev)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[#8B5CF6] text-white shadow transition hover:opacity-90"
+          aria-label="Show AI Smart Replies upgrade info"
+          title="AI Smart Replies requires an upgrade"
+        >
+          {showUpgradeBanner ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
+        </button>
+
+        {showUpgradeBanner && (
+          <div className="w-full">
+            <UpgradePlanBanner
+              title="AI Smart Replies is not available on your plan"
+              description="Upgrade to generate and enhance AI-powered reply suggestions in your conversations."
+              ctaLabel="Upgrade Plan"
+            />
+          </div>
+        )}
+      </div>
+    );
   }
 
   const normalize = (res: unknown) => {
-    // Debug: Check what we're actually receiving
-    console.log("[SmartReply] Received response:", res);
-    console.log("[SmartReply] Response type:", typeof res);
-
     // If it's a string, try to parse it as JSON
     if (typeof res === "string") {
       try {
@@ -95,8 +103,8 @@ export default function SmartReplyBar({
     // Normal array handling
     return Array.isArray(res)
       ? res
-        .filter((x: any) => x?.text)
-        .map((x: any) => ({ text: String(x.text) }))
+          .filter((x: any) => x?.text)
+          .map((x: any) => ({ text: String(x.text) }))
       : [];
   };
 
@@ -180,7 +188,9 @@ export default function SmartReplyBar({
             className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60"
           >
             <MessageSquare className="h-4 w-4" />
-            {loading === "suggest" ? "Generating…" : "Generate AI Smart Replies"}
+            {loading === "suggest"
+              ? "Generating…"
+              : "Generate AI Smart Replies"}
           </button>
 
           <button
@@ -194,16 +204,18 @@ export default function SmartReplyBar({
             {loading === "enhance" ? "Enhancing…" : "Enhance draft"}
           </button>
         </div>
-        {
-          items.length > 0 &&
+        {items.length > 0 && (
           <button
             type="button"
             onClick={handleToggleSuggestions}
-            className={` bg-white rounded-full p-1 transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`}
+            className={` bg-white rounded-full p-1 transition-transform duration-300 ${isOpen ? "" : "rotate-180"}`}
           >
-            <ArrowDown strokeWidth={2.5} className="mx-auto h-5 w-5 text-slate-500" />
+            <ArrowDown
+              strokeWidth={2.5}
+              className="mx-auto h-5 w-5 text-slate-500"
+            />
           </button>
-        }
+        )}
       </div>
 
       {error && <span className="text-xs text-red-500">{error}</span>}

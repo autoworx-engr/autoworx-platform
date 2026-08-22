@@ -1,7 +1,6 @@
 import { getNotificationSettingsByCategory } from "@/actions/settings/notificationSettings";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { errorToast } from "@/lib/toast";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { NotificationSection } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import NotificationTableRow from "./NotificationTableRow";
@@ -11,25 +10,25 @@ type TProps = {
 };
 
 export default function CategoryItems({ category }: TProps) {
-  const user = useGetCurrentUser();
   const {
     data: notificationSetting,
     isLoading,
     error,
   } = useQuery({
     queryKey: ["category", category],
-    queryFn: () =>
-      getNotificationSettingsByCategory({
-        section: category,
-        userId: Number(user?.id),
-        companyId: user?.companyId as number,
-      }),
+    queryFn: () => getNotificationSettingsByCategory(category),
   });
 
   let content = null;
 
   if (isLoading && !error) {
-    return;
+    return (
+      <div className="w-full overflow-auto px-5 py-3 animate-pulse">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="mb-3 h-8 rounded bg-gray-100" />
+        ))}
+      </div>
+    );
   } else if (!isLoading && error) {
     const formattedError = errorHandler(error);
     errorToast(formattedError.message);
@@ -41,10 +40,13 @@ export default function CategoryItems({ category }: TProps) {
     notificationSetting?.length > 0
   ) {
     content = notificationSetting?.map((setting) => (
-      <NotificationTableRow isPayment={category === "PAYMENT"} key={setting.id} setting={setting} />
+      <NotificationTableRow
+        isPayment={category === "PAYMENT"}
+        key={setting.id}
+        setting={setting}
+      />
     ));
   }
-
 
   return (
     <div className="w-full overflow-auto px-5 py-3">

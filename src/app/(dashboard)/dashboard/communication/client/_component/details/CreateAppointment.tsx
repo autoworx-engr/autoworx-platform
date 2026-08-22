@@ -4,10 +4,11 @@ import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCre
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
 import { Appointment, Lead } from "@prisma/client";
+import { Plus } from "lucide-react";
 
 export default function CreateAppointment({ clientId }: { clientId: number }) {
   const handleAppointmentCreate = async (
-    newAppointment: Appointment & { lead: Lead | null }
+    newAppointment: Appointment & { lead: Lead | null },
   ) => {
     try {
       if (newAppointment?.lead?.columnId && newAppointment?.lead?.companyId) {
@@ -29,16 +30,14 @@ export default function CreateAppointment({ clientId }: { clientId: number }) {
       triggerIcon={
         <button
           className={cn(
-            "group relative mt-2 mb-2 inline-flex items-center justify-center gap-1.5",
-            "rounded-full border border-zinc-300 bg-white/80 px-5 py-2 text-sm font-medium text-zinc-700 shadow-sm",
-            "backdrop-blur transition-all duration-200 ease-in-out",
-            "hover:border-emerald-500 hover:text-emerald-600 hover:shadow-md",
-            "active:scale-[0.98]",
-            "focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            "inline-flex w-full items-center justify-center gap-1.5",
+            "rounded-lg border border-[#CDE4E6] bg-[#CDE4E6] px-4 py-2.5 text-xs font-semibold text-[#006D77]",
+            "transition hover:bg-[#b9d9dc] active:scale-[0.98]",
+            "focus:outline-none focus:ring-2 focus:ring-[#CDE4E6] 2xl:text-sm",
           )}
         >
-          <span>Set Appointment</span>
-          <span className="text-base leading-none">+</span>
+          <Plus className="h-4 w-4" />
+          <span>Appointment</span>
         </button>
       }
       clientId={clientId}

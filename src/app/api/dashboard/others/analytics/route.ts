@@ -273,6 +273,7 @@ export async function GET(req: NextRequest) {
           date: "asc",
         },
         ...fetchWithAppointment,
+        take: 20,
       });
     } else {
       // Logic for Technician or Other role
@@ -299,6 +300,7 @@ export async function GET(req: NextRequest) {
           date: "asc",
         },
         ...fetchWithAppointment,
+        take: 20,
       });
     }
 
@@ -321,6 +323,7 @@ export async function GET(req: NextRequest) {
 
     tasks = await db.task.findMany({
       where: whereCondition,
+      take: 20,
     });
 
     totalTasks = await db.task.count({

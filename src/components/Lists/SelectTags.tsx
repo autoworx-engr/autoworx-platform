@@ -2,10 +2,13 @@
 
 import newTag from "@/actions/tag/newTag";
 import useOutsideClick from "@/hooks/useOutsideClick";
+import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { Tag } from "@prisma/client";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DropdownMenu,
@@ -18,8 +21,7 @@ import {
 import FormError from "../FormError";
 import Submit from "../Submit";
 import { SelectProps } from "./select-props";
-import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
-import { cn } from "@/lib/cn";
+
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
 export function SelectTags({
@@ -62,17 +64,13 @@ export function SelectTags({
   }, [dropdownsOpen]);
 
   return (
-    <div className="flex flex-col max-w-sm">
+    <div className="flex flex-col max-w-sm sm:max-w-full">
       <input
         type="hidden"
         name={name}
         value={tags.map((x) => x.id).join(",")}
       />
-      <DropdownMenu
-        open={open}
-        onOpenChange={(open) => {
-        }}
-      >
+      <DropdownMenu open={open} onOpenChange={(open) => {}}>
         {tags && tags.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2 max-w-[260px]">
             {tags.map((tag, i) => (
@@ -92,7 +90,14 @@ export function SelectTags({
                   }}
                   className="ml-1.5 transition-transform hover:scale-110"
                 >
-                  <div className="rounded-full bg-white/20 p-0.5 hover:bg-white/40">
+                  <div
+                    className={cn(
+                      "rounded-full p-0.5",
+                      tag.bgColor
+                        ? "bg-white/20 hover:bg-white/40"
+                        : "border border-slate-200 hover:bg-slate-100",
+                    )}
+                  >
                     <X size={10} strokeWidth={4} />
                   </div>
                 </button>
@@ -126,12 +131,12 @@ export function SelectTags({
               }
 
               setOpen(true);
-              setTimeout(() => {
-                searchRef.current?.focus();
-              }, 50);
+              // setTimeout(() => {
+              //   searchRef.current?.focus();
+              // }, 50);
             }
           }}
-          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-lg shadow-sm shadow-black/20 bg-gray-100/40 px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-[10px] px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
           <ChevronDown size={18} className="text-slate-400" />
@@ -142,7 +147,7 @@ export function SelectTags({
             side="bottom"
             align="start"
             sideOffset={8}
-            className="z-50 w-full min-w-[240px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
+            className="z-50 w-full min-w-[240px] max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
           >
             <DropdownMenuGroup>
               {/* Search Header */}
@@ -155,7 +160,7 @@ export function SelectTags({
                   ref={searchRef}
                   type="text"
                   placeholder="Search tags..."
-                  className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+                  className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   onKeyDown={(e) => e.stopPropagation()}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -171,13 +176,15 @@ export function SelectTags({
               </div>
 
               {/* Tag List */}
-              <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
+              <div className="my-1 max-h-[200px] overflow-y-auto px-2">
                 {tagList
                   .filter((x) => !tagIds.has(x.id))
                   .filter((x) =>
                     searchQuery
-                      ? x.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      : true
+                      ? normalizeSearch(x.name).includes(
+                          normalizeSearch(searchQuery),
+                        )
+                      : true,
                   )
                   .map((tag) => (
                     <DropdownMenuItem
@@ -206,7 +213,7 @@ export function SelectTags({
                         style={{
                           backgroundColor: tag.bgColor,
                           color: tag.textColor,
-                          borderRadius: '6px'
+                          borderRadius: "6px",
                         }}
                       >
                         <span>{tag.name}</span>
@@ -255,8 +262,8 @@ export function SelectTags({
                       className={cn(
                         "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                         selectedColor?.textColor === color.textColor
-                          ? "ring-2 ring-[#6571FF] ring-offset-1"
-                          : "ring-1 ring-transparent"
+                          ? "ring-2 ring-primary ring-offset-1"
+                          : "ring-1 ring-transparent",
                       )}
                     >
                       Aa
@@ -312,7 +319,7 @@ function QuickAddForm({
             type="text"
             required
             placeholder="New tag name..."
-            className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+            className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-slate-400"
             onKeyDown={(e) => e.stopPropagation()}
           />
         </div>
@@ -327,7 +334,7 @@ function QuickAddForm({
         </button>
 
         <Submit
-          className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+          className="h-10 shrink-0 rounded-lg bg-primary px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
           formAction={handleSubmit}
         >
           Quick Add

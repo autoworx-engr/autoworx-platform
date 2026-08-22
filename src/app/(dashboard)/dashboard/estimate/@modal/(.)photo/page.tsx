@@ -1,16 +1,18 @@
 "use client";
+import { use } from "react";
 
 import ComponentsLightbox from "@/components/common/LightBox";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     urls?: string;
     url?: string;
     index?: string;
-  };
+  }>;
 };
 
-export default function InvoiceImageLoad({ searchParams }: TProps) {
+export default function InvoiceImageLoad(props: TProps) {
+  const searchParams = use(props.searchParams);
   let imageSlides: any = [];
   let startIndex = 0;
 

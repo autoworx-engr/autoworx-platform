@@ -4,6 +4,8 @@ import { createTwilioCredentials } from "@/actions/communication/client/createTw
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast, successToast } from "@/lib/toast";
+import { useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
 import React, {
   ChangeEvent,
   FormEvent,
@@ -11,7 +13,6 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { useParams } from "next/navigation";
 
 type FormData = {
   companyId: number;
@@ -20,26 +21,35 @@ type FormData = {
   apiKeySid: string;
   apiKeySecret: string;
   phoneNumberSid: string;
-  notifyServiceSid?: string;
-  voipPushCredentialSid?: string;
+  fcmPushCredentialSid?: string;
+  apnPushCredentialSid?: string;
 };
 
 const SmsGetwayForm: React.FC = () => {
-  const params = useParams<{ id: string }>();
-  const arg = useMemo(() => ({ companyId: Number(params.id) }), []);
+  const { data: session } = useSession();
+  const params = useParams<{ id?: string }>();
+  const routeCompanyId = params?.id ? Number(params.id) : NaN;
+  const companyId = Number.isFinite(routeCompanyId)
+    ? routeCompanyId
+    : (session?.user?.companyId ?? 0);
 
-  const { data: twilioCredentials } = useServerGet(getTwilioCredentials, arg);
+  const twilioArg = useMemo(() => ({ companyId }), [companyId]);
+  const { data: twilioCredentials } = useServerGet(
+    getTwilioCredentials,
+    twilioArg,
+  );
 
   const [formData, setFormData] = useState<FormData>({
-    companyId: Number(params.id),
+    companyId,
     accountSid: twilioCredentials?.accountSid ?? "",
     phoneNumber: twilioCredentials?.phoneNumber ?? "",
     apiKeySid: twilioCredentials?.apiKeySid ?? "",
     apiKeySecret: twilioCredentials?.apiKeySecret ?? "",
     phoneNumberSid: twilioCredentials?.phoneNumberSid ?? "",
-    notifyServiceSid: (twilioCredentials as any)?.notifyServiceSid ?? "",
-    voipPushCredentialSid:
-      (twilioCredentials as any)?.voipPushCredentialSid ?? "",
+    fcmPushCredentialSid:
+      (twilioCredentials as any)?.fcmPushCredentialSid ?? "",
+    apnPushCredentialSid:
+      (twilioCredentials as any)?.apnPushCredentialSid ?? "",
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -76,11 +86,7 @@ const SmsGetwayForm: React.FC = () => {
     // }
 
     try {
-      //   call api
-      // console.log("formData........................", formData);
-      let res = await createTwilioCredentials(formData);
-
-      console.log("response from twiloo", res);
+      const res = await createTwilioCredentials(formData);
       if (res.success) {
         successToast("Twilio Credentials Updated Successfully");
       } else {
@@ -100,15 +106,16 @@ const SmsGetwayForm: React.FC = () => {
   };
   useEffect(() => {
     setFormData({
-      companyId: Number(params.id),
+      companyId,
       accountSid: twilioCredentials?.accountSid ?? "",
       phoneNumber: twilioCredentials?.phoneNumber ?? "",
       apiKeySid: twilioCredentials?.apiKeySid ?? "",
       apiKeySecret: twilioCredentials?.apiKeySecret ?? "",
       phoneNumberSid: twilioCredentials?.phoneNumberSid ?? "",
-      notifyServiceSid: (twilioCredentials as any)?.notifyServiceSid ?? "",
-      voipPushCredentialSid:
-        (twilioCredentials as any)?.voipPushCredentialSid ?? "",
+      fcmPushCredentialSid:
+        (twilioCredentials as any)?.fcmPushCredentialSid ?? "",
+      apnPushCredentialSid:
+        (twilioCredentials as any)?.apnPushCredentialSid ?? "",
     });
   }, [twilioCredentials]);
 
@@ -201,38 +208,38 @@ const SmsGetwayForm: React.FC = () => {
           />
         </div>
 
-        {/* Notify Service SID (optional, per subaccount) */}
+        {/* FCM Push Credential SID (optional, per subaccount) */}
         <div className="mb-4">
           <label
-            htmlFor="notifyServiceSid"
+            htmlFor="fcmPushCredentialSid"
             className="block text-sm font-medium text-gray-700"
           >
-            Notify Service SID
+            FCM Push Credential SID (Android)
           </label>
           <input
             type="text"
-            id="notifyServiceSid"
-            name="notifyServiceSid"
+            id="fcmPushCredentialSid"
+            name="fcmPushCredentialSid"
             onChange={handleChange}
-            value={formData.notifyServiceSid || ""}
+            value={formData.fcmPushCredentialSid || ""}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           />
         </div>
 
-        {/* VoIP Push Credential SID (optional, per subaccount) */}
+        {/* APN Push Credential SID (optional, per subaccount) */}
         <div className="mb-4">
           <label
-            htmlFor="voipPushCredentialSid"
+            htmlFor="apnPushCredentialSid"
             className="block text-sm font-medium text-gray-700"
           >
-            VoIP Push Credential SID
+            APN Push Credential SID (iOS)
           </label>
           <input
             type="text"
-            id="voipPushCredentialSid"
-            name="voipPushCredentialSid"
+            id="apnPushCredentialSid"
+            name="apnPushCredentialSid"
             onChange={handleChange}
-            value={formData.voipPushCredentialSid || ""}
+            value={formData.apnPushCredentialSid || ""}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           />
         </div>
@@ -296,7 +303,7 @@ const SmsGetwayForm: React.FC = () => {
           <button
             disabled={isSubmitDisabled}
             type="submit"
-            className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500"} `}
+            className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-primary hover:bg-indigo-600 focus:ring-blue-500"} `}
           >
             Save
           </button>

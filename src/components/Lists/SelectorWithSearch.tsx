@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
+import { slimInputClassName } from "@/components/SlimInput";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/cn";
 import { sentenceCase } from "change-case";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type SelectorProps = {
   label?: ReactNode;
@@ -67,11 +69,11 @@ export function SelectorWithSearch({
   }, []);
 
   // Focus search input when dropdown opens
-  useEffect(() => {
-    if (isOpen && isSearch && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen, isSearch]);
+  // useEffect(() => {
+  //   if (isOpen && isSearch && searchInputRef.current) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [isOpen, isSearch]);
 
   const normalizeOptions = () => {
     if (typeof options?.[0] === "string" || typeof options?.[0] === "number") {
@@ -87,8 +89,8 @@ export function SelectorWithSearch({
 
   const filteredOptions = searchTerm
     ? normalizedOptions.filter((opt) =>
-      opt.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
     : normalizedOptions;
 
   const handleSelect = (id: string) => {
@@ -121,43 +123,44 @@ export function SelectorWithSearch({
       ?.title || (selectedValue ? selectedValue : "");
 
   return (
-    <div className={cn("block", rootClassName)} ref={dropdownRef}>
-      <div
-        className={cn(
-          "mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200",
-          labelClassName
-        )}
+    <div
+      className={cn("group flex flex-col gap-1.5", rootClassName)}
+      ref={dropdownRef}
+    >
+      <Label
+        htmlFor={name}
+        className={cn("flex items-center gap-1 text-base", labelClassName)}
       >
         {label ?? sentenceCase(name)}
-        {required && <span className="text-[#E9405F]"> *</span>}
-      </div>
+        {required && <span className="font-bold text-destructive">*</span>}
+      </Label>
       <div className="relative">
         <button
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm leading-6 text-slate-700 dark:text-slate-200 outline-none transition-all duration-200",
-            "focus:ring-2 focus:ring-[#6571FF]/30 focus:border-[#6571FF] hover:border-[#6571FF] hover:shadow-md",
-            error && "border-red-500 focus:border-red-500 focus:ring-red-200",
-            disabled && "cursor-not-allowed bg-slate-100 text-slate-400 opacity-70 dark:bg-slate-800"
+            slimInputClassName,
+            "items-center justify-between text-left",
+            error &&
+              "border-destructive text-destructive focus-visible:ring-destructive/30",
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
           disabled={disabled}
         >
-          <span className={selectedLabel ? "" : "text-slate-400"}>
+          <span className={selectedLabel ? "" : "text-muted-foreground"}>
             {selectedLabel || placeholder}
           </span>
-          <ChevronDown className="text-slate-500 dark:text-slate-400" />
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
         </button>
 
         {isOpen && (
-          <div className="thin-scrollbar absolute z-20 mt-2 w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg shadow-slate-200/60 dark:shadow-black/30">
+          <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg shadow-slate-200/60 dark:shadow-black/30">
             {isSearch && (
               <div className="sticky top-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2">
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/30"
+                  className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="Search..."
                   value={searchTerm}
                   required={required}
@@ -175,7 +178,7 @@ export function SelectorWithSearch({
                     className={cn(
                       "cursor-pointer px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800",
                       selectedValue === opt?.id.toString() &&
-                      "bg-[#6571FF]/10 text-[#6571FF] dark:text-[#8ea0ff]"
+                        "bg-primary/10 text-primary dark:text-[#8ea0ff]",
                     )}
                     onClick={() => handleSelect(opt?.id.toString())}
                   >
@@ -184,14 +187,17 @@ export function SelectorWithSearch({
                 ))
               ) : searchTerm ? (
                 <div
-                  className="cursor-pointer px-3 py-2 text-sm text-[#6571FF] hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex cursor-pointer items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary hover:bg-slate-100 dark:hover:bg-slate-800"
                   onClick={() => handleSelect(searchTerm)}
                 >
-                  "{searchTerm}"
+                  <Plus size={14} strokeWidth={2.5} />
+                  Add "{searchTerm}"
                 </div>
               ) : (
                 <div className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">
-                  No matching options
+                  {searchTerm
+                    ? `No matches found for "${searchTerm}". Press Enter to create it.`
+                    : "No matching options found. Type a new value and select it to create."}
                 </div>
               )}
             </div>
@@ -208,7 +214,12 @@ export function SelectorWithSearch({
           </div>
         )}
       </div>
-      {error && <div className="mt-1 px-2 text-xs text-red-500">{error}</div>}
+      {error && (
+        <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
+          <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
+          <span className="text-xs font-medium text-destructive">{error}</span>
+        </div>
+      )}
     </div>
   );
 }

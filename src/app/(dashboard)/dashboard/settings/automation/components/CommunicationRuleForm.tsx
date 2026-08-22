@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
 import Selector from "./Selector";
 import { Box, Paper, Typography, Switch } from "@mui/material";
 import MultiSelect from "./MultiSelect";
@@ -67,7 +67,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   company,
   twilio,
 }) => {
-  // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     companyId: null,
     title: "",
@@ -91,7 +91,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   } = usePipelineStagesStore();
 
   const actionOptions = stages.filter(
-    (stage) => !formData.stages?.includes(stage.id)
+    (stage) => !formData.stages?.includes(stage.id),
   );
 
   const [activeTemplate, setActiveTemplate] = useState<"SMS" | "EMAIL">("SMS");
@@ -100,21 +100,21 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateCommunicationAutomationRule();
   const { data, isLoading, isFetching } = useFindOneCommunicationAutomationRule(
-    Number(id)
+    Number(id),
   );
   const [error, setError] = useState<Record<string, string>>({});
   const userEmail = user?.email;
   const maxLength = 300;
   const { length, isLimitExceeded } = useCharacterLimit(
     formData?.emailBody! || formData?.smsBody!,
-    maxLength
+    maxLength,
   );
 
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id) {
         const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
-        setFormData({
+        const initialData: Rule = {
           companyId: data?.data.companyId,
           title: data?.data.title,
           stages: data?.data?.stages?.map((stage: any) => stage.columnId),
@@ -132,11 +132,13 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
             data?.data.targetColumnId == 0
               ? null
               : data?.data.targetColumnId?.toString() || null,
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
         setActiveTemplate(data?.data.templateType);
         // setLoading(false);
       } else {
-        setFormData({
+        const initialData: Rule = {
           companyId: null,
           title: "",
           stages: [],
@@ -151,7 +153,9 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
           attachments: [],
           createdBy: null,
           targetColumnId: null,
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
       }
     };
     loadData();
@@ -159,7 +163,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
 
   useEffect(() => {
     fetchStages("sales");
-  }, []);
+  }, [fetchStages]);
 
   // Handle input changes
   const handleChange = (field: keyof Rule, value: any) => {
@@ -187,6 +191,11 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
     }
   };
 
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
+
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
     setActiveTemplate(template);
@@ -200,7 +209,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   // Handle file attachment
   const handleFileAttachment = async (
     e: ChangeEvent<HTMLInputElement>,
-    type: string
+    type: string,
   ) => {
     handleFileSelection({
       event: e,
@@ -307,36 +316,53 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
       return;
     }
 
-    if (formData.timeDelay != null) {
-      const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
-      formData.timeDelay = seconds;
-    }
-    formData.targetColumnId = Number(formData.targetColumnId);
-
     try {
-      // 1. Upload all local attachments
+      // Build transformed copy first
+      const preparedData = {
+        ...formData,
+        timeDelay:
+          formData.timeDelay != null
+            ? parseTimeDelayToSeconds(formData.timeDelay)
+            : null,
+        targetColumnId:
+          formData.targetColumnId != null
+            ? Number(formData.targetColumnId)
+            : null,
+      };
 
+      // Upload attachments
       const uploadedAttachments = await uploadAllAttachments(
-        formData.attachments!
+        preparedData.attachments || [],
       );
 
-      const images = uploadedAttachments.map((img) => ({ fileUrl: img })) || [];
+      const images = uploadedAttachments.map((img) => ({
+        fileUrl: img,
+      }));
 
-      delete formData.attachments;
+      // Build final payload
       const finalData = {
-        ...formData,
+        ...preparedData,
         createdBy: userEmail,
-        companyId: companyId,
+        companyId,
         attachments: images,
       };
+
       if (isEdit && id) {
-        finalData.isPaused = false;
-        finalData.targetColumnId =
-          finalData.targetColumnId! == 0 ? null : finalData.targetColumnId;
-        updateRule({ id, companyId: companyId, data: finalData });
-        // setLoading(true);
+        const updatePayload = {
+          ...finalData,
+          isPaused: false,
+          targetColumnId:
+            finalData.targetColumnId === 0 ? null : finalData.targetColumnId,
+        };
+
+        updateRule({
+          id,
+          companyId,
+          data: updatePayload,
+        });
       } else {
         createRule(finalData);
+
         setFormData({
           companyId: null,
           title: "",
@@ -353,6 +379,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
           createdBy: null,
           targetColumnId: null,
         });
+
         setActiveTemplate("SMS");
       }
     } catch (error) {
@@ -408,7 +435,6 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                     options={stages}
                     value={formData.stages}
                     onChange={(value) => handleChange("stages", value)}
-                    // label="Stage"
                     placeholder="Select options"
                     required
                     error={error.stages}
@@ -451,12 +477,9 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   />
                   <Selector
                     name="action"
-                    // label="Action"
                     options={actionOptions}
                     value={formData.targetColumnId!}
                     onChange={(value) => handleChange("targetColumnId", value)}
-                    // error={error.targetColumnId}
-                    // disabled={loading}
                     isClear={true}
                     labelClassName="hidden"
                   />
@@ -473,7 +496,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                         will move to "
                         {
                           stages.find(
-                            (s) => s.id === Number(formData?.targetColumnId)
+                            (s) => s.id === Number(formData?.targetColumnId),
                           )?.title
                         }
                         " when the condition is met.
@@ -490,7 +513,6 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   />
                   <CustomRadioGroup
                     name="communicationType"
-                    // label="Select Communication Type"
                     value={formData.communicationType}
                     onChange={handleChange}
                     options={[
@@ -544,7 +566,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                       checked={activeTemplate === "EMAIL"}
                       onChange={() =>
                         handleTemplateToggle(
-                          activeTemplate === "SMS" ? "EMAIL" : "SMS"
+                          activeTemplate === "SMS" ? "EMAIL" : "SMS",
                         )
                       }
                     />
@@ -626,10 +648,16 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   <button
                     type="submit"
                     disabled={
-                      isCreatePending || isUpdatePending || isLimitExceeded
+                      isCreatePending ||
+                      isUpdatePending ||
+                      isLimitExceeded ||
+                      isFormUnchanged
                     }
                     className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                      isUpdatePending || isCreatePending || isLimitExceeded
+                      isUpdatePending ||
+                      isCreatePending ||
+                      isLimitExceeded ||
+                      isFormUnchanged
                         ? "cursor-not-allowed bg-indigo-300"
                         : "bg-indigo-500 hover:bg-indigo-600"
                     }`}

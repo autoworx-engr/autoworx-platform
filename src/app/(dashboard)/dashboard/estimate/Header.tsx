@@ -6,9 +6,10 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useListsStore } from "@/stores/lists";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
 import { Filter } from "./Filter";
 
 type THeaderProps = {
@@ -30,6 +31,7 @@ export default function Header({
   const router = useRouter();
   const params = useSearchParams();
   const windowWidth = window.innerWidth;
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { reset: resetEstimateCreate } = useEstimateCreateStore();
   const { reset: resetLists } = useListsStore();
@@ -48,28 +50,38 @@ export default function Header({
     router.push(newPath);
   }, 500);
 
+  const handleClearSearch = () => {
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      inputRef.current.focus();
+    }
+    setFilter({ search: "" });
+    handleSearchChange("");
+  };
+
   return (
     <div
       // className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
 
       className="mt-5 flex  gap-4 lg:flex-row lg:items-center flex-col-reverse lg:justify-between"
     >
-      <div className="min-w-full lg:min-w-[500px] flex flex-col gap-x-4 rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 md:flex-row md:items-center">
+      <div className="min-w-full lg:min-w-[500px] flex flex-row items-center gap-x-4 rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100">
         {/* Search Container */}
-        <div className="group relative flex flex-1 items-center">
+        <div className="group relative flex min-w-0 flex-1 items-center">
           <Search
             size={18}
-            className="absolute left-4 z-10 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+            className="absolute left-4 z-10 text-slate-400 transition-colors group-focus-within:text-primary"
           />
 
           <input
+            ref={inputRef}
             type="text"
             placeholder={
               isTemplate
-                ? "Search by Template ID"
-                : "Search ID, name, vehicle, email..."
+                ? "Search by Template ID, Title"
+                : "Search by ID, client, vehicle, email..."
             }
-            className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none md:max-w-[450px]"
+            className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-primary/30 outline-none md:max-w-[450px]"
             defaultValue={searchTerm || ""}
             onChange={(e) => {
               const searchValue = e.target.value;
@@ -78,17 +90,22 @@ export default function Header({
             }}
           />
 
-          {/* Subtle indicator for search activity (Optional) */}
+          {/* Clear search button */}
           {searchTerm && (
-            <div className="absolute right-3 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-[#6571FF]/10 text-[#6571FF]">
-              <div className="h-1.5 w-1.5 rounded-full bg-[#6571FF]" />
-            </div>
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              aria-label="Clear search"
+              className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              <X size={12} />
+            </button>
           )}
         </div>
 
         {/* Filter Section */}
         {!isCanned && (
-          <div className="flex items-center gap-2 border-l border-slate-100 pl-0 md:pl-4">
+          <div className="flex items-center gap-2 border-l border-slate-100 pl-3 md:pl-4">
             <Filter
               startDate={startDate}
               endDate={endDate}
@@ -106,7 +123,7 @@ export default function Header({
             href="/dashboard/estimate/create"
             className="
               flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              bg-gradient-to-r from-primary to-[#5a66ee]
               shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
               hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
               hover:-translate-y-0.5
@@ -128,7 +145,7 @@ export default function Header({
           <Link
             href="/dashboard/estimate/templates/create"
             className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              bg-gradient-to-r from-primary to-[#5a66ee]
               shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
               hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
               hover:-translate-y-0.5

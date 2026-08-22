@@ -1,12 +1,26 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import SmsMessage from "./SmsMessage";
-import { useInView } from "framer-motion";
 import useInfinitySmsQueryByClientId from "../../../_hooks/useInfinitySmsQuery";
-import Spinner from "@/components/ui/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
+import JumpToLatestButton from "@/components/JumpToLatestButton";
+import { sortMessagesChronologically } from "../../../_utils";
 
-export default function SmsBox({ clientId }: { clientId: number }) {
+export default function SmsBox({
+  clientId,
+  clientPhoto,
+}: {
+  clientId: number;
+  clientPhoto?: string | null;
+}) {
   // data
   const {
     data,
@@ -20,11 +34,16 @@ export default function SmsBox({ clientId }: { clientId: number }) {
   // flatten pages (oldest -> newest assumed in each page)
   const rawMessages = useMemo(
     () => data?.pages?.flatMap((p) => p.data) ?? [],
-    [data]
+    [data],
   );
 
-  // we want UI in chronological order top->bottom but newest at the bottom:
-  const messages = [...rawMessages].reverse();
+  // UI runs oldest -> newest top-to-bottom. Sort rather than reverse: realtime
+  // messages are prepended in arrival order, so a split reply whose segments
+  // arrive out of order would otherwise render out of order until a refetch.
+  const messages = useMemo(
+    () => sortMessagesChronologically(rawMessages),
+    [rawMessages],
+  );
 
   // scrolling
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,79 +55,53 @@ export default function SmsBox({ clientId }: { clientId: number }) {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [lastSeenId, setLastSeenId] = useState<string | number | null>(null);
 
-  // Track scroll position before loading more messages to maintain position
-  const [prevScrollHeight, setPrevScrollHeight] = useState(0);
+  // Track scroll position before loading more messages to maintain position.
+  // Must be a ref (not state) — using state caused a premature re-render that
+  // fired the restoration effect before new data arrived (scrollDiff = 0),
+  // resetting the ref to 0 so restoration never actually happened.
+  const prevScrollHeightRef = useRef(0);
+  const isLoadingOlderRef = useRef(false);
 
-  // Add state to track if component is ready for intersection observer
+  // Delay top-loading until initial autoscroll settles
   const [isReady, setIsReady] = useState(false);
 
-  const topInView = useInView(topSentinelRef, {
-    // @ts-ignore
-    root: containerRef.current, // Use container as root for intersection
-    amount: 0.1,
-    margin: "100px 0px 0px 0px", // Increased margin for earlier triggering
-  });
-
-  // Fix: Add delay and ready state check to intersection observer effect
-  useEffect(() => {
-    if (!isReady) return;
-
-    const timeoutId = setTimeout(() => {
-      if (topInView && hasNextPage && !isFetchingNextPage) {
-        // Store current scroll height before loading
-        const container = containerRef.current;
-        if (container) {
-          setPrevScrollHeight(container.scrollHeight);
-        }
-        fetchNextPage();
-      }
-    }, 100); // Small delay to ensure proper initialization
-
-    return () => clearTimeout(timeoutId);
-  }, [topInView, hasNextPage, isFetchingNextPage, fetchNextPage, isReady]);
-
-  // Maintain scroll position after loading older messages
-  useEffect(() => {
-    if (prevScrollHeight > 0 && containerRef.current) {
-      const container = containerRef.current;
-      const newScrollHeight = container.scrollHeight;
-      const scrollDiff = newScrollHeight - prevScrollHeight;
-
-      if (scrollDiff > 0) {
-        // Use setTimeout to ensure DOM has updated
-        setTimeout(() => {
-          container.scrollTop = container.scrollTop + scrollDiff;
-        }, 0);
-      }
-
-      setPrevScrollHeight(0);
+  // Restore scroll position synchronously after older messages are prepended.
+  // useLayoutEffect runs after the DOM commit but before paint — no visible
+  // jump. Keyed only on pages.length so it fires exactly once per new page.
+  useLayoutEffect(() => {
+    if (prevScrollHeightRef.current <= 0) return;
+    const container = containerRef.current;
+    if (!container) {
+      prevScrollHeightRef.current = 0;
+      return;
     }
-  }, [data?.pages?.length]); // Track pages length instead of messages length
+    const scrollDiff = container.scrollHeight - prevScrollHeightRef.current;
+    if (scrollDiff > 0) {
+      container.scrollTop = container.scrollTop + scrollDiff;
+    }
+    prevScrollHeightRef.current = 0;
+  }, [data?.pages?.length]);
 
-  // Only auto-scroll to bottom for initial load or new incoming messages (not infinite scroll)
+  // Auto-scroll to bottom when a new message is sent or received
   useEffect(() => {
     const last = messages[messages.length - 1];
     const lastId = last?.id ?? null;
 
-    // Only scroll to bottom if this is a new message (different from what we've seen)
-    // and we're not in the middle of loading older messages
-    if (
-      !lastSeenId ||
-      (lastId && lastId !== lastSeenId && !isFetchingNextPage)
-    ) {
-      const el = containerRef.current;
-      if (el && shouldAutoScroll) {
-        const nearBottom =
-          el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-        if (nearBottom) {
-          setTimeout(() => {
-            bottomAnchorRef.current?.scrollIntoView({ block: "end" });
-          }, 0);
-        }
-      }
-      setLastSeenId(lastId);
+    // Nothing new, or loading older pages — skip
+    if (!lastId || lastId === lastSeenId || isFetchingNextPage) return;
+
+    setLastSeenId(lastId);
+
+    if (shouldAutoScroll) {
+      // Wait for the DOM to paint the new message, then scroll
+      requestAnimationFrame(() => {
+        bottomAnchorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
     }
-  }, [messages, lastSeenId, shouldAutoScroll, isFetchingNextPage]); // Added isFetchingNextPage
+  }, [messages, lastSeenId, shouldAutoScroll, isFetchingNextPage]);
 
   // Only auto-scroll to bottom for initial load - prevent it during infinite scroll
   useEffect(() => {
@@ -122,15 +115,47 @@ export default function SmsBox({ clientId }: { clientId: number }) {
     }
   }, [messages.length, isReady, shouldAutoScroll]);
 
+  const maybeLoadOlderMessages = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (
+      !isReady ||
+      el.scrollTop > 80 ||
+      !hasNextPage ||
+      isFetchingNextPage ||
+      isLoadingOlderRef.current
+    ) {
+      return;
+    }
+
+    isLoadingOlderRef.current = true;
+    prevScrollHeightRef.current = el.scrollHeight;
+    void fetchNextPage().finally(() => {
+      isLoadingOlderRef.current = false;
+    });
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isReady]);
+
   const onScroll = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+    maybeLoadOlderMessages();
+
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 104;
 
     setShowJump(!atBottom);
     setShouldAutoScroll(atBottom);
-  }, []);
+  }, [maybeLoadOlderMessages]);
+
+  // Trigger an initial check when the component becomes ready (e.g. not
+  // enough messages to fill the screen). Do NOT include data?.pages?.length
+  // here — firing on every page load caused an infinite-fetch loop because
+  // scroll restoration hadn't happened yet when this ran.
+  useEffect(() => {
+    if (isReady) maybeLoadOlderMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady]);
 
   // Fix: Reset ready state when clientId changes
   useEffect(() => {
@@ -180,16 +205,12 @@ export default function SmsBox({ clientId }: { clientId: number }) {
       </div>
     );
   }
-
-  // render with date separators; sticky chip as you scroll
-  let lastDateStr: string | null = null;
-
   return (
     <div className="relative h-full w-full">
       {/* scrollable area */}
       <div
         ref={containerRef}
-        className="thin-scrollbar h-full w-full overflow-y-auto px-2 py-2"
+        className="h-full w-full overflow-y-auto px-2 py-2"
       >
         {/* TOP SENTINEL */}
         <div
@@ -218,11 +239,15 @@ export default function SmsBox({ clientId }: { clientId: number }) {
         {/* messages */}
         <div className="flex flex-col gap-2">
           {messages.map((message: any, idx: number) => {
-            console.log("Rendering SMS message:", message);
             const created = new Date(message.createdAt);
             const dateStr = created.toDateString();
-            const showChip = dateStr !== lastDateStr;
-            lastDateStr = dateStr;
+
+            // Check previous message to decide whether to show the date chip
+            const prevMessage = idx > 0 ? messages[idx - 1] : null;
+            const prevDateStr = prevMessage
+              ? new Date(prevMessage.createdAt).toDateString()
+              : null;
+            const showChip = dateStr !== prevDateStr;
 
             return (
               <div key={message.id ?? idx} className="w-full">
@@ -232,14 +257,14 @@ export default function SmsBox({ clientId }: { clientId: number }) {
                       className={cn(
                         "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium",
                         "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200",
-                        "dark:bg-zinc-800/70 dark:text-zinc-300 dark:ring-white/10"
+                        "dark:bg-zinc-800/70 dark:text-zinc-300 dark:ring-white/10",
                       )}
                     >
                       {formatDateChip(created)}
                     </span>
                   </div>
                 )}
-                <SmsMessage message={message} />
+                <SmsMessage message={message} clientPhoto={clientPhoto} />
               </div>
             );
           })}
@@ -251,7 +276,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
 
       {/* jump-to-bottom button */}
       {showJump && (
-        <button
+        <JumpToLatestButton
           onClick={() => {
             setShouldAutoScroll(true);
             bottomAnchorRef.current?.scrollIntoView({
@@ -259,20 +284,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
               block: "end",
             });
           }}
-          className={cn(
-            "absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium",
-            "bg-white/90 text-zinc-700 shadow-md ring-1 ring-zinc-200 backdrop-blur",
-            "hover:bg-white dark:bg-zinc-900/80 dark:text-zinc-200 dark:ring-white/10",
-            "transition-all duration-200 hover:scale-105"
-          )}
-          aria-label="Jump to latest"
-          title="Jump to latest"
-        >
-          Newest
-          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
-            <path d="M10 15a1 1 0 0 1-.7-.29l-5-5a1 1 0 1 1 1.4-1.42L10 12.59l4.3-4.3a1 1 0 0 1 1.4 1.42l-5 5A1 1 0 0 1 10 15Z" />
-          </svg>
-        </button>
+        />
       )}
     </div>
   );

@@ -10,10 +10,28 @@ import { sourceValidationSchema } from "@/validations/schemas/client/source.vali
 
 export async function newSource(
   name: string,
+  forceCompanyId?: number,
 ): Promise<ServerAction | TErrorHandler> {
   try {
-    const companyId = await getCompanyId();
+    const companyId = forceCompanyId ?? (await getCompanyId());
+    if (!companyId) {
+      throw new Error("Company ID is required to create a source.");
+    }
     await sourceValidationSchema.parseAsync({ name });
+
+    const existingSource = await db.source.findFirst({
+      where: {
+        companyId,
+        name: { equals: name, mode: "insensitive" },
+      },
+    });
+
+    if (existingSource) {
+      return {
+        type: "error",
+        message: `Source "${existingSource.name}" already exists`,
+      };
+    }
 
     const source = await db.source.create({
       data: {

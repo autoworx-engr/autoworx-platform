@@ -9,39 +9,66 @@ import { createVehicleValidationSchema } from "@/validations/schemas/vehicle/veh
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
-export async function addVehicle(data: {
-  year: number;
-  make: string;
-  model: string;
-  submodel: string;
-  type: string;
-  colorId?: number;
-  transmission: string;
-  engineSize: string;
-  license: string;
-  vin: string;
-  notes: string;
-  other: string;
-  clientId: number;
-}, pathname?: string): Promise<ServerAction | TErrorHandler> {
+export async function addVehicle(
+  data: {
+    year: number;
+    make: string;
+    model: string;
+    submodel: string;
+    type: string;
+    colorId?: number;
+    transmission: string;
+    engineSize: string;
+    license: string;
+    vin: string;
+    notes: string;
+    other: string;
+    clientId: number;
+    forceCompanyId?: number;
+  },
+  pathname?: string,
+): Promise<ServerAction | TErrorHandler> {
   try {
-    const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    let companyId = data.forceCompanyId;
 
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      const session = await getServerSession(authOptions);
+      companyId = session?.user.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create a vehicle.");
+      }
     }
     await createVehicleValidationSchema.parseAsync(data);
 
-    // Add vehicle to the database
-    const vehicle = await db.vehicle.create({
-      data: {
-        ...data,
+    // Check if vehicle already exists
+    const existingVehicle = await db.vehicle.findFirst({
+      where: {
+        clientId: data.clientId,
+        year: data.year,
+        make: data.make,
+        model: data.model,
         companyId,
       },
     });
 
-    if(pathname?.includes('/dashboard/client')) {
+    if (existingVehicle) {
+      return {
+        type: "success",
+        data: existingVehicle,
+      };
+    }
+
+    const { forceCompanyId: _, ...rest } = data;
+
+    // Add vehicle to the database
+    const vehicle = await db.vehicle.create({
+      data: {
+        ...rest,
+        companyId,
+      },
+    });
+
+    if (pathname?.includes("/dashboard/client")) {
       revalidatePath(pathname);
     }
 

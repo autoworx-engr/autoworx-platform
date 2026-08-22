@@ -27,30 +27,41 @@ export default function NewClientSource({
   setOpenClientSource: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [open, setOpen] = useState(false);
-  const { showError } = useFormErrorStore();
+  const { showError, clearError } = useFormErrorStore();
   const [source, setSource] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (data: FormData) => {
-    const res = await newSource(source);
+    if (submitting) return;
+    setSubmitting(true);
+    clearError();
+    try {
+      const res = await newSource(source);
 
-    if (res.type === "success") {
-      setClientSources((prev) => [...prev, res.data]);
-      setSource("");
-      setOpen(false);
-      setOpenClientSource(false);
-      setClientSource(res.data);
+      if (res.type === "success") {
+        setClientSources((prev) => [...prev, res.data]);
+        setSource("");
+        setOpen(false);
+        setOpenClientSource(false);
+        setClientSource(res.data);
+      } else {
+        showError({ message: res.message || "Failed to add source" });
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="text-xs text-[#6571FF]">
+        <button type="button" className="text-xs text-primary">
           + Add Client Source
         </button>
       </DialogTrigger>
 
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader>
@@ -77,7 +88,7 @@ export default function NewClientSource({
             Cancel
           </DialogClose>
           <Submit
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="rounded-lg border bg-primary px-5 py-2 text-white"
             formAction={handleSubmit}
           >
             Add

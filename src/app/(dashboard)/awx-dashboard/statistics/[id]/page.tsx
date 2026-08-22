@@ -1,42 +1,108 @@
-import ChartData from "@/app/(dashboard)/dashboard/components/ChartData";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
+import { CompanyPlanEditor } from "./CompanyPlanEditor";
+import { PlatformPlanToggle } from "./PlatformPlanToggle";
+import { TestCompanyToggle } from "./TestCompanyToggle";
 import { ArrowLeft, Upload } from "lucide-react";
 import moment from "moment";
 import { CannedUploadModal } from "@/app/(dashboard)/dashboard/estimate/canned/CannedUploadModal";
 import { Button } from "@/components/ui/button";
 
 type propsType = {
-  params: {
+  params: Promise<{
     id?: string;
-  };
+  }>;
 };
 
-const ModernChartData = (props: any) => (
+const statusStyles: Record<string, { text: string; className: string }> = {
+  ACTIVE: {
+    text: "ACTIVE",
+    className:
+      "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 px-3 py-1 rounded-full text-xs font-semibold",
+  },
+  TRIALING: {
+    text: "TRIALING",
+    className:
+      "bg-sky-50 text-sky-700 ring-1 ring-sky-600/20 px-3 py-1 rounded-full text-xs font-semibold",
+  },
+  PAST_DUE: {
+    text: "PAST DUE",
+    className:
+      "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20 px-3 py-1 rounded-full text-xs font-semibold",
+  },
+  CANCELED: {
+    text: "CANCELED",
+    className:
+      "bg-rose-50 text-rose-700 ring-1 ring-rose-600/20 px-3 py-1 rounded-full text-xs font-semibold",
+  },
+  UNPAID: {
+    text: "UNPAID",
+    className:
+      "bg-orange-50 text-orange-700 ring-1 ring-orange-600/20 px-3 py-1 rounded-full text-xs font-semibold",
+  },
+};
+
+const defaultStatusStyle = {
+  text: "NO SUBSCRIPTION",
+  className:
+    "bg-slate-50 text-slate-700 ring-1 ring-slate-600/20 px-3 py-1 rounded-full text-xs font-semibold",
+};
+
+interface StatRowProps {
+  heading: string;
+  number: number | string;
+  dollarSign?: boolean;
+}
+
+const StatRow = ({ heading, number, dollarSign }: StatRowProps) => (
   <div className="flex justify-between items-center p-3 rounded-xl bg-slate-100/50 dark:bg-slate-700/50 transition duration-300 hover:bg-slate-100 dark:hover:bg-slate-700">
     <span className="text-base font-medium text-slate-500 dark:text-slate-400">
-      {props.heading}
+      {heading}
     </span>
     <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#00b8b0] to-[#0098da]">
-      {props.dollarSign ? "$" : ""}
-      {props.number}
+      {dollarSign ? "$" : ""}
+      {number}
     </span>
   </div>
 );
+
 const Page = async (props: propsType) => {
-  const { params } = props;
+  const params = await props.params;
   const { id } = params;
-  const company = await db.company.findUnique({
-    where: { id: Number(id) },
-    include: {
-      users: true,
-      clients: true,
-    },
-  });
+
+  const [company, subscription, revenueAgg, contractCount, clientCount] =
+    await Promise.all([
+      db.company.findUnique({
+        where: { id: Number(id) },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          createdAt: true,
+          enforcePlatformPlan: true,
+          isTest: true,
+          users: { select: { employeeType: true } },
+          clients: { select: { id: true } },
+        },
+      }),
+      db.platformSubscription.findUnique({
+        where: { companyId: Number(id) },
+        include: {
+          plan: { include: { features: true } },
+        },
+      }),
+      db.invoice.aggregate({
+        where: { companyId: Number(id) },
+        _sum: { grandTotal: true },
+      }),
+      db.invoice.count({ where: { companyId: Number(id) } }),
+      db.client.count({ where: { companyId: Number(id) } }),
+    ]);
 
   let sales = 0,
     technicians = 0,
@@ -49,7 +115,6 @@ const Page = async (props: propsType) => {
         case "Sales":
           sales++;
           break;
-
         case "Manager":
           managers++;
           break;
@@ -59,29 +124,17 @@ const Page = async (props: propsType) => {
         case "Other":
           others++;
           break;
-        default:
-          break;
       }
     }
   }
 
   const employees = sales + technicians + managers + others;
+  const totalRevenue = Number(revenueAgg._sum.grandTotal ?? 0).toFixed(2);
 
-  const getStatusStyles = (status: string | undefined) => {
-    if (status?.toUpperCase() === "PAID") {
-      return {
-        text: "PAID",
-        className:
-          "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 px-3 py-1 rounded-full text-xs font-semibold",
-      };
-    }
-    return {
-      text: "STATUS UNKNOWN",
-      className:
-        "bg-slate-50 text-slate-700 ring-1 ring-slate-600/20 px-3 py-1 rounded-full text-xs font-semibold",
-    };
-  };
-  const statusStyles = getStatusStyles("PAID");
+  const badge = subscription?.status
+    ? (statusStyles[subscription.status] ?? defaultStatusStyle)
+    : defaultStatusStyle;
+
   return (
     <div className="h-full bg-[#F8F9FA] px-4 text-xs 2xl:text-base">
       <div className="flex flex-col items-start justify-center space-y-8 lg:flex-row lg:space-x-6 lg:space-y-4">
@@ -109,7 +162,7 @@ const Page = async (props: propsType) => {
                       width={80}
                       height={80}
                       alt={company?.name}
-                      className="rounded-full ring-2 ring-[#6571FF]/50"
+                      className="rounded-full ring-2 ring-primary/50"
                     />
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 md:text-xl mt-3">
                       {company?.name}
@@ -156,7 +209,6 @@ const Page = async (props: propsType) => {
                     Team Breakdown
                   </h4>
                   <div className="space-y-2.5">
-                    {/* Technician */}
                     <div className="flex items-center justify-between transition duration-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 p-1.5 rounded-lg">
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-sky-400 rounded-full ring-2 ring-sky-400/50"></div>
@@ -169,7 +221,6 @@ const Page = async (props: propsType) => {
                       </span>
                     </div>
 
-                    {/* Sales */}
                     <div className="flex items-center justify-between transition duration-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 p-1.5 rounded-lg">
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-green-400 rounded-full ring-2 ring-green-400/50"></div>
@@ -198,32 +249,21 @@ const Page = async (props: propsType) => {
               </div>
             </div>
 
-            {/* Employee Payout */}
+            {/* Statistics */}
             <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 ring-1 ring-slate-200 dark:ring-slate-700 p-6">
               <div className="mb-6 flex items-center justify-between">
                 <span className="text-xl font-bold text-slate-700 dark:text-slate-200 md:text-2xl">
                   Statistics
                 </span>
               </div>
-              <div className="#px-4 space-y-4">
-                <ModernChartData
+              <div className="space-y-4">
+                <StatRow
                   heading="Total Revenue"
-                  number={567}
+                  number={totalRevenue}
                   dollarSign
-                  noRate
                 />
-                <ModernChartData
-                  heading="Total Contracts"
-                  number={767}
-                  dollarSign
-                  noRate
-                />
-                <ModernChartData
-                  heading="Client Growth"
-                  number={435}
-                  dollarSign
-                  noRate
-                />
+                <StatRow heading="Total Invoices" number={contractCount} />
+                <StatRow heading="Total Clients" number={clientCount} />
               </div>
             </div>
           </div>
@@ -236,15 +276,15 @@ const Page = async (props: propsType) => {
               <p className="text-sm text-slate-700 dark:text-slate-200">
                 Subscribed to{" "}
                 <b>
-                  <i className="font-extrabold text-[#6571FF] dark:text-[#8b94ff]">
-                    Autoworx Basic Plan
+                  <i className="font-extrabold text-primary dark:text-[#8b94ff]">
+                    {subscription?.plan?.name ?? "No Platform Plan Assigned"}
                   </i>
                 </b>
               </p>
               <p className="italic text-sm text-slate-600 dark:text-slate-300">
                 Activated On :{" "}
                 <i className="font-semibold text-slate-700 dark:text-slate-200">
-                  {moment(company?.createdAt).format("D MMMM, YYYY")}
+                  {moment(company?.createdAt).format("MMMM D, YYYY")}
                 </i>
               </p>
 
@@ -252,26 +292,19 @@ const Page = async (props: propsType) => {
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Payment Status :
                 </p>
-                <span className={statusStyles.className}>
-                  {statusStyles.text}
-                </span>
+                <span className={badge.className}>{badge.text}</span>
               </div>
 
-              <div className="mt-4 flex items-center gap-x-4 pt-2">
-                <button
-                  className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
-                hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
-                hover:-translate-y-0.5
-                active:translate-y-0 active:scale-100
-                transition-all duration-300 ease-in-out"
-                >
-                  Upgrade
-                </button>
-                <button className="rounded-xl border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-600">
-                  Cancel
-                </button>
+              <div className="mt-4 flex flex-wrap items-center gap-4 pt-2">
+                <CompanyPlanEditor companyId={Number(id)} />
+                <PlatformPlanToggle
+                  companyId={Number(id)}
+                  initialEnabled={!!company?.enforcePlatformPlan}
+                />
+                <TestCompanyToggle
+                  companyId={Number(id)}
+                  initialEnabled={!!company?.isTest}
+                />
               </div>
             </div>
             <div className="flex flex-col md:flex-row justify-between">
@@ -280,7 +313,7 @@ const Page = async (props: propsType) => {
                 buttonElement={
                   <Button
                     variant="outline"
-                    className=" bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
+                    className=" bg-primary hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
                   >
                     <Upload size={16} /> <p>Canned Upload</p>
                   </Button>
@@ -288,7 +321,6 @@ const Page = async (props: propsType) => {
                 companyId={id}
               />
             </div>
-            {/* communication hub configure */}
 
             {/* reports */}
             <CompanyReportSection />

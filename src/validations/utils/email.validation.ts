@@ -6,46 +6,46 @@ export const requiredEmailValidationSchema = z
   })
   .nonempty("Email is required")
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       const regex = new RegExp(
-        /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+        /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
       );
       return regex.test(val);
     },
-    { message: "Email must be valid" }
+    { message: "Email must be valid" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       const [local, domain] = val.split("@");
       return local && local.length <= 64;
     },
-    { message: "Local part of email cannot exceed 64 characters" }
+    { message: "Local part of email cannot exceed 64 characters" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       const [local, domain] = val.split("@");
       return domain && domain.length <= 255;
     },
-    { message: "Domain part of email cannot exceed 255 characters" }
+    { message: "Domain part of email cannot exceed 255 characters" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       return !val.includes("..");
     },
-    { message: "Email cannot contain consecutive dots" }
+    { message: "Email cannot contain consecutive dots" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(
-        val
+        val,
       );
     },
-    { message: "Invalid email format" }
+    { message: "Invalid email format" },
   );
 export const optionalEmailValidationSchema = z
   .string({
@@ -53,41 +53,41 @@ export const optionalEmailValidationSchema = z
   })
   .optional()
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       return val.includes("@");
     },
-    { message: "Email must contain '@' symbol" }
+    { message: "Email must contain '@' symbol" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       const [local, domain] = val.split("@");
       return local && local.length <= 64;
     },
-    { message: "Local part of email cannot exceed 64 characters" }
+    { message: "Local part of email cannot exceed 64 characters" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       const [local, domain] = val.split("@");
       return domain && domain.length <= 255;
     },
-    { message: "Domain part of email cannot exceed 255 characters" }
+    { message: "Domain part of email cannot exceed 255 characters" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       return !val.includes("..");
     },
-    { message: "Email cannot contain consecutive dots" }
+    { message: "Email cannot contain consecutive dots" },
   )
   .refine(
-    val => {
+    (val) => {
       if (!val) return true;
       return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(
-        val
+        val,
       );
     },
-    { message: "Invalid email format" }
+    { message: "Invalid email format" },
   );

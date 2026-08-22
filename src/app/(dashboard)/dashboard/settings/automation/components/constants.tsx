@@ -118,7 +118,7 @@ export type CommunicationType = "SMS" | "EMAIL" | "BOTH";
 
 export function getTitleById(
   id: string,
-  targetOptions: any
+  targetOptions: any,
 ): string | undefined {
   return targetOptions.find((option: any) => option.id === id)?.title;
 }
@@ -129,6 +129,13 @@ export const Frequency = [
   { id: "MONTHLY", title: "Monthly" },
   { id: "EVERY_TWO_MONTHS", title: "Every Two Months" },
 ];
+export const ReportingAutomationFrequency = [
+  { id: "DAILY", title: "Daily" },
+  { id: "WEEKLY", title: "Weekly" },
+  { id: "MONTHLY", title: "Monthly" },
+  { id: "YEARLY", title: "Yearly" },
+];
+
 export const DaysOfWeek = [
   { id: "MONDAY", title: "Monday" },
   { id: "TUESDAY", title: "Tuesday" },
@@ -148,25 +155,28 @@ export const InventoryActions = [
   { id: "SMS", title: "Send Re-order List by SMS" },
   { id: "BOTH", title: "Send Re-order List by Both" },
 ];
-
+export const ReportingActions = [
+  { id: "EMAIL", title: "Send Report by Email" },
+  { id: "SMS", title: "Send Report by SMS" },
+  { id: "BOTH", title: "Send Report by Both" },
+];
 
 export const PipelineType = [
   { id: "SALES", title: "Sales Pipeline" },
   { id: "SHOP", title: "Shop Pipeline" },
-  
 ];
 
 export const Funnels = [
-  {id: "all", title: "All Funnels"},
-  {id: "lead", title: "Lead Funnels"},
-  {id: "qualified", title: "Qualified"},
-  {id: "proposal", title: "Proposal"},
-  {id: "negotiation", title: "Negotiation"},
-  {id: "closed", title: "Closed"},
-]
+  { id: "all", title: "All Funnels" },
+  { id: "lead", title: "Lead Funnels" },
+  { id: "qualified", title: "Qualified" },
+  { id: "proposal", title: "Proposal" },
+  { id: "negotiation", title: "Negotiation" },
+  { id: "closed", title: "Closed" },
+];
 
 export const Conditions = [
-  {id: "pipeline", title: "Pipeline"},
-  {id: "communication", title: "Communication"},
-  {id: "post_tag", title: "Post-Tag"}
-]
+  { id: "pipeline", title: "Pipeline" },
+  { id: "communication", title: "Communication" },
+  { id: "post_tag", title: "Post-Tag" },
+];

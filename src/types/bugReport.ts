@@ -1,5 +1,5 @@
-import { Company } from '@prisma/client';
-import { TBugReportMessage } from './BugReportMessage';
+import { Company } from "@prisma/client";
+import { TBugReportMessage } from "./BugReportMessage";
 
 export type TBugReport = {
   id: number;

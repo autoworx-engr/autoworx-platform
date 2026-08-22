@@ -5,18 +5,18 @@ import { errorToast, successToast } from "@/lib/toast";
 import { updatePipelineAutomationTrigger } from "@/service/pipeline-automation-trigger/api";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Appointment } from "@prisma/client";
-import { customAlphabet } from "nanoid";
 import Image from "next/image";
-import { useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import CommunicationsNoti from "../../../components/CommunicationsNoti";
 import PipelineInvoiceModal from "../../../components/PipelineInvoiceModal";
 import AddTaskComponent from "./AddTaskComponent";
 import LeadAssign from "./LeadAssign";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
-import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
+import { useCreateDraftEstimate } from "@/hooks/pipeline/useCreateDraftEstimate";
 import { Calendar, CalendarCheck } from "lucide-react";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { useRouter } from "next/navigation";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -30,11 +30,123 @@ type TCreateDraftEstimateParams = {
 };
 
 export default function LeadActions({ lead }: TProps) {
-  const [pending, startTransition] = useTransition();
-
   const dispatch = useColumnDispatch();
+  const router = useRouter();
+  const [invoiceId, setInvoiceId] = useState<string | null>(
+    lead.invoiceId ?? null,
+  );
 
-  const [invoiceId, setInvoiceId] = useState<string | null>(null);
+  // Sync local invoiceId state with lead.invoiceId changes (e.g., after creation)
+  useEffect(() => {
+    if (lead.invoiceId) {
+      setInvoiceId(lead.invoiceId);
+    }
+  }, [lead.invoiceId]);
+
+  const canCreateEstimate = useCanAccessRoute("/dashboard/estimate/create");
+  // const handleCreateDraftEstimate = async ({
+  //   columnId,
+  //   leadId,
+  //   clientId,
+  //   vehicleId,
+  // }: TCreateDraftEstimateParams) => {
+  //   try {
+  //     const draftEstimateId = customAlphabet("1234567890", 10)();
+  //     const res = await createLeadDraftEstimate({
+  //       id: draftEstimateId,
+  //       leadId,
+  //       clientId: clientId!,
+  //       vehicleId: vehicleId,
+  //       type: "Estimate",
+  //     });
+
+  //     if (res.type === "success") {
+  //       successToast(res?.message || "Draft estimate created");
+  //       //updating the pipelien data with the draft estimate flag
+  //       dispatch({
+  //         type: actionTypes.CREATE_INVOICE,
+  //         payload: {
+  //           columnId: columnId,
+  //           leadId: leadId,
+  //           isInvoiceCreated: true,
+  //         },
+  //       });
+  //       console.log("res", res);
+  //       // Trigger pipeline automation
+  //       const response = await updatePipelineAutomationTrigger({
+  //         condition: "ESTIMATE_CREATED",
+  //         companyId: res?.data.companyId,
+  //         leadId,
+  //         columnId,
+  //       });
+
+  //       if (response.statusCode === 200) {
+  //         dispatch({
+  //           type: actionTypes.AUTOMATION_TRIGGER,
+  //           payload: {
+  //             updatedLead: response.data,
+  //             previousColumnId: columnId,
+  //           },
+  //         });
+  //       }
+
+  //       // Invoice automation
+  //       await updateInvoiceAutomationTrigger({
+  //         companyId: res?.data.companyId,
+  //         invoiceId: res?.data?.id,
+  //         columnId: columnId!,
+  //         type: res?.data?.type,
+  //       });
+  //       router.push(
+  //         `/dashboard/estimate/edit/${res?.data.id}?clientId=${res?.data.clientId}`,
+  //       );
+  //     } else if (res.type === "error") {
+  //       setInvoiceId(res.data.id);
+  //     } else if (res.type === "globalError") {
+  //       errorToast(
+  //         res?.errorSource && res?.errorSource.length > 0
+  //           ? res?.errorSource[0].message
+  //           : res.message,
+  //       );
+  //     }
+  //   } catch (err) {
+  //     console.error("Error creating draft estimate:", err);
+  //     errorHandler(err);
+  //     errorToast("Failed to create draft estimate. Please try again.");
+  //   }
+  // };
+
+  const triggerAutomations = async ({
+    companyId,
+    leadId,
+    columnId,
+    invoiceId,
+    type,
+  }: {
+    companyId: number;
+    leadId: number;
+    columnId: number;
+    invoiceId: string;
+    type: "Estimate" | "Invoice";
+  }) => {
+    return Promise.allSettled([
+      updatePipelineAutomationTrigger({
+        condition: "ESTIMATE_CREATED",
+        companyId,
+        leadId,
+        columnId,
+      }),
+      updateInvoiceAutomationTrigger({
+        companyId,
+        invoiceId,
+        columnId,
+        type,
+      }),
+    ]);
+  };
+
+  const { mutateAsync: createDraftEstimate, isPending } =
+    useCreateDraftEstimate();
 
   const handleCreateDraftEstimate = async ({
     columnId,
@@ -43,63 +155,94 @@ export default function LeadActions({ lead }: TProps) {
     vehicleId,
   }: TCreateDraftEstimateParams) => {
     try {
-      const draftEstimateId = customAlphabet("1234567890", 10)();
-      const res = await createLeadDraftEstimate({
-        id: draftEstimateId,
+      // Basic validation
+      if (!clientId) {
+        errorToast("Add a client to this lead first.");
+        return;
+      }
+
+      if (!leadId) {
+        errorToast("Lead not found. Please refresh and try again.");
+        return;
+      }
+
+      if (!columnId) {
+        errorToast("Pipeline stage missing. Please refresh and try again.");
+        return;
+      }
+
+      const res = await createDraftEstimate({
         leadId,
-        clientId: clientId!,
-        vehicleId: vehicleId,
-        type: "Estimate",
+        clientId,
+        vehicleId: vehicleId ?? undefined,
+        companyId: lead.companyId.toString(),
       });
 
-      if (res.type === "success") {
-        successToast(res?.message || "Draft estimate created");
-        //updating the pipelien data with the draft estimate flag
+      // Handle API error responses first (early return)
+      if (!res.success && res.data?.id) {
+        setInvoiceId(res.data.id);
+        // Estimate already exists — reflect it on the card right away
         dispatch({
           type: actionTypes.CREATE_INVOICE,
           payload: {
-            columnId: columnId,
-            leadId: leadId,
+            columnId,
+            leadId,
             isInvoiceCreated: true,
+            invoiceId: res.data.id,
           },
         });
+        return;
+      }
 
-        // Trigger pipeline automation
-        const response = await updatePipelineAutomationTrigger({
-          condition: "ESTIMATE_CREATED",
-          companyId: res?.data.companyId,
-          leadId,
+      if (!res.success) {
+        errorToast(res.message || "Something went wrong");
+        return;
+      }
+
+      const { companyId, id, clientId: resClientId, type } = res.data;
+
+      successToast(res.message || "Draft estimate created");
+
+      // Reflect the new estimate on the card immediately
+      setInvoiceId(id);
+
+      // Update pipeline state
+      dispatch({
+        type: actionTypes.CREATE_INVOICE,
+        payload: {
           columnId,
-        });
+          leadId,
+          isInvoiceCreated: true,
+          invoiceId: id,
+        },
+      });
 
-        if (response.statusCode === 200) {
+      // Run automations in parallel (faster)
+      triggerAutomations({
+        columnId,
+        companyId,
+        invoiceId: id,
+        leadId,
+        type,
+      }).then(([pipelineResult]) => {
+        if (
+          pipelineResult.status === "fulfilled" &&
+          pipelineResult.value?.statusCode === 200
+        ) {
           dispatch({
             type: actionTypes.AUTOMATION_TRIGGER,
             payload: {
-              updatedLead: response.data,
+              updatedLead: pipelineResult.value.data,
               previousColumnId: columnId,
             },
           });
         }
+      });
 
-        // Invoice automation
-        await updateInvoiceAutomationTrigger({
-          companyId: res?.data.companyId,
-          invoiceId: res?.data?.id,
-          columnId: columnId!,
-          type: res?.data?.type,
-        });
-      } else if (res.type === "error") {
-        setInvoiceId(res.data.id);
-      } else if (res.type === "globalError") {
-        errorToast(
-          res?.errorSource && res?.errorSource.length > 0
-            ? res?.errorSource[0].message
-            : res.message
-        );
-      }
+      // Navigate at the end
+      router.push(`/dashboard/estimate/edit/${id}?clientId=${resClientId}`);
     } catch (err) {
-      console.error("Error creating draft estimate:", err);
+      console.log("err", err);
       errorHandler(err);
       errorToast("Failed to create draft estimate. Please try again.");
     }
@@ -110,7 +253,7 @@ export default function LeadActions({ lead }: TProps) {
     leadInfo: {
       leadId: number;
       columnId: number;
-    }
+    },
   ) => {
     try {
       dispatch({
@@ -157,7 +300,8 @@ export default function LeadActions({ lead }: TProps) {
       : undefined;
   const fromEdit = !!appointment?.id;
   const vehicleId = lead?.vehicleId;
-  const clientId = lead?.client?.id;
+  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
+  const hasDraftEstimate = !!lead.isEstimateCreated && !!invoiceId;
   return (
     <>
       <div className="flex justify-between">
@@ -165,23 +309,22 @@ export default function LeadActions({ lead }: TProps) {
           {/* client message notification or redirect to client section component */}
           <CommunicationsNoti lead={lead} />
           <button
-            disabled={pending}
+            disabled={isPending || !canCreateEstimate}
             type="button"
             onClick={() => {
-              if (lead?.columnId && lead.id && lead?.client) {
-                startTransition(() =>
-                  handleCreateDraftEstimate({
-                    columnId: lead.columnId!,
-                    leadId: lead.id,
-                    clientId: lead.client?.id,
-                    vehicleId: lead?.vehicleId,
-                  })
-                );
+              if (!hasDraftEstimate) {
+                handleCreateDraftEstimate({
+                  columnId: lead.columnId!,
+                  leadId: lead.id,
+                  clientId: lead.client?.id,
+                  vehicleId: lead?.vehicleId,
+                });
               }
+              // otherwise show estimate modal
             }}
             className="group relative disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {lead.isEstimateCreated ? (
+            {hasDraftEstimate ? (
               <PipelineInvoiceModal invoiceId={invoiceId} />
             ) : (
               <Image
@@ -197,6 +340,7 @@ export default function LeadActions({ lead }: TProps) {
           </button>
           {/* TODO: shown a mark when create a appointment */}
           <AppointmentCreateOrEdit
+            key={`lead-${lead.id}-appt-${appointment?.id ?? "new"}`}
             fromEdit={fromEdit}
             fromLead
             appointmentId={fromEdit ? appointment?.id : undefined}
@@ -209,7 +353,7 @@ export default function LeadActions({ lead }: TProps) {
                 )}
 
                 <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                  New Appointment
+                  Appointment
                 </span>
               </button>
             }

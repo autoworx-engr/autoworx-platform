@@ -42,9 +42,9 @@ const page = () => {
       content:
         "https://drive.google.com/file/d/1aUlJT_b-fGneW7xYtkmub_-4cxNdoj_j/preview",
       type: "video",
-      title: "Saving canned labour and canned services",
+      title: "Saving canned labor and canned services",
       description:
-        "Instructions on how to save and utilize canned labour and services in estimates.",
+        "Instructions on how to save and utilize canned labor and services in estimates.",
     },
     {
       content:
@@ -65,7 +65,7 @@ const page = () => {
       <div className="mt-4 space-y-5">
         {resourcesData
           .filter((resource) =>
-            resource.title.toLowerCase().includes(filter.search.toLowerCase())
+            resource.title.toLowerCase().includes(filter.search.toLowerCase()),
           )
           .map((resource, index) => (
             <ResourceCard resource={resource} index={index} />

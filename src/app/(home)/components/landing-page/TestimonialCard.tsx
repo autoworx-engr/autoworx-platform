@@ -29,7 +29,7 @@ export default function TestimonialCard({
       )}
     >
       <div className="relative mx-auto -mt-[93px] flex size-[196px] items-center justify-center overflow-hidden rounded-full">
-        <Image src={imageUrl} alt="person image" fill />
+        <Image src={imageUrl} alt="person image" fill sizes="196px" />
       </div>
       <div className="flex flex-col items-center justify-center">
         <p className="px-16 py-8 text-center text-xl font-normal leading-9">

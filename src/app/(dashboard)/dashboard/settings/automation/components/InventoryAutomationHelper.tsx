@@ -31,12 +31,12 @@ export const getInventoryConditionHelp = (conditionType: string) => {
   return helpConfig[conditionType as keyof typeof helpConfig] || null;
 };
 
-export const getInventoryActionHelp = (actionId: string) => {
+export const getInventoryActionHelp = (actionId: string, isReporting?:boolean) => {
   const actionConfig = {
     EMAIL: {
       icon: <Mail className="w-5 h-5 text-blue-600" />,
       title: "Email Notification",
-      desc: "Selected team members will receive an email with re-order list details.",
+      desc: `Selected team members will receive an email with ${isReporting ? 'reporting' : 're-order'} list details.`,
       bgColor: "bg-blue-50",
       borderColor: "border-blue-400",
       textColor: "text-blue-900"
@@ -44,7 +44,7 @@ export const getInventoryActionHelp = (actionId: string) => {
     SMS: {
       icon: <MessageSquare className="w-5 h-5 text-green-600" />,
       title: "SMS Notification",
-      desc: "Selected team members will receive an instant SMS alert about stock levels.",
+      desc: `Selected team members will receive an SMS with ${isReporting ? 'reporting list details.' : 'stock levels.'} .`,
       bgColor: "bg-green-50",
       borderColor: "border-green-400",
       textColor: "text-green-900"
@@ -52,7 +52,7 @@ export const getInventoryActionHelp = (actionId: string) => {
     BOTH: {
       icon: <Users className="w-5 h-5 text-indigo-600" />,
       title: "Email & SMS Notification",
-      desc: "Team members will receive both email and SMS for immediate attention to stock issues.",
+      desc: `Team members will receive both email and SMS for immediate attention to ${isReporting ? 'reporting.' : 'stock issues.'} issues.`,
       bgColor: "bg-indigo-50",
       borderColor: "border-indigo-400",
       textColor: "text-indigo-900"

@@ -5,9 +5,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 type TProps = {
   searchText: string;
-  paramKey?: string; // 👈 unique key: "serviceSearch" or "laborSearch"
+  paramKey?: string;
+  placeholder?: string;
 };
-export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
+export default function FilterBySearchBox({
+  searchText,
+  paramKey,
+  placeholder,
+}: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const pathname = usePathname();
@@ -33,13 +38,24 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
         searchParams.set("search", searchTerm);
       }
     }
+
+    if (paramKey === "laborSearch") {
+      searchParams.set("laborPage", "1");
+    } else if (paramKey === "serviceSearch") {
+      searchParams.set("servicePage", "1");
+    } else {
+      searchParams.set("page", "1");
+    }
+
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
   };
   const handleSearchChange = useDebounce(handleInputChange, 500);
 
   const getPlaceholderForPath = () => {
-    if (pathname.includes("revenue")) {
+    if (placeholder) {
+      return placeholder;
+    } else if (pathname.includes("revenue")) {
       return "Search by Invoice, Customer or Vehicle";
     } else if (pathname.includes("inventory")) {
       return "Search by Name";
@@ -48,7 +64,7 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
     } else if (pathname.includes("teams")) {
       return "Search by Employee Name";
     } else if (paramKey === "laborSearch") {
-      return "Search by Labour Name or Category";
+      return "Search by Labor Name or Category";
     } else if (paramKey === "serviceSearch") {
       return "Search by Service Name or Category";
     } else {
@@ -57,15 +73,18 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
   };
 
   return (
-    <div className="relative w-full min-w-[300] max-w-[693px]">
-      <Search size={20} className="absolute left-[10px] top-[10px]" />
+    <div className="relative w-full sm:min-w-[300px] max-w-[693px]">
+      <Search
+        size={20}
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+      />
       <input
         onChange={(e) => {
           handleSearchChange(e);
           setSearchTerm(e.target.value);
         }}
         value={searchTerm}
-        className="w-full border border-slate-300 ring-0 rounded-xl bg-transparent pr-3 pl-10 py-2 text-slate-600 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:shadow-[0_8px_24px_rgba(101,113,255,0.08)] transition-all duration-300"
+        className="w-full truncate rounded-xl bg-white pl-10 pr-3 py-2.5 text-sm text-slate-600 ring-1 ring-slate-200 transition-all duration-300 ease-out placeholder:text-slate-400 hover:ring-indigo-500/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:shadow-md focus:shadow-indigo-500/10 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700"
         type="text"
         placeholder={getPlaceholderForPath()}
       />

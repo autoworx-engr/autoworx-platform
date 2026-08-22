@@ -9,7 +9,7 @@ interface ImagesDialogueShareButtonsProps {
   handleSmsShare: () => void;
   handleCopyShare: () => void;
 }
-export const ImagesDialogueShareButtons =  ({
+export const ImagesDialogueShareButtons = ({
   handleEmailShare,
   handleSmsShare,
   handleCopyShare,
@@ -53,7 +53,7 @@ export const ImagesDialogueShareButtons =  ({
           okText="Yes"
           cancelText="No"
         >
-          <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
+          <button className="flex items-center justify-center gap-1 rounded bg-primary px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
             <Mail className="h-4 w-4 md:h-4 md:w-4" />
             <span className="hidden md:inline">Email</span>
           </button>
@@ -65,7 +65,7 @@ export const ImagesDialogueShareButtons =  ({
             okText="Yes"
             cancelText="No"
           >
-            <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+            <button className="flex items-center justify-center gap-1 rounded bg-primary px-2 py-1 text-sm text-white md:px-4 md:text-base">
               <svg
                 fill="#ffffff"
                 height="24"
@@ -74,17 +74,17 @@ export const ImagesDialogueShareButtons =  ({
                 id="Icon"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="-5.28 -5.28 34.56 34.56"
-                enable-background="new 0 0 24 24"
+                enableBackground="new 0 0 24 24"
                 stroke="#ffffff"
-                stroke-width="0.36"
+                strokeWidth="0.36"
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   stroke="#CCCCCC"
-                  stroke-width="0.144"
+                  strokeWidth="0.144"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   {" "}
@@ -97,7 +97,7 @@ export const ImagesDialogueShareButtons =  ({
         )}
       </div>
       {/* <button
-        className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
+        className="flex items-center justify-center gap-1 rounded bg-primary px-2 py-1 text-sm text-white md:px-4 md:text-base"
         onClick={handleCopyShare}
       >
         <svg
@@ -107,11 +107,11 @@ export const ImagesDialogueShareButtons =  ({
           xmlns="http://www.w3.org/2000/svg"
           fill="#ffffff"
         >
-          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
           <g
             id="SVGRepo_tracerCarrier"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></g>
           <g id="SVGRepo_iconCarrier">
             {" "}

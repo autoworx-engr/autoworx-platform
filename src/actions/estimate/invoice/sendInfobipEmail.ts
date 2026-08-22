@@ -112,10 +112,12 @@ export async function sendInfobipEmail({
   clientId,
   subject,
   text,
+  html,
 }: {
   clientId: number;
   subject: string;
   text: string;
+  html?: string;
 }) {
   try {
     const client = await db.client.findFirst({
@@ -148,7 +150,7 @@ export async function sendInfobipEmail({
     // Prepare email content with unsubscribe link
     const emailText = `${text}`;
 
-    const emailHtml = emailText.replace(/\n/g, "<br>");
+    const emailHtml = html || emailText.replace(/\n/g, "<br>");
 
     // Prepare Infobip email request
     const infobipEmailData: InfobipEmailRequest = {
@@ -190,7 +192,7 @@ export async function sendInfobipEmail({
       },
     });
 
-    updateNewEmailChatTrack({
+    await updateNewEmailChatTrack({
       clientId,
       emailLastMessage: text || "",
       lastEmailBy: "Company",

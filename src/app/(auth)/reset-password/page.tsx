@@ -4,16 +4,16 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Reset Password",
+  description: "Set a new password for your account.",
 };
 
-const page = ({
-  searchParams,
-}: {
-  searchParams: {
+const page = async (props: {
+  searchParams: Promise<{
     email?: string;
     token?: string;
-  };
+  }>;
 }) => {
+  const searchParams = await props.searchParams;
   const { email, token } = searchParams;
   return <ResetPassword email={email} uriToken={token} />;
 };

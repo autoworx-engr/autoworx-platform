@@ -1,4 +1,8 @@
 import { initOneSignal } from "@/lib/notification/initOneSignal";
+import {
+  isOneSignalLoggingOut,
+  setOneSignalLoggingOut,
+} from "@/lib/notification/logoutState";
 import { errorToast, successToast } from "@/lib/toast";
 import detectBrowser from "@/utils/detectBrowser";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
@@ -11,12 +15,14 @@ export default function InitOneSignalProvider() {
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
   useEffect(() => {
     const init = async () => {
+      console.log("Notification init");
+      setOneSignalLoggingOut(false);
       await initOneSignal(Number(sessionUser?.id), isMax640); // Initialize OneSignal for push notifications
     };
     if (sessionUser?.id) {
       init(); // Call the initialization function
     }
-  }, [sessionUser?.id]);
+  }, [isMax640, sessionUser?.id]);
 
   useEffect(() => {
     const externalId = `user-${sessionUser?.id}`;
@@ -25,6 +31,7 @@ export default function InitOneSignalProvider() {
       async (event) => {
         console.log("Push subscription changed:", event);
         console.log("User is not subscribed to push notifications");
+        if (isOneSignalLoggingOut()) return;
         if (event.current.optedIn && sessionUser?.id) {
           await OneSignal.login(externalId);
           OneSignal.User.addTag("browser", detectBrowser());
@@ -48,6 +55,6 @@ export default function InitOneSignalProvider() {
         // window.location.reload(); // Reload the page when permission changes
       },
     );
-  }, []);
+  }, [sessionUser?.id]);
   return null;
 }

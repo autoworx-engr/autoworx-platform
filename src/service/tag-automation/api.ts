@@ -2,10 +2,7 @@ import axiosInstance from "@/helpers/axios";
 
 export const createTagAutomationRule = async (payload: any) => {
   try {
-    const response = await axiosInstance.post(
-      "/tag-automation-rules",
-      payload,
-    );
+    const response = await axiosInstance.post("/tag-automation-rules", payload);
 
     return response.data;
   } catch (error) {
@@ -51,9 +48,7 @@ export const updateTagAutomationRule = async (
 
 export const deleteTagAutomationRule = async (id: string) => {
   try {
-    const response = await axiosInstance.delete(
-      `/tag-automation-rules/${id}`,
-    );
+    const response = await axiosInstance.delete(`/tag-automation-rules/${id}`);
     return response.data;
   } catch (error) {
     throw error;

@@ -120,73 +120,102 @@ export const createVehicleValidationSchema = z
   });
 
 // update vehicle validation schema
-export const updateVehicleValidationSchema = z.object({
-  vehicleId: z
-    .number({ required_error: "Vehicle Id must be required" })
-    .int("Client ID must be an integer")
-    .nonnegative(),
-  year: z
-    .number({
-      required_error: "Year is required",
-      invalid_type_error: "Year must be a number",
-    })
-    .nonnegative()
-    .refine((year) => year >= 1886 && year <= new Date().getFullYear(), {
-      message: "Year must be a valid year",
-    }),
-  make: z
-    .string({
-      required_error: "Make is required",
-      invalid_type_error: "Make must be a string",
-    })
-    .nonempty("Make must be required"),
-  // .refine(
-  //   (make) =>
-  //     Number(make) >= 1886 && Number(make) <= new Date().getFullYear(),
-  //   {
-  //     message: "Make must be a valid year",
-  //   },
-  // ),
-  model: z
-    .string({
-      required_error: "Model is required",
-      invalid_type_error: "Model must be a string",
-    })
-    .trim()
-    .min(1, "Model is required")
-    .max(50, "Model cannot exceed 50 characters")
-    .nonempty("Model must be required"),
-  submodel: z.string().optional(),
-  type: z.string().optional(),
-  colorId: z.number().nonnegative().optional(),
-  transmission: z.string().optional(),
-  engineSize: z
-    .string()
-    .trim()
-    // .regex(ENGINE_SIZE_REGEX, "Engine size must be in format '2.0L' or '2000cc'")
-    .optional()
-    .nullish(),
+export const updateVehicleValidationSchema = z
+  .object({
+    vehicleId: z
+      .number({ required_error: "Vehicle Id must be required" })
+      .int("Client ID must be an integer")
+      .nonnegative(),
+    year: z
+      .number({
+        required_error: "Year is required",
+        invalid_type_error: "Year must be a number",
+      })
+      .nonnegative()
+      .optional()
+      .nullable(),
+    make: z
+      .string({
+        required_error: "Make is required",
+        invalid_type_error: "Make must be a string",
+      })
+      .optional()
+      .nullable(),
+    model: z
+      .string({
+        required_error: "Model is required",
+        invalid_type_error: "Model must be a string",
+      })
+      .trim()
+      .max(50, "Model cannot exceed 50 characters")
+      .optional()
+      .nullable(),
+    submodel: z.string().optional(),
+    type: z.string().optional(),
+    colorId: z.number().nonnegative().optional(),
+    transmission: z.string().optional(),
+    engineSize: z
+      .string()
+      .trim()
+      // .regex(ENGINE_SIZE_REGEX, "Engine size must be in format '2.0L' or '2000cc'")
+      .optional()
+      .nullish(),
 
-  license: z
-    .string()
-    .trim()
-    .toUpperCase()
-    // .regex(LICENSE_PLATE_REGEX, "Invalid license plate format")
-    .optional()
-    .nullish(),
+    license: z
+      .string()
+      .trim()
+      .toUpperCase()
+      // .regex(LICENSE_PLATE_REGEX, "Invalid license plate format")
+      .optional()
+      .nullish(),
 
-  vin: z
-    .string()
-    .trim()
-    .toUpperCase()
-    // .regex(VIN_REGEX, "Invalid VIN format (must be 17 characters)")
-    .optional()
-    .nullish(),
-  notes: z.string().optional(),
-  other: z.string().optional(),
-  clientId: z
-    .number()
-    .int("Color ID must be an integer")
-    .nonnegative()
-    .optional(),
-});
+    vin: z
+      .string()
+      .trim()
+      .toUpperCase()
+      // .regex(VIN_REGEX, "Invalid VIN format (must be 17 characters)")
+      .optional()
+      .nullish(),
+    notes: z.string().optional(),
+    other: z.string().optional().nullable(),
+    clientId: z
+      .number()
+      .int("Color ID must be an integer")
+      .nonnegative()
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const isOtherFilled = data.other?.trim();
+
+    if (!isOtherFilled) {
+      if (!data.make || !data.make.trim()) {
+        ctx.addIssue({
+          path: ["make"],
+          code: z.ZodIssueCode.custom,
+          message: "Make is required if Other is not provided",
+        });
+      }
+
+      if (!data.model || !data.model.trim()) {
+        ctx.addIssue({
+          path: ["model"],
+          code: z.ZodIssueCode.custom,
+          message: "Model is required if Other is not provided",
+        });
+      }
+
+      if (typeof data.year !== "number") {
+        ctx.addIssue({
+          path: ["year"],
+          code: z.ZodIssueCode.custom,
+          message: "Year is required if Other is not provided",
+        });
+      } else if (data.year < 1886) {
+        ctx.addIssue({
+          path: ["year"],
+          code: z.ZodIssueCode.custom,
+          message: "Year must be greater than or equal to 1886",
+        });
+      }
+    }
+  });

@@ -63,7 +63,7 @@ export default function AddTaskComponent({ lead }: TProps) {
           isUpdate: true,
         },
       });
-      successToast("Task updated successfully");
+      // successToast("Task updated successfully");
       setIsEditModalOpen(false);
       setEditTaskId(null);
     } catch (err) {
@@ -92,7 +92,7 @@ export default function AddTaskComponent({ lead }: TProps) {
         />
       </div>
       {isShowTaskCount && (
-        <span className="absolute -top-2 left-2 rounded-full bg-red-500 px-1 py-0.5 text-[10px] text-white leading-none min-w-[16px] text-center">
+        <span className="absolute -top-2 left-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none text-white">
           {totalTasksCount}
         </span>
       )}

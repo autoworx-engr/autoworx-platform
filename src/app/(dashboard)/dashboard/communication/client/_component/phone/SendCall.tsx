@@ -1,22 +1,25 @@
 "use client";
 import updateFirstContactTimeClient from "@/actions/communication/client/updateFirstContactTimeClient";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
+import { useVoiceDevice } from "@/context/VoiceDeviceContext";
 import { Client } from "@prisma/client";
 import { Call } from "@twilio/voice-sdk";
-import { useEffect, useState } from "react";
-import CallStatus from "./CallStatus";
 import { useRouter } from "next/navigation";
-import { useVoiceDevice } from "@/context/VoiceDeviceContext";
+import { useEffect, useRef, useState } from "react";
+import CallStatus from "./CallStatus";
 
 type TProps = {
   client?: Client | null;
   phoneNumber?: string | null;
   provider?: "TWILIO" | "INFOBIP";
+  canUseVoice?: boolean;
 };
 
 export default function SendCall({
   client,
   phoneNumber,
   provider = "TWILIO",
+  canUseVoice = true,
 }: TProps) {
   const router = useRouter();
   const {
@@ -35,6 +38,8 @@ export default function SendCall({
   const [localCallStatus, setLocalCallStatus] = useState("");
   const [localCallDuration, setLocalCallDuration] = useState(0);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const micStreamRef = useRef<MediaStream | null>(null);
 
   // Determine which connection is active (global incoming or local outgoing)
   const currentConnection = globalConnection || localConnection;
@@ -43,10 +48,18 @@ export default function SendCall({
     ? globalCallDuration
     : localCallDuration;
 
-  // Cleanup timer on unmount
+  const stopMicStream = () => {
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+    }
+  };
+
+  // Cleanup timer + mic stream on unmount
   useEffect(() => {
     return () => {
       if (timer) clearInterval(timer);
+      stopMicStream();
     };
   }, [timer]);
 
@@ -59,18 +72,22 @@ export default function SendCall({
     if (!client?.mobile) return;
 
     try {
+      setLocalCallStatus("Connecting…");
+      setLocalCallDuration(0);
+
       // Update first contact time
       await updateFirstContactTimeClient(client?.id);
 
-      // Use unified makeCall function that handles both providers
       if (activeProvider === "TWILIO") {
-        // Twilio-specific call logic (existing)
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        const options = { params: { To: client?.mobile } };
-        const connection = await device.connect(options);
+        micStreamRef.current = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        const connection = await device.connect({
+          params: { To: client.mobile },
+        });
 
         if (connection) {
-          connection.on("accept", async () => {
+          connection.on("accept", () => {
             setLocalCallStatus("Call connected");
             setLocalCallDuration(0);
             const interval = setInterval(() => {
@@ -83,113 +100,106 @@ export default function SendCall({
             setLocalCallStatus("Call ended");
             setLocalConnection(null);
             if (timer) clearInterval(timer);
-            setTimeout(() => {
-              router.refresh();
-            }, 3000);
+            stopMicStream();
+            // Twilio processes recordings async, give the webhook ~6s then
+            // refresh once. The 5-stage polling that lived here previously
+            // hit the server five times per call for no extra gain.
+            setTimeout(() => router.refresh(), 6000);
           });
 
           connection.on("cancel", () => {
             setLocalCallStatus("Call canceled");
             setLocalConnection(null);
             if (timer) clearInterval(timer);
+            stopMicStream();
           });
 
-          connection.on("error", (error: any) => {
+          connection.on("error", (error: unknown) => {
             console.error("Connection Error:", error);
             setLocalCallStatus("Call error occurred");
+            stopMicStream();
           });
 
           setLocalConnection(connection);
+        } else {
+          stopMicStream();
         }
       } else if (activeProvider === "INFOBIP") {
-        // Use the global makeCall for Infobip
         await globalMakeCall(client.mobile, client.id);
         setLocalCallStatus("Calling...");
       }
     } catch (error) {
       console.error("Error making call:", error);
       setLocalCallStatus("Failed to make call");
+      stopMicStream();
     }
   };
 
   const endCall = () => {
     if (globalConnection) {
-      // End global incoming call
       globalEndCall();
-      setTimeout(() => {
-        router.refresh();
-      }, 3000);
+      setTimeout(() => router.refresh(), 3000);
     } else if (localConnection) {
-      // End local outgoing call
       localConnection.disconnect();
       setLocalCallStatus("Call ended");
       setLocalConnection(null);
       if (timer) clearInterval(timer);
-      setTimeout(() => {
-        router.refresh();
-      }, 3000);
+      stopMicStream();
+      setTimeout(() => router.refresh(), 3000);
+    }
+    setIsMuted(false);
+  };
+
+  // Mute/unmute the active call. currentConnection covers both the local
+  // outgoing call and a global incoming one; both expose Twilio's .mute(bool).
+  const toggleMute = () => {
+    if (!currentConnection) return;
+    const next = !isMuted;
+    try {
+      currentConnection.mute(next);
+      setIsMuted(next);
+    } catch (error) {
+      console.error("Failed to toggle mute:", error);
     }
   };
 
-  const handleSetupDevice = async () => {
-    if (phoneNumber) {
-      await globalSetupDevice(phoneNumber, provider);
+  // Reset mute when the active call goes away (each call starts un-muted).
+  useEffect(() => {
+    if (!currentConnection) setIsMuted(false);
+  }, [currentConnection]);
+
+  useEffect(() => {
+    if (phoneNumber && !isDeviceReady && canUseVoice) {
+      globalSetupDevice(phoneNumber, provider);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phoneNumber, isDeviceReady, canUseVoice]);
 
   if (!client) return null;
 
   return (
     <>
+      {!canUseVoice && (
+        <div className="mb-3">
+          <UpgradePlanBanner
+            title="Voice calling is not included in your plan"
+            description="Upgrade to make and receive calls directly from the platform."
+            ctaLabel="Upgrade Plan"
+          />
+        </div>
+      )}
       <div className="mt-auto flex w-full gap-3">
-        {/* Setup Device Button */}
-        <button
-          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
-            isDeviceReady
-              ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 cursor-default"
-              : "bg-gradient-to-br from-[#6571FF] to-[#5563E8] shadow-[#6571FF]/20 hover:shadow-xl hover:shadow-[#6571FF]/30 hover:-translate-y-0.5 active:scale-95"
-          }`}
-          onClick={handleSetupDevice}
-          disabled={isDeviceReady}
-        >
-          {!isDeviceReady && (
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-          )}
-          <div className="relative flex items-center justify-center gap-2">
-            {isDeviceReady ? (
-              <>
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Device Ready
-              </>
-            ) : (
-              "Setup Device"
-            )}
-          </div>
-        </button>
-
         {/* Make Call Button */}
         <button
           className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
-            isDeviceReady && !currentConnection
+            isDeviceReady && !currentConnection && canUseVoice
               ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:scale-95"
               : "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
           }`}
           onClick={makeCall}
-          disabled={!isDeviceReady || !!currentConnection}
+          disabled={!isDeviceReady || !!currentConnection || !canUseVoice}
         >
-          {isDeviceReady && !currentConnection && (
+          {isDeviceReady && !currentConnection && canUseVoice && (
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           )}
           <div className="relative flex items-center justify-center gap-2">
@@ -209,6 +219,54 @@ export default function SendCall({
             Make Call
           </div>
         </button>
+
+        {/* Mute Button — only while a call is active */}
+        {currentConnection && (
+          <button
+            type="button"
+            aria-pressed={isMuted}
+            aria-label={isMuted ? "Unmute call" : "Mute call"}
+            className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:scale-95 ${
+              isMuted
+                ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-amber-500/20"
+                : "bg-slate-100 text-slate-700 shadow-slate-200 hover:bg-slate-200"
+            }`}
+            onClick={toggleMute}
+          >
+            <div className="relative flex items-center justify-center gap-2">
+              {isMuted ? (
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 9l4 4m0-4l-4 4"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11a7 7 0 01-14 0m7 7v3m-4 0h8M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3z"
+                  />
+                </svg>
+              )}
+              {isMuted ? "Unmute" : "Mute"}
+            </div>
+          </button>
+        )}
 
         {/* End Call Button */}
         <button
@@ -238,7 +296,14 @@ export default function SendCall({
           </div>
         </button>
       </div>
-      <CallStatus callStatus={callStatus} callDuration={callDuration} />
+      {canUseVoice && (
+        <CallStatus
+          callStatus={callStatus}
+          callDuration={callDuration}
+          isDeviceReady={isDeviceReady}
+          hasActiveCall={!!currentConnection}
+        />
+      )}
     </>
   );
 }

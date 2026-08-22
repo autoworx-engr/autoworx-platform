@@ -1,16 +1,27 @@
-"use client";
+import { db } from "@/lib/db";
 import React from "react";
 import ReportingStatisticsCard from "../../components/ReportingStatisticsCard";
 
-export default function ChurnRate() {
+export default async function ChurnRate() {
+  const [cancelledCount, totalCount] = await Promise.all([
+    db.platformSubscription.count({ where: { status: "CANCELED" } }),
+    db.platformSubscription.count(),
+  ]);
+
+  const churnRatePct =
+    totalCount > 0 ? Math.round((cancelledCount / totalCount) * 100) : 0;
+
   return (
     <div className="min-h-screen">
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:w-fit">
         <ReportingStatisticsCard
-          title={"Churn Rate (Number)"}
-          statistic={456}
+          title="Cancelled Subscriptions"
+          statistic={cancelledCount}
         />
-        <ReportingStatisticsCard title={"Churn Rate (%)"} statistic={45} />
+        <ReportingStatisticsCard
+          title="Churn Rate (%)"
+          statistic={churnRatePct}
+        />
       </div>
     </div>
   );

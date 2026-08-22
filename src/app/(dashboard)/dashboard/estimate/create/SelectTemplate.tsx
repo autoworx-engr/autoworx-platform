@@ -5,6 +5,8 @@ import { InvoiceTemplate } from "@prisma/client";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import useTemplateListInfiniteQuery from "@/hooks/query-hook/useTemplateListInfiniteQuery";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useListsStore } from "@/stores/lists";
 
 interface SelectTemplateProps {
   name?: string;
@@ -35,10 +37,8 @@ export default function SelectTemplate({
   }, [searchTerm]);
 
   // Infinite query
-  const { data: infiniteData } =
+  const { data: templateList, isLoading } =
     useTemplateListInfiniteQuery(debouncedSearchTerm);
-
-  const templateList = useMemo(() => infiniteData ?? [], [infiniteData]);
 
   const handleSelect = (t: InvoiceTemplate | null) => {
     setTemplate(t);
@@ -46,6 +46,46 @@ export default function SelectTemplate({
 
   const handleClear = () => {
     setTemplate(null);
+
+    // remove everything the template added, restoring whatever was there before it was applied
+    const { templateSnapshot } = useEstimateCreateStore.getState();
+    if (templateSnapshot) {
+      const { status, ...rest } = templateSnapshot;
+      useEstimateCreateStore.setState({
+        ...rest,
+        templateSnapshot: null,
+      });
+      useListsStore.setState({ status: status ?? null });
+    } else {
+      useEstimateCreateStore.setState({
+        items: [],
+        tasks: [],
+        photos: [],
+        subtotal: 0,
+        discount: 0,
+        tax: 0,
+        serviceFee: 0,
+        vehicleExtraCost: 0,
+        deposit: 0,
+        grandTotal: 0,
+        due: 0,
+        internalNotes: "",
+        terms: "",
+        policy: "",
+        customerNotes: "",
+        customerComments: "",
+        damageNotes: "",
+        title: "",
+        currentSelectedCategoryId: null,
+        inspections: Array.from({ length: 15 }, () => ({
+          title: "",
+          driver: false,
+          passenger: false,
+          notes: "",
+        })),
+      });
+      useListsStore.setState({ status: null });
+    }
 
     const params = new URLSearchParams(searchParams?.toString());
     params.delete("templateId"); // <-- remove the param
@@ -69,11 +109,12 @@ export default function SelectTemplate({
             <h3 className="font-bold">{t.title}</h3>
           </div>
         )}
-        items={templateList}
+        items={templateList || []}
         onSearch={(search: string) => {
           setSearchTerm(search);
-          return templateList;
+          return templateList || [];
         }}
+        isLoading={isLoading}
         openState={[
           openDropdown as boolean,
           setOpenDropdown as Dispatch<SetStateAction<boolean>>,

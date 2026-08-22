@@ -4,61 +4,57 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 
 export default async function getClientList(
-  params: Prisma.ClientFindManyArgs = {},
-  search?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: Record<string, any> = {},
+  search?: string,
 ) {
   try {
     const companyId = await getCompanyId();
     const whereConditions: Prisma.ClientWhereInput[] = [{ companyId }];
 
     if (params.where) {
-      whereConditions.push(params.where);
+      whereConditions.push(params.where as Prisma.ClientWhereInput);
     }
 
-    if (search) {
-      const [first, last] = search.trim().split(" ");
+    const trimmedSearch = search?.trim();
+
+    if (trimmedSearch) {
+      // Every word of the search must appear in firstName or lastName (in either
+      // order/field), so a full "First Last" search still matches when the name
+      // is split across the two fields differently than the search words are.
+      const words = trimmedSearch.split(/\s+/).filter(Boolean);
 
       whereConditions.push({
         OR: [
           {
             firstName: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
           },
           {
             lastName: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
           },
           {
-            AND: [
-              first
-                ? {
-                    firstName: {
-                      contains: first,
-                      mode: "insensitive",
-                    },
-                  }
-                : {},
-              last
-                ? {
-                    lastName: {
-                      contains: last,
-                      mode: "insensitive",
-                    },
-                  }
-                : {},
-            ],
+            AND: words.map((word) => ({
+              OR: [
+                { firstName: { contains: word, mode: "insensitive" } },
+                { lastName: { contains: word, mode: "insensitive" } },
+              ],
+            })),
           },
           {
             email: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
+          },
+          {
             mobile: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
           },
@@ -66,7 +62,8 @@ export default async function getClientList(
       });
     }
 
-    const clients = await db.client.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clients = await (db.client.findMany as any)({
       ...params,
       where: {
         AND: whereConditions,

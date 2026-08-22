@@ -39,15 +39,12 @@ export function InvoiceItems({
       : 0;
 
     return (
-      <div
-        key={item.id}
-        className="rounded-md border border-[#6571FF] px-5 py-1"
-      >
+      <div key={item.id} className="rounded-md border border-primary px-5 py-1">
         <div
           onClick={() =>
             setOpenService(openService === item.id ? null : item.id)
           }
-          className="flex w-full cursor-pointer justify-between text-[#6571FF]"
+          className="flex w-full cursor-pointer justify-between text-primary"
         >
           <p>{item.service.name}</p>
           <button
@@ -68,7 +65,7 @@ export function InvoiceItems({
 
         {openService === item.id && (
           <>
-            <div className="mt-2 text-[#6571FF]">
+            <div className="mt-2 text-primary">
               <div>
                 {item.materials.map((material, index) => {
                   if (!material) return null;
@@ -90,7 +87,7 @@ export function InvoiceItems({
               </div>
             </div>
 
-            <div className="mt-2 text-[#6571FF]">
+            <div className="mt-2 text-primary">
               <div className="flex justify-between">
                 <p>{item.labor ? item.labor.name : "Labor"}</p>
                 <p>

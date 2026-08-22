@@ -57,7 +57,7 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
               (invoice.vehicle.model || "") +
               " " +
               (invoice.vehicle.other || "")
-          : "No vehicle"
+          : "No vehicle",
       )
       .replace("<BUSINESS_NAME>", invoice?.company?.name || "No business name");
 
@@ -71,7 +71,7 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
       invoice.id,
       clientName,
       user.id,
-      user.companyId
+      user.companyId,
     );
 
     let invoiceLink =
@@ -95,7 +95,7 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
           error: shortLinkResult.error,
           originalUrl: shortLinkResult.originalUrl,
           invoiceId: invoice.id,
-        }
+        },
       );
     }
 
@@ -112,11 +112,11 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
                 (invoice.vehicle.model || "") +
                 " " +
                 (invoice.vehicle.other || "")
-            : "No vehicle Found"
+            : "No vehicle Found",
         )
         .replace(
           "<BUSINESS_NAME>",
-          invoice?.company?.name || "No business name"
+          invoice?.company?.name || "No business name",
         ) || "") + `\n\n${invoiceLink}`;
 
     const company = await db.company.findUnique({

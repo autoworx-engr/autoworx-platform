@@ -35,5 +35,5 @@ export const useDemoVendorFilterStore = create<DemoVendorFilterState>(
       set((state) => ({
         searchTerm: searchTerm ?? state.searchTerm,
       })),
-  })
+  }),
 );

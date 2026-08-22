@@ -6,19 +6,36 @@ import { z } from "zod";
 export const tagModelValidationSchema = z
   .object({
     id: z.number().int().positive(),
-    name: z.string().min(1),
-    textColor: z.string(),
+    name: z
+      .string({
+        required_error: "Tag name is required",
+        invalid_type_error: "Tag name must be a string",
+      })
+      .min(1, "Tag name is required"),
+    textColor: z.string({
+      required_error: "Text color is required",
+      invalid_type_error: "Text color must be a string",
+    }),
     //   .regex(hexColorRegex, {
     //   message: "Text color must be a valid hex color code (e.g., #000000)",
     // }),
-    bgColor: z.string(),
+    bgColor: z.string({
+      required_error: "Background color is required",
+      invalid_type_error: "Background color must be a string",
+    }),
     //   .regex(hexColorRegex, {
     //   message:
     //     "Background color must be a valid hex color code (e.g., #FFFFFF)",
     // }),
     createdAt: z.coerce.date().default(() => new Date()),
     updatedAt: z.coerce.date().default(() => new Date()),
-    companyId: z.number().int().positive(),
+    companyId: z
+      .number({
+        required_error: "Company ID is required",
+        invalid_type_error: "Company ID must be a number",
+      })
+      .int()
+      .positive(),
   })
   .refine(
     (data) => {
@@ -28,7 +45,7 @@ export const tagModelValidationSchema = z
     {
       message: "updatedAt cannot be before createdAt",
       path: ["updatedAt"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -38,7 +55,7 @@ export const tagModelValidationSchema = z
     {
       message: "Text color and background color must be different",
       path: ["textColor"],
-    }
+    },
   );
 
 // Type inference

@@ -3,14 +3,15 @@
 import Selector from "@/components/Selector";
 import { useListsStore } from "@/stores/lists";
 import { Client } from "@prisma/client";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import Avatar from "../Avatar";
-import useClientListQuery from "@/hooks/query-hook/useClientListQuery";
+
+import useClientListInfiniteQuery from "@/hooks/query-hook/useClientListInfiniteQuery";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import NewCustomer from "../Lists/NewCustomer";
 import { SelectProps } from "../Lists/select-props";
-import { usePathname } from "next/navigation";
 
 export function SelectAppointmentClient({
   name = "clientId",
@@ -28,21 +29,62 @@ export function SelectAppointmentClient({
 > | null>) {
   const state = useState(value);
   const [client, setClient] = setValue ? [value, setValue] : state;
-  const { data: clientList = [] } = useClientListQuery();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useClientListInfiniteQuery(debouncedSearchTerm);
+  const clientList = data?.pages.flatMap((page) => page.clients) ?? [];
+
   const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
   const queryClient = useQueryClient();
   const pathname = usePathname();
 
+  // Guard so we only auto-select the initial client once, not on every clientList refetch
+  const initialClientSet = useRef(false);
+  const fetchingClientId = useRef<number | null>(null);
+  // Drives the spinner while the prefilled client is still being resolved.
+  const [isResolvingClient, setIsResolvingClient] = useState(false);
+
   useEffect(() => {
-    if (clientId && clientList.length > 0) {
+    if (initialClientSet.current) return;
+    if (!clientId) return;
+
+    if (!fromLead) {
       const matchedClient = clientList.find((c) => c.id === clientId);
       if (matchedClient) {
+        initialClientSet.current = true;
         setClient(matchedClient);
-      } else {
-        setClient(null);
+        return;
       }
     }
-  }, [clientId, clientList]);
+
+    if (fetchingClientId.current === clientId) return;
+    fetchingClientId.current = clientId;
+    setIsResolvingClient(true);
+    fetch(`/api/client/client-details/${clientId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          initialClientSet.current = true;
+          setClient(data.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        // Cleared on failure too, so a bad response can't spin forever.
+        setIsResolvingClient(false);
+        if (!initialClientSet.current) fetchingClientId.current = null;
+      });
+  }, [fromLead, clientId, clientList]);
 
   useEffect(() => {
     if (newAddedCustomer && setOpenDropdown) {
@@ -68,10 +110,13 @@ export function SelectAppointmentClient({
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
       <Selector
+        className="min-w-full"
         label={(client: Partial<Client> | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }
-        disabledDropdown={(fromLead && !!clientId) ?? client?.fromRequest!}
+        disabledDropdown={Boolean(
+          (fromLead && clientId) || client?.fromRequest,
+        )}
         newButton={
           <NewCustomer
             // @ts-ignore
@@ -103,19 +148,21 @@ export function SelectAppointmentClient({
           </div>
         )}
         items={clientList}
-        onSearch={(search: string) =>
-          clientList.filter((client) =>
-            `${client.firstName} ${client.lastName}`
-              .toLowerCase()
-              .includes(search.toLowerCase()),
-          )
-        }
+        isLoading={isResolvingClient}
+        onSearch={(search: string) => {
+          setSearchTerm(search);
+          return clientList;
+        }}
         openState={[
           openDropdown as boolean,
           setOpenDropdown as Dispatch<SetStateAction<boolean>>,
         ]}
         selectedItem={client}
         setSelectedItem={setClient}
+        useInfiniteScroll
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
       />
     </>
   );

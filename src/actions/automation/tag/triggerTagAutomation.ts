@@ -16,13 +16,14 @@ type TUpdateTagAutomationTrigger = {
 };
 
 export async function updateTagAutomationTrigger(
-  payload: TUpdateTagAutomationTrigger
+  payload: TUpdateTagAutomationTrigger,
 ) {
   const { generatedToken, ...payloadData } = payload;
 
   try {
     const session = await getServerSession(authOptions);
     const token = session?.accessToken || generatedToken;
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/tag-automation-trigger`,
       {
@@ -34,10 +35,10 @@ export async function updateTagAutomationTrigger(
         body: JSON.stringify({
           ...payloadData,
         }),
-      }
+      },
     );
     const data = await response.json();
-
+    console.log("tag automation triggered", payloadData);
     return {
       success: "ok",
       data: data.data,

@@ -1,11 +1,19 @@
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
+import { debounceSmsAgent } from "@/lib/salesAgent/debounceSmsAgent";
+import { revalidatePath } from "next/cache";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 
 const pusher = getPusherInstance();
 
@@ -44,7 +52,7 @@ export async function POST(req: NextRequest) {
       console.log("No results in webhook payload");
       return NextResponse.json(
         { error: "No results in webhook payload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -65,13 +73,17 @@ export async function POST(req: NextRequest) {
       } = messageData;
 
       console.log(
-        `Processing message: from=${from}, to=${to}, text="${message || cleanText}"`
+        `Processing message: from=${from}, to=${to}, text="${message || cleanText}"`,
       );
 
       if (!from || !to) {
         console.log("Missing required fields: from or to");
         continue;
       }
+
+      const normalizedFrom = normalizePhoneForStorage(from);
+      const fromLookup = phoneLookupWhereClause(from);
+      const toLookup = phoneLookupWhereClause(to);
 
       const messageText = message || cleanText || "";
 
@@ -87,22 +99,24 @@ export async function POST(req: NextRequest) {
         twilioMediaUrls.push(...foundUrls);
         console.log(
           `Found ${twilioMediaUrls.length} Twilio media URLs:`,
-          twilioMediaUrls
+          twilioMediaUrls,
         );
       }
 
       // Find Infobip configurations that match the "to" phone number
       // The "to" field should match our Infobip phone number
-      const infobipConfigs = await db.infobipConfig.findMany({
-        where: {
-          phoneNumber: {
-            endsWith: to.replace("+", ""),
-          },
-        },
-      });
+      const infobipConfigs = toLookup
+        ? await db.infobipConfig.findMany({
+            where: {
+              OR: toLookup.map((v) => ({
+                phoneNumber: { endsWith: v.mobile.endsWith },
+              })),
+            },
+          })
+        : [];
 
       console.log(
-        `Found ${infobipConfigs.length} Infobip configs for phone number ${to}`
+        `Found ${infobipConfigs.length} Infobip configs for phone number ${to}`,
       );
 
       if (infobipConfigs.length === 0) {
@@ -112,25 +126,33 @@ export async function POST(req: NextRequest) {
 
       // Process for each matching company
       for (const infobipConfig of infobipConfigs) {
+        const entitlements = await getCompanyEntitlements(
+          infobipConfig.companyId,
+        );
+        if (!entitlements.canUseSms) {
+          continue;
+        }
+
         console.log(`Processing for company ${infobipConfig.companyId}`);
 
         // Find client by the "from" phone number (client's phone)
-        let client = await db.client.findFirst({
-          where: {
-            mobile: {
-              endsWith: from.replace("+", ""),
-            },
-            companyId: infobipConfig.companyId,
-          },
-        });
+        let client = fromLookup
+          ? await db.client.findFirst({
+              where: {
+                OR: fromLookup,
+                companyId: infobipConfig.companyId,
+              },
+            })
+          : null;
 
         if (!client) {
           client = await db.client.create({
             data: {
               firstName: from,
               lastName: " ",
-              mobile: from,
+              mobile: normalizedFrom,
               companyId: infobipConfig.companyId,
+              isSalesAgent: true,
             },
           });
         }
@@ -156,7 +178,7 @@ export async function POST(req: NextRequest) {
 
           if (mediaMessages && mediaMessages.length > 0) {
             console.log(
-              `Processing ${mediaMessages.length} Infobip media attachments`
+              `Processing ${mediaMessages.length} Infobip media attachments`,
             );
 
             const formData = new FormData();
@@ -166,13 +188,13 @@ export async function POST(req: NextRequest) {
               try {
                 const file = await fetchInfobipMedia(
                   mediaItem.url,
-                  mediaItem.contentType
+                  mediaItem.contentType,
                 );
                 formData.append("file", file);
               } catch (error) {
                 console.error(
                   `Failed to fetch media from ${mediaItem.url}:`,
-                  error
+                  error,
                 );
               }
             }
@@ -185,7 +207,7 @@ export async function POST(req: NextRequest) {
                   {
                     method: "POST",
                     body: formData,
-                  }
+                  },
                 );
 
                 const uploadResult = await res.json();
@@ -204,7 +226,7 @@ export async function POST(req: NextRequest) {
                 }
 
                 console.log(
-                  `Successfully uploaded and stored ${uploadedUrls.length} media files`
+                  `Successfully uploaded and stored ${uploadedUrls.length} media files`,
                 );
               } catch (error) {
                 console.error("Failed to upload media files:", error);
@@ -215,7 +237,7 @@ export async function POST(req: NextRequest) {
           // Process Twilio media URLs as attachments (cross-platform support)
           if (twilioMediaUrls.length > 0) {
             console.log(
-              `Processing ${twilioMediaUrls.length} Twilio media URLs as attachments`
+              `Processing ${twilioMediaUrls.length} Twilio media URLs as attachments`,
             );
             for (let i = 0; i < twilioMediaUrls.length; i++) {
               const attachment = await db.clientSmsAttachments.create({
@@ -229,6 +251,65 @@ export async function POST(req: NextRequest) {
             }
           }
 
+          //sales agent
+          const company = await db.company.findUnique({
+            where: { id: infobipConfig?.companyId },
+          });
+
+          const entitlements = await getCompanyEntitlements(client.companyId);
+          const isSalesAgentEnabled = entitlements.awxSalesAgent;
+
+          const isCompanySalesAgent = company?.isSalesAgent === true;
+          const isClientSalesAgent = client?.isSalesAgent === true;
+
+          console.log("[Infobip] Sales-agent gate check", {
+            companyId: infobipConfig.companyId,
+            clientId: client.id,
+            isCompanySalesAgent,
+            isClientSalesAgent,
+            isSalesAgentEnabled,
+            clientSMSTo: clientSMS?.to,
+            infobipPhone: infobipConfig.phoneNumber,
+            phoneMatch: clientSMS?.to === infobipConfig.phoneNumber,
+          });
+
+          if (
+            isCompanySalesAgent &&
+            isClientSalesAgent &&
+            isSalesAgentEnabled
+          ) {
+            if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
+              console.log(
+                "[Infobip] All gates passed — calling debounceSmsAgent for clientId",
+                client.id,
+              );
+
+              debounceSmsAgent({
+                clientId: client.id,
+                companyId: client.companyId,
+                sendFrom: clientSMS.from,
+                sendTo: clientSMS.to,
+                windowStart: clientSMS.createdAt.toISOString(),
+              }).catch((err) =>
+                console.error("[Infobip] debounceSmsAgent enqueue error:", err),
+              );
+            } else {
+              console.log("[Infobip] Phone mismatch — skipping debounce", {
+                clientSMSTo: clientSMS?.to,
+                infobipPhone: infobipConfig.phoneNumber,
+              });
+            }
+          } else {
+            console.log(
+              "[Infobip] Sales-agent gate FAILED — skipping debounce",
+              {
+                isCompanySalesAgent,
+                isClientSalesAgent,
+                isSalesAgentEnabled,
+              },
+            );
+          }
+
           // Count unread messages
           const totalUnReadMessages = await db.clientSMS.count({
             where: {
@@ -239,19 +320,20 @@ export async function POST(req: NextRequest) {
           });
 
           // Update chat track
-          updateNewSMSChatTrack({
+          await updateNewSMSChatTrack({
             clientId: client.id,
             smsLastMessage: cleanedMessageText,
             lastMessageBy: "Client",
             attachments: processedAttachments,
-          });
+          }).catch(console.error);
 
           // Send notifications
-          sendClientMessageNotification({
+          await sendClientMessageNotification({
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
-          });
+            message: cleanedMessageText,
+          }).catch(console.error);
 
           // Trigger Pusher notification
           const channelName = `message-${client.id}`;
@@ -269,15 +351,13 @@ export async function POST(req: NextRequest) {
           }
 
           // Send client mail or SMS notification
-          try {
-            sendClientMailOrSMSNotify(client.id);
-          } catch (pusherError) {
+          sendClientMailOrSMSNotify(client.id).catch((pusherError) =>
             console.error(
               "Pusher sendClientMailOrSMSNotify error:",
-              pusherError
-            );
-            // Continue processing even if pusher fails
-          }
+              pusherError,
+            ),
+          );
+          // Continue processing even if pusher fails
 
           // Trigger pipeline automation if applicable
           try {
@@ -299,7 +379,9 @@ export async function POST(req: NextRequest) {
                 condition: "MESSAGE_RECEIVED_CLIENT",
                 leadId: clientWithLead.Lead.id,
                 columnId: clientWithLead.Lead.columnId,
-              });
+              }).catch((automationError) =>
+                console.error("Pipeline automation error:", automationError),
+              );
             }
           } catch (automationError) {
             console.error("Pipeline automation error:", automationError);
@@ -308,24 +390,24 @@ export async function POST(req: NextRequest) {
           console.log(`Successfully processed message for client ${client.id}`);
         } else {
           console.log(
-            `No client found for phone number ${from} in company ${infobipConfig.companyId}`
+            `No client found for phone number ${from} in company ${infobipConfig.companyId}`,
           );
         }
       }
     }
-
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return NextResponse.json(
       {
         message: "Webhook processed successfully",
         processedCount: results.length,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Infobip webhook error:", error);
     return NextResponse.json(
       { message: "Webhook processing failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -351,6 +433,6 @@ async function fetchInfobipMedia(url: string, contentType: string) {
 export async function GET() {
   return NextResponse.json(
     { message: "Infobip SMS receive webhook is active" },
-    { status: 200 }
+    { status: 200 },
   );
 }

@@ -20,7 +20,7 @@ export default function AppointmentBtn({
       )}
 
       <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-        New Appointment
+        Appointment
       </span>
     </button>
   );

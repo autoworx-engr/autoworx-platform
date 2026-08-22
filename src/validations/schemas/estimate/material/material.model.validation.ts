@@ -8,35 +8,44 @@ export const materialModelSchemaValidation = z
       .positive()
       .optional(),
     name: z
-      .string({ message: "name Id must be required" })
+      .string({
+        required_error: "Name is required",
+        invalid_type_error: "Name must be a string",
+      })
       .nullable()
       .optional(),
     vendorId: z.number().int().positive().nullable().optional(),
     categoryId: z.number().int().positive().nullable().optional(),
     notes: z.string().nullable().optional(),
     quantity: z
-      .string()
+      .number()
+      .max(99999999, "Material Quantity must be less than 100,000,000")
       .refine(
         (val) => {
-          const num = Number(val);
-          return !isNaN(num) && num >= 0;
+          return !isNaN(val) && val >= 0;
         },
         {
           message: "Material Quantity must be a positive number",
-        }
+        },
       )
       .optional(),
     cost: z
-      .number()
-      .nonnegative("material cost must be positive value")
+      .number({ invalid_type_error: "Cost must be a valid number" })
+      .nonnegative("Material cost must be a positive value")
+      .max(99999999, "Material Cost must be less than 100,000,000")
       .optional()
       .default(0), // For Decimal
     sell: z
-      .number()
-      .nonnegative("material sell must be positive value")
+      .number({ invalid_type_error: "Sell price must be a valid number" })
+      .nonnegative("Material sell price must be a positive value")
+      .max(99999999, "Sell price must be less than 100,000,000")
       .optional()
       .default(0), // For Decimal
-    discount: z.number().optional().default(0), // For Decimal
+    discount: z
+      .number({ invalid_type_error: "Discount must be a valid number" })
+      .max(99999999, "Discount must be less than 100,000,000")
+      .optional()
+      .default(0), // For Decimal
     companyId: z
       .number({ message: "company Id must be required" })
       .int()
@@ -91,7 +100,7 @@ export const materialModelSchemaValidation = z
     {
       message: "Quantity must be zero or positive",
       path: ["quantity"],
-    }
+    },
   );
 
 export type TMaterialModelSchemaValidation = z.infer<

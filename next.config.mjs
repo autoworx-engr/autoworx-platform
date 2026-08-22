@@ -25,12 +25,8 @@ const nextConfig = {
   //     },
   //   ];
   // },
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -38,8 +34,16 @@ const nextConfig = {
       },
     ],
   },
+  serverExternalPackages: ["pg-boss", "fluent-ffmpeg", "@ffmpeg-installer/ffmpeg"],
   reactStrictMode: false,
   productionBrowserSourceMaps: process.env.NODE_ENV === "development",
+  allowedDevOrigins: [
+    "192.168.0.101",
+    "*.ngrok-free.app",
+    "localhost:3000",
+    "*.trycloudflare.com",
+    'bs-local.com'
+  ],
 };
 
 export default nextConfig;

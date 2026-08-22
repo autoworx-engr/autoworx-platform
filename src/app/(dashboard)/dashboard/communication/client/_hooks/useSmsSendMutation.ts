@@ -1,6 +1,7 @@
 import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { errorToast } from "@/lib/toast";
+import { isAudio } from "../_utils";
 import { ClientSMS, SmsGateway } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { smsQueryKey } from "../_utils/queryKey";
@@ -41,46 +42,48 @@ export default function useSmsSendMutation(clientId: number) {
           mediaUrl = json?.data;
         }
       }
+      const attachments = mediaUrl.map((url, ind) => ({
+        url,
+        name: files[ind].name,
+        isVoiceNote:
+          isAudio(files[ind].name) || files[ind].type.startsWith("audio/"),
+      }));
+
       let response;
       if (clientSmsData.smsGateway === "TWILIO") {
         response = await sendTwilioMessage({
           clientId: clientSmsData.clientId,
           message: clientSmsData.message,
-          attachments: mediaUrl.map((file, ind) => ({
-            url: file,
-            name: files[ind].name,
-          })),
+          attachments,
         });
       } else if (clientSmsData.smsGateway === "INFOBIP") {
         response = await sendInfobipMessage({
           clientId: clientSmsData.clientId,
           message: clientSmsData.message,
-          attachments: mediaUrl.map((file, ind) => ({
-            url: file,
-            name: files[ind].name,
-          })),
+          attachments,
         });
       }
       return response;
     },
 
     // 🔁 Optimistic update
-    onMutate: async newClientSms => {
+    onMutate: async (newClientSms) => {
       await queryClient.cancelQueries({
         queryKey: smsQueryKey.allSmsByClientId(newClientSms.clientId),
       });
 
       let previousClientSms = queryClient.getQueryData(
-        smsQueryKey.allSmsByClientId(newClientSms.clientId)
+        smsQueryKey.allSmsByClientId(newClientSms.clientId),
       );
 
       const optimisticMessage = {
         id: newClientSms.id,
         clientId: newClientSms.clientId,
         message: newClientSms.message,
-        attachments: newClientSms.files.map(file => ({
+        attachments: newClientSms.files.map((file) => ({
           name: file.name,
           url: URL.createObjectURL(file), // Temporary blob URL
+          isVoiceNote: isAudio(file.name) || file.type.startsWith("audio/"),
         })),
         createdAt: new Date().toISOString(),
         isSending: true,
@@ -105,7 +108,7 @@ export default function useSmsSendMutation(clientId: number) {
                 nextPage: number;
                 hasMore: boolean;
               },
-              index: number
+              index: number,
             ) => {
               if (index === 0) {
                 return {
@@ -114,13 +117,13 @@ export default function useSmsSendMutation(clientId: number) {
                 };
               }
               return page;
-            }
+            },
           );
           return {
             ...oldData,
             pages: updatedPages,
           };
-        }
+        },
       );
 
       return { previousClientSms };
@@ -133,7 +136,7 @@ export default function useSmsSendMutation(clientId: number) {
       // Rollback day page appointments
       queryClient.setQueryData(
         smsQueryKey.allSmsByClientId(clientId),
-        context?.previousClientSms
+        context?.previousClientSms,
       );
     },
 

@@ -27,74 +27,79 @@ export default function MailAttachment({ message, onDownload }: TProps) {
   const allImageUrls = attachments
     .filter((a) => isImage(a.mimeType ?? a.name) && typeof a.url === "string")
     .map((a) => a.url as string);
+  const images = attachments.filter((a) => isImage(a.mimeType ?? a.name));
+  const files = attachments.filter((a) => !isImage(a.mimeType ?? a.name));
 
   return (
     <div
       className={cn(
-        "mt-2 flex w-full flex-wrap items-start gap-2",
-        message.emailBy === "Company" && "justify-end"
+        "mt-2 flex w-full flex-col items-start gap-2",
+        message.emailBy === "Company" && "items-end",
       )}
     >
-      {attachments.map((att, i) => {
-        const img = isImage(att.mimeType ?? att.name);
-
-        // IMAGE THUMB
-        if (img) {
-          const currentImageIndex = allImageUrls.indexOf(att.url);
-          const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
-          return (
-            <Link
-              key={`${att.url}-${i}`}
-              href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentImageIndex}`}
-              className={cn(
-                "group relative inline-flex overflow-hidden rounded-md ring-1 ring-zinc-200 transition",
-                "hover:ring-emerald-400 dark:ring-white/10"
-              )}
-              title={att.name}
-            >
-              <Image
-                src={att.url}
-                alt={att.name || "image attachment"}
-                width={96}
-                height={96}
-                className="h-20 w-24 object-cover"
-              />
-              <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 bg-black/10" />
-            </Link>
-          );
-        }
-
-        // FILE CHIP
-        return (
-          <Link
-            key={`${att.url}-${i}`}
-            href={`${att.url}`}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-              "ring-1 ring-zinc-200 bg-white hover:ring-emerald-400 transition",
-              "dark:bg-zinc-900 dark:ring-white/10"
-            )}
-            title={att.name}
-          >
-            <File className="w-5 h-5 text-zinc-500 dark:text-zinc-300" />
-            <span className="max-w-[12rem] truncate text-zinc-700 dark:text-zinc-200">
-              {att.name || "file"}
-            </span>
-            {onDownload && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onDownload(att.url, att.name);
-                }}
-                className="ml-1 rounded-sm px-1.5 py-0.5 text-xs text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-400/10"
+      {images.length > 0 && (
+        <div
+          className="grid w-fit gap-2"
+          style={{
+            gridTemplateColumns: `repeat(${Math.min(images.length, 3)}, 6rem)`,
+          }}
+        >
+          {images.map((att, i) => {
+            const currentImageIndex = allImageUrls.indexOf(att.url);
+            const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
+            return (
+              <Link
+                key={`${att.url}-${i}`}
+                href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentImageIndex}`}
+                className={cn(
+                  "group relative block overflow-hidden rounded-md ring-1 ring-zinc-200 transition",
+                  "hover:ring-emerald-400 dark:ring-white/10",
+                )}
+                title={att.name}
               >
-                Download
-              </button>
-            )}
-          </Link>
-        );
-      })}
+                <Image
+                  src={att.url}
+                  alt={att.name || "image attachment"}
+                  width={96}
+                  height={96}
+                  className="h-24 w-24 object-cover"
+                />
+                <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 bg-black/10" />
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {files.map((att, i) => (
+        <Link
+          key={`${att.url}-${i}`}
+          href={`${att.url}`}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+            "ring-1 ring-zinc-200 bg-white hover:ring-emerald-400 transition",
+            "dark:bg-zinc-900 dark:ring-white/10",
+          )}
+          title={att.name}
+        >
+          <File className="w-5 h-5 text-zinc-500 dark:text-zinc-300" />
+          <span className="max-w-[12rem] truncate text-zinc-700 dark:text-zinc-200">
+            {att.name || "file"}
+          </span>
+          {onDownload && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onDownload(att.url, att.name);
+              }}
+              className="ml-1 rounded-sm px-1.5 py-0.5 text-xs text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-400/10"
+            >
+              Download
+            </button>
+          )}
+        </Link>
+      ))}
     </div>
   );
 }

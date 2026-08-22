@@ -1,5 +1,5 @@
 "use client";
-import React, { ChangeEvent, useEffect } from "react";
+import React, { ChangeEvent, useEffect, useMemo } from "react";
 import Selector from "./Selector";
 import { useState } from "react";
 import { Spin, TimePicker } from "antd";
@@ -86,7 +86,7 @@ const CampaignForm = ({
   const companyTimezone = useCompanyTimezone();
   const today = moment.tz(companyTimezone).format("YYYY-MM-DD");
   const [error, setError] = useState<Record<string, string>>({});
-  // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Campaign | null>(null);
   const [formData, setFormData] = useState<Campaign>({
     companyId: null,
     target: [],
@@ -111,7 +111,7 @@ const CampaignForm = ({
   const maxLength = 300;
   const { length, isLimitExceeded } = useCharacterLimit(
     formData?.emailBody! || formData?.smsBody!,
-    maxLength
+    maxLength,
   );
   // Update minDate whenever today changes (when timezone loads)
   useEffect(() => {
@@ -127,7 +127,7 @@ const CampaignForm = ({
   const { data: makes, isLoading: isMakeLoading }: any = useGetMake();
   const { data: models }: any = useGetModelsByYearAndMake(
     formData.vehicleMinYear!,
-    formData.vehicleBrand!
+    formData.vehicleBrand!,
   );
   const { mutate: createMarketing, isPending: isCreatePending } =
     useCreateMarketingAutomationRule();
@@ -136,13 +136,13 @@ const CampaignForm = ({
   const { calendarSettings, fetchCalendarSettings } =
     useCalendarSettingsStore();
   const { data, isLoading, isFetching } = useFindOneMarketingAutomationRule(
-    Number(id)
+    Number(id),
   );
 
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id) {
-        setFormData({
+        const payload: Campaign = {
           companyId: data?.data.companyId,
           target: data?.data.target,
           targetCondition: data?.data.targetCondition,
@@ -159,15 +159,16 @@ const CampaignForm = ({
           smsBody: data?.data.smsBody || "",
           attachments: data?.data.attachments || [],
           createdBy: data?.data.createdBy,
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
         setActiveTemplate(
           data?.data.communicationType === "BOTH"
             ? "SMS"
-            : data?.data.communicationType
+            : data?.data.communicationType,
         );
-        // setLoading(false);
       } else {
-        setFormData({
+        const payload: Campaign = {
           companyId: null,
           target: [],
           targetCondition: "",
@@ -184,7 +185,9 @@ const CampaignForm = ({
           emailBody: "",
           smsBody: "",
           createdBy: null,
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
       }
     };
     loadData();
@@ -194,7 +197,7 @@ const CampaignForm = ({
   // Type-safe input change handler
   const handleInputChange = <K extends keyof Campaign>(
     field: K,
-    value: Campaign[K]
+    value: Campaign[K],
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -248,15 +251,15 @@ const CampaignForm = ({
       // Combine selected date with calendar settings
       const minTime = moment(
         `${date} ${calendarSettings?.dayStart}`,
-        "YYYY-MM-DD HH:mm"
+        "YYYY-MM-DD HH:mm",
       );
       const maxTime = moment(
         `${date} ${calendarSettings?.dayEnd}`,
-        "YYYY-MM-DD HH:mm"
+        "YYYY-MM-DD HH:mm",
       );
       const selectedTime = moment(
         `${date} ${time.format("HH:mm")}`,
-        "YYYY-MM-DD HH:mm"
+        "YYYY-MM-DD HH:mm",
       );
 
       const isValid =
@@ -266,7 +269,7 @@ const CampaignForm = ({
 
       if (!isValid) {
         errorToast(
-          `Please select a time between working hours (${minTime.format("hh:mm A")} - ${maxTime.format("hh:mm A")}).`
+          `Please select a time between working hours (${minTime.format("hh:mm A")} - ${maxTime.format("hh:mm A")}).`,
         );
         return;
       }
@@ -292,7 +295,7 @@ const CampaignForm = ({
   // Handle file attachment
   const handleFileAttachment = async (
     e: ChangeEvent<HTMLInputElement>,
-    type: string
+    type: string,
   ) => {
     handleFileSelection({
       event: e,
@@ -300,6 +303,11 @@ const CampaignForm = ({
       setFormData,
     });
   };
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -380,7 +388,7 @@ const CampaignForm = ({
       }
 
       if (twilio === null) {
-        newErrors.twilio = "";
+        newErrors.twilio = "SMS gateway not configured";
         errorToast(newErrors.twilio);
       }
     }
@@ -395,35 +403,32 @@ const CampaignForm = ({
 
       return;
     }
-    const dateIso = new Date(`${formData.date}T00:00:00.000Z`).toISOString();
-    formData.date = dateIso;
-    formData.createdBy = userEmail;
-    formData.companyId = companyId;
-
     try {
-      // 1. Upload all local attachments
-
-      const uploadedAttachments = await uploadAllAttachments(
-        formData.attachments!
-      );
-
-      delete formData.attachments;
       const finalData = {
         ...formData,
+        date: new Date(`${formData.date}T00:00:00.000Z`).toISOString(),
         createdBy: userEmail,
-        companyId: companyId,
-        attachments: uploadedAttachments, // Now this will be an array of string URLs
+        companyId,
       };
 
-      // 3. Create or update campaign
-      if (isEdit && id) {
-        updateMarketing({ id, data: finalData });
-        // setLoading(true);
-      } else {
-        // Call your create API
-        createMarketing(finalData);
+      // Upload attachments
+      const uploadedAttachments = await uploadAllAttachments(
+        formData.attachments || [],
+      );
 
-        // Reset form after successful creation
+      const payload = {
+        ...finalData,
+        attachments: uploadedAttachments, // array of string URLs
+      };
+
+      if (isEdit && id) {
+        updateMarketing({
+          id,
+          data: payload,
+        });
+      } else {
+        createMarketing(payload);
+
         setFormData({
           companyId: null,
           target: [],
@@ -459,7 +464,7 @@ const CampaignForm = ({
     .join(", ");
 
   const condition = targetConditions?.find(
-    (c) => c.id === formData?.targetCondition
+    (c) => c.id === formData?.targetCondition,
   );
 
   const targetHelp = getTargetHelp({
@@ -529,7 +534,6 @@ const CampaignForm = ({
             />
             <Selector
               name="targetCondition"
-              // label="Target Conditions"
               options={targetConditions}
               value={formData.targetCondition}
               onChange={(value) => handleInputChange("targetCondition", value)}
@@ -571,7 +575,6 @@ const CampaignForm = ({
             <div className="flew-wrap flex items-center gap-2">
               <SlimInput
                 name="date"
-                // label="Select Date and Time"
                 className=""
                 type="date"
                 value={formData.date ?? ""}
@@ -586,7 +589,6 @@ const CampaignForm = ({
                     format="h:mm A"
                     placeholder="1:00 AM"
                     use12Hours
-                    // needConfirm={false}
                     onChange={handleStartTimeChange}
                     allowClear={false}
                     suffixIcon={null}
@@ -595,7 +597,7 @@ const CampaignForm = ({
                         ? getTimeFromISOString(formData.startTime)
                         : null
                     }
-                    className={`${error.startTime ? "!border-red-500" : ""}`}
+                    className={`!h-[38px] ${error.startTime ? "!border-red-500" : ""}`}
                   />
 
                   {error.startTime && (
@@ -689,7 +691,6 @@ const CampaignForm = ({
             />
             <CustomRadioGroup
               name="communicationType"
-              // label="Select Communication Type"
               value={formData.communicationType}
               onChange={handleChange}
               options={[
@@ -711,7 +712,7 @@ const CampaignForm = ({
                 checked={activeTemplate === "EMAIL"}
                 onChange={() =>
                   handleTemplateToggle(
-                    activeTemplate === "SMS" ? "EMAIL" : "SMS"
+                    activeTemplate === "SMS" ? "EMAIL" : "SMS",
                   )
                 }
               />
@@ -790,9 +791,17 @@ const CampaignForm = ({
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isUpdatePending || isCreatePending || isLimitExceeded}
+              disabled={
+                isUpdatePending ||
+                isCreatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
+              }
               className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                isUpdatePending || isCreatePending || isLimitExceeded
+                isUpdatePending ||
+                isCreatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
                   ? "cursor-not-allowed bg-indigo-300"
                   : "bg-indigo-500 hover:bg-indigo-600"
               }`}

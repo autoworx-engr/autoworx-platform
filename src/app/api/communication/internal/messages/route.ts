@@ -1,56 +1,60 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { Message } from "@prisma/client";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
  * /api/communication/internal/messages:
  *   get:
- *     summary: Retrieve internal messages
- *     tags: [Internal]
+ *     summary: Retrieve direct/private messages. Can filter by specific conversation or all messages involving a user.
+ *     tags: [Internal Messages]
  *     parameters:
  *       - in: query
- *         name: to
+ *         name: toId
+ *         required: false
  *         schema:
  *           type: integer
- *         description: ID of the recipient user
+ *         description: ID of the recipient user (required if 'fromId' is not provided)
  *       - in: query
- *         name: from
+ *         name: fromId
+ *         required: false
  *         schema:
  *           type: integer
- *         description: ID of the sender user
+ *         description: ID of the sender user (required if 'toId' is not provided)
  *       - in: query
  *         name: companyId
+ *         required: true
  *         schema:
  *           type: integer
  *         description: ID of the company
  *       - in: query
- *         name: groupId
- *         schema:
- *           type: integer
- *         description: ID of the group
- *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *         description: Page number for pagination (default is 1)
+ *           default: 1
+ *         description: Page number for pagination
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *         description: Number of records per page (default is 20)
+ *           default: 20
+ *         description: Number of records per page
  *       - in: query
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Field to sort by (default is createdAt)
+ *           default: createdAt
+ *         description: Field to sort by
  *       - in: query
  *         name: sortOrder
  *         schema:
  *           type: string
- *         description: Sort order, either asc or desc (default is desc)
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
  *     responses:
  *       200:
  *         description: Messages retrieved successfully
@@ -62,123 +66,90 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const searchParams = request.nextUrl.searchParams;
 
-    // 2. Extract specific values using .get()
-    const to = searchParams.get("to");
-    const from = searchParams.get("from");
-    const companyId = searchParams.get("companyId");
-    const groupId = searchParams.get("groupId");
+    const toIdRaw = searchParams.get("toId");
+    const fromIdRaw = searchParams.get("fromId");
     const sortBy = searchParams.get("sortBy");
     const sortOrder = searchParams.get("sortOrder");
 
-    // 3. Handle numbers (params are always strings by default)
-    // If 'page' is null, default to 1.
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
 
-    // Placeholder for actual message retrieval logic
+    const toId = toIdRaw ? parseInt(toIdRaw) : null;
+    const fromId = fromIdRaw ? parseInt(fromIdRaw) : null;
 
-    const toId = to ? parseInt(to) : null;
-    const fromId = from ? parseInt(from) : null;
-    const groupIdNum = groupId ? parseInt(groupId) : null;
-    const companyIdNum = companyId ? parseInt(companyId) : null;
-
-    if (!companyIdNum) {
-      throw new AppError(400, "Company ID is required");
+    if ((!toId || isNaN(toId)) && (!fromId || isNaN(fromId))) {
+      throw new AppError(
+        400,
+        "At least one valid user ID ('fromId' or 'toId') is required",
+      );
     }
 
-    const findExistingCompany = await db.company.findUnique({
-      where: { id: companyIdNum },
+    if (toId && fromId && toId === fromId) {
+      throw new AppError(400, "Cannot send message to oneself");
+    }
+
+    // Caller must be one of the conversation parties.
+    if (
+      (toId && toId !== principal.userId && fromId !== principal.userId) ||
+      (fromId && fromId !== principal.userId && toId !== principal.userId)
+    ) {
+      throw new AppError(403, "Forbidden");
+    }
+
+    // Verify the other party is in the same company.
+    const otherId = toId === principal.userId ? fromId : toId;
+    if (otherId) {
+      const otherUser = await db.user.findFirst({
+        where: { id: otherId, companyId: principal.companyId },
+        select: { id: true },
+      });
+      if (!otherUser) {
+        throw new AppError(404, "User not found in this company");
+      }
+    }
+
+    const where: Prisma.MessageWhereInput = {
+      groupId: null,
+      section: "internal",
+    };
+
+    if (toId && fromId) {
+      where.OR = [
+        { from: fromId, to: toId },
+        { from: toId, to: fromId },
+      ];
+    } else if (fromId) {
+      where.OR = [{ from: fromId }, { to: fromId }];
+    } else if (toId) {
+      where.OR = [{ from: toId }, { to: toId }];
+    }
+
+    const sortField = sortBy === "updatedAt" ? "updatedAt" : "createdAt";
+
+    const messages = await db.message.findMany({
+      where,
+      include: {
+        attachment: true,
+        requestEstimate: true,
+      },
+      orderBy: {
+        [sortField]: sortOrder === "asc" ? "asc" : "desc",
+      },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
     });
 
-    if (!findExistingCompany) {
-      throw new AppError(404, "Company not found");
-    }
+    const transformedMessages = messages.map((message) => ({
+      ...message,
+      userType: principal.userId === message.from ? "sender" : "recipient",
+    }));
 
-    if (!toId && !fromId && !groupIdNum) {
-      throw new AppError(
-        400,
-        "'to' and 'from' or 'groupId' fields are required",
-      );
-    }
-
-    if (toId && fromId && groupIdNum) {
-      throw new AppError(
-        400,
-        "Provide either 'to' and 'from' or 'groupId', not both",
-      );
-    }
-
-    let messages: Message[] = [];
-    let totalRecords = 0;
-    if (toId && fromId) {
-      if (toId === fromId) {
-        throw new AppError(400, "Cannot send message to oneself");
-      }
-
-      const findToFromUser = await db.user.findFirst({
-        where: {
-          OR: [{ id: toId }, { id: fromId }],
-          companyId: findExistingCompany?.id,
-        },
-      });
-
-      if (!findToFromUser) {
-        throw new AppError(404, "User not found");
-      }
-
-      console.log("Fetching messages between:", fromId, "and", toId);
-      messages = await db.message.findMany({
-        where: {
-          AND: [{ AND: [{ from: fromId }, { to: toId }] }, { groupId: null }],
-          section: "internal",
-        },
-        include: {
-          attachment: true,
-          requestEstimate: true,
-        },
-        orderBy: {
-          [sortBy ?? "createdAt"]: sortOrder ?? "desc",
-        },
-        skip: (pageNum - 1) * limitNum,
-        take: limitNum,
-      });
-      totalRecords = await db.message.count({
-        where: {
-          AND: [{ AND: [{ from: fromId }, { to: toId }] }, { groupId: null }],
-          section: "internal",
-        },
-      });
-    } else if (groupIdNum) {
-      const findGroup = await db.group.findUnique({
-        where: { id: groupIdNum },
-      });
-
-      if (!findGroup) {
-        throw new AppError(404, "Group not found");
-      }
-      messages = await db.message.findMany({
-        where: {
-          groupId: groupIdNum,
-        },
-        include: {
-          attachment: true,
-          requestEstimate: true,
-          group: true,
-        },
-        orderBy: {
-          [sortBy ?? "createdAt"]: sortOrder ?? "desc",
-        },
-        skip: (pageNum - 1) * limitNum,
-        take: limitNum,
-      });
-      totalRecords = await db.message.count({
-        where: {
-          groupId: groupIdNum,
-        },
-      });
-    }
+    const totalRecords = await db.message.count({ where });
 
     const hasNextPage = pageNum * limitNum < totalRecords;
     const hasPrevPage = pageNum > 1;
@@ -187,7 +158,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: messages,
+        data: transformedMessages,
         message: "Messages fetched successfully",
         meta: {
           totalRecords: totalRecords,

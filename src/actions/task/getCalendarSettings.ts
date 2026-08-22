@@ -9,6 +9,9 @@ export async function getCalenderSettings(
   const { where, ...restParams } = params || {};
   try {
     const companyId = await getCompanyId();
+    if (!companyId) {
+      throw new Error("Company ID is required to fetch calendar settings.");
+    }
     const calendarSettings = await db.calendarSettings.findFirst({
       where: {
         companyId,
@@ -18,6 +21,6 @@ export async function getCalenderSettings(
     });
     return calendarSettings;
   } catch (err: any) {
-    throw new Error("Error: ", err);
+    throw new Error(`Error: ${err?.message ?? err}`);
   }
 }

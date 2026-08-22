@@ -12,12 +12,14 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { InvoiceType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { authorizedLeadsConvertion } from "./authorizedLeadsConvertion";
 
 export async function authorizeInvoice(
   invoiceId: string,
   authorizedName: string,
   url: string,
-  invoiceType: string
+  invoiceType: string,
+  allowInsufficientInventory: boolean = false,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const updatedInvoice = await db.invoice.update({
@@ -52,7 +54,10 @@ export async function authorizeInvoice(
 
           if (!findInventoryProduct) return;
 
-          if (product.quantity > Number(findInventoryProduct?.quantity ?? 0)) {
+          if (
+            product.quantity > Number(findInventoryProduct?.quantity ?? 0) &&
+            !allowInsufficientInventory
+          ) {
             // low inventory send notification to all admins and managers
             console.log("convert to estimate", invoiceId);
             await db.invoice.update({
@@ -74,7 +79,7 @@ export async function authorizeInvoice(
             });
 
             throw new Error(
-              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`
+              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`,
             );
           }
           await db.inventoryProductHistory.create({
@@ -102,7 +107,7 @@ export async function authorizeInvoice(
               },
             },
           });
-        })
+        }),
       );
     }
 
@@ -128,39 +133,39 @@ export async function authorizeInvoice(
         authorizedName,
         companyId: updatedInvoice.companyId,
         clientName,
-      });
+      }).catch((err) =>
+        console.error("sendInvoiceAuthorizeNotification failed", err),
+      );
       sendInvoiceConvertedNotification({
         invoiceId: updatedInvoice.id,
         clientName,
         companyId: updatedInvoice.companyId,
         invoiceType: updatedInvoice.type,
-      });
+      }).catch((err) =>
+        console.error("sendInvoiceConvertedNotification failed", err),
+      );
 
-      // await updateServiceAutomationTrigger({
-      //   companyId: updatedInvoice?.companyId,
-      //   estimateId: updatedInvoice?.id,
-      //   columnId: updatedInvoice?.columnId!,
-      // });
-      // if authorized invoice automation trigger
-      //  updateInvoiceAutomationTrigger({
-      //   companyId: updatedInvoice?.companyId!,
-      //   invoiceId: updatedInvoice?.id!,
-      //   columnId: updatedInvoice?.columnId!,
-      // });
+      await authorizedLeadsConvertion(updatedInvoice.id).catch((err) =>
+        console.error("authorizedLeadsConvertion failed", err),
+      );
     }
 
-    revalidatePath("/estimate");
-  } catch (err) {
-    return errorHandler(err);
-  } finally {
+    try {
+      revalidatePath("/estimate");
+    } catch {
+      // no-op: cache revalidation is best-effort outside request context
+    }
+
     return {
       type: "success",
     };
+  } catch (err) {
+    return errorHandler(err);
   }
 }
 
 export async function deleteInvoiceAuthorize(
-  invoiceId: string
+  invoiceId: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await db.invoice.update({

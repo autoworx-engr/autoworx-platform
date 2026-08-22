@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import {
-  readClientSmsAndEmail,
-  unreadClientSmsAndEmail,
+  readClientConversations,
+  unreadClientConversations,
 } from "@/actions/communication/client/chat-track";
 
 import { starUnstarClient } from "@/actions/communication/client/starUnstarClient";
@@ -24,6 +24,10 @@ import { useEffect, useRef, useState } from "react";
 import StarOrUnStarAction from "./StarOrUnStarAction";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { ChevronDown } from "lucide-react";
+import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
+import { companyPermissionModule } from "@/constants/company-permission";
+import { isCallLive } from "@/lib/twilio/callDisplay";
+import { useDraftPreview } from "../../_hooks/useDraftPreview";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -49,22 +53,48 @@ export default function ClientItem({
 }: ClientItemProps) {
   const [client, setClient] = useState<TClient | null>(clientFromDB);
   const router = useRouter();
+  const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+
+  const isMessengerAccess = companyFeaturePermission.find(
+    (permission) =>
+      permission.permission_name === companyPermissionModule?.MESSENGER,
+  );
 
   const buttonRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const conversationTrack = useClientCommunicationStore(
-    (state) => state.clientConversationTrack
+    (state) => state.clientConversationTrack,
   );
   const setClientConversationTrack = useClientCommunicationStore(
-    (state) => state.setClientConversationTrack
+    (state) => state.setClientConversationTrack,
   );
+  const setClientTrackUpdate = useClientCommunicationStore(
+    (state) => state.setClientTrackUpdate,
+  );
+
+  // The store holds the track for the conversation that's currently open, and
+  // ChatHead reads it to draw its badges. Writing another row's track into it
+  // would make the open conversation adopt that row's unread state, so only
+  // the selected row may publish. Rows keep their own state via `setClient`.
+  const publishTrack = (
+    updatedTrack: ClientConversationTrack | null | undefined,
+  ) => {
+    setClient((prev) =>
+      prev ? { ...prev, conversationsTrack: updatedTrack } : prev,
+    );
+    // The nav badge counts every unread client, so it hears about all rows.
+    setClientTrackUpdate(updatedTrack);
+    if (selected) {
+      setClientConversationTrack(updatedTrack);
+    }
+  };
 
   const markClientMessagesAsUnseen = async (clientId: number) => {
     try {
-      const updatedTrack = await unreadClientSmsAndEmail(clientId);
+      const updatedTrack = await unreadClientConversations(clientId);
 
-      setClientConversationTrack(updatedTrack);
+      publishTrack(updatedTrack);
     } catch (err: any) {
       const formattedError = errorHandler(err);
       errorToast(formattedError.message);
@@ -73,8 +103,11 @@ export default function ClientItem({
 
   const markClientMessagesAsSeen = async (clientId: number) => {
     try {
-      const updatedTrack = await readClientSmsAndEmail(clientId);
-      setClientConversationTrack(updatedTrack);
+      const updatedTrack = await readClientConversations(clientId);
+      publishTrack(updatedTrack);
+      if (filter === "Unread") {
+        setClients((prev) => prev.filter((c) => c.id !== clientId));
+      }
     } catch (err: any) {
       const formattedError = errorHandler(err);
       errorToast(formattedError.message);
@@ -98,21 +131,35 @@ export default function ClientItem({
           : prev;
       });
     }
-  }, [conversationTrack]);
+  }, [conversationTrack, client?.id]);
+
+  // Bring the row into view when it becomes the selected client (e.g. after
+  // navigating in from a pipeline card or notification), since the list can
+  // be scrolled past it.
+  useEffect(() => {
+    if (selected) {
+      buttonRef.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [selected]);
 
   const filter = useDemoClientFilterStore((state) => state.filter);
 
-  const handleRedirect = async () => {
+  const handleRedirect = async (channel?: string) => {
     // await updateLastMailReadId({ clientId: client.id });
+    if (!isMessengerAccess?.enabled && channel == "MESSENGER") {
+      channel = "SMS";
+    }
     if (searchParams) {
       const params = new URLSearchParams(searchParams);
       let pathname = `/dashboard/communication/client/${client?.id}`;
 
       document.querySelector("#client-message-lists")?.classList.add("hidden");
 
-      if (params.has("open")) {
-        params.delete("open");
+      params.delete("open");
+      if (channel && channel !== "SMS") {
+        params.set("open", channel);
       }
+
       params.set("chat", "true");
       pathname = params.toString()
         ? `${pathname}?${params.toString()}`
@@ -131,7 +178,7 @@ export default function ClientItem({
   const handleStarUnStarClient = async (
     event: React.MouseEvent<HTMLButtonElement>,
     isStarred: boolean,
-    clientId: number
+    clientId: number,
   ) => {
     try {
       event.stopPropagation();
@@ -153,14 +200,57 @@ export default function ClientItem({
     }
   };
 
+  // Suppress the draft preview for the row that's currently open — you're
+  // already looking at that text in the compose box, so re-showing it here
+  // on every keystroke is just noise (WhatsApp only shows drafts for chats
+  // you're NOT currently in).
+  const draftEmailLive = useDraftPreview("client", "email", client?.id);
+  const draftSmsLive = useDraftPreview("client", "sms", client?.id);
+  const draftMessengerLive = useDraftPreview("client", "messenger", client?.id);
+  const draftInstagramLive = useDraftPreview("client", "instagram", client?.id);
+  const draftEmail = selected ? "" : draftEmailLive;
+  const draftSms = selected ? "" : draftSmsLive;
+  const draftMessenger = selected ? "" : draftMessengerLive;
+  const draftInstagram = selected ? "" : draftInstagramLive;
+
+  const conversationsTrack = client?.conversationsTrack as
+    | (NonNullable<typeof client>["conversationsTrack"] & {
+        messengerUnReadCount?: number;
+        messengerLastMessage?: string | null;
+        messengerIsRead?: boolean;
+        messengerLastBy?: string | null;
+      })
+    | undefined;
+
   const isShowConversationIndicator =
-    client?.conversationsTrack &&
-    (!client?.conversationsTrack?.smsIsRead ||
-      !client?.conversationsTrack?.emailIsRead);
+    !!conversationsTrack &&
+    (!conversationsTrack.emailIsRead ||
+      !conversationsTrack.smsIsRead ||
+      conversationsTrack.messengerIsRead === false ||
+      conversationsTrack.instagramIsRead === false);
+
+  // While a call is ringing or connected the row collapses to just the call —
+  // the email and SMS previews would only bury the thing that needs attention
+  // right now. They come back the moment the call settles.
+  const callTrack = conversationsTrack as
+    | (typeof conversationsTrack & {
+        callStatus?: string | null;
+        callUpdatedAt?: Date | string | null;
+      })
+    | undefined;
+  const isLiveCall = isCallLive(
+    callTrack?.callStatus,
+    callTrack?.callUpdatedAt,
+  );
+  const callPreview =
+    isLiveCall && conversationsTrack?.smsLastMessage
+      ? conversationsTrack.smsLastMessage
+      : null;
+
   return (
     <div
       ref={buttonRef}
-      onClick={handleRedirect}
+      onClick={() => handleRedirect()}
       className={cn(
         // layout
         "group relative mb-2 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-2xl p-3 sm:p-4",
@@ -174,20 +264,26 @@ export default function ClientItem({
               "bg-gradient-to-r from-teal-700 to-teal-600",
               "ring-1 ring-teal-500/60",
             ].join(" ")
-          : [
-              "bg-white dark:bg-zinc-900/60",
-              "border-zinc-200/70 dark:border-white/10",
-              "hover:border-zinc-300/80 dark:hover:border-white/20",
-            ].join(" ")
+          : isLiveCall
+            ? // A call happening right now outranks the normal resting style so
+              // the row is impossible to miss while the phone is ringing.
+              [
+                "bg-emerald-50 dark:bg-emerald-950/40",
+                "border-emerald-300 dark:border-emerald-700",
+                "ring-1 ring-emerald-400/50",
+              ].join(" ")
+            : [
+                "bg-white dark:bg-zinc-900/60",
+                "border-zinc-200/70 dark:border-white/10",
+                "hover:border-zinc-300/80 dark:hover:border-white/20",
+              ].join(" "),
       )}
     >
       <Image
         src={
-          !client?.photo
-            ? "/images/default.png"
-            : client.photo.includes("/images/default.png")
-              ? "/images/default.png"
-              : client.photo
+          client?.photo?.includes("autoworx-production")
+            ? client.photo
+            : "/images/default.png"
         }
         alt={(client?.firstName || "") + " " + (client?.lastName || "")}
         width={56}
@@ -196,7 +292,7 @@ export default function ClientItem({
           "size-12 shrink-0 rounded-full object-cover",
           selected
             ? "ring-2 ring-white/80"
-            : "ring-1 ring-zinc-200 dark:ring-white/10"
+            : "ring-1 ring-zinc-200 dark:ring-white/10",
         )}
       />
 
@@ -205,32 +301,19 @@ export default function ClientItem({
           <p
             className={cn(
               "truncate text-sm font-semibold tracking-tight",
-              selected ? "text-white" : "text-zinc-800 dark:text-zinc-100"
+              selected ? "text-white" : "text-zinc-800 dark:text-zinc-100",
             )}
             title={`${client?.firstName || ""} ${client?.lastName || ""}`}
           >
             {client?.firstName} {client?.lastName}
           </p>
-
-          {!!client?.isStarred && (
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                selected
-                  ? "bg-white/15 text-white"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
-              )}
-            >
-              ★ Favorite
-            </span>
-          )}
         </div>
 
         {client?.customerCompany && (
           <p
             className={cn(
               "mt-1 truncate text-xs",
-              selected ? "text-teal-50/90" : "text-zinc-500 dark:text-zinc-400"
+              selected ? "text-teal-50/90" : "text-zinc-500 dark:text-zinc-400",
             )}
             title={client?.customerCompany}
           >
@@ -238,62 +321,190 @@ export default function ClientItem({
           </p>
         )}
 
-        {/* Email preview */}
-        {client?.conversationsTrack?.emailLastMessage && (
+        {/* Live call — replaces the message previews for as long as it lasts */}
+        {callPreview && (
           <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("PHONE");
+            }}
             className={cn(
-              "mt-2 line-clamp-1 text-xs",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.emailIsRead
-                ? "font-normal"
-                : "font-semibold"
+              "mt-2 line-clamp-1 cursor-pointer text-xs font-semibold",
+              selected ? "text-white" : "text-emerald-600",
             )}
-            title={client?.conversationsTrack?.emailLastMessage}
+            title={callPreview}
           >
-            {client?.conversationsTrack?.lastEmailBy === "Company"
-              ? "You (Email)"
-              : "Client (Email)"}{" "}
-            — {client?.conversationsTrack?.emailLastMessage}
+            <span className="mr-1.5 inline-block size-1.5 animate-pulse rounded-full bg-emerald-500 align-middle" />
+            {callPreview}
           </p>
         )}
 
+        {/* Email preview */}
+        {!callPreview &&
+          (draftEmail || client?.conversationsTrack?.emailLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("EMAIL");
+              }}
+              className={cn(
+                "mt-2 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftEmail || client?.conversationsTrack?.emailIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftEmail || client?.conversationsTrack?.emailLastMessage || ""
+              }
+            >
+              {draftEmail ? (
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftEmail}
+                </>
+              ) : (
+                <>
+                  {client?.conversationsTrack?.lastEmailBy === "Company"
+                    ? "You (Email)"
+                    : "Client (Email)"}{" "}
+                  — {client?.conversationsTrack?.emailLastMessage}
+                </>
+              )}
+            </p>
+          )}
+
         {/* SMS preview */}
-        {client?.conversationsTrack?.smsLastMessage && (
-          <p
-            className={cn(
-              "mt-1.5 line-clamp-1 text-xs",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.smsIsRead
-                ? "font-normal"
-                : "font-semibold"
-            )}
-            title={client?.conversationsTrack?.smsLastMessage}
-          >
-            {client?.conversationsTrack?.lastMessageBy === "Company"
-              ? "You (SMS)"
-              : "Client (SMS)"}{" "}
-            — {client?.conversationsTrack?.smsLastMessage}
-          </p>
-        )}
+        {!callPreview &&
+          (draftSms || client?.conversationsTrack?.smsLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("SMS");
+              }}
+              className={cn(
+                "mt-1.5 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftSms || client?.conversationsTrack?.smsIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftSms || client?.conversationsTrack?.smsLastMessage || ""
+              }
+            >
+              {draftSms ? (
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftSms}
+                </>
+              ) : (
+                <>
+                  {client?.conversationsTrack?.lastMessageBy === "Company"
+                    ? "You (SMS)"
+                    : "Client (SMS)"}{" "}
+                  — {client?.conversationsTrack?.smsLastMessage}
+                </>
+              )}
+            </p>
+          )}
+
+        {/* Messenger preview */}
+        {!callPreview &&
+          (draftMessenger || conversationsTrack?.messengerLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("MESSENGER");
+              }}
+              className={cn(
+                "mt-1.5 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftMessenger || conversationsTrack?.messengerIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftMessenger || conversationsTrack?.messengerLastMessage || ""
+              }
+            >
+              {draftMessenger ? (
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftMessenger}
+                </>
+              ) : (
+                <>
+                  {conversationsTrack?.messengerLastBy === "Company"
+                    ? "You (Messenger)"
+                    : "Client (Messenger)"}{" "}
+                  — {conversationsTrack?.messengerLastMessage}
+                </>
+              )}
+            </p>
+          )}
+
+        {/* Instagram preview */}
+        {!callPreview &&
+          (draftInstagram ||
+            client?.conversationsTrack?.instagramLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("INSTAGRAM");
+              }}
+              className={cn(
+                "mt-1.5 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftInstagram || client?.conversationsTrack?.instagramIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftInstagram ||
+                client?.conversationsTrack?.instagramLastMessage ||
+                ""
+              }
+            >
+              {draftInstagram ? (
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftInstagram}
+                </>
+              ) : (
+                <>
+                  {client?.conversationsTrack?.instagramLastBy === "Company"
+                    ? "You (Instagram)"
+                    : "Client (Instagram)"}{" "}
+                  — {client?.conversationsTrack?.instagramLastMessage}
+                </>
+              )}
+            </p>
+          )}
       </div>
 
       {/* notification indicator */}
       {isShowConversationIndicator && (
-        <div className="absolute right-3 top-3 z-10">
-          <div className="relative">
-            <span className="absolute -inset-1.5 animate-ping rounded-full bg-rose-400/60"></span>
-            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/90 dark:ring-zinc-900">
-              {(client?.conversationsTrack?.emailIsUnReadCount || 0) +
-                (client?.conversationsTrack?.smsUnReadCount || 0)}
-            </span>
-          </div>
-        </div>
+        <span
+          role="status"
+          aria-label="Unread conversation"
+          className="absolute right-3 top-3 z-10 size-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-zinc-900"
+        />
       )}
 
       <div className="relative ml-auto flex items-center gap-1.5">
         <StarOrUnStarAction
           isStarred={!!client?.isStarred}
           clientId={client?.id}
+          selected={selected}
           onStarChange={handleStarUnStarClient}
         />
 
@@ -307,7 +518,7 @@ export default function ClientItem({
                   "h-8 w-8 rounded-xl transition-colors",
                   selected
                     ? "text-white hover:bg-white/15"
-                    : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10"
+                    : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10",
                 )}
                 aria-label="More actions"
               >
@@ -344,7 +555,7 @@ export default function ClientItem({
                   handleStarUnStarClient(
                     e as any,
                     !!client?.isStarred,
-                    client?.id as number
+                    client?.id as number,
                   );
                 }}
               >

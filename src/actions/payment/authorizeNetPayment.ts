@@ -1,7 +1,6 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { env } from "next-runtime-env";
 const ApiContracts = require("authorizenet").APIContracts;
 const ApiControllers = require("authorizenet").APIControllers;
 const SDKConstants = require("authorizenet").Constants;
@@ -14,12 +13,19 @@ export const createAuthorizeNetPaymentLink = async ({
   companyId,
   invoiceId,
   statementId,
+  shopBookingId,
+  paymentId,
+  giftCardSource,
+  giftCardCode,
+  giftCardId,
+  redirectUrl,
   amount,
+  tip,
   payType,
 }: PaymentParams): Promise<PaymentLink> => {
   try {
-    if (!invoiceId && !statementId) {
-      throw new Error("Invoice or Statement ID is required");
+    if (!invoiceId && !statementId && !shopBookingId && !paymentId) {
+      throw new Error("Invoice, Statement or Booking ID is required");
     }
 
     const company = await db.company.findFirst({
@@ -73,8 +79,19 @@ export const createAuthorizeNetPaymentLink = async ({
         })
       : null;
 
+    const shopBooking = shopBookingId
+      ? await db.shopBooking.findUnique({
+          where: { id: Number(shopBookingId) },
+          select: {
+            invoiceId: true,
+          },
+        })
+      : null;
+
     // Validate amount
     const paymentAmount = parseFloat(amount);
+    const tipAmount = parseFloat(tip || "0");
+    const totalCharge = paymentAmount + tipAmount;
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
       throw new Error("Invalid payment amount");
     }
@@ -102,13 +119,17 @@ export const createAuthorizeNetPaymentLink = async ({
     transactionRequestType.setTransactionType(
       ApiContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION,
     );
-    transactionRequestType.setAmount(paymentAmount);
+    transactionRequestType.setAmount(totalCharge);
 
     // Set up order information
     const orderType = new ApiContracts.OrderType();
     const productName = invoiceId
       ? `INVOICE-${invoiceId}`
-      : `STATEMENT-${statementId}`;
+      : statementId
+        ? `STATEMENT-${statementId}`
+        : shopBookingId
+          ? `BOOKING-${shopBookingId}`
+          : `GIFTCARD-${paymentId}`;
 
     // Encode payType into invoiceNumber so the webhook can
     // reliably distinguish deposits vs normal payments and
@@ -123,24 +144,67 @@ export const createAuthorizeNetPaymentLink = async ({
       }
     } else if (statementId) {
       invoiceNumberForGateway = `STM-${statementId}`;
+    } else if (shopBookingId) {
+      invoiceNumberForGateway = `VSB-DEP-${shopBookingId}`;
+    } else if (paymentId) {
+      invoiceNumberForGateway =
+        giftCardSource === "reload"
+          ? `VSGCR-${paymentId}`
+          : `VSGCP-${paymentId}`;
     }
 
+    // Encode tip into invoiceNumber so the webhook can extract it.
+    // The webhook payload only includes bare fields (id, authAmount,
+    // invoiceNumber) — no order description or userFields.
+    // Authorize.Net invoiceNumber has a max length of 20 characters,
+    // so we only append the tip suffix if it fits.
+    const ANET_INVOICE_MAX_LENGTH = 20;
+    if (tipAmount > 0) {
+      const tipSuffix = `-T${tipAmount}`;
+      if (
+        invoiceNumberForGateway.length + tipSuffix.length <=
+        ANET_INVOICE_MAX_LENGTH
+      ) {
+        invoiceNumberForGateway += tipSuffix;
+      } else {
+        // Try integer cents to save a character (e.g. "-T1242" instead of "-T12.42")
+        const tipCents = Math.round(tipAmount * 100);
+        const tipCentsSuffix = `-TC${tipCents}`;
+        if (
+          invoiceNumberForGateway.length + tipCentsSuffix.length <=
+          ANET_INVOICE_MAX_LENGTH
+        ) {
+          invoiceNumberForGateway += tipCentsSuffix;
+        }
+        // Otherwise skip tip in invoiceNumber — webhook defaults to 0
+      }
+    }
+
+    const isDepositPayment =
+      payType === "deposit" || payType === "virtual_shop_deposit";
+    const isGiftCardPayment = payType === "virtual_shop_gift_card";
     orderType.setInvoiceNumber(invoiceNumberForGateway);
     orderType.setDescription(
-      `${payType === "deposit" ? "Deposit" : "Payment"} for ${productName}`,
+      `${isGiftCardPayment ? "Gift Card" : isDepositPayment ? "Deposit" : "Payment"} for ${productName}`,
     );
     transactionRequestType.setOrder(orderType);
 
     // Add line items for the payment form to display properly
     const lineItemsArray = [];
     const lineItem = new ApiContracts.LineItemType();
-    lineItem.setItemId(invoiceId || statementId || "1");
+    lineItem.setItemId(
+      invoiceId || statementId || shopBookingId || paymentId || "1",
+    );
     lineItem.setName(productName);
     lineItem.setDescription(
-      payType === "deposit" ? "Deposit Payment" : "Payment",
+      isGiftCardPayment
+        ? "Gift Card Payment"
+        : isDepositPayment
+          ? "Deposit Payment"
+          : "Payment",
     );
     lineItem.setQuantity("1");
-    lineItem.setUnitPrice(paymentAmount.toString());
+    lineItem.setUnitPrice(totalCharge.toString());
     lineItemsArray.push(lineItem);
 
     // Wrap in ArrayOfLineItem
@@ -175,6 +239,11 @@ export const createAuthorizeNetPaymentLink = async ({
     customField2.setValue(payType);
     userFieldsArray.push(customField2);
 
+    const tipField = new ApiContracts.UserField();
+    tipField.setName("tip");
+    tipField.setValue((tip || "0").toString());
+    userFieldsArray.push(tipField);
+
     if (invoiceId) {
       const customField3 = new ApiContracts.UserField();
       customField3.setName("invoiceId");
@@ -185,6 +254,43 @@ export const createAuthorizeNetPaymentLink = async ({
       customField3.setName("statementId");
       customField3.setValue(statementId);
       userFieldsArray.push(customField3);
+    } else if (paymentId) {
+      const customField3 = new ApiContracts.UserField();
+      customField3.setName("paymentRef");
+      customField3.setValue(paymentId);
+      userFieldsArray.push(customField3);
+
+      if (giftCardSource) {
+        const customField4 = new ApiContracts.UserField();
+        customField4.setName("giftCardSource");
+        customField4.setValue(giftCardSource);
+        userFieldsArray.push(customField4);
+      }
+
+      if (giftCardCode) {
+        const customField5 = new ApiContracts.UserField();
+        customField5.setName("giftCardCode");
+        customField5.setValue(giftCardCode);
+        userFieldsArray.push(customField5);
+      }
+
+      if (Number.isInteger(giftCardId) && Number(giftCardId) > 0) {
+        const customField6 = new ApiContracts.UserField();
+        customField6.setName("giftCardId");
+        customField6.setValue(String(giftCardId));
+        userFieldsArray.push(customField6);
+      }
+    } else if (shopBookingId) {
+      const customField3 = new ApiContracts.UserField();
+      customField3.setName("shopBookingId");
+      customField3.setValue(shopBookingId);
+      userFieldsArray.push(customField3);
+      if (shopBooking?.invoiceId) {
+        const customField4 = new ApiContracts.UserField();
+        customField4.setName("invoiceId");
+        customField4.setValue(shopBooking.invoiceId);
+        userFieldsArray.push(customField4);
+      }
     }
 
     // Set user fields with proper structure
@@ -208,13 +314,13 @@ export const createAuthorizeNetPaymentLink = async ({
     orderSetting.setSettingValue('{"show": false}');
     settings.push(orderSetting);
 
-    // Hide billing & shipping address blocks on the hosted form.
-    // Note: the account's Payment Form > Form Fields settings must
-    // also NOT mark these fields as "Required", otherwise Authorize.Net
-    // can still enforce them even if they are hidden here.
+    // Show billing address block so customers can enter name on card
+    // and zip code. Only name and zip are required; other address
+    // fields should be set to optional in the Authorize.Net merchant
+    // portal (Payment Form > Form Fields).
     const billingOptions = new ApiContracts.SettingType();
     billingOptions.setSettingName("hostedPaymentBillingAddressOptions");
-    billingOptions.setSettingValue('{"show": false, "required": false}');
+    billingOptions.setSettingValue('{"show": true, "required": false}');
     settings.push(billingOptions);
 
     const shippingOptions = new ApiContracts.SettingType();
@@ -233,14 +339,22 @@ export const createAuthorizeNetPaymentLink = async ({
 
     // Configure iframe communicator URL so Authorize.Net can send
     // transactResponse / cancel / resizeWindow messages to our
-    // domain. This URL must:
-    //  - be HTTPS
-    //  - be on the same domain as the page hosting the iframe
-    // NEXT_PUBLIC_APP_URL should point to that origin in both
-    // dev (ngrok/dev-tunnel) and production.
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (appUrl) {
-      const normalized = appUrl.replace(/\/+$/, "");
+    // domain. Prefer the current page origin if provided, because
+    // multi-domain setups (e.g. test.dev.* vs dev.*) can break
+    // postMessage handling when this is hard-coded.
+    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+
+    let communicatorBaseUrl = configuredAppUrl;
+    if (redirectUrl) {
+      try {
+        communicatorBaseUrl = new URL(redirectUrl).origin;
+      } catch {
+        // Ignore invalid redirect URL and fall back to configured app URL.
+      }
+    }
+
+    if (communicatorBaseUrl) {
+      const normalized = communicatorBaseUrl.replace(/\/+$/, "");
       const communicatorSetting = new ApiContracts.SettingType();
       communicatorSetting.setSettingName("hostedPaymentIFrameCommunicatorUrl");
       communicatorSetting.setSettingValue(
@@ -249,7 +363,7 @@ export const createAuthorizeNetPaymentLink = async ({
       settings.push(communicatorSetting);
     } else {
       console.warn(
-        "NEXT_PUBLIC_APP_URL is not set; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net.",
+        "No communicator base URL found; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net.",
       );
     }
 

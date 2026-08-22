@@ -1,13 +1,13 @@
-import { authOptions } from "@/authOptions";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import {
-  sendInternalMessageNotification,
   sendCollaborationMessageNotification,
+  sendInternalMessageNotification,
 } from "@/lib/notification/communication-notify";
+import { sendInternalGroupMessageNotification } from "@/lib/notification/internal-group-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendType } from "@/types/Chat";
 import { MessageSection } from "@prisma/client";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
 type TMessageDate = {
@@ -42,12 +42,16 @@ const pusher = getPusherInstance();
  *               to:
  *                 type: integer
  *                 description: Recipient user ID or group ID.
+ *               sessionUserId:
+ *                 type: integer
+ *                 description: Sender user ID.
  *               message:
  *                 type: string
  *                 description: Text content of the message.
  *               type:
  *                 type: string
  *                 description: The type of message being sent.
+ *                 example: USER,GROUP
  *               section:
  *                 type: string
  *                 enum: [INTERNAL, COLLABORATION]
@@ -85,11 +89,22 @@ const pusher = getPusherInstance();
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { to, message, type, section, attachmentFiles, requestEstimate } = body;
+  const {
+    to,
+    message,
+    type,
+    section,
+    attachmentFiles,
+    requestEstimate,
+    sessionUserId,
+  } = body;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) throw new Error("Unauthorized");
-    const userId = parseInt(session.user.id);
+    const userId = parseInt(sessionUserId);
+
+    if (!userId) {
+      throw new Error("Missing Session User ID");
+    }
+
     if (!to || (!message && !attachmentFiles && !requestEstimate)) {
       throw new Error("Missing some argument for message");
     }
@@ -107,7 +122,7 @@ export async function POST(req: Request) {
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
         const imageCount = attachmentFiles.filter(
-          file => file.fileType && file.fileType.startsWith("image/"),
+          (file) => file.fileType && file.fileType.startsWith("image/"),
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
 
@@ -145,6 +160,7 @@ export async function POST(req: Request) {
     };
 
     // send a message for group
+    let groupMemberIds: number[] | null = null;
     if (type === sendType.Group) {
       const isUserInExistGroup = await db.group.findFirst({
         where: {
@@ -154,6 +170,9 @@ export async function POST(req: Request) {
               id: userId,
             },
           },
+        },
+        include: {
+          users: { select: { id: true } },
         },
       });
       if (!isUserInExistGroup) {
@@ -166,6 +185,7 @@ export async function POST(req: Request) {
         );
       }
       channel = `group-${to}`;
+      groupMemberIds = isUserInExistGroup.users.map((user) => user.id);
       messageData = {
         from: userId,
         groupId: to,
@@ -178,6 +198,14 @@ export async function POST(req: Request) {
     const createdMessage = await db.message.create({
       data: messageData,
     });
+
+    // Touch Group.updatedAt so group list sorts by most recent message activity
+    if (type === sendType.Group) {
+      await db.group.update({
+        where: { id: to },
+        data: { updatedAt: new Date() },
+      });
+    }
 
     // create chat tracker for track last message
     const isChatTrackExist = await db.chatTrack.findFirst({
@@ -283,12 +311,21 @@ export async function POST(req: Request) {
     }
 
     if (type === sendType.User && section === "internal") {
-      // send message notification
-      // Send a notification to the user about the new message
-      // Send a notification to the user about the new message
+      // Send a notification to the user about the new message.
+      // Pass the sender id explicitly — mobile app requests have no web session.
       sendInternalMessageNotification({
         toUserId: to,
+        fromUserId: userId,
         message: message,
+      });
+    }
+
+    if (type === sendType.Group && section === "internal" && groupMemberIds) {
+      // Send a notification to every group member (except the sender).
+      sendInternalGroupMessageNotification({
+        groupId: to,
+        fromUserId: userId,
+        memberIds: groupMemberIds,
       });
     }
 
@@ -300,14 +337,16 @@ export async function POST(req: Request) {
 
       const company = await db.company.findUnique({
         where: { id: receiver?.companyId },
-        select: { name: true },
+        select: { name: true, id: true },
       });
       // send collaboration message notification
       // Send a notification to the user about the new message
-      sendCollaborationMessageNotification({
-        toUserId: to,
-        companyName: company?.name || "",
-      });
+      if (company) {
+        sendCollaborationMessageNotification({
+          companyId: company?.id,
+          senderUserId: userId,
+        });
+      }
     }
     revalidatePath("/dashboard/communication/internal");
     revalidatePath("/dashboard/communication/collaboration");
@@ -321,12 +360,17 @@ export async function POST(req: Request) {
         chatTrack: userChatTrack,
       }),
     );
-  } catch (e: any) {
+  } catch (e) {
+    const formattedError = errorHandler(e);
     console.error(e);
     return new Response(
-      JSON.stringify({ message: "Failed to send message", success: false }),
+      JSON.stringify({
+        message: formattedError?.message,
+        success: false,
+        errorDetails: formattedError,
+      }),
       {
-        status: 500,
+        status: formattedError?.statusCode || 500,
       },
     );
   }

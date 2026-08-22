@@ -39,9 +39,6 @@ interface NewCouponData {
 //   });
 // });
 
-
-
-
 export async function newCoupon(
   data: TCreateCouponValidationSchema,
 ): Promise<ServerAction | TErrorHandler> {

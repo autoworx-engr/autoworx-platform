@@ -19,7 +19,7 @@ export type { InfobipRTC, PhoneCall, WebrtcCall };
 // Create Infobip RTC Client
 // Note: This returns a factory that needs to be called with a token
 export function createInfobipRTC(
-  options?: InfobipRTCOptions
+  options?: InfobipRTCOptions,
 ): typeof createInfobipRtc | null {
   // Check if running in browser
   if (typeof window === "undefined") {

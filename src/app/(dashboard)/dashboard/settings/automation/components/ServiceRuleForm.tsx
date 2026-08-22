@@ -2,7 +2,7 @@
 import { SlimInput } from "@/components/SlimInput";
 import { Box, Paper, Switch, Typography } from "@mui/material";
 import { ArrowRight } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ActiveTemplate from "./ActiveTemplate";
 import { timeDelays } from "./constants";
 import MultiSelect from "./MultiSelect";
@@ -80,7 +80,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   company,
   twilio,
 }) => {
-  // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     title: "",
     selectedServiceIds: [],
@@ -112,7 +112,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   } = usePipelineStagesStore();
 
   const actionOptions = stages.filter(
-    (stage) => formData?.conditionColumnId != stage.id
+    (stage) => formData?.conditionColumnId != stage.id,
   );
 
   const { mutate: updateServiceRule, isPending: isUpdatePending } =
@@ -122,18 +122,18 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   const maxLength = 160;
   const { length, isLimitExceeded } = useCharacterLimit(
     formData?.emailBody! || formData?.smsBody!,
-    maxLength
+    maxLength,
   );
 
   // Update rule on initial data change
   useEffect(() => {
     if (isEdit && id) {
       const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
-      setFormData({
+      const initialData: Rule = {
         companyId: data?.data.companyId,
         title: data?.data.title,
         selectedServiceIds: data?.data.serviceMaintenanceStage?.map(
-          (item: any) => item.serviceId
+          (item: any) => item.serviceId,
         ),
         conditionColumnId: data?.data.conditionColumnId,
         targetColumnId:
@@ -147,11 +147,12 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         emailBody: data?.data.emailBody || "",
         smsBody: data?.data.smsBody || "",
         createdBy: data?.data.createdBy,
-      });
+      };
+      setFormData(initialData);
+      setInitialFormData(initialData);
       setActiveTemplate(data?.data.templateType);
-      // setLoading(false);
     } else {
-      setFormData({
+      const initialData: Rule = {
         title: "",
         selectedServiceIds: [],
         conditionColumnId: null,
@@ -164,13 +165,20 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         smsBody: "",
         createdBy: null,
         companyId: null,
-      });
+      };
+      setFormData(initialData);
+      setInitialFormData(initialData);
     }
   }, [isEdit, id, data, mode]);
 
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
+
   useEffect(() => {
     fetchStages("shop");
-  }, []);
+  }, [fetchStages]);
   // Handle input changes
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -201,7 +209,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   // Handle file attachment
   const handleFileAttachment = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    type: string
+    type: string,
   ) => {
     handleFileSelection({
       event: event,
@@ -280,7 +288,6 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
 
       return;
     }
-    // console.log("FOrmData", formData);
 
     try {
       const { attachments, timeDelay, ...rest } = formData;
@@ -295,7 +302,6 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             ? null
             : Number(formData.targetColumnId) || null,
         conditionColumnId: Number(formData.conditionColumnId),
-        // selectedServiceIds: formData.selectedServiceIds.map((id) => Number(id)),
         timeDelay: seconds,
         createdBy: userEmail,
         companyId: companyId,
@@ -305,7 +311,6 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
 
       if (isEdit && id) {
         updateServiceRule({ id: id, data: finalData });
-        // setLoading(true);
       } else {
         createService(finalData);
         //reset the form data
@@ -342,9 +347,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
 
     const findStageName = (id: any) => {
       const st: any = stages?.find((s: any) => Number(s.id) === Number(id));
-      console.log("Finding stage for ID:", id, "Found:", st); // Debug line
       return st?.title ?? st?.name ?? "";
-      // return st?.title ?? st?.name ?? String(id);
     };
 
     const conditionName = findStageName(conditionId);
@@ -419,7 +422,6 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                     : formData.selectedServiceIds
                 }
                 onChange={(value) => handleChange("selectedServiceIds", value)}
-                // label="Service"
                 placeholder="Select options"
                 required
                 isSearch={true}
@@ -452,9 +454,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               />
               <Selector
                 name="condition"
-                // label="Condition"
                 options={stages}
-                // value={formData.conditionColumnId!}
                 value={
                   typeof formData.conditionColumnId === "number"
                     ? formData.conditionColumnId
@@ -503,7 +503,6 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               />
               <Selector
                 name="action"
-                // label="Action"
                 options={actionOptions}
                 value={formData.targetColumnId!}
                 onChange={(value) => handleChange("targetColumnId", value)}
@@ -537,7 +536,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                   checked={activeTemplate === "EMAIL"}
                   onChange={() =>
                     handleTemplateToggle(
-                      activeTemplate === "SMS" ? "EMAIL" : "SMS"
+                      activeTemplate === "SMS" ? "EMAIL" : "SMS",
                     )
                   }
                 />
@@ -614,10 +613,18 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             {/* Save & Cancel Buttons */}
             <div className="flex justify-end pt-4">
               <button
-                disabled={isUpdatePending || isCreatePending || isLimitExceeded}
+                disabled={
+                  isUpdatePending ||
+                  isCreatePending ||
+                  isLimitExceeded ||
+                  isFormUnchanged
+                }
                 type="submit"
                 className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                  isUpdatePending || isCreatePending || isLimitExceeded
+                  isUpdatePending ||
+                  isCreatePending ||
+                  isLimitExceeded ||
+                  isFormUnchanged
                     ? "cursor-not-allowed bg-indigo-300"
                     : "bg-indigo-500 hover:bg-indigo-600"
                 }`}

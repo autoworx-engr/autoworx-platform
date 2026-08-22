@@ -1,30 +1,70 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import moment from "moment";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { Appointment } from "@prisma/client";
 import AppointMentCard from "./AppointMentCard";
+import { pusher } from "@/lib/pusher/client";
+import { useClientCommunicationStore } from "@/stores/client-store";
 
 export default function AppointmentListClient({
-  appointments,
+  appointments: initialAppointments,
+  companyId,
+  clientId,
 }: {
   appointments: Appointment[];
+  companyId: number;
+  clientId: number;
 }) {
+  const [appointments, setAppointments] = useState<Appointment[]>(
+    initialAppointments || [],
+  );
   const [appointmentModalId, setAppointmentModalId] = useState<number | null>(
-    null
+    null,
   );
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const setUpcomingAppointmentCount = useClientCommunicationStore(
+    (state) => state.setUpcomingAppointmentCount,
+  );
+
+  useEffect(() => {
+    setAppointments(initialAppointments || []);
+  }, [initialAppointments]);
+
+  const removeAppointment = (id?: number) => {
+    if (!id) return;
+    setAppointments((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  // realtime: drop the appointment from the list when an admin deletes it
+  useEffect(() => {
+    const channelName = `appointment-${companyId}-${clientId}`;
+    const channel = pusher.subscribe(channelName);
+    const handleDeleted = (data: { id: number }) => {
+      removeAppointment(data?.id);
+    };
+    channel.bind("appointment-deleted", handleDeleted);
+    return () => {
+      channel.unbind("appointment-deleted", handleDeleted);
+      pusher.unsubscribe(channelName);
+    };
+  }, [companyId, clientId]);
 
   const now = moment();
-  const startOfToday = moment().startOf("day");
+
+  const getStartEnd = (a: Appointment) => {
+    const dateStr = moment.utc(a.date).format("YYYY-MM-DD");
+    return {
+      start: moment(`${dateStr} ${a.startTime}`, "YYYY-MM-DD HH:mm"),
+      end: moment(`${dateStr} ${a.endTime}`, "YYYY-MM-DD HH:mm"),
+    };
+  };
 
   const current = useMemo(() => {
     return (appointments || []).filter((a) => {
       try {
-        const dateStr = moment(a.date).format("YYYY-MM-DD");
-        const start = moment(`${dateStr} ${a.startTime}`, "YYYY-MM-DD HH:mm");
-        const end = moment(`${dateStr} ${a.endTime}`, "YYYY-MM-DD HH:mm");
+        const { start, end } = getStartEnd(a);
         return now.isBetween(start, end, null, "[]");
       } catch (err) {
         return false;
@@ -32,15 +72,25 @@ export default function AppointmentListClient({
     });
   }, [appointments]);
   const upcoming = useMemo(() => {
-    const currentIds = new Set(current.map((a) => a.id));
     return (appointments || [])
-      .filter(
-        (a) =>
-          moment(a.date).startOf("day").valueOf() >= startOfToday.valueOf() &&
-          !currentIds.has(a.id)
-      )
-      .sort((x, y) => moment(x.date).valueOf() - moment(y.date).valueOf());
+      .filter((a) => {
+        try {
+          return getStartEnd(a).start.isAfter(now);
+        } catch (err) {
+          return false;
+        }
+      })
+      .sort(
+        (x, y) =>
+          getStartEnd(x).start.valueOf() - getStartEnd(y).start.valueOf(),
+      );
   }, [appointments]);
+
+  // Publish the visible (current + upcoming) count so the tab badge matches
+  // exactly what is rendered here — no need to recompute it elsewhere.
+  useEffect(() => {
+    setUpcomingAppointmentCount(current.length + upcoming.length);
+  }, [current.length, upcoming.length, setUpcomingAppointmentCount]);
 
   const openEditor = (id: number) => {
     setAppointmentModalId(id);
@@ -54,7 +104,7 @@ export default function AppointmentListClient({
           Appointments
         </h3>
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-          {upcoming?.length || 0}
+          {Number(current?.length) + Number(upcoming?.length) || 0}
         </span>
       </header>
 
@@ -85,6 +135,7 @@ export default function AppointmentListClient({
         appointmentId={appointmentModalId ?? undefined}
         isModalOpen={isAppointmentModalOpen}
         setIsModalOpen={setIsAppointmentModalOpen}
+        onAppointmentDeleted={removeAppointment}
       />
     </section>
   );

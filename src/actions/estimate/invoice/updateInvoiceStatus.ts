@@ -74,30 +74,32 @@ export async function updateInvoiceStatus(
           },
         },
       });
-      revalidatePath("/dashboard/pipeline/shop/pipeline");
+
       if (column?.title === "Delivered") {
         // send notification when invoice is delivered
         sendInvoiceDeliveredNotification({
           companyId: updatedInvoice.companyId,
           invoiceId: updatedInvoice.id,
           clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
-        });
+        }).catch((err) =>
+          console.error("sendInvoiceDeliveredNotification failed", err),
+        );
       }
 
-      await updateServiceAutomationTrigger({
+      updateServiceAutomationTrigger({
         companyId: updatedInvoice?.companyId!,
         estimateId: updatedInvoice?.id!,
         columnId: updatedInvoice?.columnId!,
       });
       // if invoice status update invoice automation trigger
-      await updateInvoiceAutomationTrigger({
+      updateInvoiceAutomationTrigger({
         companyId: updatedInvoice?.companyId!,
         invoiceId: updatedInvoice?.id!,
         columnId: updatedInvoice?.columnId!,
         type: updatedInvoice?.type!,
       });
 
-      await updateTagAutomationTrigger({
+      updateTagAutomationTrigger({
         columnId: updatedInvoice?.columnId!,
         companyId: updatedInvoice?.companyId!,
         pipelineType: "SHOP",
@@ -105,9 +107,10 @@ export async function updateInvoiceStatus(
         conditionType: "post_tag",
       });
 
+      revalidatePath("/dashboard/pipeline/shop/pipeline");
+
       return { type: "success" };
     } catch (error) {
-      console.error("Error updating invoice status:", error);
       return { type: "error", message: "Failed to update invoice status" };
     }
   } else {

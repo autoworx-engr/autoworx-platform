@@ -1,9 +1,9 @@
 import FormError from "@/components/FormError";
-import Password from "@/components/Password";
-import SubmitButton from "./SubmitButton";
-import Link from "next/link";
 import Input from "@/components/Input";
+import Password from "@/components/Password";
 import Image from "next/image";
+import Link from "next/link";
+import SubmitButton from "./SubmitButton";
 export default function LoginPage() {
   return (
     <form className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50 z-10">
@@ -50,7 +50,7 @@ export default function LoginPage() {
             required
             autoFocus
             placeholder="name@company.com"
-            className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-[#6571FF]"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-primary"
           />
         </div>
 
@@ -65,16 +65,16 @@ export default function LoginPage() {
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs font-semibold text-[#6571FF] transition-colors hover:text-[#5059d4]"
+              className="text-xs font-semibold text-primary transition-colors hover:text-[#5059d4]"
             >
-              Forgot?
+              Forgot Password?
             </Link>
           </div>
           <Password
             name="password"
             placeholder="Enter your password"
             required
-            className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#6571FF]"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
           />
         </div>
       </div>
@@ -87,7 +87,7 @@ export default function LoginPage() {
         Don&rsquo;t have an account?{" "}
         <Link
           href="/register"
-          className="font-semibold text-[#6571FF] transition-colors hover:text-[#5059d4] hover:underline"
+          className="font-semibold text-primary transition-colors hover:text-[#5059d4] hover:underline"
         >
           Create an account
         </Link>

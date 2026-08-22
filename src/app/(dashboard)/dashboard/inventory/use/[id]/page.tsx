@@ -1,24 +1,31 @@
+import BackButton from "@/components/BackButton";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import React from "react";
 import UseProductForm from "../../UseProductForm";
 import ReplenishProductForm from "../../ReplenishProductForm";
 import { getCompanyId } from "@/lib/companyId";
+import { Metadata } from "next";
 
-export default async function Page({
-  params: { id },
-}: {
-  params: { id: string };
-}) {
-  console.log({ id });
+export const metadata: Metadata = {
+  title: "Inventory - Product",
+  description: "View and manage inventory product details.",
+};
+
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+
+  const { id } = params;
+
   if (!id) return notFound();
 
   const companyId = await getCompanyId();
 
   const productId = parseInt(id);
   const product = await db.inventoryProduct.findUnique({
-    where: { id: productId },
+    where: { id: productId, companyId },
   });
+
   const invoices = await db.invoice.findMany({
     where: { companyId, type: "Invoice" },
     select: {
@@ -40,17 +47,18 @@ export default async function Page({
   //   orderBy: { date: "desc" },
   // });
 
-  console.log({ product });
-
   if (!product) return notFound();
 
   return (
     <div className="app-shadow mx-auto mt-10 w-full max-w-[60rem] rounded-lg bg-background p-4">
       <div className="flex flex-col gap-4 md:flex-row">
         <div className="w-full md:w-[70%]">
-          <h3 className="text-xs font-semibold sm:text-lg">
-            Inventory Details
-          </h3>
+          <div className="mb-2 flex items-center gap-3">
+            <BackButton href="/dashboard/inventory" />
+            <h3 className="text-xs font-semibold sm:text-lg">
+              Inventory Details
+            </h3>
+          </div>
           <p className="mt-1 text-sm sm:mt-2 sm:text-base">
             <span className="font-semibold">Name: </span> {product.name}
           </p>

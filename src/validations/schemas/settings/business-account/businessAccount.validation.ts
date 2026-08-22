@@ -20,11 +20,15 @@ export const updateBusinessAccountValidationSchema = z.object({
     })
     .nullable()
     .optional(), // Optional nullable URL
+  image: z.string().nullable().optional(), // Nullable string for the uploaded business logo URL
   address: z.string().nullable().optional(), // Nullable string for address
   city: z.string().nullable().optional(), // Nullable string for city
   state: z.string().nullable().optional(), // Nullable string for state
   zip: z.string().nullable().optional(), // Optional nullable US ZIP code format
-  image: z.string().nullable().optional(), // Nullable string for image
+  about: z.string().nullable().optional(),
+  teamSize: z.enum(["SMALL", "MEDIUM", "LARGE"]).nullable().optional(),
+  timezone: z.string().nullable().optional(),
+  countryCode: z.string().nullable().optional(),
 });
 
 export type TUpdateBusinessAccountValidationSchema = z.infer<

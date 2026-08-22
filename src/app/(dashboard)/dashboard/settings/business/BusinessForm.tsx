@@ -1,26 +1,31 @@
 "use client";
 import { updateCompany } from "@/actions/settings/updateCompany";
+import PhoneInput from "@/components/PhoneInput";
+import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
+import { SlimTextarea } from "@/components/SlimTextarea";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import { Company } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Tooltip } from "antd";
+import { Briefcase, Mail, MapPin, Save } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import ProfilePicture from "./ProfilePicture";
 import Timezone from "./Timezone";
-import { queryKeys } from "@/lib/queryKeys";
-import { useQueryClient } from "@tanstack/react-query";
-import { Briefcase, Mail, MapPin, Save } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
 
 type TProps = {
   company: Company | null;
 };
 
 export default function BusinessForm({ company }: TProps) {
+  const IconComponent = InfoCircleOutlined;
   const queryClient = useQueryClient();
   const [imageSrc, setImageSrc] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(
-    company?.image
+    company?.image,
   );
 
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +44,8 @@ export default function BusinessForm({ company }: TProps) {
     businessEmail: company?.email ?? "",
     businessWebsite: company?.website || "",
     companyAddress: company?.address || "",
+    about: company?.about || "",
+    teamSize: company?.teamSize || "MEDIUM",
     city: company?.city || "",
     state: company?.state || "",
     zip: company?.zip || "",
@@ -47,7 +54,7 @@ export default function BusinessForm({ company }: TProps) {
   };
 
   const [businessSettings, setBusinessSettings] = useState(
-    initialBusinessSettings
+    initialBusinessSettings,
   );
 
   // Check if any values have changed from initial state
@@ -102,11 +109,11 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
- const validateBusinessPhone = (value: string) => {
+  const validateBusinessPhone = (value: string) => {
     if (!value.trim()) {
       return "Business phone number is required.";
     }
-    if (!/^\+?\d+$/.test(value)) { 
+    if (!/^\+?\d+$/.test(value)) {
       return "Business phone number must only contain digits (optional + prefix).";
     }
     return "";
@@ -144,11 +151,9 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
-  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
-
+  const handlePhoneChange = (num: string, code: string, isoCode: string) => {
     const fullPhoneNumber = `${code}${num}`;
 
-   
     setBusinessSettings((prev) => ({
       ...prev,
       businessPhone: fullPhoneNumber,
@@ -191,6 +196,18 @@ export default function BusinessForm({ company }: TProps) {
   // Live validation handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    // block non-digit characters entirely
+    if (name === "zip") {
+      if (value !== "" && !/^\d+$/.test(value)) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          zip: "Zip code must contain digits only.",
+        }));
+        // Don't update state with invalid characters
+        return;
+      }
+    }
 
     // Update business settings
     setBusinessSettings((prev) => ({ ...prev, [name]: value }));
@@ -235,23 +252,27 @@ export default function BusinessForm({ company }: TProps) {
     const newValidationErrors: { [key: string]: string } = {};
 
     newValidationErrors.legalBusinessName = validateLegalBusinessName(
-      businessSettings.legalBusinessName
+      businessSettings.legalBusinessName,
     );
     newValidationErrors.businessRegistrationIDNumber =
       validateBusinessRegistrationID(
-        businessSettings.businessRegistrationIDNumber
+        businessSettings.businessRegistrationIDNumber,
       );
     newValidationErrors.businessType = validateBusinessType(
-      businessSettings.businessType
+      businessSettings.businessType,
     );
+
+    newValidationErrors.teamSize = !businessSettings.teamSize
+      ? "Team size is required."
+      : "";
     newValidationErrors.businessPhone = validateBusinessPhone(
-      businessSettings.businessPhone
+      businessSettings.businessPhone,
     );
     newValidationErrors.businessEmail = validateBusinessEmail(
-      businessSettings.businessEmail
+      businessSettings.businessEmail,
     );
     newValidationErrors.businessWebsite = validateBusinessWebsite(
-      businessSettings.businessWebsite
+      businessSettings.businessWebsite,
     );
 
     // Set validation errors
@@ -259,7 +280,7 @@ export default function BusinessForm({ company }: TProps) {
 
     // Check if there are any errors
     const hasErrors = Object.values(newValidationErrors).some(
-      (error) => error !== ""
+      (error) => error !== "",
     );
     if (hasErrors) {
       return;
@@ -312,9 +333,11 @@ export default function BusinessForm({ company }: TProps) {
         image,
         timezone: businessSettings.timezone,
         countryCode: businessSettings.countryCode,
+        about: businessSettings.about,
+        teamSize: businessSettings.teamSize,
       };
 
-      const response = await updateCompany(company?.id, companyData);
+      const response = await updateCompany(companyData);
       if (response.type === "success") {
         queryClient.invalidateQueries({ queryKey: [queryKeys.company] });
         successToast("Profile updated successfully");
@@ -323,7 +346,7 @@ export default function BusinessForm({ company }: TProps) {
         errorToast(
           response.errorSource && response.errorSource.length > 0
             ? response.errorSource[0].message
-            : response.message
+            : response.message,
         );
       }
     } catch (err) {
@@ -331,7 +354,7 @@ export default function BusinessForm({ company }: TProps) {
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   };
@@ -355,20 +378,31 @@ export default function BusinessForm({ company }: TProps) {
 
       <form
         onSubmit={(e) => startTransition(() => handleSubmit(e))}
-        className="space-y-6 pb-6"
+        className="space-y-8 pb-6"
       >
-        {/* Business Information Section */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
-            <Briefcase className="h-5 w-5 mr-2 text-gray-500" />
-            Core Business Info
-          </h4>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
+        <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/70 p-4 shadow-sm md:p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500">
+                <Briefcase className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <h4 className="text-lg font-semibold text-slate-600">
+                  Core Business Info
+                </h4>
+                <p className="text-sm text-slate-500">
+                  Primary identity and public profile details.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-x-8">
             <SlimInput
               value={businessSettings.legalBusinessName}
               onChange={handleChange}
               label="Legal Business Name"
               name="legalBusinessName"
+              placeholder="e.g. Acme Auto Works LLC"
               required
               error={validationErrors.legalBusinessName}
             />
@@ -378,7 +412,25 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Registration ID Number"
               name="businessRegistrationIDNumber"
+              placeholder="e.g. 12-3456789"
               error={validationErrors.businessRegistrationIDNumber}
+            />
+            <SlimTextarea
+              required={false}
+              value={businessSettings.about}
+              // onChange={(e)}
+              label="About"
+              name="about"
+              placeholder="Briefly describe your business and what you offer"
+              rows={3}
+              className="max-h-18 resize-none overflow-y-auto"
+              onChange={(e) =>
+                setBusinessSettings({
+                  ...businessSettings,
+                  about: e.target.value,
+                })
+              }
+              tooltipText="This information will be shown on your Collaboration Profile."
             />
             <SlimInput
               required={true}
@@ -386,110 +438,193 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Type"
               name="businessType"
+              placeholder="e.g. Auto Detailing, Body Shop"
               error={validationErrors.businessType}
             />
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="flex items-center gap-1 text-base font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
+                Team Size
+                <span className="text-rose-500 font-bold">*</span>
+                <Tooltip
+                  title="Your team size will be displayed on your Collaboration Profile."
+                  placement="top"
+                >
+                  <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
+                </Tooltip>
+              </label>
+
+              <Selector<{ id: string; label: string }>
+                label={(item) => item?.label ?? "Select Team Size"}
+                items={[
+                  { id: "SMALL", label: "Small" },
+                  { id: "MEDIUM", label: "Medium" },
+                  { id: "LARGE", label: "Large" },
+                ]}
+                displayList={(item) => <span>{item.label}</span>}
+                selectedItem={
+                  businessSettings.teamSize
+                    ? {
+                        id: businessSettings.teamSize,
+                        label:
+                          businessSettings.teamSize.charAt(0) +
+                          businessSettings.teamSize.slice(1).toLowerCase(),
+                      }
+                    : null
+                }
+                onSelect={(item) =>
+                  setBusinessSettings((prev) => ({
+                    ...prev,
+                    teamSize: item.id as typeof prev.teamSize,
+                  }))
+                }
+                newButton={null}
+                showSearch={false}
+                className="max-w-full"
+              />
+
+              {validationErrors.teamSize && (
+                <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                  <span className="text-xs font-medium text-rose-500">
+                    {validationErrors.teamSize}
+                  </span>
+                </div>
+              )}
+            </div>
             <SlimInput
               required={false}
               value={businessSettings.industrySpecialization}
               onChange={handleChange}
               label="Industry/Specialization (Optional)"
               name="industrySpecialization"
+              placeholder="e.g. Ceramic Coating, Vinyl Wrap"
               error={validationErrors.industrySpecialization}
+              tooltipText="This will appear on your Collaboration Profile. Example: Dry Install PPF, Wet Install PPF, Vinyl Wrap, Ceramic Coating."
             />
           </div>
         </div>
 
-        {/* Contact Information Section */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
-          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
-            <Mail className="h-5 w-5 mr-2 text-gray-500" />
-            Contact & Digital Presence
-          </h4>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
-           
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm md:p-6">
+          <div className="flex items-center gap-2 border-b border-slate-200/70 pb-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500">
+              <Mail className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <h4 className="text-lg font-semibold text-slate-600">
+                Contact & Digital Presence
+              </h4>
+              <p className="text-sm text-slate-500">
+                Where customers can reach you.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-x-8">
             <PhoneInput
-    label="Business Phone"
-    defaultValue={company?.phone || ""}
-     defaultIsoCode={company?.countryCode!}
-    // value={businessSettings.businessPhone} 
-    onChange={handlePhoneChange} 
-    required={true}
-    error={validationErrors.businessPhone}
-     
-  />
+              label="Business Phone"
+              defaultValue={company?.phone || ""}
+              defaultIsoCode={company?.countryCode!}
+              // value={businessSettings.businessPhone}
+              onChange={handlePhoneChange}
+              required={true}
+              error={validationErrors.businessPhone}
+            />
             <SlimInput
               required={true}
               value={businessSettings.businessEmail}
               onChange={handleChange}
               label="Business Email"
               name="businessEmail"
+              placeholder="e.g. contact@yourbusiness.com"
               error={validationErrors.businessEmail}
             />
           </div>
-          <div className="grid grid-cols-1">
+          <div className="mt-4 grid grid-cols-1">
             <SlimInput
               required={false}
               value={businessSettings.businessWebsite}
               onChange={handleChange}
               label="Business Website (Optional)"
               name="businessWebsite"
+              placeholder="e.g. https://www.yourbusiness.com"
               error={validationErrors.businessWebsite}
             />
           </div>
         </div>
 
-        {/* Location & Timezone Section */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
-          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
-            <MapPin className="h-5 w-5 mr-2 text-gray-500" />
-            Location & Preferences
-          </h4>
-
-          <Timezone
-            timezone={businessSettings?.timezone}
-            setBusinessSettings={setBusinessSettings}
-          />
-
-          <div className="grid grid-cols-1 gap-y-4">
-            <SlimInput
-              value={businessSettings.companyAddress}
-              onChange={handleChange}
-              label="Company Address"
-              name="companyAddress"
-              error={validationErrors.companyAddress}
-            />
+        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-4 shadow-sm md:p-6">
+          <div className="flex items-center gap-2 border-b border-slate-200/70 pb-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500 bg-white shadow-sm">
+              <MapPin className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <h4 className="text-lg font-semibold text-slate-600">
+                Location & Preferences
+              </h4>
+              <p className="text-sm text-slate-500">
+                Set timezone and address details.
+              </p>
+            </div>
           </div>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-x-8 gap-y-4">
-            <SlimInput
-              value={businessSettings.city}
-              onChange={handleChange}
-              label="City"
-              name="city"
-              error={validationErrors.city}
+
+          <div className="mt-5 space-y-4">
+            <Timezone
+              timezone={businessSettings?.timezone}
+              setBusinessSettings={setBusinessSettings}
             />
-            <SlimInput
-              value={businessSettings.state}
-              onChange={handleChange}
-              label="State"
-              name="state"
-              error={validationErrors.state}
-            />
-            <SlimInput
-              value={businessSettings.zip}
-              onChange={handleChange}
-              label="Zip"
-              name="zip"
-              error={validationErrors.zip}
-            />
+
+            <div className="grid grid-cols-1">
+              <SlimInput
+                value={businessSettings.companyAddress}
+                onChange={handleChange}
+                label="Company Address"
+                name="companyAddress"
+                placeholder="e.g. 123 Main Street"
+                error={validationErrors.companyAddress}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-x-8">
+              <SlimInput
+                value={businessSettings.city}
+                onChange={handleChange}
+                label="City"
+                name="city"
+                placeholder="e.g. New York"
+                error={validationErrors.city}
+              />
+              <SlimInput
+                value={businessSettings.state}
+                onChange={handleChange}
+                label="State"
+                name="state"
+                placeholder="e.g. NY"
+                error={validationErrors.state}
+              />
+              <SlimInput
+                value={businessSettings.zip}
+                onChange={handleChange}
+                label="Zip"
+                name="zip"
+                placeholder="e.g. 10001"
+                error={validationErrors.zip}
+              />
+            </div>
           </div>
         </div>
 
         {/* Save Button */}
-        <div className="text-right   border-gray-100">
+        <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm sm:flex-row sm:items-center md:p-6">
+          <div>
+            <h5 className="text-sm font-semibold text-slate-900">
+              Ready to save?
+            </h5>
+            <p className="text-sm text-slate-500">
+              Changes apply to your profile immediately.
+            </p>
+          </div>
           <button
             disabled={isPending || !hasChanges()}
             type="submit"
-            className="ml-auto rounded-lg bg-[#6571FF] px-8 py-2 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg flex items-center justify-center float-right"
+            className="rounded-xl bg-primary px-6 py-2.5 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center"
           >
             {isPending ? (
               <>Saving...</>

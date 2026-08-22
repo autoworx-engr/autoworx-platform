@@ -29,7 +29,12 @@ export default function WorkOrderModal({
       <DialogTrigger asChild>{buttonChild}</DialogTrigger>
 
       {(open || dataFetched) && (
-        <WorkOrderModalBody invoiceId={invoiceId} setOpen={setOpen} onWorkOrderCreated={onWorkOrderCreated} />
+        <WorkOrderModalBody
+          open={open}
+          invoiceId={invoiceId}
+          setOpen={setOpen}
+          onWorkOrderCreated={onWorkOrderCreated}
+        />
       )}
     </Dialog>
   );

@@ -1,7 +1,28 @@
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { db } from "@/lib/db";
+import { sendClientCallMissedNotification } from "@/lib/notification/communication-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
-import { NextResponse } from "next/server";
-import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
+import { sendMissedCallTextBack } from "@/lib/twilio/missedCallTextBack";
+import { NextRequest, NextResponse } from "next/server";
+
+type CallStateAction = "accepted" | "rejected" | "ended";
+
+const ACTION_TO_STATUS: Record<CallStateAction, string> = {
+  accepted: "in-progress",
+  rejected: "no-answer",
+  ended: "completed",
+};
+
+// Statuses that mean the call never connected. Mirrors MISSED_STATUSES in
+// src/app/api/twilio/call-status/route.ts.
+const MISSED_STATUSES = new Set(["no-answer", "busy", "failed", "canceled"]);
+
+const ACTION_TO_EVENT: Record<CallStateAction, string> = {
+  accepted: "call-accepted",
+  rejected: "call-rejected",
+  ended: "call-ended",
+};
 
 /**
  * @swagger
@@ -11,255 +32,147 @@ import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track
  *     tags: [Twilio]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               callSid:
- *                 type: string
- *               action:
- *                 type: string
- *                 enum: [accepted, rejected, ended]
- *               companyId:
- *                 type: integer
- *               deviceId:
- *                 type: string
- *     responses:
- *       200:
- *         description: Call state updated
- *       400:
- *         description: Missing required parameters
  */
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { callSid, action, companyId, deviceId } = body;
+export async function POST(request: NextRequest) {
+  const principal = await getAuthPrincipal(request);
+  if (!principal) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const companyId = principal.companyId;
 
-    console.log("📥 [call-state] Received request:", {
-      callSid,
-      action,
-      companyId,
-      deviceId,
-    });
+  const body = (await request.json().catch(() => ({}))) as {
+    callSid?: unknown;
+    action?: unknown;
+    deviceId?: unknown;
+  };
 
-    if (!callSid || !action || !companyId) {
-      console.error("❌ [call-state] Missing required parameters:", {
-        callSid,
-        action,
-        companyId,
-      });
-      return NextResponse.json(
-        { error: "Missing required parameters" },
-        { status: 400 }
-      );
-    }
+  const callSid = typeof body.callSid === "string" ? body.callSid : "";
+  const action =
+    body.action === "accepted" ||
+    body.action === "rejected" ||
+    body.action === "ended"
+      ? (body.action as CallStateAction)
+      : null;
+  const deviceId =
+    typeof body.deviceId === "string" ? body.deviceId : undefined;
 
-    if (action !== "accepted" && action !== "rejected" && action !== "ended") {
-      console.error("❌ [call-state] Invalid action:", action);
-      return NextResponse.json(
-        { error: "Invalid action. Must be 'accepted', 'rejected', or 'ended'" },
-        { status: 400 }
-      );
-    }
-
-    // Determine the status based on action
-    let status: string;
-    if (action === "accepted") {
-      status = "in-progress";
-    } else if (action === "rejected") {
-      status = "no-answer";
-    } else {
-      status = "completed";
-    }
-
-    console.log(
-      `📊 [DB] Attempting to update callSid: ${callSid} to status: ${status}`
-    );
-
-    // Try to update call status in database (use updateMany to avoid error if not found)
-    let updateResult;
-    let updatedCall: any = null;
-    try {
-      updateResult = await db.clientCall.updateMany({
-        where: {
-          callSid,
-          companyId,
-        },
-        data: {
-          status,
-        },
-      });
-      console.log(
-        `✅ [DB] Updated ${updateResult.count} call record(s) for callSid: ${callSid}`
-      );
-
-      // If call was rejected (not answered), fetch the call details to create conversation track
-      if (action === "rejected" && updateResult.count > 0) {
-        try {
-          updatedCall = await db.clientCall.findFirst({
-            where: { callSid, companyId },
-            select: { id: true, clientId: true, from: true, to: true },
-          });
-
-          if (updatedCall?.clientId) {
-            console.log(
-              `📝 [DB] Creating "missed call" SMS record for client: ${updatedCall.clientId}`
-            );
-
-            // Create SMS record for missed call
-            const dbMessage = await db.clientSMS.create({
-              data: {
-                from: updatedCall.from,
-                to: updatedCall.to,
-                message: "You missed a call from this number. Call to respond.",
-                sentBy: "Client",
-                clientId: updatedCall.clientId,
-                companyId: companyId,
-              },
-            });
-            console.log(
-              `✅ [DB] SMS record created for missed call, id: ${dbMessage.id}`
-            );
-
-            // Create conversation track
-            await updateNewSMSChatTrack({
-              clientId: updatedCall.clientId,
-              smsLastMessage:
-                "You missed a call from this number. Call to respond.",
-              lastMessageBy: "Client",
-              attachments: [],
-            });
-            console.log(`✅ [DB] Conversation track created for missed call`);
-          }
-        } catch (trackError) {
-          console.error(
-            "❌ [DB] Failed to create conversation track:",
-            trackError
-          );
-          // Continue anyway - this is not critical
-        }
-      }
-
-      // If no records were updated, check what's actually in the database
-      if (updateResult.count === 0) {
-        console.warn(
-          `⚠️ [DB] No records found for callSid: ${callSid}, checking database...`
-        );
-        const existingCall = await db.clientCall.findFirst({
-          where: { callSid },
-          select: {
-            id: true,
-            callSid: true,
-            status: true,
-            companyId: true,
-            createdAt: true,
-          },
-        });
-
-        if (existingCall) {
-          console.log(`📋 [DB] Found call in database:`, existingCall);
-          console.log(
-            `⚠️ [DB] Company mismatch? Expected: ${companyId}, Found: ${existingCall.companyId}`
-          );
-        } else {
-          console.warn(
-            `❌ [DB] No call record exists with callSid: ${callSid}`
-          );
-          // Check for recent calls in this company
-          const recentCalls = await db.clientCall.findMany({
-            where: {
-              companyId,
-              createdAt: {
-                gte: new Date(Date.now() - 5 * 60 * 1000), // Last 5 minutes
-              },
-            },
-            select: {
-              callSid: true,
-              status: true,
-              from: true,
-              createdAt: true,
-            },
-            orderBy: { createdAt: "desc" },
-            take: 5,
-          });
-          console.log(
-            `📋 [DB] Recent calls for company ${companyId}:`,
-            recentCalls
-          );
-        }
-      }
-    } catch (dbError) {
-      console.error("❌ [DB] Database update error:", dbError);
-      // Continue with Pusher broadcast even if DB update fails
-      updateResult = { count: 0 };
-    }
-
-    // Broadcast to all devices in the company via Pusher
-    // This happens regardless of whether the DB record was found
-    // because we still want to dismiss the popup on other devices
-    console.log("📡 [Pusher] Preparing to broadcast...");
-
-    let pusher;
-    try {
-      pusher = getPusherInstance();
-      console.log("✅ [Pusher] Instance obtained");
-    } catch (pusherError) {
-      console.error("❌ [Pusher] Failed to get Pusher instance:", pusherError);
-      // Return success anyway since DB update succeeded
-      return NextResponse.json({
-        success: true,
-        recordsUpdated: updateResult.count,
-        pusherError: "Failed to get Pusher instance",
-      });
-    }
-
-    const channelName = `company-${companyId}`;
-
-    // Determine the event name based on action
-    let eventName: string;
-    if (action === "accepted") {
-      eventName = "call-accepted";
-    } else if (action === "rejected") {
-      eventName = "call-rejected";
-    } else {
-      eventName = "call-ended";
-    }
-
-    try {
-      await pusher.trigger(channelName, eventName, {
-        callSid,
-        action,
-        deviceId, // Include deviceId so the accepting device knows to keep its modal open
-        timestamp: new Date().toISOString(),
-      });
-
-      console.log(
-        `✅ [Pusher] Broadcasted ${eventName} for call ${callSid} to ${channelName} (deviceId: ${deviceId})`
-      );
-    } catch (pusherError) {
-      console.error("❌ [Pusher] Broadcast error:", pusherError);
-      // Continue anyway - DB update is more important
-    }
-
-    return NextResponse.json({
-      success: true,
-      recordsUpdated: updateResult.count,
-    });
-  } catch (error) {
-    console.error("❌ [call-state] Unexpected error:", error);
-    console.error("❌ [call-state] Error details:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+  if (!callSid || !action) {
     return NextResponse.json(
-      {
-        error: "Internal Server Error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
+      { error: "Missing required parameters" },
+      { status: 400 },
     );
   }
+
+  const status = ACTION_TO_STATUS[action];
+
+  let recordsUpdated = 0;
+  let dbError = false;
+  let affectedClientId: number | null = null;
+
+  try {
+    // Read before writing so we can tell a genuine transition from a repeat —
+    // "ended" arriving after the call was already recorded as missed must not
+    // rewrite it to "completed".
+    const existing = await db.clientCall.findFirst({
+      where: { callSid, companyId },
+      select: {
+        id: true,
+        status: true,
+        clientId: true,
+        direction: true,
+        from: true,
+        to: true,
+        client: { select: { firstName: true, lastName: true } },
+      },
+    });
+
+    if (existing) {
+      affectedClientId = existing.clientId;
+      const wasMissed = MISSED_STATUSES.has(existing.status ?? "");
+      const nextStatus =
+        wasMissed && action === "ended" ? existing.status! : status;
+
+      if (nextStatus !== existing.status) {
+        await db.clientCall.update({
+          where: { id: existing.id },
+          data: { status: nextStatus },
+        });
+        recordsUpdated = 1;
+
+        const direction =
+          existing.direction === "outbound" ? "outbound" : "inbound";
+
+        // Rejecting a ringing call in the browser or the mobile app never hits
+        // the Twilio status callback, so the missed-call notification and
+        // text-back have to fire from here too — otherwise whether the client
+        // hears back depends on how the agent dismissed the call. Only inbound:
+        // a call we placed that went unanswered isn't one we "missed".
+        //
+        // These run *before* the chat-track write: sending the text-back also
+        // stamps the track with the SMS body, so writing the call preview after
+        // it is what leaves "Missed call" as the line the client list shows.
+        if (
+          !wasMissed &&
+          MISSED_STATUSES.has(nextStatus) &&
+          direction === "inbound"
+        ) {
+          await sendClientCallMissedNotification({
+            companyId,
+            clientId: existing.clientId,
+            clientName: [existing.client?.firstName, existing.client?.lastName]
+              .filter(Boolean)
+              .join(" "),
+          });
+          await sendMissedCallTextBack({
+            companyId,
+            clientId: existing.clientId,
+            call: { from: existing.from, to: existing.to },
+          });
+        }
+
+        // Every state change bumps the thread so the client floats to the top
+        // of the communication hub; a rejected call also marks it unread.
+        await updateCallChatTrack({
+          clientId: existing.clientId,
+          status: nextStatus,
+          direction,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[call-state] Database update error:", err);
+    dbError = true;
+  }
+
+  if (dbError) {
+    return NextResponse.json(
+      { error: "Failed to update call state" },
+      { status: 500 },
+    );
+  }
+
+  try {
+    await getPusherInstance().trigger(
+      `company-${companyId}`,
+      ACTION_TO_EVENT[action],
+      {
+        callSid,
+        action,
+        deviceId,
+        // The open phone tab uses this to refresh its call list in place
+        // instead of waiting for a manual page reload.
+        clientId: affectedClientId,
+        timestamp: new Date().toISOString(),
+      },
+    );
+  } catch (pusherError) {
+    console.error("[call-state] Pusher broadcast error:", pusherError);
+    return NextResponse.json({
+      success: true,
+      recordsUpdated,
+      pusherError: "Failed to broadcast",
+    });
+  }
+
+  return NextResponse.json({ success: true, recordsUpdated });
 }

@@ -7,20 +7,11 @@ import { revalidatePath } from "next/cache";
 import deleteGoogleCalendarEvent from "./google-calendar/deleteGoogleCalendarEvent";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
 
-export async function deleteTask(id: number): Promise<ServerAction> {
+export async function deleteTask(
+  id: number,
+  options?: { revalidate?: boolean },
+): Promise<ServerAction> {
   try {
-    // find the task users
-    const taskUsers = await db.taskUser.findMany({
-      where: {
-        taskId: id,
-      },
-    });
-
-    // remove the task users
-    // for (const user of taskUsers) {
-    // TODO: Remove the task from the user's Google Calendar
-    // }
-
     // remove the task
     let deletedTask = await db.task.delete({
       where: {
@@ -29,7 +20,6 @@ export async function deleteTask(id: number): Promise<ServerAction> {
     });
 
     // delete task from google calendar
-
     try {
       let googleCalendarToken = (await getGoogleCalendarToken())
         ?.googleCalendarToken;
@@ -38,24 +28,22 @@ export async function deleteTask(id: number): Promise<ServerAction> {
         await deleteGoogleCalendarEvent(deletedTask.googleEventId);
       }
     } catch (error) {
-      console.log("🚀 ~ deleteTask ~ error:", error);
+      // console.log("🚀 ~ deleteTask ~ error:", error);
     }
 
-    await sendTaskCompleteNotification({
-      companyId: deletedTask.companyId,
-      taskDate: deletedTask.date && deletedTask?.date,
-      taskTitle: deletedTask?.title,
-      assignTaskUserId: taskUsers.map((user) => user.userId),
-    });
-
-    revalidatePath("/task");
-    revalidatePath("/communication/client");
+    // Skipping revalidation avoids an unnecessary refresh of the calling page
+    // (e.g. the task calendar/sidebar, where the client already updates its
+    // cache). It defaults to true so the communication/client page stays fresh.
+    if (options?.revalidate !== false) {
+      revalidatePath("/communication/client");
+    }
 
     return {
       type: "success",
+      data: deletedTask,
     };
   } catch (error) {
-    console.log("🚀 ~ deleteTask ~ error:", error);
+    // console.log("🚀 ~ deleteTask ~ error:", error);
     return {
       type: "error",
     };

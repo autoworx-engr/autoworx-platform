@@ -41,7 +41,7 @@ export default function RevenueTableRow({
   const refundedAmount =
     invoice?.Refund?.reduce(
       (acc, refund) => acc + Number(refund.amount || 0),
-      0
+      0,
     ) || 0;
 
   const totalProfit = Number((invoice as any).profitPrice).toFixed(2);
@@ -56,11 +56,11 @@ export default function RevenueTableRow({
   return (
     <tr
       className={cn(
-        "cursor-pointer rounded-md py-3",
-        index % 2 === 0 ? "bg-background" : "bg-blue-100"
+        "cursor-pointer py-3 duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
+        index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
       )}
     >
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         <Link
           className="text-blue-500"
           href={`/dashboard/client/${invoice.client?.id}`}
@@ -68,27 +68,27 @@ export default function RevenueTableRow({
           {invoice?.client?.firstName} {invoice?.client?.lastName!}
         </Link>
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         {invoice.vehicle?.year !== 0 ? invoice.vehicle?.year : ""}{" "}
         {invoice.vehicle?.make} {invoice.vehicle?.model}{" "}
         {invoice.vehicle?.submodel} {invoice.vehicle?.other}
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         <InvoiceModal
           invoiceId={invoice.id}
           buttonChild={<button>{invoice.id}</button>}
           buttonChildClassName="text-blue-500"
         />
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         {invoice?.deliveredAt
           ? moment.tz(invoice.deliveredAt, timezone).format("MM/DD/YYYY")
           : ""}
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         {formatCurrency(Number(invoice.grandTotal?.toString() || 0))}
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         <div className="flex items-center gap-2">
           {formatCurrency(displayCost)}
           {hasLosses && (
@@ -102,11 +102,11 @@ export default function RevenueTableRow({
                 preserveAspectRatio="xMidYMid meet"
                 fill="#000000"
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   {" "}
@@ -123,7 +123,7 @@ export default function RevenueTableRow({
           )}
         </div>
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         <div>
           <span className="font-medium text-[#66738C]">
             {formatCurrency(Number(totalProfit))}

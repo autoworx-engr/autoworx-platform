@@ -27,10 +27,12 @@ interface VoiceDeviceContextType {
   endCall: () => void;
   provider: VoiceProvider;
   makeCall: (to: string, clientId: number) => Promise<void>;
+  isMuted: boolean;
+  toggleMute: () => void;
 }
 
 const VoiceDeviceContext = createContext<VoiceDeviceContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function useVoiceDevice() {
@@ -43,19 +45,20 @@ export function useVoiceDevice() {
 
 export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
+  const companyId = session?.user?.companyId ?? null;
   const [device, setDevice] = useState<Device | any | null>(null);
   const [incomingCall, setIncomingCall] = useState<Call | any | null>(null);
   const [currentConnection, setCurrentConnection] = useState<Call | any | null>(
-    null
+    null,
   );
   const [isDeviceReady, setIsDeviceReady] = useState(false);
   const [callStatus, setCallStatus] = useState("");
   const [callDuration, setCallDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   const [provider, setProvider] = useState<VoiceProvider>("TWILIO");
-  const [companyId, setCompanyId] = useState<number | null>(null);
   const [infobipPhoneNumber, setInfobipPhoneNumber] = useState<string | null>(
-    null
+    null,
   );
   const [infobipCallsConfigId, setInfobipCallsConfigId] = useState<
     string | null
@@ -66,14 +69,6 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     return `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   });
   const [wakeLock, setWakeLock] = useState<any>(null);
-
-  // Get companyId from session
-  useEffect(() => {
-    if (session?.user?.companyId) {
-      console.log("🏢 [VoiceDevice] Company ID set:", session.user.companyId);
-      setCompanyId(session.user.companyId);
-    }
-  }, [session]);
 
   // Subscribe to Pusher events for call state changes
   useEffect(() => {
@@ -102,7 +97,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           setIncomingCall(null);
           setCallStatus("Call accepted on another device");
         }
-      }
+      },
     );
 
     // Listen for call rejected event
@@ -153,7 +148,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
             setTimer(null);
           }
         }
-      }
+      },
     );
 
     return () => {
@@ -184,7 +179,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     if (call.parameters?.ParentCallSid) {
       console.log(
         "🔍 [getCallSid] Found ParentCallSid (database record):",
-        call.parameters.ParentCallSid
+        call.parameters.ParentCallSid,
       );
       return call.parameters.ParentCallSid;
     }
@@ -197,7 +192,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         if (parentCallSid) {
           console.log(
             "🔍 [getCallSid] Found ParentCallSid in Params string (database record):",
-            parentCallSid
+            parentCallSid,
           );
           return parentCallSid;
         }
@@ -210,7 +205,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     if (call.parameters?.CallSid) {
       console.log(
         "🔍 [getCallSid] Found Twilio CallSid:",
-        call.parameters.CallSid
+        call.parameters.CallSid,
       );
       return call.parameters.CallSid;
     }
@@ -265,7 +260,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       if (currentConnection) {
         if (document.hidden) {
           console.log(
-            "👁️ [Visibility] Page hidden, maintaining audio connection"
+            "👁️ [Visibility] Page hidden, maintaining audio connection",
           );
         } else {
           console.log("👁️ [Visibility] Page visible, ensuring audio is active");
@@ -278,7 +273,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
             stream.getAudioTracks().forEach((track) => {
               track.enabled = true;
               console.log(
-                "🎤 [Audio] Audio track re-enabled after visibility change"
+                "🎤 [Audio] Audio track re-enabled after visibility change",
               );
             });
           } catch (err) {
@@ -306,34 +301,42 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       try {
         console.log(
           `🔧 [Global] Setting up ${voiceProvider} device with identity:`,
-          phoneNumber
+          phoneNumber,
         );
 
         setProvider(voiceProvider);
 
         if (voiceProvider === "TWILIO") {
-          await setupTwilioDevice(phoneNumber);
+          phoneNumber &&
+            companyId &&
+            (await setupTwilioDevice(phoneNumber, companyId));
         } else if (voiceProvider === "INFOBIP") {
           await setupInfobipDevice(phoneNumber);
         }
       } catch (error) {
         console.error(
           `❌ [Global] Error setting up ${voiceProvider} Device:`,
-          error
+          error,
         );
         setCallStatus(
-          `Setup failed: ${error instanceof Error ? error.message : "Unknown error"}`
+          `Setup failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       }
     },
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session, companyId],
   );
 
   // Setup Twilio Device
-  const setupTwilioDevice = async (twilioPhoneNumber: string) => {
+  const setupTwilioDevice = async (
+    twilioPhoneNumber: string,
+    companyId: number,
+  ) => {
+    if (!companyId) throw new Error("No companyId received from server");
+
     const response = await fetch("/api/twilio/token", {
       method: "POST",
-      body: JSON.stringify({ identity: twilioPhoneNumber }),
+      body: JSON.stringify({ identity: twilioPhoneNumber, companyId }),
       headers: { "Content-Type": "application/json" },
     });
 
@@ -386,7 +389,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       console.log("📞 [Twilio] ParentCallSid (database):", parentCallSid);
       console.log(
         "📞 [Twilio] CallSid (browser leg):",
-        call.parameters?.CallSid
+        call.parameters?.CallSid,
       );
       console.log("📞 [Twilio] Using CallSid:", callSid);
       console.log("📞 [Twilio] Full call parameters:", call.parameters);
@@ -459,12 +462,12 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         if (data?.token && typeof data.token === "string") {
           console.log(
             "🔑 [Infobip] Raw token (first 200 chars):",
-            data.token.slice(0, 200)
+            data.token.slice(0, 200),
           );
           const parts = data.token.split(".");
           if (parts.length === 3) {
             const payload = atob(
-              parts[1].replace(/-/g, "+").replace(/_/g, "/")
+              parts[1].replace(/-/g, "+").replace(/_/g, "/"),
             );
             console.log("🔑 [Infobip] Decoded token payload:", payload);
           }
@@ -479,11 +482,11 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         setInfobipCallsConfigId(data.callsConfigurationId);
         console.log(
           "✅ [Infobip] Calls Configuration ID stored:",
-          data.callsConfigurationId
+          data.callsConfigurationId,
         );
       } else {
         console.warn(
-          "⚠️ [Infobip] No Calls Configuration ID received - calls may fail"
+          "⚠️ [Infobip] No Calls Configuration ID received - calls may fail",
         );
       }
 
@@ -527,7 +530,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           console.log("📞 [Infobip] Incoming WebRTC call detected!");
           console.log(
             "📞 [Infobip] From:",
-            incomingCallEvent.source().identity
+            incomingCallEvent.source().identity,
           );
 
           const callSid = incomingCallEvent.id ? incomingCallEvent.id() : null;
@@ -550,7 +553,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
             setCurrentCallSid(null);
             setCallStatus("Call error");
           });
-        }
+        },
       );
 
       // Note: No generic "error" event - errors are handled per call
@@ -587,7 +590,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
           if (!infobipPhoneNumber) {
             throw new Error(
-              "Infobip phone number not set. Please setup device first."
+              "Infobip phone number not set. Please setup device first.",
             );
           }
 
@@ -669,7 +672,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         setCallStatus("Failed to make call");
       }
     },
-    [device, isDeviceReady, provider, companyId, timer]
+    [device, isDeviceReady, provider, companyId, timer],
   );
 
   // Setup connection listeners (for Twilio)
@@ -774,7 +777,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               action: "accepted",
               companyId,
               deviceId,
-            }
+            },
           );
           const response = await fetch("/api/twilio/call-state", {
             method: "POST",
@@ -801,7 +804,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           {
             callSid,
             companyId,
-          }
+          },
         );
       }
 
@@ -820,7 +823,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           });
           console.log(
             "🎤 [Audio] Microphone permission granted, tracks:",
-            stream.getAudioTracks().length
+            stream.getAudioTracks().length,
           );
         } catch (audioError) {
           console.warn("⚠️ [Audio] Microphone permission issue:", audioError);
@@ -908,7 +911,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("❌ [Global] Error accepting call:", error);
       setCallStatus(
-        `Failed to accept call: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to accept call: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
       // Clean up on error
       setCurrentConnection(null);
@@ -927,7 +930,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       if (!callSid && currentCallSid) {
         console.log(
           "📞 [Global] Using stored currentCallSid as fallback:",
-          currentCallSid
+          currentCallSid,
         );
         callSid = currentCallSid;
       }
@@ -942,7 +945,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               callSid,
               action: "rejected",
               companyId,
-            }
+            },
           );
           const response = await fetch("/api/twilio/call-state", {
             method: "POST",
@@ -968,7 +971,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           {
             callSid,
             companyId,
-          }
+          },
         );
       }
 
@@ -1004,7 +1007,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               action: "ended",
               companyId,
               deviceId,
-            }
+            },
           );
           const response = await fetch("/api/twilio/call-state", {
             method: "POST",
@@ -1031,7 +1034,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           {
             callSid,
             companyId,
-          }
+          },
         );
       }
 
@@ -1054,6 +1057,23 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     }
   }, [currentConnection, provider, timer, companyId, deviceId, currentCallSid]);
 
+  // Toggle mute on the active call. Both Twilio's Call and Infobip's RTC call
+  // expose a .mute(bool) method, so the same call works for either provider.
+  const toggleMute = useCallback(() => {
+    if (!currentConnection) return;
+    const next = !isMuted;
+    try {
+      currentConnection.mute(next);
+      setIsMuted(next);
+    } catch (error) {
+      console.error("❌ [Call] Failed to toggle mute:", error);
+    }
+  }, [currentConnection, isMuted]);
+
+  useEffect(() => {
+    if (!currentConnection) setIsMuted(false);
+  }, [currentConnection]);
+
   return (
     <VoiceDeviceContext.Provider
       value={{
@@ -1069,6 +1089,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         endCall,
         provider,
         makeCall,
+        isMuted,
+        toggleMute,
       }}
     >
       {children}

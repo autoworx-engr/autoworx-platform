@@ -1,10 +1,13 @@
 "use server";
 import { db } from "@/lib/db";
+import { getManualUnreadChannels } from "./manualUnread";
+
+type AttachmentSummary = { name?: string; url?: string };
 
 // Helper function to create descriptive attachment message
 function createAttachmentMessage(
-  attachments: any[],
-  textMessage?: string
+  attachments: AttachmentSummary[],
+  textMessage?: string,
 ): string {
   if (!attachments || attachments.length === 0) {
     return textMessage || "";
@@ -14,12 +17,12 @@ function createAttachmentMessage(
   const images = attachments.filter(
     (att) =>
       att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ||
-      att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+      att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
   );
   const otherFiles = attachments.filter(
     (att) =>
       !att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) &&
-      !att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+      !att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
   );
 
   const parts = [];
@@ -30,7 +33,7 @@ function createAttachmentMessage(
 
   if (otherFiles.length > 0) {
     parts.push(
-      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`,
     );
   }
 
@@ -77,7 +80,7 @@ export async function initialCreateClientChatTrack(clientId: number) {
 
 export async function CreateClientChatTrack(
   clientId: number,
-  data: TCreateChatTrack
+  data: TCreateChatTrack,
 ) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
@@ -108,7 +111,7 @@ type TUpdateClientEmailChatTrack = {
   clientId: number;
   emailLastMessage: string;
   lastEmailBy: string; // Who sent the email (Company or Client)
-  attachments?: any[]; // Array of attachments to create descriptive message
+  attachments?: AttachmentSummary[]; // Array of attachments to create descriptive message
 };
 
 // update client email conversation track
@@ -161,7 +164,7 @@ type TUpdateClientSMSChatTrack = {
   clientId: number;
   smsLastMessage: string;
   lastMessageBy: string;
-  attachments?: any[]; // Array of attachments to create descriptive message
+  attachments?: AttachmentSummary[]; // Array of attachments to create descriptive message
 };
 
 export async function updateNewSMSChatTrack({
@@ -217,15 +220,18 @@ export async function readClientSMS(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = findClientChatTrack?.smsUnReadCount
-      ? await db.clientConversationTrack.update({
-          where: { clientId },
-          data: {
-            smsIsRead: true,
-            smsUnReadCount: 0,
-          },
-        })
-      : findClientChatTrack;
+    // A thread marked unread by hand has no count to clear, so gate on the
+    // read flag as well — otherwise opening it would never mark it read.
+    const updatedData =
+      findClientChatTrack.smsUnReadCount || !findClientChatTrack.smsIsRead
+        ? await db.clientConversationTrack.update({
+            where: { clientId },
+            data: {
+              smsIsRead: true,
+              smsUnReadCount: 0,
+            },
+          })
+        : findClientChatTrack;
     return updatedData;
   } catch (err) {
     throw err;
@@ -241,22 +247,23 @@ export async function readClientEmail(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = findClientChatTrack?.emailIsUnReadCount
-      ? await db.clientConversationTrack.update({
-          where: { clientId },
-          data: {
-            emailIsRead: true,
-            emailIsUnReadCount: 0,
-          },
-        })
-      : findClientChatTrack;
+    const updatedData =
+      findClientChatTrack.emailIsUnReadCount || !findClientChatTrack.emailIsRead
+        ? await db.clientConversationTrack.update({
+            where: { clientId },
+            data: {
+              emailIsRead: true,
+              emailIsUnReadCount: 0,
+            },
+          })
+        : findClientChatTrack;
     return updatedData;
   } catch (err) {
     throw err;
   }
 }
 
-export async function unreadClientSmsAndEmail(clientId: number) {
+export async function unreadClientConversations(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId },
@@ -266,35 +273,178 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       return initialCreateClientChatTrack(clientId);
     }
 
-    let updatedData = findClientChatTrack;
-
-    if (updatedData?.lastMessageBy === "Client") {
-      updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+    // Marking a thread unread by hand means "remind me", not "a new message
+    // arrived" — so leave the counts alone. A count of 0 on an unread channel
+    // is what tells the badge to show a plain dot instead of a number, and it
+    // keeps a real inbound count from being inflated.
+    const channels = getManualUnreadChannels(findClientChatTrack);
+    if (channels.sms) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, smsIsRead: true },
         data: {
           smsIsRead: false,
-          smsUnReadCount: { increment: 1 }, // or set to specific number
         },
       });
     }
 
-    if (updatedData?.lastEmailBy === "Client") {
-      updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+    if (channels.email) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
-          emailIsUnReadCount: { increment: 1 }, // or set to specific number
         },
       });
     }
 
-    return updatedData;
+    if (channels.messenger) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, messengerIsRead: true },
+        data: {
+          messengerIsRead: false,
+        },
+      });
+    }
+
+    if (channels.instagram) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, instagramIsRead: true },
+        data: {
+          instagramIsRead: false,
+        },
+      });
+    }
+
+    return db.clientConversationTrack.findUnique({ where: { clientId } });
   } catch (err) {
     throw err;
   }
 }
 
-export async function readClientSmsAndEmail(clientId: number) {
+export async function updateNewMessengerChatTrack({
+  clientId,
+  message,
+  sentBy,
+}: {
+  clientId: number;
+  message: string;
+  sentBy: string;
+}) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+
+    const data = {
+      messengerIsRead: sentBy === "Company",
+      messengerUnReadCount: sentBy === "Company" ? 0 : undefined,
+      messengerLastMessage: message,
+      messengerLastBy: sentBy,
+      sendAt: new Date(),
+    };
+
+    if (!track) {
+      return db.clientConversationTrack.create({
+        data: {
+          clientId,
+          messengerIsRead: sentBy === "Company",
+          messengerUnReadCount: sentBy === "Company" ? 0 : 1,
+          messengerLastMessage: message,
+          messengerLastBy: sentBy,
+          sendAt: new Date(),
+        },
+      });
+    }
+
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: {
+        messengerIsRead: sentBy === "Company",
+        messengerUnReadCount: { increment: sentBy === "Company" ? 0 : 1 },
+        messengerLastMessage: message,
+        messengerLastBy: sentBy,
+        sendAt: new Date(),
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function readClientMessenger(clientId: number) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+    if (!track) return initialCreateClientChatTrack(clientId);
+    if (!track.messengerUnReadCount && track.messengerIsRead) return track;
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: { messengerIsRead: true, messengerUnReadCount: 0 },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function updateNewInstagramChatTrack({
+  clientId,
+  message,
+  sentBy,
+}: {
+  clientId: number;
+  message: string;
+  sentBy: string;
+}) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+
+    if (!track) {
+      return db.clientConversationTrack.create({
+        data: {
+          clientId,
+          instagramIsRead: sentBy === "Company",
+          instagramUnReadCount: sentBy === "Company" ? 0 : 1,
+          instagramLastMessage: message,
+          instagramLastBy: sentBy,
+          sendAt: new Date(),
+        },
+      });
+    }
+
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: {
+        instagramIsRead: sentBy === "Company",
+        instagramUnReadCount: { increment: sentBy === "Company" ? 0 : 1 },
+        instagramLastMessage: message,
+        instagramLastBy: sentBy,
+        sendAt: new Date(),
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function readClientInstagram(clientId: number) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+    if (!track) return initialCreateClientChatTrack(clientId);
+    if (!track.instagramUnReadCount && track.instagramIsRead) return track;
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: { instagramIsRead: true, instagramUnReadCount: 0 },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function readClientConversations(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId },
@@ -311,6 +461,10 @@ export async function readClientSmsAndEmail(clientId: number) {
         smsUnReadCount: 0,
         emailIsRead: true,
         emailIsUnReadCount: 0,
+        messengerIsRead: true,
+        messengerUnReadCount: 0,
+        instagramIsRead: true,
+        instagramUnReadCount: 0,
       },
     });
 

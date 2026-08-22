@@ -12,11 +12,17 @@ export default function useAppointmentQueryByWeek(
     queryFn: async () => {
       const response = await getAppointments({
         where: {
-          date: {
-            gte: `${startDate}T00:00:00.000Z`,
-            lte: `${endDate}T00:00:00.000Z`,
-          },
-          AND: [{ startTime: { not: null } }, { endTime: { not: null } }],
+          AND: [
+            { startTime: { not: null } },
+            { endTime: { not: null } },
+            { date: { lte: `${endDate}T23:59:59.999Z` } },
+            {
+              OR: [
+                { endDate: null, date: { gte: `${startDate}T00:00:00.000Z` } },
+                { endDate: { gte: `${startDate}T00:00:00.000Z` } },
+              ],
+            },
+          ],
         },
         include: {
           appointmentUsers: {
@@ -44,13 +50,15 @@ export default function useAppointmentQueryByWeek(
       const appointments = response.data as (Appointment & {
         appointmentUsers: (AppointmentUser & { user: User })[];
       })[];
-      
+
       // Transform appointmentUsers to assignedUsers to match CalendarAppointment interface
-      return appointments.map(appointment => {
+      return appointments.map((appointment) => {
         const { appointmentUsers, ...appointmentData } = appointment;
         return {
           ...appointmentData,
-          assignedUsers: appointmentUsers.map(appointmentUser => appointmentUser.user)
+          assignedUsers: appointmentUsers.map(
+            (appointmentUser) => appointmentUser.user,
+          ),
         };
       });
     },

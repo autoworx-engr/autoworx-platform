@@ -5,9 +5,10 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
-import { getInfobipConfig, getInfobipConfigById } from "./createInfobipConfig";
+import { getInfobipConfigById } from "./createInfobipConfig";
 
 type TInfobipConfig = {
   companyId?: number;
@@ -30,13 +31,32 @@ export async function sendInfobipMessage({
   message,
   clientId,
   attachments,
+  isSalesAgent = false,
+  userId,
+  systemCall = false,
+  shouldSalesAgentStop = true,
 }: {
   companyId?: number;
   message: string;
   clientId: number;
-  attachments: { url: string; name: string }[];
+  attachments: { url: string; name: string; isVoiceNote?: boolean }[];
+  isSalesAgent?: boolean;
+  userId?: number;
+  /** Pass true when calling from a webhook/system context with no user session. */
+  systemCall?: boolean;
+  /** When true (default), disables isSalesAgent on the client after sending. */
+  shouldSalesAgentStop?: boolean;
 }) {
   try {
+    const resolvedCompanyId = companyId ?? (await getCompanyId());
+    const entitlements = await getCompanyEntitlements(resolvedCompanyId);
+    if (!entitlements.canUseSms) {
+      return {
+        success: false,
+        error: "SMS is not enabled for this plan",
+      };
+    }
+
     let infobipConfig = companyId
       ? (await getInfobipConfigById(companyId)).data
       : (await getInfobipCredentials()).data;
@@ -48,15 +68,28 @@ export async function sendInfobipMessage({
       };
     }
 
+    const company = await db.company.findUnique({
+      where: { id: infobipConfig?.companyId },
+    });
+
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
-    try {
+    // try {
+    //   user = await getUser();
+    // } catch (error) {
+    //   console.error(
+    //     "sendInfobipMessage: getUser failed, continuing without user context",
+    //     error,
+    //   );
+    // }
+
+    if (userId) {
+      user = await db.user.findFirst({
+        where: { id: userId },
+      });
+    } else if (!systemCall) {
       user = await getUser();
-    } catch (error) {
-      console.error(
-        "sendInfobipMessage: getUser failed, continuing without user context",
-        error
-      );
     }
+
     const client = await db.client.findFirst({
       where: {
         id: clientId,
@@ -78,7 +111,14 @@ export async function sendInfobipMessage({
       };
     }
 
-    let to = normalizeUSPhoneNumber(client.mobile!);
+    if (!client.mobile) {
+      return {
+        success: false,
+        error: "Client has no phone number",
+      };
+    }
+
+    let to = normalizeUSPhoneNumber(client.mobile);
 
     if (!to) {
       return {
@@ -90,7 +130,7 @@ export async function sendInfobipMessage({
     if (infobipConfig.phoneNumber && to && clientId) {
       // Normalize phone numbers for MMS compatibility
       const normalizedSender = normalizeUSPhoneNumber(
-        infobipConfig.phoneNumber
+        infobipConfig.phoneNumber,
       );
       const normalizedRecipient = normalizeUSPhoneNumber(to);
 
@@ -119,6 +159,21 @@ export async function sendInfobipMessage({
             return "audio/mpeg";
           case "wav":
             return "audio/wav";
+          case "ogg":
+          case "oga":
+            return "audio/ogg";
+          case "opus":
+            return "audio/ogg; codecs=opus";
+          case "m4a":
+            return "audio/mp4";
+          case "webm":
+            return "audio/webm";
+          case "aac":
+            return "audio/aac";
+          case "amr":
+            return "audio/amr";
+          case "3gp":
+            return "audio/3gpp";
           default:
             return "image/jpeg"; // Default to image/jpeg for images
         }
@@ -127,7 +182,7 @@ export async function sendInfobipMessage({
       // Helper function to fetch content type from URL
       const getContentTypeFromUrl = async (
         url: string,
-        fileName: string
+        fileName: string,
       ): Promise<string> => {
         try {
           // First try to get from file extension
@@ -162,7 +217,7 @@ export async function sendInfobipMessage({
           attachments.map(async (file) => {
             const contentType = await getContentTypeFromUrl(
               file.url,
-              file.name
+              file.name,
             );
             const contentId = `${file.name.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
 
@@ -172,7 +227,7 @@ export async function sendInfobipMessage({
               contentType: contentType,
               contentUrl: file.url,
             };
-          })
+          }),
         );
 
         // Send MMS with direct links using v2 API format
@@ -249,48 +304,62 @@ export async function sendInfobipMessage({
 
       const infobipResult = await infobipResponse.json();
 
-      let dbMessage = await db.clientSMS.create({
-        data: {
-          from: infobipConfig.phoneNumber,
-          to,
-          message: message ?? "",
-          sentBy: "Company",
-          userId: user?.id,
-          isRead: true,
-          clientId,
-          companyId: infobipConfig.companyId,
-        },
-      });
-
-      const processedAttachments = [];
-      for (const file of attachments) {
-        let attachment = await db.clientSmsAttachments.create({
+      const data = await db.$transaction(async (tx) => {
+        const created = await tx.clientSMS.create({
           data: {
-            name: file.name,
-            url: file.url,
-            clientSMSId: dbMessage.id,
+            from: infobipConfig!.phoneNumber,
+            to,
+            message: message ?? "",
+            sentBy: "Company",
+            userId: user?.id,
+            isRead: true,
+            clientId,
+            companyId: infobipConfig!.companyId,
+            isSalesAgent,
           },
         });
-        processedAttachments.push({
-          name: file.name,
-          url: file.url,
+
+        if (attachments && attachments.length > 0) {
+          await tx.clientSmsAttachments.createMany({
+            data: attachments.map((file) => ({
+              name: file.name,
+              url: file.url,
+              isVoiceNote: file.isVoiceNote ?? false,
+              clientSMSId: created.id,
+            })),
+          });
+        }
+
+        if (
+          shouldSalesAgentStop &&
+          client &&
+          client?.isSalesAgent &&
+          !systemCall &&
+          process.env.APP_ENV === "production"
+        ) {
+          await tx.client.update({
+            where: { id: clientId },
+            data: { isSalesAgent: false },
+          });
+        }
+
+        return tx.clientSMS.findFirst({
+          where: { id: created.id },
+          include: { attachments: true },
         });
-      }
+      });
+
+      const processedAttachments = (attachments ?? []).map((file) => ({
+        name: file.name,
+        url: file.url,
+        isVoiceNote: file.isVoiceNote ?? false,
+      }));
 
       await updateNewSMSChatTrack({
         clientId,
         smsLastMessage: message ?? "",
         lastMessageBy: "Company",
         attachments: processedAttachments,
-      });
-
-      let data = await db.clientSMS.findFirst({
-        where: {
-          id: dbMessage.id,
-        },
-        include: {
-          attachments: true,
-        },
       });
 
       try {
@@ -308,7 +377,7 @@ export async function sendInfobipMessage({
         console.error("Pipeline automation trigger error:", error);
       }
 
-      revalidatePath("/dashboard/communication/client");
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
       return {
         success: true,
         data,

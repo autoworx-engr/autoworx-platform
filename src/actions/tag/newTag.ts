@@ -10,34 +10,35 @@ export default async function newTag({
   textColor,
   bgColor,
   type = "GENERAL",
+  companyId: companyIdParam,
 }: {
   name: string;
   textColor?: string;
   bgColor?: string;
   type?: "GENERAL" | "SALES" | "CLIENT" | "INVENTORY";
+  companyId?: number;
 }): Promise<ServerAction> {
   const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+  const companyId = companyIdParam ?? session?.user.companyId;
 
-    if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
-    }
-const isExist = await db.tag.findFirst({
+  if (!companyId) {
+    throw new Error("Company ID is required to create an tag.");
+  }
+  const isExist = await db.tag.findFirst({
     where: {
       companyId,
       name: {
         equals: name.trim(),
-        
       },
       type,
     },
-  }); 
+  });
 
-  if(isExist){
+  if (isExist) {
     return {
       type: "error",
-      message: "This Tag is already exists.",
-    };  
+      message: "This tag already exists.",
+    };
   }
   const newTag = await db.tag.create({
     data: {

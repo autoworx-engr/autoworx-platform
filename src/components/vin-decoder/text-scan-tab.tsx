@@ -1,44 +1,73 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { CameraIcon, ScanLine } from "lucide-react";
-import { useRef, useState } from "react";
-import { createWorker } from "tesseract.js";
+import { errorToast } from "@/lib/toast";
+import { extractVin } from "@/utils/findVin";
+import { ScanLine } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type TTextScanTabProps = {
   onDetectedValue?: (vin: string) => void;
 };
 
-const vinRegex = /[A-HJ-NPR-Z0-9]{17}/g; // basic VIN pattern
-
 export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [vin, setVin] = useState("");
   const [loading, setLoading] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
 
+  // NEW: State to control the camera flash effect
+  const [isFlashing, setIsFlashing] = useState(false);
+
   const onStartCamera = async () => {
-    setIsCameraActive(true);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-    });
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
       streamRef.current = stream;
+      stream.getVideoTracks().forEach((track) => {
+        track.addEventListener("ended", stopCamera);
+      });
+      setIsCameraActive(true);
+    } catch (err) {
+      errorToast("Unable to access camera");
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
-      setIsCameraActive(false);
     }
+    setIsCameraActive(false);
   };
+
+  // Assign the stream once the <video> element has actually mounted
+  // (it only renders after isCameraActive flips to true).
+  useEffect(() => {
+    if (isCameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraActive]);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const onCaptureFrame = async () => {
     if (!videoRef.current || !canvasRef.current) return;
+
+    if (!videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+      errorToast("Camera preview isn't ready yet. Please try again.");
+      return;
+    }
+
+    // NEW: Trigger the visual flash effect instantly
+    setIsFlashing(true);
+    setTimeout(() => setIsFlashing(false), 150); // Flash duration of 150ms
+
     setLoading(true);
 
     const video = videoRef.current;
@@ -51,22 +80,61 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
     // capture frame
     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const worker = await createWorker("eng");
-    const { data } = await worker.recognize(canvas);
-    await worker.terminate();
-
-    const text = data.text.toUpperCase();
-    console.log("OCR text:", text);
-
-    const matches = text.match(vinRegex);
-    console.log(matches);
-
-    if (matches && matches.length) {
-      const vin = matches[0];
-      onDetectedValue && onDetectedValue(vin);
-    }
-    setLoading(false);
+    canvas.toBlob(
+      async (blob) => {
+        if (blob) {
+          const file = new File([blob], "captured-vin.jpg", {
+            type: "image/jpeg",
+          });
+          await onCaptureImage(file);
+        }
+        setLoading(false);
+      },
+      "image/jpeg",
+      0.9,
+    );
   };
+
+  const onCaptureImage = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        errorToast("Failed to upload photos");
+      }
+
+      const json = await uploadRes.json();
+      const imageUrl = json?.data?.[0];
+
+      const url = "https://agent.autoworx.tech/webhook/image-extract";
+
+      const data = {
+        s3_url: imageUrl,
+      };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      const getVinCode = extractVin(result);
+      if (!getVinCode) {
+        errorToast("Failed to extract VIN");
+        return;
+      }
+      onDetectedValue && onDetectedValue(getVinCode);
+    } catch (err) {
+      errorToast("Failed to capture image");
+    }
+  };
+
   return (
     <div className="space-y-4">
       {!isCameraActive ? (
@@ -99,12 +167,19 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
             <video
               ref={videoRef}
               autoPlay
-              // playsInline
+              playsInline
+              muted
               className="h-64 w-full object-cover"
             />
+
+            {/* NEW: White flash overlay that appears briefly on capture */}
+            {isFlashing && (
+              <div className="absolute inset-0 bg-white z-20 transition-opacity duration-75" />
+            )}
+
             {/* Barcode scanning frame overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-32 w-48 border-2 border-blue-500 opacity-75" />
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <div className="h-32 w-48 border-2 border-blue-500 opacity-75 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]" />
             </div>
           </div>
           <canvas ref={canvasRef} className="hidden" width="640" height="480" />
@@ -112,16 +187,17 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
             <Button
               type="button"
               onClick={onCaptureFrame}
-              className="flex-1 bg-green-600 text-white hover:bg-green-700"
+              className="flex-1 bg-green-600 text-white hover:bg-green-700 relative overflow-hidden"
               disabled={loading}
             >
-              {loading ? "Loading..." : "Capture"}
+              {loading ? "Scanning..." : "Capture"}
             </Button>
             <Button
               type="button"
               onClick={stopCamera}
               variant="outline"
               className="flex-1 border-blue-600 text-blue-300 hover:bg-blue-700 bg-transparent"
+              disabled={loading}
             >
               Close Camera
             </Button>

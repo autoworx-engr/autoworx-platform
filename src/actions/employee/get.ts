@@ -2,6 +2,7 @@
 import { authOptions } from "@/authOptions";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { getPaddedIdSearchCondition } from "@/lib/padId";
 import { EmployeeType, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { cache } from "react";
@@ -10,18 +11,26 @@ export async function getEmployees({
   excludeCurrentUser,
   type,
   notType,
+  companyId: providedCompanyId,
+  currentUserId: providedUserId,
 }: {
   excludeCurrentUser?: boolean;
   type?: EmployeeType;
   notType?: EmployeeType;
+  companyId?: number;
+  currentUserId?: number;
 }) {
-  const companyId = await getCompanyId();
-  const session = await getServerSession(authOptions);
+  const companyId = providedCompanyId ?? (await getCompanyId());
+  const currentUserId =
+    providedUserId ??
+    (excludeCurrentUser
+      ? parseInt((await getServerSession(authOptions))?.user?.id!)
+      : undefined);
   const employees = await db.user.findMany({
     where: {
       companyId,
       id: {
-        not: excludeCurrentUser ? parseInt(session?.user?.id!) : undefined,
+        not: excludeCurrentUser ? currentUserId : undefined,
       },
       employeeType: {
         equals: type,
@@ -39,7 +48,7 @@ type EmployeeParams = {
   filter?: {
     type?: EmployeeType;
     searchParams?: string;
-    dateRange?: { startDate: Date; endDate: Date };
+    dateRange?: { startDate: string; endDate: string };
   };
 };
 export const getEmployeesForPaginate = cache(
@@ -52,20 +61,19 @@ export const getEmployeesForPaginate = cache(
       whereClause.employeeType = filter.type;
     }
 
-    if (filter?.searchParams) {
-      const trimmed = filter?.searchParams.trim();
-      const numericId = /^\d+$/.test(trimmed) ? Number(trimmed) : null;
-      whereClause.OR = filter.searchParams
-        .split(" ")
-        .flatMap(searchText => [
+    if (filter?.searchParams?.trim()) {
+      const trimmed = filter.searchParams.trim();
+      const idCondition = getPaddedIdSearchCondition(trimmed);
+
+      whereClause.OR = trimmed
+        .split(/\s+/)
+        .flatMap((searchText) => [
           { firstName: { contains: searchText, mode: "insensitive" } },
           { lastName: { contains: searchText, mode: "insensitive" } },
           { email: { contains: searchText, mode: "insensitive" } },
           { phone: { contains: searchText, mode: "insensitive" } },
         ]) as Prisma.UserWhereInput[];
-      whereClause.OR.push(
-        ...(numericId !== null ? [{ id: numericId }] : [])
-      )
+      if (idCondition) whereClause.OR.push(idCondition);
     }
 
     if (
@@ -73,9 +81,12 @@ export const getEmployeesForPaginate = cache(
       filter.dateRange.startDate &&
       filter.dateRange.endDate
     ) {
+      const start = new Date(filter.dateRange.startDate + "T00:00:00.000Z");
+      const end = new Date(filter.dateRange.endDate + "T23:59:59.999Z");
+
       whereClause.joinDate = {
-        gte: filter.dateRange.startDate,
-        lte: filter.dateRange.endDate,
+        gte: start,
+        lte: end,
       };
     }
 
@@ -101,7 +112,7 @@ export const getEmployeesForPaginate = cache(
         zip: true,
         companyName: true,
         image: true,
-        countryCode:true,
+        countryCode: true,
         salaryHistory: {
           where: {
             isActive: true,
@@ -124,5 +135,5 @@ export const getEmployeesForPaginate = cache(
       },
     });
     return { employees, totalEmployees };
-  }
+  },
 );

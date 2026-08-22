@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ['nodejs_20', 'bash', 'npm', 'openssl']
+nixPkgs = ['nodejs_22', 'bash', 'yarn', 'openssl']
 
 [phases.install]
-cmds = ['npm i --legacy-peer-deps']
+cmds = ['yarn install']
 
 [phases.build]
-cmds = ['npm run build']
+cmds = ['yarn build']
 
 [start]
-cmd = 'npm run start'
+cmd = 'yarn start'

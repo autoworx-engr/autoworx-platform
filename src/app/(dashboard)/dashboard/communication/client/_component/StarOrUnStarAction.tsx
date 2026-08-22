@@ -5,16 +5,18 @@ import React, { useTransition } from "react";
 type TProps = {
   isStarred: boolean;
   clientId?: number;
+  selected?: boolean;
   onStarChange: (
     event: React.MouseEvent<HTMLButtonElement>,
     isStarred: boolean,
-    clientId: number
+    clientId: number,
   ) => void;
 };
 
 export default function StarOrUnStarAction({
   isStarred,
   clientId,
+  selected,
   onStarChange,
 }: TProps) {
   const [pending, startTransaction] = useTransition();
@@ -31,7 +33,7 @@ export default function StarOrUnStarAction({
       {isStarred ? (
         <Star fill="#eab308" className="text-yellow-400" />
       ) : (
-        <Star />
+        <Star className={selected ? "text-white/80" : "text-zinc-400"} />
       )}
     </button>
   );

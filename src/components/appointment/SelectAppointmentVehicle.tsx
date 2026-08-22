@@ -6,10 +6,11 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useListsStore } from "@/stores/lists";
 import { Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Plus } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
-import { usePathname } from "next/navigation";
 
 export function SelectAppointmentVehicle({
   name = "vehicleId",
@@ -33,12 +34,10 @@ export function SelectAppointmentVehicle({
 
   const isClientIdNumber = !isNaN(Number(clientId)) && clientId !== null;
 
-  const { data: clientVehicles = [] } = useVehicleByClientIdQuery(
-    Number(clientId),
-    {
+  const { data: clientVehicles = [], isLoading: isLoadingVehicles } =
+    useVehicleByClientIdQuery(Number(clientId), {
       enabled: isClientIdNumber,
-    }
-  );
+    });
 
   useEffect(() => {
     if (vehicleId && clientVehicles.length > 0) {
@@ -53,26 +52,48 @@ export function SelectAppointmentVehicle({
 
   const queryClient = useQueryClient();
 
+  const prevClientId = useRef<number | null>(null);
+
   useEffect(() => {
-    const selectedVehicle = newAddedVehicle ?? clientVehicles?.[0];
+    const numericClientId = isClientIdNumber ? Number(clientId) : null;
 
-    if (clientId) {
-      if (clientVehicles?.length > 0 && !value) {
-        if (isEdit == false) {
-          setVehicle(selectedVehicle);
-          // useListsStore.setState({ vehicle: selectedVehicle });
-        }
-      } else {
-        const matchedVehicle = clientVehicles?.find(
-          (vehicle) => vehicle.id === value?.id
-        );
-        const finalVehicle = matchedVehicle ?? selectedVehicle;
-
-        setVehicle(finalVehicle);
-        // useListsStore.setState({ vehicle: finalVehicle });
-      }
+    if (!numericClientId) {
+      prevClientId.current = null;
+      return;
     }
-  }, [newAddedVehicle, clientId, clientVehicles]);
+
+    const clientChanged = prevClientId.current !== numericClientId;
+
+    const requestedVehicle = vehicleId
+      ? clientVehicles?.find((v) => v.id === vehicleId)
+      : undefined;
+
+    if (clientChanged && !isEdit) {
+      prevClientId.current = numericClientId;
+      setVehicle(
+        requestedVehicle ?? newAddedVehicle ?? clientVehicles?.[0] ?? null,
+      );
+      return;
+    }
+    prevClientId.current = numericClientId;
+
+    const selectedVehicle =
+      requestedVehicle ?? newAddedVehicle ?? clientVehicles?.[0];
+    if (clientVehicles?.length > 0 && !value) {
+      if (isEdit == false) {
+        setVehicle(selectedVehicle);
+      }
+    } else if (clientVehicles?.length > 0) {
+      const matchedVehicle = clientVehicles?.find(
+        (vehicle) => vehicle.id === value?.id,
+      );
+
+      const finalVehicle = matchedVehicle ?? selectedVehicle;
+      setVehicle(finalVehicle);
+    } else {
+      setVehicle(null);
+    }
+  }, [newAddedVehicle, clientId, clientVehicles, vehicleId]);
 
   useEffect(() => {
     return () => {
@@ -93,6 +114,7 @@ export function SelectAppointmentVehicle({
 
       <div className="flex items-center gap-2">
         <Selector
+          className="min-w-full"
           disabledDropdown={clientId && !vehicle?.fromRequest ? false : true}
           label={(vehicle: Partial<Vehicle> | null) =>
             vehicle
@@ -102,6 +124,14 @@ export function SelectAppointmentVehicle({
           newButton={
             <NewVehicle
               clientId={Number(clientId)}
+              newButton={
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
+                >
+                  <Plus className="w-4 h-4" /> New Vehicle
+                </button>
+              }
               onAdd={(vehicle: Vehicle) => {
                 if (pathname.includes("/dashboard/client")) {
                   return;
@@ -117,7 +147,7 @@ export function SelectAppointmentVehicle({
                     return oldVehicle && oldVehicle.length > 0
                       ? [...oldVehicle, vehicle]
                       : [];
-                  }
+                  },
                 );
                 vehicle && setOpenDropdown && setOpenDropdown(false);
               }}
@@ -125,11 +155,12 @@ export function SelectAppointmentVehicle({
             />
           }
           items={clientVehicles}
+          isLoading={isLoadingVehicles}
           onSearch={(search: string) =>
             clientVehicles.filter(
               (vehicle) =>
                 vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-                vehicle.other?.toLowerCase().includes(search.toLowerCase())
+                vehicle.other?.toLowerCase().includes(search.toLowerCase()),
             )
           }
           openState={[
@@ -151,7 +182,7 @@ export function SelectAppointmentVehicle({
                   handleClear();
                   setOpenDropdown && setOpenDropdown(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                className="flex w-full items-center justify-center rounded-md border border-red-200 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-600 transition-colors duration-150 hover:bg-red-100"
               >
                 Clear Vehicle
               </button>

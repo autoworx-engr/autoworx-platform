@@ -6,6 +6,6 @@ export const useFindOnePipelineAutomationRule = (id: number) => {
     queryKey: ["pipeline-automation", id],
     queryFn: async () => findOnePipelineAutomationRules(id),
     enabled: !!id,
-    staleTime: 3600 * 1000
+    staleTime: 3600 * 1000,
   });
 };

@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import AllCards from "./AllCards";
 import AutomationSidebar from "./AutomationSidebar";
@@ -16,6 +17,7 @@ type AutomationMainProps = {
   twilio: TwilioCredentials | InfobipConfig | null;
   employees?: User[] | null;
 };
+
 const AutomationMain = ({
   companyId,
   user,
@@ -25,29 +27,31 @@ const AutomationMain = ({
 }: AutomationMainProps) => {
   const [type, setType] = useState<string | null>(null);
 
-  const RenderPage = () => {
-    if (!type) return null;
-    return (
-      <AllCards
-        type={type}
-        companyId={companyId}
-        user={user}
-        company={company}
-        twilio={twilio!}
-        employees={employees}
-      />
-    );
-  };
-
   return (
     <>
       {/* Sidebar */}
       <aside className="w-full md:w-1/4">
         <h1 className="mb-6 text-xl font-semibold text-gray-800">Automation</h1>
-        <AutomationSidebar setType={setType} type={type} />
+
+        <AutomationSidebar
+          setType={setType}
+          type={type}
+          companyId={Number(companyId)}
+        />
       </aside>
 
-      <main className="w-full md:w-3/4">{RenderPage()}</main>
+      <main className="w-full md:w-3/4">
+        {type && (
+          <AllCards
+            type={type}
+            companyId={companyId}
+            user={user}
+            company={company}
+            twilio={twilio!}
+            employees={employees}
+          />
+        )}
+      </main>
     </>
   );
 };

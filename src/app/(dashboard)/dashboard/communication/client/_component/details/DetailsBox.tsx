@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import { getClientById } from "../../_actions/getClientById";
 import ClientDescription from "./ClientDescription";
 import ClientHeading from "./ClientHeading";
-import NoClientFound from "../NoClientFound";
 
 type Props = {
   clientId: number;
@@ -19,6 +18,9 @@ export default async function DetailsBox({ clientId, showDetails }: Props) {
       make: true,
       model: true,
       other: true,
+      license: true,
+      vin: true,
+      color: { select: { name: true } },
     },
   });
   const [client, vehicles] = await Promise.all([
@@ -26,12 +28,12 @@ export default async function DetailsBox({ clientId, showDetails }: Props) {
     vehiclesPromise,
   ]);
 
-  if (!client) return <NoClientFound />;
+  if (!client) return null;
 
-  const showDetailsClass = showDetails === "true" ? "block" : "hidden";
+  const showDetailsClass = showDetails === "true" ? "flex" : "hidden";
   return (
     <div
-      className={`app-shadow mt-3 rounded-lg bg-background pb-4 lg:mt-0 lg:h-[90vh] xl:block ${showDetailsClass}`}
+      className={`app-shadow mt-3 flex-col rounded-lg bg-background pb-4 lg:mt-0 lg:h-[90vh] xl:flex ${showDetailsClass}`}
     >
       {/* Client Heading */}
       <ClientHeading vehicles={vehicles} client={client} />

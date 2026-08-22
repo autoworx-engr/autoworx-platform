@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { ServerAction } from "@/types/action";
+import { TECHNICIAN_STATUS } from "@/lib/consts";
 
 // 1. Fetch the invoice by its ID, including its associated technicians.
 // 2. If no technicians are found, return a success message without making any updates.
@@ -37,14 +38,15 @@ export async function updateWorkOrderStatus(id: string): Promise<ServerAction> {
   }
 
   const allComplete = technicians.every(
-    (technician) => technician.status === "Complete"
+    (technician) => technician.status === TECHNICIAN_STATUS.COMPLETE,
   );
   const anyInProgress = technicians.some(
-    (technician) => technician.status === "In Progress"
+    (technician) => technician.status === TECHNICIAN_STATUS.IN_PROGRESS,
   );
   const anyPending = technicians.some(
     (technician) =>
-      technician.status === "Pending" || technician.status === "Cancel"
+      technician.status === TECHNICIAN_STATUS.PENDING ||
+      technician.status === TECHNICIAN_STATUS.CANCEL,
   );
 
   // Check if the current status is already "Completed" and all technicians are complete

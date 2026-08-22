@@ -32,11 +32,33 @@ export default async function deleteCategory({
     };
   }
 
-  await db.category.delete({
-    where: {
-      id: categoryId,
-    },
-  });
+  await db.$transaction([
+    db.appointment.updateMany({
+      where: { serviceCategoryId: categoryId },
+      data: { serviceCategoryId: null },
+    }),
+    db.service.updateMany({
+      where: { categoryId },
+      data: { categoryId: null },
+    }),
+    db.material.updateMany({
+      where: { categoryId },
+      data: { categoryId: null },
+    }),
+    db.labor.updateMany({
+      where: { categoryId },
+      data: { categoryId: null },
+    }),
+    db.inventoryProduct.updateMany({
+      where: { categoryId },
+      data: { categoryId: null },
+    }),
+    db.servicePlaybook.updateMany({
+      where: { categoryId },
+      data: { categoryId: null },
+    }),
+    db.category.delete({ where: { id: categoryId } }),
+  ]);
 
   return {
     type: "success",

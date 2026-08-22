@@ -1,20 +1,22 @@
 "use client";
 
-import { getCompany } from "@/actions/settings/getCompany";
+import { createLeadFromForm } from "@/actions/lead/createLeadFromForm";
 import { DialogContent } from "@/components/Dialog";
 
-import { Company } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import PhoneInput from "@/components/PhoneInput";
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
+import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import {
   useGetAllYears,
   useGetMake,
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
+import { cn } from "@/lib/cn";
+import { errorToast, successToast } from "@/lib/toast";
 import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
 import Selector from "../../settings/automation/components/Selector";
 
@@ -34,7 +36,6 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     others: "",
     service: "" as string | { id: string | number; title: string },
     source: "",
-    token: "",
     countryCode: "US",
   });
 
@@ -78,23 +79,6 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     }
   };
 
-  // Extract source and token from URL on component mount
-  useEffect(() => {
-    const fetchTokenAndSetSource = async () => {
-      try {
-        const res: Company | null = await getCompany();
-        setFormData((prev) => ({
-          ...prev,
-          token: res?.zapierToken || "",
-        }));
-      } catch (err) {
-        console.error("Failed to fetch token", err);
-      }
-    };
-
-    fetchTokenAndSetSource();
-  }, []);
-
   useEffect(() => {
     const fullPhone = `${countryCode}${phoneNumber}`;
     setFormData((prev) => ({
@@ -113,6 +97,8 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       clearFieldError("phone");
     }
   }, [phoneNumber, countryCode, isoCode]);
+  const NAME_REGEX = /^[A-Za-z\s\-']+$/;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -139,6 +125,15 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
         ...formData,
         [name]: value,
       });
+
+      if (name === "name" && value && !NAME_REGEX.test(value)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+        }));
+      } else {
+        clearFieldError(name);
+      }
     }
   };
 
@@ -157,6 +152,36 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (formData.name && !/^[A-Za-z\s\-']+$/.test(formData.name.trim())) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+      }));
+      return;
+    }
+
+    if (!formData.others) {
+      if (
+        !formData.vehicle_year ||
+        !formData.vehicle_make ||
+        !formData.vehicle_model
+      ) {
+        errorToast("Please select Year, Make, and Model for the vehicle");
+        return;
+      }
+    }
+
+    if (!formData.service) {
+      errorToast("Please select a service");
+      return;
+    }
+
+    if (!formData.source) {
+      errorToast("Please select a lead source");
+      return;
+    }
+
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
 
@@ -172,70 +197,50 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       // Construct the opportunity source string in the required format
       const opportunitySource = `(${formData.source}) ${vehicleInfo} | ${serviceTitle}`;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/lead-generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-TOKEN": formData.token,
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            countryCode: formData.countryCode,
-            serviceId: formData.service,
-            opportunity_source: opportunitySource,
-            source: formData.source,
-          }),
-        },
-      );
+      await createLeadFromForm({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        countryCode: formData.countryCode,
+        serviceId: String(formData.service),
+        opportunity_source: opportunitySource,
+        source: formData.source,
+      });
 
-      if (response.ok) {
-        setFormStatus({
-          message: "Lead created successfully!",
-          type: "success",
-        });
+      setFormStatus({ message: "Lead created successfully!", type: "success" });
+      successToast("Lead created successfully!");
 
-        // Invalidate and refetch pipeline data
-        await queryClient.invalidateQueries({
-          queryKey: [salesPipelineKeyStr.salesPipeline],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: [salesPipelineKeyStr.salesPipelineCount],
-        });
+      await queryClient.invalidateQueries({
+        queryKey: [salesPipelineKeyStr.salesPipeline],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: [salesPipelineKeyStr.salesPipelineCount],
+      });
 
-        router.refresh();
-        onClose?.();
+      router.refresh();
+      onClose?.();
 
-        // Reset form fields except source and token
-        setFormData({
-          ...formData,
-          name: "",
-          email: "",
-          phone: "",
-          vehicle_year: "",
-          vehicle_make: "",
-          vehicle_model: "",
-          others: "",
-          service: "",
-          source: "",
-          countryCode: "US",
-        });
-        setPhoneNumber("");
-        setCountryCode("+1");
-      } else {
-        setFormStatus({
-          message: "Failed to create lead. Please try again.",
-          type: "error",
-        });
-      }
+      setFormData({
+        ...formData,
+        name: "",
+        email: "",
+        phone: "",
+        vehicle_year: "",
+        vehicle_make: "",
+        vehicle_model: "",
+        others: "",
+        service: "",
+        source: "",
+        countryCode: "US",
+      });
+      setPhoneNumber("");
+      setCountryCode("+1");
     } catch (error) {
       setFormStatus({
         message: "An error occurred. Please try again later.",
         type: "error",
       });
+      errorToast("An error occurred. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
@@ -265,47 +270,45 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     { title: "Phone Call", id: "Phone Call" },
   ];
 
-  console.log("formData", formData);
   return (
     <DialogContent
-      className="max-h-[calc(100vh-2rem)] overflow-y-auto"
+      className="max-h-full flex flex-col"
       onCloseAutoFocus={() => setFormStatus({ message: "", type: null })}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Full Name<span className="text-red-500"> *</span>
-          </label>
-          <input
-            id="name"
-            type="text"
+      {/* Header */}
+      <div className="shrink-0 px-2 pt-6 pb-2 md:px-4">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+          Add Lead
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Enter details for the new lead opportunity
+        </p>
+      </div>
+
+      {/* Scrollable body */}
+      <form
+        id="add-lead-form"
+        onSubmit={handleSubmit}
+        className="flex-1 space-y-4 overflow-y-auto px-2 py-2 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent md:px-4"
+      >
+        {/* Contact Information */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <SlimInput
             name="name"
+            label="Full Name"
             placeholder="John Doe"
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+            error={fieldErrors.name}
           />
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
+          <SlimInput
             name="email"
+            type="email"
+            label="Email Address"
             placeholder="john@example.com"
             value={formData.email}
             onChange={handleChange}
-            className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
           />
         </div>
 
@@ -321,13 +324,17 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           error={fieldErrors.phone}
         />
         {/* Vehicle Information Section */}
-        <div className="border-t border-gray-200 pb-1 pt-2">
-          <h3 className="text-md font-medium text-gray-700">
-            Vehicle Information<span className="text-red-500"> *</span>
+        <div className="border-t border-slate-200 pb-1 pt-3 dark:border-slate-700">
+          <h3 className="text-base font-semibold text-slate-600 dark:text-slate-300">
+            Vehicle Information <span className="text-[#E9405F]">*</span>
           </h3>
+          <p className="mt-0.5 text-xs text-slate-400">
+            Select year, make &amp; model or use the field below for unlisted
+            vehicles
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Selector
             name="vehicle_year"
             label="Year"
@@ -340,8 +347,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             isSearch={true}
             isClear={true}
             required={true}
-            disabled={formData.others != ""} // Disable this field as per your requirement
-            // error={isYearFetchError ? "Failed to fetch years" : undefined}
+            disabled={formData.others !== ""}
           />
           <Selector
             name="vehicle_make"
@@ -355,16 +361,13 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             isSearch={true}
             isClear={true}
             required={true}
-            disabled={formData.others != ""} // Disable this field as per your requirement
-            // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
+            disabled={formData.others !== ""}
           />
-
           <Selector
             name="vehicle_model"
             label="Model"
             placeholder="Select model"
             options={vehicleModelOptions || []}
-            // rootClassName="w-1/3"
             value={formData.vehicle_model || ""}
             onChange={(value) =>
               setFormData((prev) => ({ ...prev, vehicle_model: value }))
@@ -372,8 +375,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             isSearch={true}
             isClear={true}
             required={true}
-            disabled={formData.others != ""} // Disable this field as per your requirement
-            // error={isModelsFetchError ? "Failed to fetch Models" : undefined}
+            disabled={formData.others !== ""}
           />
         </div>
 
@@ -402,8 +404,11 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
               formData.vehicle_model != ""
                 ? true
                 : false
-            } // Disable this field as per your requirement
-            className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+            }
+            className={cn(
+              "w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none",
+              slimInputClassName,
+            )}
           />
         </div>
 
@@ -442,7 +447,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
         <button
           type="submit"
-          className="w-full rounded-md bg-[#6571FF] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting || !!fieldErrors.phone}
         >
           {isSubmitting ? "Adding..." : "Add Lead"}

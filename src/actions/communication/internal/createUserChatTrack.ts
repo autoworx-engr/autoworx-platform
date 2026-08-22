@@ -32,7 +32,7 @@ export const createUserChatTrack = async ({
           receiverId,
           lastMessage: "",
           isRead: false,
-          section: 'internal'
+          section: "internal",
         },
       });
       revalidatePath("/communication/internal");

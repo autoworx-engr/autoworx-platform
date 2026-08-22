@@ -15,21 +15,26 @@ import RedirectToSettings from "./RedirectToSettings";
 
 type TProps = {
   clientId: number;
-  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[], user?: {
+  conversations?: (MailgunEmail & {
+    attachments: MailgunEmailAttachment[];
+    user?: {
       firstName: string;
       lastName: string | null;
-    } | null; })[];
+    } | null;
+  })[];
   clientEmail: boolean;
+  clientPhoto?: string | null;
 };
 
 export default function MailgunMessageBox({
   clientId,
   conversations: initialMessages,
   clientEmail,
+  clientPhoto,
 }: TProps) {
   const [conversations, setConversations] = useState(initialMessages);
   const setClientConversationTrack = useClientCommunicationStore(
-    (state) => state.setClientConversationTrack
+    (state) => state.setClientConversationTrack,
   );
 
   const user = useGetCurrentUser();
@@ -47,14 +52,14 @@ export default function MailgunMessageBox({
             if (!prevMails) return [data];
             return [...prevMails, data];
           });
-        }
+        },
       );
     return () => {
       return pusher
         .unbind("mail")
         .unsubscribe(`mail-${user?.companyId}-${clientId}`);
     };
-  }, []);
+  }, [user?.companyId, clientId]);
 
   // update client unread messages
   const updateEmailUnReadMessages = useCallback(async () => {
@@ -66,26 +71,32 @@ export default function MailgunMessageBox({
       const formattedError = errorHandler(err);
       errorToast(formattedError.message);
     }
-  }, [clientId]);
+  }, [clientId, setClientConversationTrack]);
 
   useEffect(() => {
     updateEmailUnReadMessages();
-  }, []);
+  }, [updateEmailUnReadMessages]);
 
   return (
     <>
       {clientEmail ? (
         <div className="flex flex-col h-full gap-0">
           <div className="flex-1 overflow-hidden">
-            <MaiGunBox conversations={conversations} clientId={clientId} />
-          </div>
-          <div className="flex-shrink-0">
-            <SendMail
+            <MaiGunBox
+              conversations={conversations}
               clientId={clientId}
-              companyId={user!.companyId}
-              setConversations={setConversations}
+              clientPhoto={clientPhoto}
             />
           </div>
+          {user && (
+            <div className="flex-shrink-0">
+              <SendMail
+                clientId={clientId}
+                companyId={user.companyId}
+                setConversations={setConversations}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <RedirectToSettings

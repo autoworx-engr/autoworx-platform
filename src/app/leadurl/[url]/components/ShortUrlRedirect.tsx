@@ -2,8 +2,9 @@
 
 import CarLoading from "@/components/common/CarLoading";
 import { useLeadLinkStore } from "@/stores/useLeadLinkStore";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const ShortUrlRedirect = () => {
   const params = useParams();
@@ -74,12 +75,12 @@ const ShortUrlRedirect = () => {
           <p className="text-gray-600">
             The link you followed may be invalid, or deleted.
           </p>
-          <a
+          <Link
             href="/"
-            className="mt-4 inline-block rounded-md bg-[#6571FF] px-4 py-2 text-white transition hover:bg-[#4e5bff] focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:ring-offset-2"
+            className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-white transition hover:bg-[#4e5bff] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             Go Back Home
-          </a>
+          </Link>
         </div>
       </div>
     );

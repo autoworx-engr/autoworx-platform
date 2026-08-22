@@ -52,11 +52,11 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   }, []);
 
   // Focus search input when dropdown opens
-  useEffect(() => {
-    if (open && isSearch && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [open, isSearch]);
+  // useEffect(() => {
+  //   if (open && isSearch && searchInputRef.current) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [open, isSearch]);
 
   // ADDED: Effect to reset search when dropdown closes
   useEffect(() => {
@@ -94,7 +94,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   // ADDED: Filter options based on search query
   const filteredOptions = searchTerm
     ? options.filter((opt) =>
-        opt.title.toLowerCase()?.includes(searchTerm.toLowerCase())
+        opt.title.toLowerCase()?.includes(searchTerm.toLowerCase()),
       )
     : options;
   return (
@@ -108,7 +108,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
         className={cn(
           "flex w-full cursor-pointer flex-wrap items-center gap-2 rounded border border-slate-400 bg-white px-2 py-0.5",
           error && "border-red-500 focus:border-red-500",
-          disabled && "cursor-not-allowed bg-gray-100 opacity-50"
+          disabled && "cursor-not-allowed bg-gray-100 opacity-50",
         )}
       >
         {value?.length === 0 ? (

@@ -2,10 +2,9 @@
 
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Appointment, Client, User, Vehicle } from "@prisma/client";
+import { Calendar, Car, Clock, Info, User as UserIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
-import { Clock, User as UserIcon, Calendar, Info, Car } from "lucide-react";
-import React from "react";
 
 type TAppointmentDetailsProps = {
   appointment: Appointment & {
@@ -23,7 +22,7 @@ export default function AppointmentDetails({
   const date = moment.utc(appointment?.date).format("Do MMMM YYYY");
 
   const assignedUsers = appointment.appointmentUsers.flatMap(
-    (appointmentUser) => appointmentUser.user
+    (appointmentUser) => appointmentUser.user,
   );
 
   const router = useRouter();
@@ -87,9 +86,17 @@ export default function AppointmentDetails({
 
       {/* Assigned Users */}
       {assignedUsers.length > 0 && (
-        <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-          <UserIcon className="h-4 w-4 text-slate-400" />
-          <span>
+        <div className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+          <UserIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+          <span
+            className="line-clamp-3 min-w-0 flex-1"
+            title={assignedUsers
+              .map((assigned) =>
+                `${assigned.firstName ?? ""} ${assigned.lastName ?? ""}`.trim(),
+              )
+              .filter(Boolean)
+              .join(", ")}
+          >
             {assignedUsers.map((assigned, idx) => (
               <span key={idx}>
                 {assigned.firstName} {assigned.lastName}

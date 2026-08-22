@@ -5,16 +5,16 @@ import fetchUnreadInternalMessageCount from "@/actions/communication/internal/fe
 import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
 import { PermissionsResult } from "@/lib/getPermissions";
-import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { pusher } from "@/lib/pusher/client";
+
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { ClientConversationTrack } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +34,7 @@ import { filterNavList } from "@/lib/navListAuthorization";
 type TProps = {
   navList: {
     title: string;
-    icon: string;
+    icon: string | ReactNode;
     link?: string | null;
     path: string;
     subnav?:
@@ -74,7 +74,10 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   >([]);
 
   const clientConversationTrack = useClientCommunicationStore(
-    state => state.clientConversationTrack,
+    (state) => state.clientConversationTrack,
+  );
+  const clientTrackUpdate = useClientCommunicationStore(
+    (state) => state.clientTrackUpdate,
   );
 
   const { data: unreadInternalMessageCountData } = useServerGet(
@@ -154,64 +157,16 @@ export default function SideNavbar({ navList, permissions }: TProps) {
         companyUserPermissions?.communicationHubCollaboration);
   const [visibleTooltip, setVisibleTooltip] = useState<number | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-  // Helper: Check if company feature permission allows access to this route
-  function canAccessCompanyFeatureRoute(route: string): boolean {
-    if (!companyFeaturePermission || companyFeaturePermission.length === 0)
-      return true;
-    const routeWithoutQuery = route.split("?")[0];
-    const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
-    if (!featureKey) return true;
-    if (Array.isArray(featureKey)) {
-      return featureKey.some(key =>
-        companyFeaturePermission.some(
-          perm => perm.permission_name === key && perm.enabled,
-        ),
-      );
-    }
-    return companyFeaturePermission.some(
-      perm => perm.permission_name === featureKey && perm.enabled,
-    );
-  }
-  // First filter by permissions, then by company feature permission
-  const [filteredNavList, setFilteredNavList] = useState(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
-    return permissionFiltered
-      .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-      .map(item => {
-        if (item.subnav) {
-          const filteredSubnav = item.subnav.filter(sub =>
-            canAccessCompanyFeatureRoute(sub.link),
-          );
-          return {
-            ...item,
-            subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-          };
-        }
-        return item;
-      });
-  });
+
+  // Route → key resolution (including subtree prefixes and the entitlement
+  // carve-outs) lives in filterNavList so nav and route guards can't drift.
+  const [filteredNavList, setFilteredNavList] = useState(() =>
+    filterNavList(navList, permissions, companyFeaturePermission),
+  );
 
   useEffect(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
     setFilteredNavList(
-      permissionFiltered
-        .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-        .map(item => {
-          if (item.subnav) {
-            const filteredSubnav = item.subnav.filter(sub =>
-              canAccessCompanyFeatureRoute(sub.link),
-            );
-            return {
-              ...item,
-              subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-            };
-          }
-          return item;
-        }),
+      filterNavList(navList, permissions, companyFeaturePermission),
     );
   }, [companyFeaturePermission, navList, permissions]);
 
@@ -256,10 +211,10 @@ export default function SideNavbar({ navList, permissions }: TProps) {
       .subscribe(`client-notify-${companyId}`)
       .bind("client-notify", (data: ClientConversationTrack) => {
         if (!data) return;
-        setClientConversations(prevClients => {
+        setClientConversations((prevClients) => {
           if (!prevClients) return [data];
           const findConversation = prevClients?.find(
-            conversation => conversation?.clientId === data?.clientId,
+            (conversation) => conversation?.clientId === data?.clientId,
           );
           if (findConversation) {
             return prevClients;
@@ -290,22 +245,40 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     }
   }, [companyId]);
 
-  useEffect(() => {
-    if (clientConversationTrack) {
-      setClientConversations(prevClients => {
-        return prevClients.filter(client => {
-          if (
-            client.clientId === clientConversationTrack.clientId &&
-            clientConversationTrack.smsIsRead &&
-            clientConversationTrack.emailIsRead
-          ) {
-            return false;
-          }
-          return true;
-        });
+  // Opening a conversation marks it read, and any sidebar row can be marked
+  // read or unread by hand — the badge has to follow both.
+  const applyTrackChange = useCallback(
+    (track: ClientConversationTrack | null) => {
+      if (!track) return;
+      const { clientId, smsIsRead, emailIsRead } = track;
+      const isRead = smsIsRead && emailIsRead;
+
+      setClientConversations((prevClients) => {
+        const isCounted = prevClients.some(
+          (client) => client.clientId === clientId,
+        );
+
+        if (isRead) {
+          return isCounted
+            ? prevClients.filter((client) => client.clientId !== clientId)
+            : prevClients;
+        }
+
+        // Newly unread — the badge has to grow too, not just shrink, or
+        // marking a thread unread only shows up after a reload.
+        return isCounted ? prevClients : [...prevClients, track];
       });
-    }
-  }, [clientConversationTrack]);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    applyTrackChange(clientConversationTrack);
+  }, [clientConversationTrack, applyTrackChange]);
+
+  useEffect(() => {
+    applyTrackChange(clientTrackUpdate);
+  }, [clientTrackUpdate, applyTrackChange]);
 
   const totalMessageCount =
     (hasClientCommunicationPermission ? unReadClientCount : 0) +
@@ -325,9 +298,6 @@ export default function SideNavbar({ navList, permissions }: TProps) {
             width={40}
             height={40}
           />
-          <div className="py-0.1 let absolute right-4 top-12 rotate-12 transform gap-2 rounded-md border border-white bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-1 text-[8px] font-bold tracking-wider text-black shadow-lg">
-            Beta
-          </div>
         </Link>
 
         {/* Links */}
@@ -343,12 +313,16 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 active={modifiedPathName === item.path ? true : false}
                 icon={
                   <span className="relative inline-flex items-center justify-center">
-                    <Image
-                      src={item.icon}
-                      alt={item.title}
-                      width={24}
-                      height={24}
-                    />
+                    {typeof item.icon === "string" ? (
+                      <Image
+                        src={item.icon}
+                        alt={item.title}
+                        width={24}
+                        height={24}
+                      />
+                    ) : (
+                      item.icon
+                    )}
                     {item.title === "Communication Hub" &&
                       notificationShowPermission &&
                       totalMessageCount > 0 && (
@@ -405,16 +379,21 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                     <Link
                       className={cn(
                         "rounded-sm p-2 hover:bg-background/25",
-                        modifiedPathName === item.path && "!bg-black invert",
+                        modifiedPathName === item.path &&
+                          "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150",
                       )}
                       href={item.link}
                     >
-                      <Image
-                        src={item.icon}
-                        alt={item.title}
-                        width={20}
-                        height={20}
-                      />
+                      {typeof item.icon === "string" ? (
+                        <Image
+                          src={item.icon}
+                          alt={item.title}
+                          width={20}
+                          height={20}
+                        />
+                      ) : (
+                        item.icon
+                      )}
                     </Link>
                   )}
                 </TooltipTrigger>
@@ -470,7 +449,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 href="/dashboard/settings/my-account"
                 className={`rounded-sm p-2 hover:bg-background/25 hover:opacity-50 ${
                   modifiedPathName === "/dashboard/settings" &&
-                  "!bg-black invert"
+                  "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150"
                 }`}
               >
                 <Image
@@ -535,8 +514,11 @@ function Dropdown({
               type="button"
               className={cn(
                 "rounded-sm p-2 hover:bg-background/25",
-                open && activeDropdown === index && "!bg-black invert",
-                active && "!bg-black invert",
+                open &&
+                  activeDropdown === index &&
+                  "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150",
+                active &&
+                  "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150",
               )}
             >
               {icon}

@@ -1,3 +1,4 @@
+import { updateTemplate } from "@/actions/appointment/updateTemplate";
 import {
   Dialog,
   DialogClose,
@@ -7,15 +8,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
+import FormError from "@/components/FormError";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useState } from "react";
-import FormError from "@/components/FormError";
+import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
-import { updateTemplate } from "@/actions/appointment/updateTemplate";
 import { useListsStore } from "@/stores/lists";
-import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
+import { useState } from "react";
 
 export default function UpdateTemplate({
   id,
@@ -64,8 +65,11 @@ export default function UpdateTemplate({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-white text-[#6571FF] active:scale-90">
-          <SquarePen size={16} strokeWidth={2} />
+        <button
+          type="button"
+          className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-white text-primary active:scale-90"
+        >
+          <PencilLineIcon size={16} strokeWidth={2} />
         </button>
       </DialogTrigger>
 
@@ -91,7 +95,7 @@ export default function UpdateTemplate({
             <textarea
               name="message"
               rows={10}
-              className={slimInputClassName}
+              className={cn(slimInputClassName, "min-h-16 resize-y")}
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
             />
@@ -100,17 +104,19 @@ export default function UpdateTemplate({
         </div>
 
         <DialogFooter>
-          <DialogClose className="
+          <DialogClose
+            className="
                 rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
-              ">
+              "
+          >
             Cancel
           </DialogClose>
           <Submit
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

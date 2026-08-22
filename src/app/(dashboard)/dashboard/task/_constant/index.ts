@@ -1,28 +1,29 @@
 export const taskQueryKey = {
-  allTasks: 'all-tasks',
-  allTaskByScroll: ['all-tasks', 'scroll'],
-  taskById: (taskId: string) => ['task', taskId],
-  taskByUserId: (userId: string) => ['user-tasks', userId],
+  allTasks: "all-tasks",
+  allTaskByScroll: ["all-tasks", "scroll"],
+  taskById: (taskId: string) => ["task", taskId],
+  userTasks: "user-tasks",
+  taskByUserId: (userId: string) => ["user-tasks", userId],
 };
 
 export const userQueryKey = {
-  users: 'users',
-  companyUsers: 'companyUsers',
-  employees: 'employees',
+  users: "users",
+  companyUsers: "companyUsers",
+  employees: "employees",
 };
 
 export const appointmentQueryKey = {
-  allAppointments: 'all-appointments',
-  allAppointmentsByScroll: ['all-appointments', 'scroll'],
-  appointmentByUserId: (userId: string) => ['user-appointments', userId],
+  allAppointments: "all-appointments",
+  allAppointmentsByScroll: ["all-appointments", "scroll"],
+  appointmentByUserId: (userId: string) => ["user-appointments", userId],
 };
 
 export const calenderQueryKey = {
-  calendarSettings: 'calendarSettings',
-  holidays: 'holidays',
-  weekStartEndDaysSettings: 'weekStartEndDaysSettings',
+  calendarSettings: "calendarSettings",
+  holidays: "holidays",
+  weekStartEndDaysSettings: "weekStartEndDaysSettings",
 };
 
 export const emailTemplateQueryKey = {
-  templates: 'email-templates',
+  templates: "email-templates",
 };

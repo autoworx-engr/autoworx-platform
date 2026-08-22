@@ -12,6 +12,7 @@ type TProps = {
       Partial<
         User & {
           isConnected: boolean;
+          companyStatus?: string | null;
         }
       >[]
     >
@@ -21,7 +22,7 @@ type TProps = {
 
 const SearchBox = React.forwardRef(function SearchBox(
   { setOpenUserList, onSearch }: TProps,
-  ref: React.Ref<HTMLInputElement>
+  ref: React.Ref<HTMLInputElement>,
 ) {
   // const [searchText, setSearchText] = useState("");
 

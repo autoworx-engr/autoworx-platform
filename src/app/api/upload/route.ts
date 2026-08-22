@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 // import { isImageFile } from "@/utils/isImageFile";
 import { getSignedURL } from "@/actions/s3/signedURL";
 import { deleteObject } from "@/actions/s3/deleteObject";
+import { transcodeToMp3IfNeeded } from "@/utils/transcodeAudio";
 // const pump = promisify(pipeline);
 
 /**
@@ -52,7 +53,7 @@ import { deleteObject } from "@/actions/s3/deleteObject";
  *       500:
  *         description: Delete failed
  */
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
   try {
     // const fileNames = [];
 
@@ -63,7 +64,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
     // }
 
     const formData = await req.formData();
-    const files = formData.getAll("file") as File[];
+    const rawFiles = formData.getAll("file") as File[];
+    const files = await Promise.all(rawFiles.map(transcodeToMp3IfNeeded));
     const uploadPromises = files.map(async (file) => {
       const response = await getSignedURL({
         fileType: file.type,
@@ -100,13 +102,12 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     return NextResponse.json({ status: "success", data: fileNames });
   } catch (e) {
-    console.log("🚀 ~ /upload POST ~ e:", e);
-    return NextResponse.json({ status: "fail", data: e });
+    return NextResponse.json({ status: "fail", data: String(e) });
   }
 }
 
 // Delete the file
-export async function DELETE(req: NextRequest, res: NextResponse) {
+export async function DELETE(req: NextRequest) {
   try {
     const json = await req.json();
     let { filePath } = json;

@@ -67,15 +67,15 @@ export async function updatePayment({
   // ** Calculate total refunded amount**
   const totalRefunded = existingPayment.Refund.reduce(
     (sum, refund) => sum + Number(refund.amount),
-    0
+    0,
   );
 
   // ** Validate that new amount is not less than refunded amount**
   if (amount < totalRefunded) {
     throw new Error(
       `Cannot reduce payment amount below refunded amount ($${totalRefunded.toFixed(
-        2
-      )})`
+        2,
+      )})`,
     );
     // return {
     //   type: "globalError",
@@ -245,7 +245,7 @@ export async function updatePayment({
       // ** Subtract refunds from the payment amount**
       const paymentRefunds = p.Refund.reduce(
         (sum, refund) => sum + Number(refund.amount),
-        0
+        0,
       );
       const netPaymentAmount = Number(p.amount) - paymentRefunds;
 

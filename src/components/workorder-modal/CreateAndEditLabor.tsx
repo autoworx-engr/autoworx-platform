@@ -1,7 +1,4 @@
 "use client";
-import { getEmployees } from "@/actions/employee/get";
-import { addTechnician } from "@/actions/estimate/technician/addTechnician";
-import { updateTechnician } from "@/actions/estimate/technician/updateTechnician";
 import ComponentsLightbox from "@/components/common/LightBox";
 import {
   Dialog,
@@ -15,6 +12,7 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { queryKeys } from "@/lib/queryKeys";
+import { addTechnician, updateTechnician } from "@/service/work-order/api";
 import {
   handleFileSelection,
   uploadAllAttachments,
@@ -53,37 +51,50 @@ type LocalAttachment = {
 type TProps = {
   invoiceItemId: number;
   invoiceId: string;
-  serviceId: number;
+  serviceId: number | null;
   technician?: Technician & {
     name: string;
     hasPermission: boolean;
     vehicleParts: Parts[];
     images: TechnicianImage[];
   };
-  setTechnicians: Dispatch<
-    SetStateAction<
-      (Technician & {
-        name: string;
-        hasPermission: boolean;
-        vehicleParts: Parts[];
-        images: TechnicianImage[];
-      })[]
-    >
-  >;
   technicianList?: Technician[];
   writePermission: boolean;
+  onAddTechnician?: (
+    invoiceItemId: number,
+    serviceId: number | null,
+    payload: any,
+    employeeName: string,
+  ) => void;
+  onUpdateTechnician?: (
+    invoiceItemId: number,
+    techId: number | string,
+    payload: any,
+  ) => void;
 };
 
 type TStatus = "Pending" | "In Progress" | "Complete" | "Cancel";
+
+// Shared label styling so every field label in the grid renders with the
+// same font-size/weight/line-height. Previously "Assign To" used its own
+// inline className while SlimInput fields used labelClassName="text-sm
+// md:text-base", which reverts to text-base (16px) at the md breakpoint —
+// that mismatch was the real source of the row misalignment. The actual
+// height mismatch between Selector and SlimInput/DropdownSelection is now
+// fixed directly in Selector.tsx (h-9 mt-1 -> h-10), so this component no
+// longer needs to work around it with wrapper classes.
+const FIELD_LABEL_CLASS = "block px-1 text-sm font-medium text-slate-600";
+const FIELD_WRAPPER_CLASS = "flex flex-col gap-1.5";
 
 export default function CreateAndEditLabor({
   invoiceItemId,
   invoiceId,
   serviceId,
   technician,
-  setTechnicians,
   technicianList,
   writePermission,
+  onAddTechnician,
+  onUpdateTechnician,
 }: TProps) {
   const [open, setOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
@@ -103,14 +114,14 @@ export default function CreateAndEditLabor({
   const [error, setError] = useState<string | null>(null);
   const [inputValues, setInputValues] = useState({
     date: moment().format("YYYY-MM-DD"),
-    due: "",
+    due: moment().add(1, "day").format("YYYY-MM-DD"),
     amount: "",
     note: "",
     technicianNote: "",
   });
 
   const [technicianNote, setTechnicianNote] = useState(
-    technician?.technicianNote || ""
+    technician?.technicianNote || "",
   );
 
   const [formData, setFormData] = useState<{
@@ -123,19 +134,27 @@ export default function CreateAndEditLabor({
   const [imageUploadIsLoading, setImageUploadIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [lightboxItems, setLightboxItems] = useState<{ src: string }[] | null>(
-    null
+    null,
   );
   const [priority, setPriority] = useState<Priority>("Low");
   const [loading, setLoading] = useState(false); // Loading state
 
   const isAdminOrManger = useIsAdminOrManager();
   const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
   const isTechnician = currentUser?.employeeType === "Technician";
 
   useEffect(() => {
     const fetchEmployees = async () => {
-      const employees = await getEmployees({ notType: "Sales" });
-      setEmployeeList(employees);
+      try {
+        const res = await fetch(
+          "/api/pipeline/shop/get-employees?notType=Sales",
+        );
+        const json = await res.json();
+        setEmployeeList(json?.data ?? []);
+      } catch {
+        setEmployeeList([]);
+      }
     };
     fetchEmployees();
   }, []);
@@ -155,8 +174,20 @@ export default function CreateAndEditLabor({
         images,
       } = technician;
 
-      const formattedDate = moment(date).utc().format("YYYY-MM-DD");
-      const formattedDue = moment(due).utc().format("YYYY-MM-DD");
+      // FIX: moment(undefined/null/invalid) silently resolves to the Unix
+      // epoch (01/01/1970) instead of throwing, which is what produced the
+      // bogus "Assigned Date" value. Only format `date` when it's a valid
+      // date; otherwise fall back to today, same as the "new technician"
+      // default used in reset().
+      const formattedDate = moment(date).isValid()
+        ? moment(date).utc().format("YYYY-MM-DD")
+        : moment().utc().format("YYYY-MM-DD");
+
+      const formattedDue =
+        due && moment(due).isValid()
+          ? moment(due).utc().format("YYYY-MM-DD")
+          : moment().add(1, "day").utc().format("YYYY-MM-DD");
+
       setInputValues({
         date: formattedDate,
         due: formattedDue,
@@ -173,7 +204,7 @@ export default function CreateAndEditLabor({
     }
   }, [technician, employeeList]);
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = event.target;
 
@@ -211,6 +242,19 @@ export default function CreateAndEditLabor({
       setLoading(false); // Hide spinner
       return;
     }
+
+    // Frontend date validation (mirrors backend Zod schema)
+    if (!isTechnician) {
+      const assignedDate = inputValues.date ? new Date(inputValues.date) : null;
+      const dueDateVal = inputValues.due ? new Date(inputValues.due) : null;
+
+      if (assignedDate && dueDateVal && assignedDate > dueDateVal) {
+        setError("Assigned date cannot be after due date");
+        setLoading(false);
+        return;
+      }
+    }
+
     let finalImageUrls: string[] = [];
     try {
       finalImageUrls = await uploadAllAttachments(formData.attachments);
@@ -220,72 +264,78 @@ export default function CreateAndEditLabor({
         // For technicians, only allow updating status, keep other fields from the original technician
         const updatedPayload = isTechnician
           ? {
-            date: new Date(technician.date || new Date()),
-            due: new Date(technician.due || new Date()),
-            amount: Number(technician.amount) || 0,
-            note: technician.note || "",
-            technicianNote: technicianNote || "",
-            userId: technician.userId,
-            status,
-            priority: technician.priority || "Low",
-            invoiceId,
-            serviceId,
-          }
+              date: new Date(technician.date || new Date()),
+              due: technician.due ? new Date(technician.due) : null,
+              amount: Number(technician.amount) || 0,
+              note: technician.note || "",
+              technicianNote: technicianNote || "",
+              userId: technician.userId,
+              status,
+              priority: technician.priority || "Low",
+              invoiceId,
+              serviceId,
+            }
           : {
-            date: new Date(inputValues.date),
-            due: new Date(inputValues.due),
-            amount: Number(inputValues.amount),
-            note: inputValues.note,
-            technicianNote: technicianNote,
-            userId: employee?.id,
-            status,
-            priority,
-            invoiceId,
-            serviceId,
-          };
+              date: new Date(
+                inputValues.date || moment().utc().format("YYYY-MM-DD"),
+              ),
+              due: inputValues.due ? new Date(inputValues.due) : null,
+              amount: Number(inputValues.amount),
+              note: inputValues.note,
+              technicianNote: technicianNote,
+              userId: employee?.id,
+              status,
+              priority,
+              invoiceId,
+              serviceId,
+            };
 
-        const response = await updateTechnician(
-          technician.id,
-          updatedPayload,
-          isTechnician ? technician.vehicleParts || [] : selectedVehicleParts,
-          finalImageUrls
-        );
+        const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
+          return {
+            fileUrl: url,
+            uploadedAt: new Date(),
+            technicianId: technician.id,
+          } as TechnicianImage;
+        });
 
-        if (response.type === "success") {
-          const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
-            return {
-              fileUrl: url,
-              uploadedAt: new Date(),
-              technicianId: technician.id,
-            } as TechnicianImage;
+        if (onUpdateTechnician) {
+          onUpdateTechnician(invoiceItemId, technician.id, {
+            ...updatedPayload,
+            vehicleParts: isTechnician
+              ? technician.vehicleParts || []
+              : selectedVehicleParts,
+            imageUrls: finalImageUrls,
           });
-
-          setFormData({ attachments: newImages });
-          setOpen(false);
-          setTechnicians((prev) =>
-            prev.map((tech) =>
-              tech.id === technician.id
-                ? {
-                  ...response.data,
-                  images: newImages,
-                  hasPermission: tech.hasPermission,
-                  vehicleParts: selectedVehicleParts as Parts[],
-                }
-                : tech
-            )
-          );
-        } else if (response.type === "globalError") {
-          setError(
-            response?.errorSource?.length
-              ? response.errorSource[0].message
-              : response.message
-          );
+        } else {
+          await updateTechnician(companyId!, invoiceId, technician.id, {
+            ...updatedPayload,
+            vehicleParts: isTechnician
+              ? technician.vehicleParts || []
+              : selectedVehicleParts,
+            imageUrls: finalImageUrls,
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+          });
+          const event = new CustomEvent("invoice-updated", {
+            detail: { invoiceId },
+          });
+          window.dispatchEvent(event);
         }
+
+        setFormData({ attachments: newImages });
+        setOpen(false);
       } else {
         const payload = {
-          serviceId: Number(serviceId),
-          date: new Date(inputValues.date),
-          due: new Date(inputValues.due),
+          // Number(null) is 0, which the API rejects — keep it null instead.
+          serviceId: serviceId ?? null,
+          date: new Date(
+            inputValues.date || moment().utc().format("YYYY-MM-DD"),
+          ),
+          due: inputValues.due ? new Date(inputValues.due) : null,
           amount: Number(inputValues.amount),
           note: inputValues.note,
           userId: employee?.id,
@@ -295,40 +345,45 @@ export default function CreateAndEditLabor({
           invoiceItemId,
           technicianNote: technicianNote,
         };
-        const response = await addTechnician(payload, selectedVehicleParts);
-        if (response.type === "success") {
-          setOpen(false);
-          setTechnicians((prev) => [
-            ...prev,
+
+        if (onAddTechnician) {
+          onAddTechnician(
+            invoiceItemId,
+            serviceId ?? null,
             {
-              ...response.data,
-              hasPermission: true,
-              vehicleParts: selectedVehicleParts as Parts[],
+              ...payload,
+              vehicleParts: selectedVehicleParts,
             },
-          ]);
-          setSelectedVehicleParts([]);
-        } else if (response.type === "globalError") {
-          setError(
-            response?.errorSource?.length
-              ? response.errorSource[0].message
-              : response.message
+            `${employee?.firstName} ${employee?.lastName}`,
           );
+        } else {
+          await addTechnician(companyId!, invoiceId, {
+            ...payload,
+            vehicleParts: selectedVehicleParts,
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+          });
+          const event = new CustomEvent("invoice-updated", {
+            detail: { invoiceId },
+          });
+          window.dispatchEvent(event);
         }
+
+        setOpen(false);
+        setSelectedVehicleParts([]);
       }
     } catch (error) {
       const formattedError = errorHandler(error);
       setError(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     } finally {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
-      });
       setLoading(false); // Hide spinner
       setImageUploadIsLoading(false);
     }
@@ -341,7 +396,7 @@ export default function CreateAndEditLabor({
   const reset = () => {
     setInputValues({
       date: moment().format("YYYY-MM-DD"),
-      due: "",
+      due: moment().add(1, "day").format("YYYY-MM-DD"),
       amount: "",
       note: "",
       technicianNote: "",
@@ -372,13 +427,13 @@ export default function CreateAndEditLabor({
   useEffect(() => {
     return () => {
       // Reset the pending state when the component unmounts
-      startTransition(() => { });
+      startTransition(() => {});
     };
   }, []);
 
   //show only them who are not assigned
   const availableEmployees = employeeList.filter(
-    (emp) => !technicianList?.some((tech) => tech.userId === emp.id)
+    (emp) => !technicianList?.some((tech) => tech.userId === emp.id),
   );
   // parts select handler
   const handleSelectParts = (part: { label: string; value: string }) => {
@@ -393,7 +448,7 @@ export default function CreateAndEditLabor({
   const handleRemoveParts = (part: { label: string; value: string }) => {
     if (isTechnician) return; // Prevent technicians from removing parts
     setSelectedVehicleParts((prev) =>
-      prev.filter((vPart) => vPart.partsName !== part.value)
+      prev.filter((vPart) => vPart.partsName !== part.value),
     );
   };
 
@@ -405,7 +460,7 @@ export default function CreateAndEditLabor({
             <p className="text-white">{technician.name}</p>
           </DialogTrigger>
         ) : (
-          <p className="cursor-auto text-[#6571FF]">{technician.name}</p>
+          <p className="cursor-auto text-primary">{technician.name}</p>
         )
       ) : (
         writePermission &&
@@ -413,318 +468,325 @@ export default function CreateAndEditLabor({
           <DialogTrigger asChild>
             <button
               onClick={reset}
-              className="rounded-full border border-[#6571FF] px-3 py-0.5"
+              className="rounded-full border border-primary px-3 py-0.5"
             >
               + Add Labor
             </button>
           </DialogTrigger>
         )
       )}
-      <DialogContent className="overflow-y-auto space-y-5">
-        <h2 className="text-xl font-semibold text-slate-800">
-          {technician ? "Edit Technician" : "Assign Technician"}
-        </h2>
-        {error && (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-red-700">
-            <p>{error}</p>
-            <button type="button" onClick={() => setError("")}>
-              <X size={20} strokeWidth={3} />
-            </button>
-          </div>
-        )}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          {" "}
-          {/* Assigned by */}
-          <div>
-            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
-              Assign To
-            </label>
-            <div
-              className={isTechnician ? "pointer-events-none opacity-50" : ""}
-            >
-              <Selector
-                label={(employee) =>
-                  employee?.firstName ? `${employee.firstName}` : "Employee"
-                }
-                newButton={<div></div>}
-                items={availableEmployees}
-                displayList={(employee: User) => (
-                  <p>
-                    {employee.firstName} {employee.lastName}
-                  </p>
-                )}
-                onSearch={(search: string) =>
-                  availableEmployees.filter((employee) =>
-                    `${employee.firstName} ${employee.lastName}`
-                      .toLowerCase()
-                      .includes(search.toLowerCase())
-                  )
-                }
-                openState={[employeeOpen, setEmployeeOpen]}
-                selectedItem={employee}
-                //@ts-ignore
-                setSelectedItem={setEmployee}
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[90vh] overflow-hidden">
+        <div className="p-6 pb-4 border-b">
+          <h2 className="text-xl font-semibold text-slate-800">
+            {technician ? "Edit Technician" : "Assign Technician"}
+          </h2>
+          {error && (
+            <div className="mt-4 flex items-center justify-between rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-red-700">
+              <p>{error}</p>
+              <button type="button" onClick={() => setError("")}>
+                <X size={20} strokeWidth={3} />
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            {" "}
+            {/* Assigned by */}
+            <div className={FIELD_WRAPPER_CLASS}>
+              <label className={FIELD_LABEL_CLASS}>
+                Assign To <span className="text-red-500">*</span>
+              </label>
+              <div
+                className={isTechnician ? "pointer-events-none opacity-50" : ""}
+              >
+                <Selector
+                  label={(employee) =>
+                    employee?.firstName ? `${employee.firstName}` : "Employee"
+                  }
+                  newButton={<div></div>}
+                  items={availableEmployees}
+                  displayList={(employee: User) => (
+                    <p>
+                      {employee.firstName} {employee.lastName}
+                    </p>
+                  )}
+                  onSearch={(search: string) =>
+                    availableEmployees.filter((employee) =>
+                      `${employee.firstName} ${employee.lastName}`
+                        .toLowerCase()
+                        .includes(search.toLowerCase()),
+                    )
+                  }
+                  openState={[employeeOpen, setEmployeeOpen]}
+                  selectedItem={employee}
+                  //@ts-ignore
+                  setSelectedItem={setEmployee}
+                />
+              </div>
+            </div>{" "}
+            <SlimInput
+              value={inputValues.date}
+              onChange={handleChange}
+              labelClassName={FIELD_LABEL_CLASS}
+              className="h-10 text-sm font-normal text-slate-700"
+              label="Assigned Date"
+              name="date"
+              type="date"
+              readOnly={isTechnician}
+            />
+            <SlimInput
+              onChange={handleChange}
+              value={inputValues.due}
+              labelClassName={FIELD_LABEL_CLASS}
+              className="h-10 text-sm font-normal text-slate-700"
+              label="Due Date"
+              name="due"
+              type="date"
+              readOnly={isTechnician}
+            />
+            <SlimInput
+              onChange={handleChange}
+              value={inputValues.amount}
+              labelClassName={FIELD_LABEL_CLASS}
+              className="h-10 text-sm font-normal text-slate-700"
+              label="Amount"
+              name="amount"
+              readOnly={isTechnician}
+            />{" "}
+            <div className={FIELD_WRAPPER_CLASS}>
+              <label className={FIELD_LABEL_CLASS}>Priority</label>
+              <div
+                className={isTechnician ? "pointer-events-none opacity-50" : ""}
+              >
+                <Selector
+                  label={(priority) => (priority ? priority : "Priority")}
+                  items={["Low", "Medium", "High"]}
+                  displayList={(priority: Priority) => <p>{priority}</p>}
+                  openState={[priorityOpen, setPriorityOpen]}
+                  selectedItem={priority}
+                  //@ts-ignore
+                  setSelectedItem={setPriority}
+                  showSearch={false}
+                  border={true}
+                />
+              </div>
+            </div>
+            <div className={FIELD_WRAPPER_CLASS}>
+              <label htmlFor="status" className={FIELD_LABEL_CLASS}>
+                Status
+              </label>
+              <DropdownSelection
+                dropDownValues={[
+                  "Pending",
+                  "In Progress",
+                  "Complete",
+                  "Cancel",
+                ]}
+                onValueChange={(value) => setStatus(value as any)}
+                changesValue={status}
+                buttonClassName="h-10 cursor-pointer rounded-md border border-slate-300 px-3 py-2 outline-none w-full text-sm font-normal text-slate-700 hover:border-slate-400 transition-colors"
               />
             </div>
           </div>{" "}
-          <SlimInput
-            value={inputValues.date}
-            onChange={handleChange}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
-            label="Assigned Date"
-            name="date"
-            type="date"
-            readOnly={isTechnician}
-          />
-          <SlimInput
-            onChange={handleChange}
-            value={inputValues.due}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
-            label="Due Date"
-            name="due"
-            type="date"
-            readOnly={isTechnician}
-          />
-          <SlimInput
-            onChange={handleChange}
-            value={inputValues.amount}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
-            label="Amount"
-            name="amount"
-            readOnly={isTechnician}
-          />{" "}
-          <div>
-            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
-              Priority
-            </label>
-            <div
-              className={isTechnician ? "pointer-events-none opacity-50" : ""}
-            >
-              <Selector
-                label={(priority) => (priority ? priority : "Priority")}
-                items={["Low", "Medium", "High"]}
-                displayList={(priority: Priority) => <p>{priority}</p>}
-                openState={[priorityOpen, setPriorityOpen]}
-                selectedItem={priority}
-                //@ts-ignore
-                setSelectedItem={setPriority}
-                showSearch={false}
-                border={true}
+          {isAdminOrManger && (
+            <div className={FIELD_WRAPPER_CLASS}>
+              <label htmlFor="note" className={FIELD_LABEL_CLASS}>
+                New Note
+              </label>
+              <textarea
+                onChange={handleChange}
+                value={inputValues.note}
+                name="note"
+                className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400"
+                readOnly={isTechnician}
+                placeholder="Add a note..."
               />
             </div>
-          </div>
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-1 px-1 text-sm font-medium text-slate-600"
-            >
-              Status
-            </label>
-            <DropdownSelection
-              dropDownValues={["Pending", "In Progress", "Complete", "Cancel"]}
-              onValueChange={(value) => setStatus(value as any)}
-              changesValue={status}
-              buttonClassName="h-10 cursor-pointer rounded-md border border-slate-300 px-3 py-2 outline-none w-full text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors"
-            />
-          </div>
-        </div>{" "}
-        {isAdminOrManger && (
-          <div>
-            <label
-              htmlFor="note"
-              className="mb-1 px-1 text-sm font-medium text-slate-600"
-            >
-              New Note
-            </label>
-            <textarea
-              onChange={handleChange}
-              value={inputValues.note}
-              name="note"
-              className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
-              readOnly={isTechnician}
-              placeholder="Add a note..."
-            />
-          </div>
-        )}
-        {technician && (
-          <div>
-            <div className="flex justify-between">
-              <p className="text-left text-sm font-semibold text-slate-700">Work Note</p>
-            </div>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-              <div className="space-y-1.5">
-                <p className="text-xs text-slate-500">{formattedDate}</p>
-                <p className="text-sm text-slate-700">{technician?.note || "No notes"}</p>
+          )}
+          {technician && (
+            <div className={FIELD_WRAPPER_CLASS}>
+              <div className="flex justify-between">
+                <p className="text-left text-sm font-semibold text-slate-700">
+                  Work Note
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                <div className="space-y-1.5">
+                  <p className="text-xs text-slate-500">{formattedDate}</p>
+                  <p className="text-sm text-slate-700">
+                    {technician?.note || "No notes"}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        {isTechnician ||
+          )}
+          {isTechnician ||
           (isAdminOrManger &&
             ((technicianNote && technicianNote.length > 0) ||
               formData.attachments.length > 0)) ? (
-          <div className="space-y-4 mb-4 pb-4 border-b border-slate-100">
-            <h3 className="text-left text-sm font-semibold text-slate-700">
-              Technician Work Details
-            </h3>
+            <div className="space-y-4 mb-4 pb-4 border-b border-slate-100">
+              <h3 className="text-left text-sm font-semibold text-slate-700">
+                Technician Work Details
+              </h3>
 
-            {/* Technician Note Input */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-600">
-                Technician Work Note
-              </label>
-              {isTechnician ? (
-                <textarea
-                  value={technicianNote}
-                  onChange={(e) => setTechnicianNote(e.target.value)}
-                  className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
-                  placeholder="Add work details, observations, and findings..."
-                />
-              ) : isAdminOrManger &&
-                ((technicianNote && technicianNote.length > 0) ||
-                  (technician as any)?.images?.length > 0) ? (
-                <div className="min-h-28 w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 shadow-sm">
-                  {/* show technician note if exists */}
-                  {(technician as any)?.technicianNote || technicianNote ? (
-                    <p className="whitespace-pre-wrap text-slate-700">
-                      {(technician as any)?.technicianNote || technicianNote}
-                    </p>
-                  ) : (
-                    <p className="text-slate-400">No work note added</p>
-                  )}
-                </div>
-              ) : null}
-            </div>
+              {/* Technician Note Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-600">
+                  Technician Work Note
+                </label>
+                {isTechnician ? (
+                  <textarea
+                    value={technicianNote}
+                    onChange={(e) => setTechnicianNote(e.target.value)}
+                    className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400"
+                    placeholder="Add work details, observations, and findings..."
+                  />
+                ) : isAdminOrManger &&
+                  ((technicianNote && technicianNote.length > 0) ||
+                    (technician as any)?.images?.length > 0) ? (
+                  <div className="min-h-28 w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 shadow-sm">
+                    {/* show technician note if exists */}
+                    {(technician as any)?.technicianNote || technicianNote ? (
+                      <p className="whitespace-pre-wrap text-slate-700">
+                        {(technician as any)?.technicianNote || technicianNote}
+                      </p>
+                    ) : (
+                      <p className="text-slate-400">No work note added</p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
 
-            {/* Photo Attachments Section */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-600">
-                Photo Attachments
-              </label>
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4">
-                <div className="flex flex-col gap-3">
-                  {/* Upload Button */}
-                  {isTechnician && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center justify-center gap-2 rounded-md border border-[#6571FF] bg-[#6571FF]/5 text-[#6571FF] hover:bg-[#6571FF]/10 cursor-pointer py-2 px-3 text-sm font-medium transition-colors"
-                      >
-                        <ImageIcon size={16} />
-                        <span>
-                          {imageUploadIsLoading
-                            ? "Uploading Photos"
-                            : "Upload Photo"}
-                        </span>
-                      </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={(e) =>
-                          handleFileSelection({
-                            event: e as any,
-                            formData,
-                            setFormData,
-                          })
-                        }
+              {/* Photo Attachments Section */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-600">
+                  Photo Attachments
+                </label>
+                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4">
+                  <div className="flex flex-col gap-3">
+                    {/* Upload Button */}
+                    {isTechnician && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center justify-center gap-2 rounded-md border border-primary bg-primary/5 text-primary hover:bg-primary/10 cursor-pointer py-2 px-3 text-sm font-medium transition-colors"
+                        >
+                          <ImageIcon size={16} />
+                          <span>
+                            {imageUploadIsLoading
+                              ? "Uploading Photos"
+                              : "Upload Photo"}
+                          </span>
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) =>
+                            handleFileSelection({
+                              event: e as any,
+                              formData,
+                              setFormData,
+                            })
+                          }
+                        />
+                      </>
+                    )}
+
+                    {/* Attachments Gallery */}
+                    {formData.attachments && formData.attachments.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.attachments.map((att, idx) => (
+                          <div key={idx} className="group relative">
+                            <img
+                              src={att.fileUrl || "/placeholder.svg"}
+                              alt={`attachment-${idx}`}
+                              onClick={() =>
+                                setLightboxItems([
+                                  { src: att.fileUrl || "/placeholder.svg" },
+                                ])
+                              }
+                              className="h-20 w-20 rounded-lg border border-slate-200 object-cover shadow-sm transition-all group-hover:shadow-md cursor-pointer"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  attachments: prev.attachments.filter(
+                                    (_, i) => i !== idx,
+                                  ),
+                                }));
+                              }}
+                              className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1 text-white shadow-md opacity-0 transition-opacity group-hover:opacity-100"
+                            >
+                              <X size={14} strokeWidth={3} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-xs text-slate-400">
+                        No photos uploaded
+                      </p>
+                    )}
+                    {/* Lightbox  */}
+                    {lightboxItems && (
+                      <ComponentsLightbox
+                        getItems={lightboxItems.map((i) => ({ src: i.src }))}
+                        startIndex={0}
+                        onClose={() => setLightboxItems(null)}
                       />
-                    </>
-                  )}
-
-                  {/* Attachments Gallery */}
-                  {formData.attachments && formData.attachments.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.attachments.map((att, idx) => (
-                        <div key={idx} className="group relative">
-                          <img
-                            src={att.fileUrl || "/placeholder.svg"}
-                            alt={`attachment-${idx}`}
-                            onClick={() =>
-                              setLightboxItems([
-                                { src: att.fileUrl || "/placeholder.svg" },
-                              ])
-                            }
-                            className="h-20 w-20 rounded-lg border border-slate-200 object-cover shadow-sm transition-all group-hover:shadow-md cursor-pointer"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev) => ({
-                                attachments: prev.attachments.filter(
-                                  (_, i) => i !== idx
-                                ),
-                              }));
-                            }}
-                            className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1 text-white shadow-md opacity-0 transition-opacity group-hover:opacity-100"
-                          >
-                            <X size={14} strokeWidth={3} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-xs text-slate-400">
-                      No photos uploaded
-                    </p>
-                  )}
-                  {/* Lightbox  */}
-                  {lightboxItems && (
-                    <ComponentsLightbox
-                      getItems={lightboxItems.map((i) => ({ src: i.src }))}
-                      startIndex={0}
-                      onClose={() => setLightboxItems(null)}
-                    />
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ) : null}
-        {/* select vehicle parts item */}{" "}
-        <VehicleParts
-          fromEdit={!!technician}
-          selectedParts={selectedVehicleParts || []}
-          onRemoveParts={handleRemoveParts}
-          onSelectParts={handleSelectParts}
-          isWriteAccess={isAdminOrManger && !isTechnician}
-        />
-        <DialogFooter>
-          <DialogClose
-            className="mt-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors md:mt-0"
-            onClick={handleCancel}
-          >
-            Cancel
-          </DialogClose>
-          <button
-            disabled={loading || pending} // Disable button when loading
-            className="flex items-center justify-center rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-medium text-white hover:bg-[#5A63E6] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
-            onClick={() => startTransition(handleSubmit)}
-          >
-            {loading || pending ? (
-              <Circles
-                height="20"
-                width="20"
-                color="#ffffff"
-                ariaLabel="circles-loading"
-                wrapperStyle={{}}
-                wrapperClass=""
-                visible={true}
-              />
-            ) : technician ? (
-              "Update"
-            ) : (
-              "Add"
-            )}{" "}
-            {/* Show spinner when loading */}
-          </button>
-        </DialogFooter>
+          ) : null}
+          {/* select vehicle parts item */}{" "}
+          <VehicleParts
+            fromEdit={!!technician}
+            selectedParts={selectedVehicleParts || []}
+            onRemoveParts={handleRemoveParts}
+            onSelectParts={handleSelectParts}
+            isWriteAccess={isAdminOrManger && !isTechnician}
+          />
+        </div>
+        <div className="p-6 pt-4 border-t">
+          <DialogFooter>
+            <DialogClose
+              className="mt-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors md:mt-0"
+              onClick={handleCancel}
+            >
+              Cancel
+            </DialogClose>
+            <button
+              disabled={loading || pending} // Disable button when loading
+              className="flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-[#5A63E6] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              onClick={() => startTransition(handleSubmit)}
+            >
+              {loading || pending ? (
+                <Circles
+                  height="20"
+                  width="20"
+                  color="#ffffff"
+                  ariaLabel="circles-loading"
+                  wrapperStyle={{}}
+                  wrapperClass=""
+                  visible={true}
+                />
+              ) : technician ? (
+                "Update"
+              ) : (
+                "Add"
+              )}{" "}
+              {/* Show spinner when loading */}
+            </button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

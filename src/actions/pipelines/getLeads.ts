@@ -5,13 +5,15 @@ import { sendLeadStageChangeOrCloseNotification } from "@/lib/notification/pipel
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Prisma } from "@prisma/client";
 import moment from "moment-timezone";
-import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
-import { getCompanyTimezone } from "../settings/getCompanyTimezone";
-import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
-import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
 import { revalidatePath } from "next/cache";
-
-import { actionTypes } from "@/constants/lead.constant";
+import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
+import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
+import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
+import { getCompanyTimezone } from "../settings/getCompanyTimezone";
+import {
+  buildUpcomingAppointmentFilter,
+  upcomingAppointmentOrderBy,
+} from "./_upcomingAppointmentFilter";
 
 type TGetLeads = {
   columnId?: number;
@@ -19,6 +21,7 @@ type TGetLeads = {
   searchTerm?: string;
   take?: number;
   skip?: number;
+  companyId?: number;
 };
 
 type TGetLeadsWithCount = {
@@ -30,8 +33,39 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
-  dateRange?: [Date | null, Date | null];
+  orderBy?: "asc" | "desc";
+  // YYYY-MM-DD strings so the action can parse them directly in the company
+  // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
+  dateRange?: [string | null, string | null];
+  // Explicit company override for callers without a next-auth session (mobile /
+  // external Bearer-token requests) where getCompanyId() would return undefined.
+  companyId?: number;
+  // Exclude leads removed from the pipeline (columnId === null) so paginated
+  // totalCount/take match what mobile's list actually renders. Opt-in: the web
+  // Sales Leads table still shows no-stage leads as "Unqualified".
+  excludeNoStage?: boolean;
 };
+
+function makeLeadSearchCondition(searchTerm?: string) {
+  if (!searchTerm?.trim()) return null;
+  const words = searchTerm.trim().split(/\s+/);
+  const makeWordCondition = (word: string) => {
+    const ci = { contains: word, mode: "insensitive" as const };
+    return {
+      OR: [
+        { clientName: ci },
+        { vehicleInfo: ci },
+        { services: ci },
+        { source: ci },
+        { Client: { some: { firstName: ci } } },
+        { Client: { some: { lastName: ci } } },
+      ],
+    };
+  };
+  return words.length === 1
+    ? makeWordCondition(words[0])
+    : { AND: words.map(makeWordCondition) };
+}
 
 export const getLeads = async ({
   columnId,
@@ -39,31 +73,21 @@ export const getLeads = async ({
   take,
   skip,
   searchTerm = "",
+  companyId: companyIdOverride,
 }: TGetLeads): Promise<LeadWithSalesUser[]> => {
-  const companyId = await getCompanyId();
+  const companyId = companyIdOverride ?? (await getCompanyId());
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "")
-      .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
-
-    const now = moment().tz(timezone ?? "");
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
     // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
@@ -71,7 +95,7 @@ export const getLeads = async ({
       take,
       skip,
       orderBy: {
-        createdAt: orderBy || "desc",
+        createdAt: orderBy,
       },
       include: {
         salesUser: {
@@ -91,14 +115,9 @@ export const getLeads = async ({
         Client: {
           include: {
             appointments: {
-              where: {
-                date: {
-                  gte: `${todayTimeString}Z`,
-                },
-              },
-              orderBy: {
-                date: "desc",
-              },
+              where: upcomingApptFilter,
+              orderBy: upcomingAppointmentOrderBy,
+              take: 1,
               select: {
                 id: true,
                 title: true,
@@ -112,6 +131,12 @@ export const getLeads = async ({
                 smsIsRead: true,
                 emailIsRead: true,
               },
+            },
+            Invoice: {
+              where: { type: "Estimate" },
+              select: { id: true },
+              orderBy: { createdAt: "asc" },
+              take: 1,
             },
           },
         },
@@ -146,14 +171,9 @@ export const getLeads = async ({
             },
             include: {
               appointments: {
-                where: {
-                  date: {
-                    gte: `${todayTimeString}Z`,
-                  },
-                },
-                orderBy: {
-                  date: "desc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -168,27 +188,17 @@ export const getLeads = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
+              },
             },
           }))!;
         }
 
-        const appointments = client?.appointments.filter((appointment: any) => {
-          if (
-            appointment.date &&
-            appointment.endTime &&
-            appointment.startTime
-          ) {
-            const end = moment.tz(
-              `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
-              "YYYY-MM-DDTHH:mm",
-              timezone ?? "",
-            );
-
-            // Show appointment only if endTime is same or after now
-            return end.isSameOrAfter(now);
-          }
-          return false;
-        });
+        const appointments = client?.appointments ?? [];
 
         const vehicle = lead.vehicleId ? vehicleMap.get(lead.vehicleId) : null;
 
@@ -224,6 +234,7 @@ export const getLeads = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -243,6 +254,7 @@ export const getLeadsWithCount = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -252,17 +264,11 @@ export const getLeadsWithCount = async ({
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -274,20 +280,37 @@ export const getLeadsWithCount = async ({
       ...(dateRange &&
         dateRange[0] &&
         dateRange[1] && {
-          createdAt: {
-            gte: new Date(dateRange[0]),
-            lte: new Date(dateRange[1].getTime() + 24 * 60 * 60 * 1000 - 1), // End of day
-          },
+          // Converted leads use columnChangedAt to match the admin dashboard metric
+          // (when the lead moved to Converted), not when it was created.
+          ...(status === "Converted"
+            ? {
+                columnChangedAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }
+            : {
+                createdAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }),
         }),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "")
-      .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
-
-    const now = moment();
-    const todayStart = moment(todayTimeString);
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
 
     const [totalCount, leadsData] = await Promise.all([
       db.lead.count({ where: query }),
@@ -296,7 +319,7 @@ export const getLeadsWithCount = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -316,14 +339,9 @@ export const getLeadsWithCount = async ({
           Client: {
             include: {
               appointments: {
-                where: {
-                  date: {
-                    gte: moment(todayTimeString) as any,
-                  },
-                },
-                orderBy: {
-                  date: "desc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -337,6 +355,12 @@ export const getLeadsWithCount = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -371,14 +395,9 @@ export const getLeadsWithCount = async ({
             },
             include: {
               appointments: {
-                where: {
-                  date: {
-                    gte: moment(todayTimeString) as any,
-                  },
-                },
-                orderBy: {
-                  date: "desc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -393,27 +412,16 @@ export const getLeadsWithCount = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+              },
             },
           }))!;
         }
-        const appointments = client?.appointments.filter((appointment: any) => {
-          if (
-            !appointment.date ||
-            !moment(appointment.date).isSameOrAfter(todayStart)
-          ) {
-            return false;
-          }
-
-          if (
-            moment(appointment.date).startOf("day").isSame(todayStart) &&
-            appointment.endTime &&
-            moment(appointment.endTime, "HH:mm").isBefore(now)
-          ) {
-            return false;
-          }
-
-          return true;
-        });
+        const appointments = client?.appointments ?? [];
 
         const vehicle = lead.vehicleId ? vehicleMap.get(lead.vehicleId) : null;
 
@@ -449,6 +457,7 @@ export const getLeadsWithCount = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -469,27 +478,31 @@ export const getLeadsWithCountOptimized = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
+  companyId: companyIdOverride,
+  excludeNoStage,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
   totalCount: number;
 }> => {
-  const companyId = await getCompanyId();
-  const companyTimezone = await getCompanyTimezone();
+  const companyId = companyIdOverride ?? (await getCompanyId());
+  const companyTimezone = await getCompanyTimezone(companyId);
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
+    let columnIdFilter: Prisma.LeadWhereInput = {};
+    if (columnId) {
+      columnIdFilter = { columnId };
+    } else if (excludeNoStage) {
+      columnIdFilter = { columnId: { not: null } };
+    }
+
     const query: Prisma.LeadWhereInput = {
       companyId,
-      ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...columnIdFilter,
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -501,17 +514,37 @@ export const getLeadsWithCountOptimized = async ({
       ...(dateRange &&
         dateRange[0] &&
         dateRange[1] && {
-          createdAt: {
-            gte: new Date(dateRange[0]),
-            lte: new Date(dateRange[1].getTime() + 24 * 60 * 60 * 1000 - 1),
-          },
+          // Converted leads use columnChangedAt to match the admin dashboard metric
+          // (when the lead moved to Converted), not when it was created.
+          ...(status === "Converted"
+            ? {
+                columnChangedAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }
+            : {
+                createdAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }),
         }),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
 
     // Run count and data queries in parallel
     const [totalCount, leadsData] = await Promise.all([
@@ -521,7 +554,7 @@ export const getLeadsWithCountOptimized = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -531,8 +564,9 @@ export const getLeadsWithCountOptimized = async ({
               lastName: true,
             },
           },
-          tasks: {
-            take: 5, // Limit tasks to reduce payload
+          tasks: true,
+          _count: {
+            select: { tasks: true },
           },
           column: true,
           leadTags: {
@@ -543,14 +577,9 @@ export const getLeadsWithCountOptimized = async ({
           Client: {
             include: {
               appointments: {
-                where: {
-                  date: {
-                    gte: `${todayTimeString}Z`,
-                  },
-                },
-                orderBy: {
-                  date: "desc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -558,13 +587,18 @@ export const getLeadsWithCountOptimized = async ({
                   startTime: true,
                   endTime: true,
                 },
-                take: 3, // Limit appointments
               },
               conversationsTrack: {
                 select: {
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -585,7 +619,6 @@ export const getLeadsWithCountOptimized = async ({
         : [];
 
     const vehicleMap = new Map(vehicles.map((v) => [v.id, v]));
-    const now = moment().tz(timezone ?? "UTC");
 
     // Process leads more efficiently without additional database calls
     const leadsDataWithClient: LeadWithSalesUser[] = leadsData.map((lead) => {
@@ -594,17 +627,7 @@ export const getLeadsWithCountOptimized = async ({
           client.companyId === companyId && client.leadId === lead.id,
       );
 
-      const appointments = client?.appointments.filter((appointment: any) => {
-        if (appointment.date && appointment.endTime && appointment.startTime) {
-          const end = moment.tz(
-            `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
-            "YYYY-MM-DDTHH:mm",
-            timezone ?? "",
-          );
-          return end.isSameOrAfter(now);
-        }
-        return false;
-      });
+      const appointments = client?.appointments ?? [];
 
       const vehicle = lead.vehicleId ? vehicleMap.get(lead.vehicleId) : null;
 
@@ -640,6 +663,8 @@ export const getLeadsWithCountOptimized = async ({
         client: clientData,
         column,
         totalMessage: isShowConversationIndicator ? 1 : 0,
+        invoiceId: client?.Invoice?.[0]?.id ?? null,
+        taskCount: lead._count?.tasks ?? 0,
       } as LeadWithSalesUser;
     });
 
@@ -670,7 +695,6 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         column: true,
       },
     });
-    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     if (updatedLead.column?.title === "Converted") {
       sendLeadStageChangeOrCloseNotification({
@@ -707,6 +731,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         columnId: newColumnId,
       });
     } catch (error) {
+      console.log("error", error);
       console.log("updateCommunicationAutomationTrigger error", error);
     }
 
@@ -717,6 +742,8 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
       leadId: leadId,
       conditionType: "post_tag",
     });
+
+    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     // if (response?.success) {
     //   console.log("response", response?.data);
@@ -744,18 +771,12 @@ export async function getLeadsCountByColumnId(
   searchTerm?: string,
 ) {
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const totalLeadCount = await db.lead.count({
       where: {
         columnId: columnId,
         companyId: companyId,
-        ...(searchTerm && {
-          OR: [
-            { clientName: { contains: searchTerm, mode: "insensitive" } },
-            { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-            { services: { contains: searchTerm, mode: "insensitive" } },
-            { source: { contains: searchTerm, mode: "insensitive" } },
-          ],
-        }),
+        ...(searchCond ?? {}),
       },
     });
     return totalLeadCount;

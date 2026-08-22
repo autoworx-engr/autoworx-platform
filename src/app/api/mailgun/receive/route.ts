@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         message: formData.get("body-plain")?.toString() || "No message content",
         htmlBody: formData.get("body-html")?.toString() || null,
         attachments: JSON.parse(
-          formData.get("attachments")?.toString() || "[]"
+          formData.get("attachments")?.toString() || "[]",
         ),
       };
 
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
         // Find the Message-ID header
         const messageIdHeader = headers.find(
-          (header) => header[0]?.toLowerCase() === "message-id"
+          (header) => header[0]?.toLowerCase() === "message-id",
         );
 
         if (messageIdHeader) {
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 
         // Find the Message-ID header
         const messageIdHeader = headers.find(
-          (header) => header[0]?.toLowerCase() === "message-id"
+          (header) => header[0]?.toLowerCase() === "message-id",
         );
 
         if (messageIdHeader) {
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
         {
           method: "POST",
           body: formData2,
-        }
+        },
       );
 
       if (!uploadRes.ok) {
@@ -231,7 +231,7 @@ export async function POST(request: Request) {
     console.error("Error in POST handler:", error.message);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

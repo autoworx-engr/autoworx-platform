@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import MenuDropDown from "./MenuDropDown";
+
+export const metadata: Metadata = {
+  title: "Settings - Calendar",
+  description: "Configure calendar settings",
+};
 
 const days = [
   "Sunday",
@@ -56,7 +62,7 @@ export default function CalendarPage() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white"
+              className="rounded-md bg-primary px-10 py-1.5 text-white"
             >
               Save
             </button>

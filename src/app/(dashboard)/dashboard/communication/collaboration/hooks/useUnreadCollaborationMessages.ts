@@ -14,7 +14,7 @@ export function useUnreadCollaborationMessages(userId: number) {
       const counts = await getUnreadCollaborationMessageCount(userId);
       setUnreadCounts(counts);
     };
-    
+
     if (userId) {
       loadUnreadCounts();
     }
@@ -25,7 +25,7 @@ export function useUnreadCollaborationMessages(userId: number) {
     if (!userId) return;
 
     const channel = pusher.subscribe(`track-${userId}`);
-    
+
     const refreshUnreadCounts = async () => {
       const counts = await getUnreadCollaborationMessageCount(userId);
       setUnreadCounts(counts);
@@ -33,7 +33,7 @@ export function useUnreadCollaborationMessages(userId: number) {
 
     // Listen for new messages
     channel.bind("chat-track", refreshUnreadCounts);
-    
+
     // Listen for messages being marked as read
     channel.bind("chat-track-read", refreshUnreadCounts);
 

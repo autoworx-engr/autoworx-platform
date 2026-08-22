@@ -1,7 +1,12 @@
 "use server";
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { Technician, TechnicianImage, User, VehicleParts } from "@prisma/client";
+import {
+  Technician,
+  TechnicianImage,
+  User,
+  VehicleParts,
+} from "@prisma/client";
 import { getServerSession } from "next-auth";
 
 export const getTechniciansWithPermission = async ({
@@ -28,14 +33,14 @@ export const getTechniciansWithPermission = async ({
       include: {
         user: true,
         vehicleParts: true,
-        images: true
+        images: true,
       },
     })) as (Technician & {
       user: User;
       name: string;
       hasPermission: boolean;
       vehicleParts: VehicleParts[];
-      images: TechnicianImage[]
+      images: TechnicianImage[];
     })[];
 
     technicians.forEach((technician) => {

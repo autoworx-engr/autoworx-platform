@@ -1,26 +1,20 @@
 "use server";
 
+import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 
-export async function getPaymentGatewayInfo(companyId: number) {
+export async function getPaymentGatewayInfo(companyId?: number) {
   try {
-    if (!companyId) {
-      return {
-        success: false,
-        message: "Company ID not found",
-        hasStripe: false,
-        hasAuthorizeNet: false,
-        paymentGateway: null,
-      };
-    }
+    const resolvedId = companyId ?? (await getCompanyId());
 
     const company = await db.company.findUnique({
-      where: { id: companyId },
+      where: { id: resolvedId },
       select: {
         stripeAccountId: true,
         authorizeNetApiLoginId: true,
         authorizeNetTransactionKey: true,
         paymentGateway: true,
+        tipEnabled: true,
       },
     });
 
@@ -30,7 +24,7 @@ export async function getPaymentGatewayInfo(companyId: number) {
         message: "Company not found",
         hasStripe: false,
         hasAuthorizeNet: false,
-        paymentGateway: null,
+        paymentGateway: null as string | null,
       };
     }
 
@@ -44,6 +38,7 @@ export async function getPaymentGatewayInfo(companyId: number) {
       hasStripe,
       hasAuthorizeNet,
       paymentGateway: company.paymentGateway || "STRIPE",
+      tipEnabled: company.tipEnabled ?? false,
     };
   } catch (error: any) {
     console.error("Get Payment Gateway Info Error:", error);

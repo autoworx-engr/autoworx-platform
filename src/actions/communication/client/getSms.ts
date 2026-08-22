@@ -7,7 +7,7 @@ import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
 
 const getSms = async (
   clientId: number,
-  companyId?: number
+  companyId?: number,
 ): Promise<(ClientSMS & { attachments: ClientSmsAttachments[] })[]> => {
   const cId = companyId || (await getCompanyId());
 

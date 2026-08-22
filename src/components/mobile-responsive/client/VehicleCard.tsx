@@ -15,18 +15,18 @@ export default function VehicleCard({
 }) {
   const router = useRouter();
   return (
-    <div className="lg:hidden">
+    <div className="lg:hidden mx-2">
       {vehicles.map((vehicle: any, index: number) => (
         <Card
           key={index}
-          className="w-full text-[#66738C] transition-shadow hover:shadow-lg"
+          className="w-full mb-2 text-[#66738C] transition-shadow hover:shadow-lg"
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3">
             <CardTitle
-              className="cursor-pointer text-2xl font-bold text-[#6571FF]"
+              className="cursor-pointer text-2xl font-bold text-primary"
               onClick={() => {
                 router.push(
-                  `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`
+                  `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`,
                 );
               }}
             >
@@ -50,22 +50,22 @@ export default function VehicleCard({
             className="cursor-pointer px-4"
             onClick={() => {
               router.push(
-                `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`
+                `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`,
               );
             }}
           >
             <dl className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <dt className="font-medium text-muted-foreground">Year</dt>
-                <dd className="text-lg font-bold">{vehicle.year || ""}</dd>
+                <dd className="text-lg font-bold">{vehicle.year || "N/A"}</dd>
               </div>
               <div>
                 <dt className="font-medium text-muted-foreground">Make</dt>
-                <dd className="text-lg font-bold">{vehicle.make}</dd>
+                <dd className="text-lg font-bold">{vehicle.make || "N/A"}</dd>
               </div>
               <div>
                 <dt className="font-medium text-muted-foreground">Model</dt>
-                <dd className="text-lg font-bold">{vehicle.model}</dd>
+                <dd className="text-lg font-bold">{vehicle.model || "N/A"}</dd>
               </div>
               {vehicle.other && (
                 <div>
@@ -76,7 +76,7 @@ export default function VehicleCard({
               <div>
                 <dt className="font-medium text-muted-foreground">Plate</dt>
                 <dd className="text-lg font-bold uppercase tracking-wider">
-                  {vehicle.license}
+                  {vehicle.license || "N/A"}
                 </dd>
               </div>
             </dl>

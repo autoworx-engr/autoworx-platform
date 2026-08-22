@@ -5,6 +5,10 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
+import {
+  normalizePhoneForStorage,
+  phoneNumberLookupValues,
+} from "@/utils/normalizePhone";
 import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
       console.log("No results in MMS webhook payload");
       return NextResponse.json(
         { error: "No results in MMS webhook payload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -66,7 +70,7 @@ export async function POST(req: NextRequest) {
       } = messageData;
 
       console.log(
-        `Processing MMS message: from=${from}, to=${to}, text="${message || cleanText}", media count=${media.length}`
+        `Processing MMS message: from=${from}, to=${to}, text="${message || cleanText}", media count=${media.length}`,
       );
 
       if (!from || !to) {
@@ -74,19 +78,30 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      const normalizedFrom = {
+        lookupValues: phoneNumberLookupValues(from),
+        storeValue: normalizePhoneForStorage(from),
+      };
+      const normalizedTo = {
+        lookupValues: phoneNumberLookupValues(to),
+        storeValue: normalizePhoneForStorage(to),
+      };
+
       const messageText = message || cleanText || "";
 
       // Find Infobip configurations that match the "to" phone number
       const infobipConfigs = await db.infobipConfig.findMany({
         where: {
-          phoneNumber: {
-            endsWith: to.replace("+", ""),
-          },
+          OR: normalizedTo.lookupValues.map((lookupValue) => ({
+            phoneNumber: {
+              endsWith: lookupValue,
+            },
+          })),
         },
       });
 
       console.log(
-        `Found ${infobipConfigs.length} Infobip configs for phone number ${to}`
+        `Found ${infobipConfigs.length} Infobip configs for phone number ${to}`,
       );
 
       if (infobipConfigs.length === 0) {
@@ -101,9 +116,11 @@ export async function POST(req: NextRequest) {
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
-            mobile: {
-              endsWith: from.replace("+", ""),
-            },
+            OR: normalizedFrom.lookupValues.map((lookupValue) => ({
+              mobile: {
+                endsWith: lookupValue,
+              },
+            })),
             companyId: infobipConfig.companyId,
           },
         });
@@ -113,8 +130,9 @@ export async function POST(req: NextRequest) {
             data: {
               firstName: from,
               lastName: " ",
-              mobile: from,
+              mobile: normalizedFrom.storeValue,
               companyId: infobipConfig.companyId,
+              isSalesAgent: true,
             },
           });
         }
@@ -140,18 +158,29 @@ export async function POST(req: NextRequest) {
           if (media && media.length > 0) {
             console.log(`Processing ${media.length} MMS attachments`);
             for (const mediaItem of media) {
+              const ext = infobipMimeToExt(mediaItem.contentType || "");
+              const baseName =
+                mediaItem.caption ||
+                mediaItem.name ||
+                `mms_media_${Date.now()}`;
+              // Ensure the name has an extension so the frontend can detect type
+              const name = baseName.includes(".")
+                ? baseName
+                : `${baseName}.${ext}`;
+              const isVoice = (mediaItem.contentType || "")
+                .split(";")[0]
+                .trim()
+                .startsWith("audio/");
               const attachment = await db.clientSmsAttachments.create({
                 data: {
-                  name:
-                    mediaItem.caption ||
-                    mediaItem.name ||
-                    `mms_media_${Date.now()}`,
+                  name,
                   url: mediaItem.url,
+                  isVoiceNote: isVoice,
                   clientSMSId: clientSMS.id,
                 },
               });
               console.log(
-                `Created attachment: ${attachment.name} - ${attachment.url}`
+                `Created attachment: ${attachment.name} - ${attachment.url}`,
               );
             }
           }
@@ -177,6 +206,8 @@ export async function POST(req: NextRequest) {
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
+            message: messageText,
+            hasMedia: media.length > 0,
           });
 
           // Trigger Pusher notification
@@ -196,7 +227,7 @@ export async function POST(req: NextRequest) {
           } catch (pusherError) {
             console.error(
               "Pusher sendClientMailOrSMSNotify error:",
-              pusherError
+              pusherError,
             );
           }
 
@@ -229,7 +260,7 @@ export async function POST(req: NextRequest) {
           console.log(`Successfully processed MMS for client ${client.id}`);
         } else {
           console.log(
-            `No client found for phone number ${from} in company ${infobipConfig.companyId}`
+            `No client found for phone number ${from} in company ${infobipConfig.companyId}`,
           );
         }
       }
@@ -240,13 +271,13 @@ export async function POST(req: NextRequest) {
         message: "MMS webhook processed successfully",
         processedCount: results.length,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Infobip MMS webhook error:", error);
     return NextResponse.json(
       { message: "MMS webhook processing failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -255,6 +286,26 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json(
     { message: "Infobip MMS receive webhook is active" },
-    { status: 200 }
+    { status: 200 },
   );
+}
+
+function infobipMimeToExt(mime: string): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "audio/ogg": "ogg",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/amr": "amr",
+    "audio/aac": "aac",
+    "audio/3gpp": "3gp",
+    "video/mp4": "mp4",
+    "video/3gpp": "3gp",
+    "application/pdf": "pdf",
+  };
+  return map[mime.split(";")[0].trim()] || "bin";
 }

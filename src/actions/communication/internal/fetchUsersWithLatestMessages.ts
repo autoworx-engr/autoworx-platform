@@ -2,127 +2,115 @@
 
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import { Prisma, User } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import { buildUserSearchWhere } from "./_utils/userSearch";
+import {
+  countCompanyUsers,
+  fetchUserIdsByLatestMessage,
+  hydrateLatestMessages,
+  type UserWithLatest,
+} from "./_utils/usersWithLatestMessagesQuery";
 
-export const fetchUsersWithLatestMessages = async () => {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      throw new Error("Session ID is required");
-    }
+const DEFAULT_TAKE = 30;
 
-    const currentUserId = parseInt(session.user.id!);
+export type FetchUsersWithLatestMessagesPage = {
+  data: UserWithLatest[];
+  total: number;
+  nextPage: number | undefined;
+  hasMore: boolean;
+};
 
-    // Get all users in the company except current user
-    const users = await db.user.findMany({
-      where: {
-        NOT: {
-          id: currentUserId,
-        },
-        companyId: session.user.companyId,
-      },
-    });
+type Params = {
+  /** 1-based page number, mirrors useInfinitySmsQuery convention. */
+  pageParam?: number;
+  take?: number;
+  search?: string;
+};
 
-    // Get all messages involving the current user (both sent and received)
-    const messages = await db.message.findMany({
-      where: {
-        OR: [{ from: currentUserId }, { to: currentUserId }],
-        // Removed restrictive filters to see all messages
-        // { groupId: null }, // Only direct messages, not group messages
-        // { section: "internal" }, // Only internal messages
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+/**
+ * Paginated users-with-latest-message feed for the internal sidebar.
+ *
+ * - With no `search`: orders users by the timestamp of their latest direct
+ *   message with the current user (NULLS LAST). Pagination is pushed into
+ *   Postgres so the client only receives `take` rows.
+ * - With a `search` term: name/email/phone search via the shared
+ *   `buildUserSearchWhere` predicate; results ordered by firstName.
+ */
+export async function fetchUsersWithLatestMessages({
+  pageParam = 1,
+  take = DEFAULT_TAKE,
+  search,
+}: Params = {}): Promise<FetchUsersWithLatestMessagesPage> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id || !session.user.companyId) {
+    return { data: [], total: 0, nextPage: undefined, hasMore: false };
+  }
 
-    // Calculate unread counts and latest message info per user
-    const usersWithLatestMessages = users.map(user => {
-      // Find all messages between current user and this user (including group messages for now)
-      const userMessages = messages.filter(
-        message =>
-          (message.from === currentUserId && message.to === user.id) ||
-          (message.from === user.id && message.to === currentUserId),
-      );
+  const currentUserId = parseInt(session.user.id);
+  const companyId = session.user.companyId;
+  const skip = Math.max(0, (pageParam - 1) * take);
+  const trimmed = search?.trim() ?? "";
 
-      // Get the latest message
-      const latestMessage = userMessages.length > 0 ? userMessages[0] : null;
-
-      // Count unread messages (messages sent to current user that haven't been read)
-      const unreadMessages = userMessages.filter(
-        message => message.to === currentUserId && message.from === user.id,
-      );
-
-      // Check if any of these messages are unread via ChatTrack
-      const hasUnreadMessage = unreadMessages.some(message => {
-        // We'll check this via a separate query since we need ChatTrack info
-        return false; // For now, we'll handle this separately
-      });
-
-      return {
-        ...user,
-        latestMessage,
-        unreadCount: hasUnreadMessage ? 1 : 0,
-      };
-    });
-
-    // Now check for unread status via ChatTrack for users who have messages
-    const userChatTracks = await db.chatTrack.findMany({
-      where: {
-        OR: [{ senderId: currentUserId }, { receiverId: currentUserId }],
-      },
-      include: {
-        message: true,
-      },
-    });
-
-    // Update unread counts based on ChatTrack data and sort by latest message
-    const finalUsersWithLatestMessages = usersWithLatestMessages
-      .map(user => {
-        const userChatTrack = userChatTracks.find(
-          track =>
-            (track.senderId === user.id &&
-              track.receiverId === currentUserId) ||
-            (track.senderId === currentUserId && track.receiverId === user.id),
-        );
-
-        // Check if there are unread messages for this user
-        const hasUnreadMessage = userChatTracks.some(
-          track =>
-            track.receiverId === currentUserId &&
-            track.senderId === user.id &&
-            !track.isRead,
-        );
-
-        return {
-          ...user,
-          latestMessage: user.latestMessage,
-          unreadCount: hasUnreadMessage ? 1 : 0,
-        };
-      })
-      .sort((a, b) => {
-        // Sort by latest message timestamp (most recent first)
-        const aTimestamp = a.latestMessage
-          ? new Date(a.latestMessage.updatedAt).getTime()
-          : 0;
-        const bTimestamp = b.latestMessage
-          ? new Date(b.latestMessage.updatedAt).getTime()
-          : 0;
-        return bTimestamp - aTimestamp;
-      });
-
-    return {
-      success: true,
-      data: {
-        users: finalUsersWithLatestMessages,
-        messages, // All messages for the current user
-      },
+  // Search branch: simple paginated findMany; ordering by latest message is
+  // not the priority when the user is typing a name.
+  if (trimmed.length > 0) {
+    const where: Prisma.UserWhereInput = {
+      companyId,
+      NOT: { id: currentUserId },
+      ...buildUserSearchWhere(trimmed),
     };
-  } catch (error) {
-    console.error("Error fetching users with latest messages:", error);
+
+    const [users, total] = await Promise.all([
+      db.user.findMany({
+        where,
+        orderBy: [{ firstName: "asc" }, { id: "asc" }],
+        skip,
+        take,
+      }),
+      db.user.count({ where }),
+    ]);
+
+    const hydrated = await hydrateLatestMessages(currentUserId, users);
+    const hasMore = skip + users.length < total;
+
     return {
-      success: false,
-      error: "Failed to fetch users with latest messages",
+      data: hydrated,
+      total,
+      nextPage: hasMore ? pageParam + 1 : undefined,
+      hasMore,
     };
   }
-};
+
+  // No search: order by latest direct-message activity at the DB layer.
+  const orderedRows = await fetchUserIdsByLatestMessage(
+    currentUserId,
+    companyId,
+    skip,
+    take,
+  );
+  const total = await countCompanyUsers(currentUserId, companyId);
+
+  const idsInOrder = orderedRows.map((r) => r.id);
+  if (idsInOrder.length === 0) {
+    return { data: [], total, nextPage: undefined, hasMore: false };
+  }
+
+  const usersUnordered = await db.user.findMany({
+    where: { id: { in: idsInOrder } },
+  });
+  const usersById = new Map(usersUnordered.map((u) => [u.id, u]));
+  const usersInOrder = idsInOrder
+    .map((id) => usersById.get(id))
+    .filter((u): u is User => Boolean(u));
+
+  const hydrated = await hydrateLatestMessages(currentUserId, usersInOrder);
+  const hasMore = skip + usersInOrder.length < total;
+
+  return {
+    data: hydrated,
+    total,
+    nextPage: hasMore ? pageParam + 1 : undefined,
+    hasMore,
+  };
+}

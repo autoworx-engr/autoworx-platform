@@ -43,7 +43,7 @@ export const POST = async (req: NextRequest) => {
     if (!userId || !title || !description || !companyId) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const response = await sendUserNotifications(body);
@@ -52,14 +52,14 @@ export const POST = async (req: NextRequest) => {
     } else {
       return NextResponse.json(
         { success: false, error: "Failed to send notification" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
     console.error("Error in send-notification route:", error);
     return NextResponse.json(
       { success: false, error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 };
