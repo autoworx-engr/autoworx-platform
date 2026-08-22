@@ -47,6 +47,8 @@ export const Confirmation = () => {
     ? Number(bookingTotals.serviceFee || 0)
     : fallbackServiceFee;
   const tax = bookingTotals ? Number(bookingTotals.tax || 0) : fallbackTax;
+  const shopFeeRate = bookingTotals?.serviceFeeRate ?? settings.shopFeePercent;
+  const taxRate = bookingTotals?.taxRate ?? settings.taxPercent;
   const grandTotal = bookingTotals
     ? Number(bookingTotals.grandTotal || 0)
     : Number((subtotal + shopFee + tax).toFixed(2));
@@ -194,13 +196,13 @@ END:VCALENDAR`;
             </div>
             {shopFee > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>Service Fee</span>
+                <span>Shop Fee ({shopFeeRate}%)</span>
                 <span>${shopFee.toFixed(2)}</span>
               </div>
             )}
             {tax > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>Tax</span>
+                <span>Tax ({taxRate}%)</span>
                 <span>${tax.toFixed(2)}</span>
               </div>
             )}

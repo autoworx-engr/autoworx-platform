@@ -180,7 +180,9 @@ export interface CreateVirtualShopServiceBookingResponse {
     totals: {
       subtotal: number;
       tax: number;
+      taxRate?: number;
       serviceFee: number;
+      serviceFeeRate?: number;
       grandTotal: number;
       giftCardRedeemed?: number;
       depositRequired?: number;
