@@ -1,6 +1,7 @@
 "use client";
 
 import { CATEGORY_NAME_MAX_LENGTH } from "@/lib/categoryConstants";
+import { TruncatedText } from "@/components/ui/TruncatedText";
 import { cn } from "@/lib/cn";
 import { Category } from "@prisma/client";
 import { Check, Loader2, PencilLine, Trash2 } from "lucide-react";
@@ -158,9 +159,10 @@ export default function ServiceCategoryRow({
           className="h-2.5 w-2.5 shrink-0 rounded-full border border-slate-200"
           style={{ backgroundColor: getCategoryColor(category.color) }}
         />
-        <p className="truncate text-sm font-medium text-slate-700 transition-colors group-hover:text-primary">
-          {category.name}
-        </p>
+        <TruncatedText
+          text={category.name}
+          className="text-sm font-medium text-slate-700 transition-colors group-hover:text-primary"
+        />
       </div>
 
       <div

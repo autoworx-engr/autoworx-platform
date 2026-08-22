@@ -152,6 +152,7 @@ export default function LeadTableActions({
           }
           vehicleId={vehicleId}
           clientId={clientId}
+          draftEstimateId={lead.invoiceId ?? undefined}
           onAppointmentCreated={(appointment: Appointment) =>
             onUpdateAppointment(appointment, {
               leadId: lead.id,
