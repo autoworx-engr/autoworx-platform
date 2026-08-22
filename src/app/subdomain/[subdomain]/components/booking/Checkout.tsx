@@ -450,6 +450,7 @@ export const Checkout = () => {
         serviceFeeRate={totals.serviceFeeRate}
         tax={totals.tax}
         taxRate={totals.taxRate}
+        isTaxEnabled={totals.isTaxEnabled}
         giftCardRedeemedPreview={totals.giftCardRedeemedPreview}
         adjustedGrandTotal={totals.adjustedGrandTotal}
         effectiveDepositDue={totals.effectiveDepositDue}

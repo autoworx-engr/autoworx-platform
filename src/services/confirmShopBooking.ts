@@ -8,6 +8,7 @@ import { sendBookingConfirmation } from "@/actions/communication/client/sendBook
 import { revalidatePath } from "next/cache";
 import {
   buildInvoiceItemsWithDefaults,
+  calcMaterialSubtotal,
   mapInvoiceItemsForCreate,
 } from "@/services/shopServiceInvoiceItems";
 
@@ -228,7 +229,9 @@ export async function confirmShopBooking(
       ? Number(booking.shop.company.serviceFee)
       : 0;
 
-    const taxAmount = (subtotal * taxRate) / 100;
+    // Tax applies to material price only; service fee to the full subtotal
+    const materialSubtotal = calcMaterialSubtotal(allInvoiceItems);
+    const taxAmount = (materialSubtotal * taxRate) / 100;
     const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
     // 5. Gift card processing (if provided)

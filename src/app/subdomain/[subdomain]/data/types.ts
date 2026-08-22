@@ -17,6 +17,7 @@ export interface Service {
   category: string;
   images: string[];
   vehicleTypePricing: VehicleTypePricing;
+  materialTotal?: number;
 }
 
 export interface CartItem {

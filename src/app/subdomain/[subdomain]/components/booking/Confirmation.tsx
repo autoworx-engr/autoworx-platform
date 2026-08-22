@@ -36,8 +36,14 @@ export const Confirmation = () => {
   const fallbackServiceFee = settings.shopFeeEnabled
     ? Number(((serviceBaseTotal * settings.shopFeePercent) / 100).toFixed(2))
     : 0;
+  // Tax base: material price only (labor is excluded), same as invoice/estimate
+  const materialTotal = cart.reduce(
+    (sum, item) =>
+      sum + Number(item.service.materialTotal || 0) * item.quantity,
+    0,
+  );
   const fallbackTax = settings.taxEnabled
-    ? Number(((serviceBaseTotal * settings.taxPercent) / 100).toFixed(2))
+    ? Number(((materialTotal * settings.taxPercent) / 100).toFixed(2))
     : 0;
 
   const subtotal = bookingTotals
@@ -198,7 +204,7 @@ END:VCALENDAR`;
                 <span>${shopFee.toFixed(2)}</span>
               </div>
             )}
-            {tax > 0 && (
+            {settings.taxEnabled && (
               <div className="flex justify-between text-muted-foreground">
                 <span>Tax</span>
                 <span>${tax.toFixed(2)}</span>
