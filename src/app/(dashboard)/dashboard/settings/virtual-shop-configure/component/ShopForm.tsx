@@ -9,6 +9,7 @@ import {
   useGetVirtualShopConfigureById,
   useUpdateShop,
 } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
+import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { debounce } from "@/utils/debounce";
 import { Loader2, Palette, Store } from "lucide-react";
@@ -484,6 +485,7 @@ export default function ShopForm({
               name="termsConditions"
               placeholder="Enter your Terms and Conditions..."
               maxLength={1500}
+              rows={5}
               onChange={(e) => {
                 const value = e.target.value;
                 setForm((p) => ({ ...p, termsConditions: value }));
@@ -499,11 +501,12 @@ export default function ShopForm({
                 setTouched((p) => ({ ...p, termsConditions: true }));
                 validate();
               }}
-              className={
+              className={cn(
+                "h-28 resize-y",
                 touched.termsConditions && errors.termsConditions
                   ? "border-red-400"
-                  : "bg-slate-50/60"
-              }
+                  : "bg-slate-50/60",
+              )}
             />
             <div className="mt-1 flex justify-between text-xs">
               {touched.termsConditions && errors.termsConditions ? (
@@ -529,6 +532,7 @@ export default function ShopForm({
               name="privacyPolicy"
               placeholder="Enter your Privacy Policy..."
               maxLength={1500}
+              rows={5}
               onChange={(e) => {
                 const value = e.target.value;
                 setForm((p) => ({ ...p, privacyPolicy: value }));
@@ -544,11 +548,12 @@ export default function ShopForm({
                 setTouched((p) => ({ ...p, privacyPolicy: true }));
                 validate();
               }}
-              className={
+              className={cn(
+                "h-28 resize-y",
                 touched.privacyPolicy && errors.privacyPolicy
                   ? "border-red-400"
-                  : "bg-slate-50/60"
-              }
+                  : "bg-slate-50/60",
+              )}
             />
             <div className="mt-1 flex justify-between text-xs">
               {touched.privacyPolicy && errors.privacyPolicy ? (
