@@ -13,6 +13,11 @@ import { FleetStatement, Invoice } from "@prisma/client";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+const getPaymentStatus = (item: any) => {
+  if (!(Number(item?.grandTotal) > 0)) return "N/A";
+  return Number(item?.due) == 0 ? "Paid" : "Unpaid";
+};
+
 const InvoiceListTable = ({
   invoiceData,
   type = "invoice",
@@ -38,9 +43,7 @@ const InvoiceListTable = ({
   const filteredData = invoiceData.filter((item: any) => {
     const paymentMatch =
       paymentFilters.length === 0 ||
-      paymentFilters.includes(
-        item?.grandTotal > 0 && item?.due == 0 ? "Paid" : "Unpaid",
-      );
+      paymentFilters.includes(getPaymentStatus(item));
 
     const statusMatch =
       statusFilters.length === 0 || statusFilters.includes(item.column?.title);
@@ -63,10 +66,12 @@ const InvoiceListTable = ({
     }
   };
 
-  const getPaymentBadgeClasses = (item: any) =>
-    item?.grandTotal > 0 && item?.due == 0
-      ? "bg-[#27837c]/90 text-white"
-      : "bg-[#dc4757]/90 text-white";
+  const getPaymentBadgeClasses = (item: any) => {
+    const status = getPaymentStatus(item);
+    if (status === "Paid") return "bg-[#27837c]/90 text-white";
+    if (status === "Unpaid") return "bg-[#dc4757]/90 text-white";
+    return "bg-gray-100 text-gray-700";
+  };
 
   const getStatusBadgeClasses = (title?: string) => {
     const t = (title || "").toLowerCase();
@@ -214,9 +219,7 @@ const InvoiceListTable = ({
                           item,
                         )}`}
                       >
-                        {item?.grandTotal > 0 && item?.due == 0
-                          ? "Paid"
-                          : "Unpaid"}
+                        {getPaymentStatus(item)}
                       </span>
                     </td>
                     <td className="border-b px-4 py-2 text-left">
@@ -314,9 +317,7 @@ const InvoiceListTable = ({
                         item,
                       )}`}
                     >
-                      {item?.grandTotal > 0 && item?.due == 0
-                        ? "Paid"
-                        : "Unpaid"}
+                      {getPaymentStatus(item)}
                     </span>
                     <span
                       className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(
