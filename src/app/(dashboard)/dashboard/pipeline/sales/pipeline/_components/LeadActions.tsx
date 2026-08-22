@@ -361,6 +361,7 @@ export default function LeadActions({ lead }: TProps) {
             }
             vehicleId={vehicleId}
             clientId={clientId}
+            draftEstimateId={invoiceId ?? undefined}
             onAppointmentCreated={(appointment: Appointment) => {
               handleUpdateAppointmentInLead(appointment, {
                 leadId: lead.id,

@@ -549,20 +549,32 @@ export function useAppointmentFormState({
     if (!draftOpen) setDraftSearch("");
   }, [draftOpen]);
 
+  // The lead's estimate can be created while this modal is already mounted, so
+  // the prefill follows the prop instead of only its initial value. Never
+  // clears: an absent id must not undo a selection the user just made.
+  useEffect(() => {
+    if (fromEdit || !draftEstimateId) return;
+    setDraft(draftEstimateId);
+  }, [draftEstimateId, fromEdit]);
+
   const prevDraftClientId = useRef<number | null | undefined>(undefined);
   useEffect(() => {
     if (fromEdit && !appointment) return;
     const currentClientId = client?.id ?? null;
     if (prevDraftClientId.current === undefined) {
+      // Seeded from the client the form was opened for rather than from state:
+      // `client` is still null on the render that hydrates it, so reading it
+      // here saw null -> client id as a switch on the next render and cleared
+      // the invoice that came in with the appointment or the lead.
       prevDraftClientId.current = fromEdit
         ? (appointment?.client?.id ?? currentClientId)
-        : currentClientId;
+        : (clientId ?? currentClientId);
       return;
     }
     if (prevDraftClientId.current === currentClientId) return;
     prevDraftClientId.current = currentClientId;
     setDraft(null);
-  }, [client?.id, fromEdit, appointment]);
+  }, [client?.id, clientId, fromEdit, appointment]);
 
   const handleDate = (operator: "+" | "-") => {
     const delta = operator === "+" ? 1 : -1;
