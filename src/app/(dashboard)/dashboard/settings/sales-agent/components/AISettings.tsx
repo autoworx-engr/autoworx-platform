@@ -16,7 +16,7 @@ import {
   HelpCircle,
   Timer,
   BookOpen,
-  MessageSquare,
+  MessageCircleMore,
 } from "lucide-react";
 import { PlaybooksTab } from "./playbooks/PlaybooksTab";
 import { ConversationExamplesTab } from "./ConversationExamplesTab";
@@ -74,7 +74,7 @@ const AISettings = () => {
             <span className="hidden sm:inline">Playbooks</span>
           </TabsTrigger>
           <TabsTrigger value="examples" className="text-xs lg:text-sm">
-            <MessageSquare className="h-4 w-4 mr-1 lg:mr-2" />
+            <MessageCircleMore className="h-4 w-4 mr-1 lg:mr-2" />
             <span className="hidden sm:inline">Examples</span>
           </TabsTrigger>
           <TabsTrigger value="sms" className="text-xs lg:text-sm">

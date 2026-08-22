@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  MessageSquare,
   Image,
   Trash2,
   Loader2,
@@ -310,7 +309,7 @@ export function ConversationExamplesTab() {
 
         {conversationExamples.length === 0 && !isLoadingExamples && (
           <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
-            <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-50" />
+            <MessageCircleMore className="h-10 w-10 mx-auto mb-2 opacity-50" />
             <p>No conversation examples uploaded yet.</p>
             <p className="text-sm mt-1">
               Upload screenshots of your best text conversations to help the AI
