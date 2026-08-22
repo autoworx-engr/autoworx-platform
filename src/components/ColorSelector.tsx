@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { VehicleColor } from "@prisma/client";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface ColorSelectorProps {
@@ -125,10 +125,13 @@ export default function ColorSelector({
                 <button
                   key={color.id}
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 border-b border-slate-200 rounded-sm dark:border-slate-800 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 border-b border-slate-200 rounded-sm dark:border-slate-800 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                   onClick={() => handleSelectColor(color)}
                 >
                   <span>{color.name}</span>
+                  {color.id === selectedColor?.id && (
+                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                  )}
                 </button>
               ))}
               {filteredColors.length === 0 && (
