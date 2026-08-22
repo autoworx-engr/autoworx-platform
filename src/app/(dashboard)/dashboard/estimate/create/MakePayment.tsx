@@ -882,7 +882,7 @@ export default function MakePayment() {
             <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-3">
               <button
                 type="button"
-                className="rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border"
                 onClick={() => handleOpenChange(false)}
