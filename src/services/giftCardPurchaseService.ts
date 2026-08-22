@@ -14,6 +14,7 @@ import {
   GiftCardPurchaseType,
 } from "@prisma/client";
 import { type TransactionClient } from "@/lib/db";
+import { maskGiftCardCode } from "@/utils/maskGiftCardCode";
 import {
   normalizePhoneForStorage,
   phoneLookupWhereClause,
@@ -617,7 +618,7 @@ export async function issueGiftCardFromContext(
 
   await sendGiftCardNotifications(tx, input, context, code);
 
-  const maskedCode = `${code.split("-")[0]}-****-${code.split("-")[2]}`;
+  const maskedCode = maskGiftCardCode(code);
 
   // Recipient notifications above cover the "here's your gift card" case.
   // When gifting to someone else, the purchaser is charged but otherwise
