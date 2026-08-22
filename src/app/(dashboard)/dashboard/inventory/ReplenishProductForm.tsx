@@ -51,6 +51,11 @@ export default function ReplenishProductForm({
     const lot = formData.get("lot") as string;
     const notes = formData.get("notes") as string;
 
+    if (!unit || !unit.trim()) {
+      showError({ message: "Unit is required." });
+      return;
+    }
+
     const perUnitPrice = parseFloat(price) / Number(quantity);
     const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
 
