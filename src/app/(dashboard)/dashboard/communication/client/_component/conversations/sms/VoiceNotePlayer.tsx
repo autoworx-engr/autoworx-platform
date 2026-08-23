@@ -5,7 +5,6 @@ import { Mic, Pause, Phone, Play } from "lucide-react";
 import React from "react";
 import AudioOptionsMenu from "./AudioOptionsMenu";
 
-// Decorative waveform bar heights (percent of container height)
 const WAVE_HEIGHTS = [
   30, 55, 75, 45, 85, 60, 95, 50, 40, 70, 80, 55, 65, 40, 75, 90, 50, 45, 60,
   80, 95, 60, 50, 38, 70, 88, 55, 42, 58, 78,
@@ -13,8 +12,6 @@ const WAVE_HEIGHTS = [
 
 type PlayerVariant = "voice-note" | "recording";
 
-// "recording" sits inside a container that already has its own background
-// (the call bubble), so it stays transparent and fills the available width.
 const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
   if (variant === "recording") {
     return {
