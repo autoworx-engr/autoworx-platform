@@ -82,12 +82,10 @@ export default function AssignTaskDropDown({
     ];
   }, [authUser]);
 
-  // Filter users based on admin/manager permissions
   const userForAssign = useMemo(() => {
     return isAdminOrManager ? infiniteUsers : currentUserForAssign;
   }, [isAdminOrManager, infiniteUsers, currentUserForAssign]);
 
-  // Get available users (not already assigned)
   const availableUsers = useMemo(() => {
     return userForAssign.filter((user) => {
       if (typeof user?.id !== "number") {
@@ -108,7 +106,6 @@ export default function AssignTaskDropDown({
     }, new Map<number, Partial<User>>());
   }, [infiniteUsers, currentUserForAssign]);
 
-  // Get assigned user objects
   const assignedUserObjects = useMemo(() => {
     return assignedUsers
       .map((userId) => usersById.get(userId))
@@ -120,7 +117,6 @@ export default function AssignTaskDropDown({
 
   const triggerLabel = () => {
     if (availableUsers.length > 0) return "Select user";
-    // Mid-search the trigger shouldn't claim anything about the roster.
     if (isLoading || isSearching) return "Select user";
     if (hasAssignableUsers) return "All users assigned";
     return "No users available";
@@ -148,24 +144,6 @@ export default function AssignTaskDropDown({
         Assign
       </label>
 
-      {/* Display assigned users */}
-      {/* <div className="#no-visible-scrollbar my-2 flex max-h-40 w-full flex-wrap items-center gap-1 overflow-y-auto">
-        {assignedUserObjects.map((userInfo) => {
-          const fullName = `${userInfo?.firstName} ${userInfo?.lastName}`;
-          return (
-            <div
-              key={userInfo?.id}
-              className="flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md"
-            >
-              <span>{fullName}</span>
-              <X
-                onClick={() => handleRemoveUser(userInfo?.id!)}
-                className="size-6 flex-shrink-0 cursor-pointer text-red-300 hover:text-red-500"
-              />
-            </div>
-          );
-        })}
-      </div> */}
       <div className="no-visible-scrollbar my-3 flex max-h-44 w-full flex-wrap items-center gap-2 overflow-y-auto p-1">
         {assignedUserObjects.map((userInfo) => {
           const fullName = getFullName(userInfo);
@@ -216,8 +194,6 @@ export default function AssignTaskDropDown({
           className="max-w-full"
           label={triggerLabel}
           items={availableUsers}
-          // No footer: Selector already renders its own empty state, so a
-          // second message here only ever duplicated or contradicted it.
           emptyMessage={
             isSearching
               ? `No users match "${debouncedSearchTerm.trim()}"`

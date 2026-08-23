@@ -95,10 +95,7 @@ export default function UpdateTemplate({
             <textarea
               name="message"
               rows={10}
-              className={cn(
-                slimInputClassName,
-                "min-h-16 resize-y thin-scrollbar",
-              )}
+              className={cn(slimInputClassName, "min-h-16 resize-y")}
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
             />

@@ -1,5 +1,4 @@
 "use server";
-import { getStatusPriority } from "@/utils/getStatusPriority";
 import { db } from "./db";
 import { InvoiceType, Prisma } from "@prisma/client";
 import moment from "moment-timezone";
@@ -143,13 +142,9 @@ export async function fetchAndTransformData(
   const totalResult = await db.$queryRaw<{ total: number }[]>(countQuery);
   const totalEstimate = Number(totalResult[0]?.total || 0);
 
-  const sortedData = data.sort(
-    (a: { status: string }, b: { status: string }) =>
-      getStatusPriority(a?.status) - getStatusPriority(b?.status),
-  );
   return {
     totalEstimate,
-    data: sortedData?.map((item: any) => ({
+    data: data?.map((item: any) => ({
       id: item.id,
       clientId: item.clientId ?? null,
       clientName: item.clientName?.trim() || "",

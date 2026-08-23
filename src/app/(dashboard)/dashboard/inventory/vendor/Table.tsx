@@ -43,7 +43,7 @@ export default function Table({
   });
   return (
     <div className="hidden h-[85%] w-[70%] rounded-xl border bg-background p-4 shadow-sm lg:flex lg:flex-col">
-      <div className="h-full w-full overflow-y-auto thin-scrollbar">
+      <div className="h-full w-full overflow-y-auto">
         <table className="relative w-full rounded-xl">
           <thead className="bg-background sticky top-0 z-10">
             <tr className="h-10 border-b">

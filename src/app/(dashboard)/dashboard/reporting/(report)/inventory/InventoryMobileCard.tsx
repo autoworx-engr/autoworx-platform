@@ -46,10 +46,10 @@ export default function InventoryMobileCard({ history, index }: TProps) {
         </span>
       </div>
 
-      <div className="mb-3">
+      <div className="mb-3 min-w-0">
         <Link
           href={redirectUrl}
-          className="truncate text-base font-semibold text-slate-700 hover:text-primary dark:text-white sm:text-lg"
+          className="block truncate text-base font-semibold text-slate-700 hover:text-primary dark:text-white sm:text-lg"
         >
           {name}
         </Link>

@@ -15,6 +15,10 @@ export default function Input({
   onChange,
   min,
   max,
+  onBlur,
+  autoComplete,
+  invalid,
+  describedBy,
 }: {
   name: string;
   type?: string;
@@ -27,6 +31,10 @@ export default function Input({
   onChange?: (e: any) => void;
   min?: string;
   max?: string;
+  onBlur?: (e: any) => void;
+  autoComplete?: string;
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   const [inputValue, setInputValue] = useState(defaultValue || "");
   const { error } = useFormErrorStore();
@@ -40,10 +48,14 @@ export default function Input({
         className={className}
         required={required}
         autoFocus={autoFocus}
-        value={value || inputValue}
+        value={value ?? inputValue}
         onChange={(e) => {
           onChange ? onChange(e) : setInputValue(e.target.value);
         }}
+        onBlur={onBlur}
+        autoComplete={autoComplete}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         placeholder={placeholder}
         min={min}
         max={max}

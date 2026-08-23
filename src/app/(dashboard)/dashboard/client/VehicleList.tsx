@@ -24,7 +24,7 @@ export default function VehicleList({
 
   return (
     <div className={`${selectedVehicle && "hidden lg:block"} w-full space-y-2`}>
-      <div className="flex items-center justify-between px-2">
+      <div className="flex items-center justify-between px-4">
         <h3 className="text-xl font-bold tracking-tight text-slate-600">
           Client Vehicles
         </h3>
@@ -90,14 +90,20 @@ export default function VehicleList({
                   }}
                 >
                   <td className="text-nowrap px-6 py-4 text-left">
-                    {vehicle?.year || ""}
+                    {vehicle?.year || "N/A"}
                   </td>
                   <td className="text-nowrap px-6 py-4 text-left">
-                    {vehicle.make}
+                    {vehicle.make || "N/A"}
                   </td>
-                  <td className="px-6 py-4 text-left">{vehicle.model}</td>
-                  <td className="px-6 py-4 text-left">{vehicle.license}</td>
-                  <td className="px-6 py-4 text-left">{vehicle.other}</td>
+                  <td className="px-6 py-4 text-left">
+                    {vehicle.model || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 text-left">
+                    {vehicle.license || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 text-left">
+                    {vehicle.other || "N/A"}
+                  </td>
                   <td className="px-6 py-4 text-left">
                     <div className="flex items-center gap-x-4 text-xl">
                       {" "}

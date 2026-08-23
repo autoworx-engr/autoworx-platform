@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Loader2, MessageSquare, Users } from "lucide-react";
+import { Calendar, Loader2, MessageCircleMore, Users } from "lucide-react";
 import { StatsCard } from "./StatsCard";
 import { useQuery } from "@tanstack/react-query";
 
@@ -49,7 +49,7 @@ export default function AIMetrics({ companyId }: { companyId: number }) {
           <StatsCard
             title="Texts Exchanged"
             value={data?.totalTexts ?? 0}
-            icon={<MessageSquare className="h-5 w-5" />}
+            icon={<MessageCircleMore className="h-5 w-5" />}
             subtitle="Total messages sent & received"
             variant="success"
           />

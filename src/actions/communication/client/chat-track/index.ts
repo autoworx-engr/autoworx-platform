@@ -263,7 +263,7 @@ export async function readClientEmail(clientId: number) {
   }
 }
 
-export async function unreadClientSmsAndEmail(clientId: number) {
+export async function unreadClientConversations(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId },
@@ -292,6 +292,24 @@ export async function unreadClientSmsAndEmail(clientId: number) {
         where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
+        },
+      });
+    }
+
+    if (channels.messenger) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, messengerIsRead: true },
+        data: {
+          messengerIsRead: false,
+        },
+      });
+    }
+
+    if (channels.instagram) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, instagramIsRead: true },
+        data: {
+          instagramIsRead: false,
         },
       });
     }
@@ -426,7 +444,7 @@ export async function readClientInstagram(clientId: number) {
   }
 }
 
-export async function readClientSmsAndEmail(clientId: number) {
+export async function readClientConversations(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId },
@@ -443,6 +461,10 @@ export async function readClientSmsAndEmail(clientId: number) {
         smsUnReadCount: 0,
         emailIsRead: true,
         emailIsUnReadCount: 0,
+        messengerIsRead: true,
+        messengerUnReadCount: 0,
+        instagramIsRead: true,
+        instagramUnReadCount: 0,
       },
     });
 

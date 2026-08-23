@@ -99,6 +99,7 @@ export function SlimInput({
                 "data-[empty]:[&::-webkit-calendar-picker-indicator]:w-full",
                 "data-[empty]:[&::-webkit-calendar-picker-indicator]:cursor-pointer",
                 "data-[empty]:[&::-webkit-calendar-picker-indicator]:opacity-0",
+                "data-[empty]:text-transparent",
               ),
             // Error state styling overrides
             error &&

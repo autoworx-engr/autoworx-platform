@@ -54,12 +54,10 @@ export function TaskFormFields({
   titleError,
   clearTitleError,
 }: TaskFormFieldsProps) {
-  // Shared with the task list / calendar so priority colors match everywhere.
   const priorityStyles = taskPriorityStyles;
 
   const priorityItems = [{ id: "Low" }, { id: "Medium" }, { id: "High" }];
 
-  // Picking a date is what makes the times mandatory — mirrors the submit check.
   const hasDate = !!date?.trim();
 
   return (

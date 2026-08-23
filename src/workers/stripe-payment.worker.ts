@@ -64,6 +64,8 @@ export async function processStripePayment(eventId: string) {
     paymentData.payType === "virtual_shop_deposit" &&
     paymentData.shopBookingId
   ) {
+    const tipAmount = parseFloat(paymentData.tip || "0");
+
     const result = await confirmShopBooking({
       shopBookingId: paymentData.shopBookingId,
       cashPaid: Number(paymentData.amount),
@@ -77,6 +79,7 @@ export async function processStripePayment(eventId: string) {
           companyId: paymentData.companyId,
           invoiceId,
           amount: paymentData.amount,
+          tip: tipAmount,
           type: "DEPOSIT",
           date: new Date(),
           deposit: {
@@ -115,6 +118,7 @@ export async function processStripePayment(eventId: string) {
       paymentData.paymentRef || paymentData.paymentId || "",
     ).trim();
     const companyId = Number(paymentData.companyId);
+    const tipAmount = parseFloat(paymentData.tip || "0");
 
     if (!paymentRef) {
       await db.webhookEvent.update({
@@ -201,6 +205,7 @@ export async function processStripePayment(eventId: string) {
             data: {
               gateway: "STRIPE",
               date: new Date(),
+              tip: tipAmount,
               ...(Number.isFinite(gatewayAmount) && gatewayAmount > 0
                 ? { amount: gatewayAmount }
                 : {}),
@@ -248,6 +253,7 @@ export async function processStripePayment(eventId: string) {
         data: {
           companyId,
           amount: Number(paymentData.amount),
+          tip: tipAmount,
           type: "OTHER",
           date: new Date(),
           gateway: "STRIPE",

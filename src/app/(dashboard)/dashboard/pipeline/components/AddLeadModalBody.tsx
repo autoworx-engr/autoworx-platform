@@ -289,7 +289,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       <form
         id="add-lead-form"
         onSubmit={handleSubmit}
-        className="flex-1 space-y-4 overflow-y-auto px-2 py-2 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent md:px-4"
+        className="flex-1 space-y-4 overflow-y-auto px-2 py-2 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent md:px-4"
       >
         {/* Contact Information */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

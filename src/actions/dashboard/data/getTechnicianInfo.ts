@@ -115,12 +115,12 @@ export async function getCurrentProjects(
       null,
     );
 
-    // Get the earliest due date from technicians
-    const earliestDueDate = technicians.reduce<Date | null>(
-      (earliest, technician) => {
-        if (!technician.due) return earliest;
-        if (!earliest) return technician.due;
-        return technician.due < earliest ? technician.due : earliest;
+    // Get the latest due date from technicians
+    const latestDueDate = technicians.reduce<Date | null>(
+      (latest, technician) => {
+        if (!technician.due) return latest;
+        if (!latest) return technician.due;
+        return technician.due > latest ? technician.due : latest;
       },
       null,
     );
@@ -134,7 +134,7 @@ export async function getCurrentProjects(
       })),
       yearMakeModel: `${invoice?.vehicle?.year || ""} ${invoice.vehicle?.make || ""} ${invoice.vehicle?.model || ""} ${invoice.vehicle?.other || ""}`,
       totalPayout,
-      dueDate: earliestDueDate, // Now using technician due date instead of invoice due date
+      dueDate: latestDueDate,
       startDate: earliestStartDate,
       status: invoice.status
         ? {

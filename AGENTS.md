@@ -37,3 +37,7 @@ These rules are NON-NEGOTIABLE and apply to ALL work on both autoworx-native and
 
 - Maximum 200-250 lines of code per file — DO NOT exceed this limit
 - If a file grows beyond 250 lines, refactor it into smaller files/components
+
+### Don't add unneccassary comments in code priority first
+
+- don't add comments until its important

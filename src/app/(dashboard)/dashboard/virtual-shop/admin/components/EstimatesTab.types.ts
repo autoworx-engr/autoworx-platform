@@ -25,5 +25,6 @@ export type Estimate = {
   subtotal: number;
   taxAmount: number;
   serviceFee: number;
+  tip: number;
   total: number;
 };

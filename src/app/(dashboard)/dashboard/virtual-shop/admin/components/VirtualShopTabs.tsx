@@ -90,7 +90,7 @@ export default function VirtualShopTabs({
       <nav className="mb-6 w-full md:w-auto" aria-label="Virtual shop tabs">
         <ul
           ref={tabsContainerRef}
-          className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm w-full md:w-auto md:inline-flex"
+          className="flex items-center gap-1.5 p-1.5 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm w-full md:w-auto md:inline-flex"
         >
           {tabs.map(({ href, label, icon: Icon }) => {
             const isActive = href === activeHref;

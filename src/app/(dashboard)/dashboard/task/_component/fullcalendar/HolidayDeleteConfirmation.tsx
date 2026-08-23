@@ -1,13 +1,13 @@
 import { deleteHoliday } from "@/actions/task/deleteHoliday";
 import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { Holiday } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import moment from "moment";
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { calenderQueryKey } from "../../_constant";
-import { Holiday } from "@prisma/client";
-import { useCalendarStore } from "@/stores/calendarStore";
-import { Trash2 } from "lucide-react";
 
 type TProps = {
   holidayId: number;

@@ -12,8 +12,15 @@ import useInfinitySmsQueryByClientId from "../../../_hooks/useInfinitySmsQuery";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
 import JumpToLatestButton from "@/components/JumpToLatestButton";
+import { sortMessagesChronologically } from "../../../_utils";
 
-export default function SmsBox({ clientId }: { clientId: number }) {
+export default function SmsBox({
+  clientId,
+  clientPhoto,
+}: {
+  clientId: number;
+  clientPhoto?: string | null;
+}) {
   // data
   const {
     data,
@@ -30,8 +37,13 @@ export default function SmsBox({ clientId }: { clientId: number }) {
     [data],
   );
 
-  // we want UI in chronological order top->bottom but newest at the bottom:
-  const messages = [...rawMessages].reverse();
+  // UI runs oldest -> newest top-to-bottom. Sort rather than reverse: realtime
+  // messages are prepended in arrival order, so a split reply whose segments
+  // arrive out of order would otherwise render out of order until a refetch.
+  const messages = useMemo(
+    () => sortMessagesChronologically(rawMessages),
+    [rawMessages],
+  );
 
   // scrolling
   const containerRef = useRef<HTMLDivElement>(null);
@@ -198,7 +210,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
       {/* scrollable area */}
       <div
         ref={containerRef}
-        className="thin-scrollbar h-full w-full overflow-y-auto px-2 py-2"
+        className="h-full w-full overflow-y-auto px-2 py-2"
       >
         {/* TOP SENTINEL */}
         <div
@@ -252,7 +264,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
                     </span>
                   </div>
                 )}
-                <SmsMessage message={message} />
+                <SmsMessage message={message} clientPhoto={clientPhoto} />
               </div>
             );
           })}

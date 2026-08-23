@@ -1,11 +1,11 @@
-import { unreadClientSmsAndEmail } from "@/actions/communication/client/chat-track";
+import { unreadClientConversations } from "@/actions/communication/client/chat-track";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
  * /api/communication/client-hub/unread:
  *   post:
- *     summary: Mark a client SMS or email conversation as unread
+ *     summary: Mark a client conversation (SMS, Email, Messenger, Instagram) as unread
  *     tags:
  *       - Client Conversation
  *     requestBody:
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const data = await unreadClientSmsAndEmail(body.clientId);
+    const data = await unreadClientConversations(body.clientId);
 
     return NextResponse.json({
       success: true,

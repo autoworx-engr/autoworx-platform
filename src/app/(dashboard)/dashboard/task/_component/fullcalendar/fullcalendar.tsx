@@ -1,28 +1,28 @@
 "use client";
 
+import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
 import { EventClickArg } from "@fullcalendar/core";
 import FullCalendar from "@fullcalendar/react";
 import moment from "moment";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useCalendarStore } from "@/stores/calendarStore";
-import styles from "./fullcalendar.module.css";
-import { CalendarHeader } from "./CalendarHeader";
-import { CalendarEditModals } from "./CalendarEditModals";
-import { CalendarLoadingOverlay } from "./CalendarLoadingOverlay";
-import { EventDetailsSheet } from "./EventDetailsSheet";
-import { StandardCalendar } from "./StandardCalendar";
-import { TransposedWeekView } from "./transposedWeek/TransposedWeekView";
-import { getCalendarType } from "../../_utils/calendarView";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCalendarData } from "../../_hook/calendar/useCalendarData";
 import { useCalendarEventDateTimeUpdate } from "../../_hook/calendar/useCalendarEventDateTimeUpdate";
-import { useCalendarNativeDrop } from "../../_hook/calendar/useCalendarNativeDrop";
 import { useCalendarFilters } from "../../_hook/calendar/useCalendarFilters";
+import { useCalendarNativeDrop } from "../../_hook/calendar/useCalendarNativeDrop";
 import { useCalendarSettings } from "../../_hook/calendar/useCalendarSettings";
 import { useCalendarStoreSync } from "../../_hook/calendar/useCalendarStoreSync";
 import { useScheduleTaskAt } from "../../_hook/calendar/useScheduleTaskAt";
+import { getCalendarType } from "../../_utils/calendarView";
+import { CalendarEditModals } from "./CalendarEditModals";
+import { CalendarHeader } from "./CalendarHeader";
+import { CalendarLoadingOverlay } from "./CalendarLoadingOverlay";
+import { EventDetailsSheet } from "./EventDetailsSheet";
+import styles from "./fullcalendar.module.css";
+import { StandardCalendar } from "./StandardCalendar";
+import { TransposedWeekView } from "./transposedWeek/TransposedWeekView";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -133,11 +133,20 @@ export default function Calendar({ type }: { type: CalendarType }) {
   }, [events, view]);
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
-  const estRevenue = filteredAppointments.reduce((acc, apt: any) => {
-    const startDay = moment.utc(apt.date).format("YYYY-MM-DD");
-    if (startDay < dateRange.start || startDay > dateRange.end) return acc;
-    return acc + (Number(apt.invoiceGrandTotal) || 0);
-  }, 0);
+
+  // Every appointment in `filteredAppointments` overlaps the visible range —
+  // that is what the query asks for — and each one is drawn on the calendar, so
+  // the total covers all of them. Keying it off the start day instead dropped
+  // any appointment that began before the week it runs into, leaving the total
+  // out of step with both the appointment count and what's on screen.
+  const estRevenue = useMemo(
+    () =>
+      filteredAppointments.reduce(
+        (acc, apt: any) => acc + (Number(apt.invoiceGrandTotal) || 0),
+        0,
+      ),
+    [filteredAppointments],
+  );
 
   const eventType = selectedEvent?.extendedProps?.type;
   const originalData = selectedEvent?.extendedProps?.originalData;

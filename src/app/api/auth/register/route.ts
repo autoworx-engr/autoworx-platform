@@ -2,6 +2,7 @@ import { register } from "@/actions/auth/register";
 import { NextRequest, NextResponse } from "next/server";
 import httpStatus from "http-status";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { registerRequestValidation } from "@/validations/schemas/auth/user.validation";
 
 /**
  * @swagger
@@ -59,25 +60,13 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 export async function POST(req: NextRequest) {
   try {
     const reqBody = await req.json();
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      company,
-      accessCode,
-      timezone,
-    } = reqBody;
 
-    const registerUser = await register({
-      firstName,
-      lastName,
-      email,
-      password,
-      company,
-      accessCode,
-      timezone,
-    });
+    // Validate before the action runs. A ZodError is turned into a 400 with
+    // per-field errorSource entries by errorHandler below, so a bad body never
+    // reaches the database work.
+    const payload = await registerRequestValidation.parseAsync(reqBody);
+
+    const registerUser = await register(payload);
 
     return NextResponse.json({
       statusCode: httpStatus.OK,

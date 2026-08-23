@@ -99,7 +99,7 @@ export default function TaskListBox() {
         />
 
         {/* Task List Content Area - Uses min-h-0 to allow scrolling  */}
-        <div className="thin-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto overflow-x-hidden min-h-0 max-h-[40vh] md:max-h-none">
+        <div className="flex flex-1 flex-col space-y-3 overflow-y-auto overflow-x-hidden min-h-0 max-h-[40vh] md:max-h-none">
           {content}
         </div>
 

@@ -105,7 +105,7 @@ function ImageGrid({
   }
 
   return (
-    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
+    <div ref={scrollRef} className="h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -154,7 +154,7 @@ function ChipList({
   }
 
   return (
-    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
+    <div ref={scrollRef} className="h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -248,7 +248,7 @@ export default function SharedFilesSection({
         </span>
       </header>
 
-      <div className="thin-scrollbar mb-4 flex shrink-0 gap-0.5 overflow-x-auto overflow-y-hidden border-b border-zinc-100 dark:border-white/10">
+      <div className="mb-4 flex shrink-0 gap-0.5 overflow-x-auto overflow-y-hidden border-b border-zinc-100 dark:border-white/10">
         {TABS.map((tab) => (
           <button
             key={tab.id}

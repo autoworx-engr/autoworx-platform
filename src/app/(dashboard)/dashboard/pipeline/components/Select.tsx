@@ -42,7 +42,7 @@ const SelectComponent = ({
             className="z-[100] min-w-[300px] overflow-hidden rounded-2xl border border-slate-50 bg-white shadow-xl animate-in fade-in zoom-in-95"
           >
             <Select.Viewport className="p-2">
-              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto thin-scrollbar">
+              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
                 {items.map((item) => (
                   <Select.Item
                     key={item.id}

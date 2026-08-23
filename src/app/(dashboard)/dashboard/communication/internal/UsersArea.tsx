@@ -125,7 +125,7 @@ export default function UsersArea({
   return (
     <div
       className={cn(
-        "w-full gap-3 sm:grid md:h-[88vh]",
+        "w-full gap-3 h-[calc(100dvh-56px)] sm:h-[calc(100dvh-76px)] sm:grid md:h-[88vh]",
         totalMessageBoxLength > 1 ? "grid-cols-2" : "grid-cols-1",
         className,
       )}

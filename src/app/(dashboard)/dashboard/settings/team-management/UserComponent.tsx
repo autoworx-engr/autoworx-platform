@@ -23,7 +23,7 @@ const UserList: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [openEdit, setOpenEdit] = useState<boolean>(true);
-  const { search } = useEmployeeWorkFilterStore();
+  const { search, setFilter } = useEmployeeWorkFilterStore();
 
   useEffect(() => {
     const usersFetchFunction = async () => {
@@ -60,6 +60,7 @@ const UserList: React.FC = () => {
   const handleBackClick = () => {
     setSelectedUser(null);
     setOpenEdit(true);
+    setFilter({ search: "" });
   };
 
   return (
@@ -84,7 +85,7 @@ const UserList: React.FC = () => {
               <Search />
             </div>
 
-            <div className="thin-scrollbar max-h-[100vh] overflow-y-auto pr-1 2xl:max-h-[calc(100vh-450px)]">
+            <div className="max-h-[100vh] overflow-y-auto pr-1 2xl:max-h-[calc(100vh-450px)]">
               {isLoading && (
                 <ul className="space-y-3">
                   {Array.from({ length: 6 }).map((_, index) => (

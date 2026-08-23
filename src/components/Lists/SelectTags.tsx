@@ -176,7 +176,7 @@ export function SelectTags({
               </div>
 
               {/* Tag List */}
-              <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
+              <div className="my-1 max-h-[200px] overflow-y-auto px-2">
                 {tagList
                   .filter((x) => !tagIds.has(x.id))
                   .filter((x) =>

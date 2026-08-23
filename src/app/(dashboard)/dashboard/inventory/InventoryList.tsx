@@ -155,7 +155,7 @@ export default function InventoryList({
             </div>
 
             {/* Scrollable content area */}
-            <div className="h-full overflow-y-auto thin-scrollbar">
+            <div className="h-full overflow-y-auto">
               <DatabaseTable
                 totalItems={totalDatabaseItems}
                 data={databaseContent}

@@ -14,11 +14,6 @@ import {
 
 const MONTHS = moment.months(); // ["January", ..., "December"]
 
-/**
- * Month + Year quick-jump control shown in the calendar header (month view).
- * Two independently clickable, scrollable dropdowns; selecting either jumps the
- * calendar via the store (useCalendarStoreSync calls calApi.gotoDate).
- */
 export default function MonthYearPicker() {
   const month = useMonth(); // "YYYY-MM" | null
   const base = useMemo(

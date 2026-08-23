@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
 import { TransactionType } from "@prisma/client";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { maskGiftCardCode } from "@/utils/maskGiftCardCode";
 import {
   buildGiftCardPurchaseContext,
   giftCardPurchaseSchema,
@@ -119,8 +120,7 @@ export async function POST(req: Request) {
         });
 
         if (existingIssued?.giftCard?.orderNumber) {
-          const codeParts = existingIssued.giftCard.code.split("-");
-          const maskedCode = `${codeParts[0]}-****-${codeParts[2] || "****"}`;
+          const maskedCode = maskGiftCardCode(existingIssued.giftCard.code);
           const issuedAmount = Number(
             existingIssued.amount ??
               existingIssued.giftCard.initialBalance ??

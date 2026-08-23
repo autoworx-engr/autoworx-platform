@@ -65,10 +65,17 @@ export const ServiceCard = ({ service }: { service: Service }) => {
             loading="lazy"
             onError={() => setImgSrc(FALLBACK_IMAGE)}
           />
-          {service.category && (
-            <Badge className="absolute top-3 left-3 bg-background/90 text-foreground backdrop-blur-sm text-[10px] font-medium">
-              {service.category}
-            </Badge>
+          {service.category.length > 0 && (
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[calc(100%-1.5rem)]">
+              {service.category.map((cat) => (
+                <Badge
+                  key={cat}
+                  className="bg-background/90 text-foreground backdrop-blur-sm text-[10px] font-medium"
+                >
+                  {cat}
+                </Badge>
+              ))}
+            </div>
           )}
         </div>
         <div className="p-4 space-y-3">
@@ -157,7 +164,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl overflow-hidden p-0 gap-0 [&>button]:hidden max-h-[90vh] flex flex-col">
           {/* Image header */}
-          <div className="relative aspect-[16/6] w-full overflow-hidden flex-shrink-0">
+          <div className="relative aspect-video w-full overflow-hidden flex-shrink-0">
             <Image
               src={imgSrc}
               alt={service.title}
@@ -168,10 +175,17 @@ export const ServiceCard = ({ service }: { service: Service }) => {
               onError={() => setImgSrc(FALLBACK_IMAGE)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            {service.category && (
-              <Badge className="absolute top-3 left-3 bg-background/90 text-foreground backdrop-blur-sm text-[10px]">
-                {service.category}
-              </Badge>
+            {service.category.length > 0 && (
+              <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[calc(100%-3rem)]">
+                {service.category.map((cat) => (
+                  <Badge
+                    key={cat}
+                    className="bg-background/90 text-foreground backdrop-blur-sm text-[10px]"
+                  >
+                    {cat}
+                  </Badge>
+                ))}
+              </div>
             )}
             <button
               onClick={() => setIsDetailsOpen(false)}
@@ -196,7 +210,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
           </div>
 
           {/* Scrollable body — description only */}
-          <div className="thin-scrollbar overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
+          <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
             {service.description && (
               <div
                 className="px-5 pt-5 text-sm text-muted-foreground leading-relaxed break-words w-full [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-blue-500 [&_a]:underline [&_a]:cursor-pointer"

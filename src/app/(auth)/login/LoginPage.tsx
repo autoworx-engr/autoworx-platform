@@ -1,12 +1,44 @@
+"use client";
+
 import FormError from "@/components/FormError";
+import FormField from "@/components/FormField";
 import Input from "@/components/Input";
 import Password from "@/components/Password";
+import Submit from "@/components/Submit";
 import Image from "next/image";
 import Link from "next/link";
-import SubmitButton from "./SubmitButton";
+import { LoginField, useLoginForm } from "./useLoginForm";
+
+const baseControl =
+  "w-full rounded-xl border-2 bg-white/50 px-4 py-2.5 transition-colors focus:outline-none dark:bg-slate-800/50";
+
+const controlClass = (hasError: boolean) =>
+  `${baseControl} ${
+    hasError
+      ? "border-red-400 focus:border-red-500 dark:border-red-500/70"
+      : "border-slate-200 focus:border-primary/50 dark:border-slate-700 dark:focus:border-primary"
+  }`;
+
 export default function LoginPage() {
+  const { values, errors, update, validateOnBlur, handler } = useLoginForm();
+
+  const fieldProps = (field: LoginField, autoComplete: string) => ({
+    name: field,
+    value: values[field],
+    onChange: update(field),
+    onBlur: validateOnBlur(field),
+    autoComplete,
+    invalid: Boolean(errors[field]),
+    describedBy: errors[field] ? `${field}-error` : undefined,
+    className: controlClass(Boolean(errors[field])),
+  });
+
   return (
-    <form className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50 z-10">
+    // noValidate: our inline messages replace the browser's native bubbles.
+    <form
+      noValidate
+      className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50 z-10"
+    >
       {/* Top Accent Gradient Line */}
       <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#00b8b0] to-transparent opacity-50" />
 
@@ -36,51 +68,48 @@ export default function LoginPage() {
       <FormError />
 
       <div className="space-y-5">
-        {/* Email Address */}
-        <div className="group transition-all duration-300">
-          <label
-            htmlFor="email"
-            className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Email Address
-          </label>
+        <FormField
+          name="email"
+          label="Email Address"
+          required
+          error={errors.email}
+        >
           <Input
-            name="email"
             type="email"
-            required
             autoFocus
             placeholder="name@company.com"
-            className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-primary"
+            {...fieldProps("email", "email")}
           />
-        </div>
+        </FormField>
 
-        {/* Password Section */}
-        <div className="group transition-all duration-300">
-          <div className="flex items-center justify-between mb-1.5">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Password
-            </label>
+        <FormField
+          name="password"
+          label="Password"
+          required
+          error={errors.password}
+          labelAction={
             <Link
               href="/forgot-password"
               className="text-xs font-semibold text-primary transition-colors hover:text-[#5059d4]"
             >
               Forgot Password?
             </Link>
-          </div>
+          }
+        >
           <Password
-            name="password"
             placeholder="Enter your password"
-            required
-            className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
+            {...fieldProps("password", "current-password")}
           />
-        </div>
+        </FormField>
       </div>
 
       <div className="mt-8">
-        <SubmitButton />
+        <Submit
+          className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-10 py-2 text-white border-0 outline-none focus:outline-none active:outline-none min-h-[42px] flex items-center justify-center"
+          formAction={handler}
+        >
+          Login
+        </Submit>
       </div>
 
       <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">

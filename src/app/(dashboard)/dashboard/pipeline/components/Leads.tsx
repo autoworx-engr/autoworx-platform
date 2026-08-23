@@ -4,7 +4,6 @@ import {
   LeadFilterOptions,
 } from "@/actions/pipelines/getLeadFilterOptions";
 import { getCompanyUser } from "@/actions/user/getCompanyUser";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import DateRange from "@/components/DateRange";
 import ResponsiveSalesPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveSalesPipelineCard";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
@@ -17,25 +16,18 @@ import { LeadWithSalesUser } from "@/types/invoiceLead";
 import SessionUserType from "@/types/sessionUserType";
 import { Appointment, Column, User } from "@prisma/client";
 import { Pagination, Select } from "antd";
-import {
-  Calendar,
-  CalendarCheck,
-  MessageCircleMore,
-  Search,
-} from "lucide-react";
+import { Search } from "lucide-react";
 import moment from "moment";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import LeadsFilterDropdown, { LeadFilter } from "./LeadsFilterDropdown";
+import LeadTableActions from "./LeadTableActions";
 import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
 import LeadsSearch from "./LeadsSearch";
 import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
-import PipelineInvoiceModal from "./PipelineInvoiceModal";
-import TaskForm from "./TaskForm";
 import useCompanyUsersQuery from "@/hooks/query-hook/useCompanyUsersQuery";
 
 type TProps = {
@@ -228,12 +220,6 @@ const Leads = ({ salesColumn }: TProps) => {
     [pageSize],
   );
 
-  // Reset page to 1 when search changes
-  // useEffect(() => {
-  //   setCurrentPage(1);
-  // }, [search]);
-
-  // Debounced search and filter effect
   useEffect(() => {
     const filterKey = JSON.stringify({
       search,
@@ -346,35 +332,6 @@ const Leads = ({ salesColumn }: TProps) => {
     },
     [router, currentUser, createDraftEstimate],
   );
-
-  //sort leads by time created in descending order (already sorted by backend)
-  // leads?.sort((a, b) => {
-  //   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  // });
-
-  // Reset page to 1 when filters change
-  // useEffect(() => {
-  //   setCurrentPage(1);
-  // }, [search, filter, dateRange]);
-
-  // if (loading) {
-  //   return (
-  //     <Spin
-  //       size="large"
-  //       className="flex w-full items-center justify-center"
-  //       style={{ height: "calc(100vh - 150px)" }} // Adjust height as needed>
-  //     />
-  //   );
-  // }
-  // if (loading) {
-  //   return (
-  //     <Spin
-  //       size="large"
-  //       className="flex w-full items-center justify-center"
-  //       style={{ height: "calc(100vh - 150px)" }} // Adjust height as needed>
-  //     />
-  //   );
-  // }
 
   // Optimized column change handler with useCallback
   const handleColumnChange = useCallback(
@@ -516,6 +473,7 @@ const Leads = ({ salesColumn }: TProps) => {
                             const timeCreated = moment(lead.createdAt).format(
                               "MM/DD/YYYY",
                             );
+                            const clientId = lead.client?.id;
 
                             return (
                               <tr
@@ -528,23 +486,23 @@ const Leads = ({ salesColumn }: TProps) => {
                                 )}
                               >
                                 <td className="px-4 py-2 text-left">
-                                  {lead.clientId ? (
+                                  {clientId ? (
                                     <Link
-                                      href={`/dashboard/client/${lead.clientId}`}
+                                      href={`/dashboard/client/${clientId}`}
                                       className="block h-full w-full text-primary"
                                     >
                                       {(currentPage - 1) * pageSize + index + 1}
                                     </Link>
                                   ) : (
-                                    <span className="block h-full w-full text-primary">
+                                    <span className="block h-full w-full">
                                       {(currentPage - 1) * pageSize + index + 1}
                                     </span>
                                   )}
                                 </td>
                                 <td className="px-4 py-2 text-left">
-                                  {lead.clientId ? (
+                                  {clientId ? (
                                     <Link
-                                      href={`/dashboard/client/${lead.clientId}`}
+                                      href={`/dashboard/client/${clientId}`}
                                       className="block h-full w-full"
                                     >
                                       {formatDisplayName(lead.clientName)}
@@ -605,136 +563,17 @@ const Leads = ({ salesColumn }: TProps) => {
                                 </td>
 
                                 <td className="px-4 py-2 text-left">
-                                  <div className="flex items-center gap-2">
-                                    {(lead?.client?.id ?? lead?.clientId) ? (
-                                      <Link
-                                        href={`/dashboard/communication/client/${lead?.client?.id ?? lead?.clientId}?source=lead`}
-                                        className="group relative"
-                                      >
-                                        <MessageCircleMore
-                                          size={20}
-                                          className="duration-300 hover:text-primary"
-                                        />
-                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          Communications
-                                        </span>
-                                      </Link>
-                                    ) : (
-                                      <span className="group relative cursor-not-allowed opacity-40">
-                                        <MessageCircleMore size={20} />
-                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          Communications
-                                        </span>
-                                      </span>
-                                    )}
-                                    {lead.isEstimateCreated &&
-                                    lead.invoiceId ? (
-                                      <span className="group relative">
-                                        <PipelineInvoiceModal
-                                          invoiceId={lead.invoiceId}
-                                        />
-                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          Draft estimate
-                                        </span>
-                                      </span>
-                                    ) : (
-                                      <button
-                                        onClick={() =>
-                                          handleCreateDraftEstimate({
-                                            leadId: lead.id,
-                                            clientId: Number(lead?.clientId),
-                                            vehicleId:
-                                              lead?.client?.vehicle?.id,
-                                          })
-                                        }
-                                        disabled={isPending}
-                                        className="group relative"
-                                      >
-                                        <div className="relative h-4 w-4">
-                                          <Image
-                                            src="/icons/draftEstimate.png"
-                                            alt="draftEstimate"
-                                            fill
-                                            sizes="16px"
-                                            className="object-contain duration-300 hover:opacity-80"
-                                            loading="lazy"
-                                          />
-                                        </div>
-                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          Draft estimate
-                                        </span>
-                                      </button>
-                                    )}
-                                    {(() => {
-                                      const appointment =
-                                        lead?.latestAppointment ??
-                                        ((lead?.client?.appointments?.length ??
-                                          0) > 0
-                                          ? lead?.client?.appointments?.[0]
-                                          : undefined);
-                                      return (
-                                        <AppointmentCreateOrEdit
-                                          fromEdit={!!appointment}
-                                          fromLead
-                                          appointmentId={appointment?.id}
-                                          triggerIcon={
-                                            <button className="group relative">
-                                              {!!appointment ? (
-                                                <CalendarCheck
-                                                  size={18}
-                                                  color="#6571FF"
-                                                />
-                                              ) : (
-                                                <Calendar
-                                                  size={18}
-                                                  color="#66738C"
-                                                />
-                                              )}
-
-                                              <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                                Appointment
-                                              </span>
-                                            </button>
-                                          }
-                                          vehicleId={lead?.client?.vehicle?.id}
-                                          clientId={lead?.client?.id}
-                                          onAppointmentCreated={(
-                                            appointment: Appointment,
-                                          ) => {
-                                            handleUpdateAppointmentInLead(
-                                              appointment,
-                                              {
-                                                leadId: lead.id,
-                                                columnId: lead.columnId!,
-                                              },
-                                            );
-                                          }}
-                                          onAppointmentUpdated={(
-                                            appointment: Appointment,
-                                          ) => {
-                                            handleUpdateAppointmentInLead(
-                                              appointment,
-                                              {
-                                                leadId: lead.id,
-                                                columnId: lead.columnId!,
-                                              },
-                                            );
-                                          }}
-                                        />
-                                      );
-                                    })()}
-                                    <div className="group relative ">
-                                      <TaskForm
-                                        companyUsers={companyUsers}
-                                        leadId={lead.id}
-                                        previousTasks={lead.tasks || []}
-                                        totalTasksCount={lead.taskCount ?? 0}
-                                      />
-                                      <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                        Add Task
-                                      </span>
-                                    </div>
-                                  </div>
+                                  <LeadTableActions
+                                    lead={lead}
+                                    companyUsers={companyUsers}
+                                    isPending={isPending}
+                                    onCreateDraftEstimate={
+                                      handleCreateDraftEstimate
+                                    }
+                                    onUpdateAppointment={
+                                      handleUpdateAppointmentInLead
+                                    }
+                                  />
                                 </td>
                                 <td className="px-4 py-2 text-left">
                                   {timeCreated}

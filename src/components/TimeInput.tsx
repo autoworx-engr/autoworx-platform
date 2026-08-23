@@ -337,7 +337,7 @@ export function TimeInput({
             )}
           >
             <div className="grid grid-cols-3 gap-1 p-2">
-              <div className="thin-scrollbar h-[200px] overflow-y-auto">
+              <div className="h-[200px] overflow-y-auto">
                 {hours.map((hour) => {
                   // Check if the hour should be completely disabled
                   const isDisabled = shouldDisableHour(hour);
@@ -493,7 +493,7 @@ export function TimeInput({
                   );
                 })}
               </div>
-              <div className="thin-scrollbar h-[200px] overflow-y-auto">
+              <div className="h-[200px] overflow-y-auto">
                 {minutes.map((minute) => {
                   const [hours = "12", _, period = "AM"] = (
                     formatTo12Hour(value) || "12:00 AM"

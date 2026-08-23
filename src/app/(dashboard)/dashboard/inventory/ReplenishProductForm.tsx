@@ -51,6 +51,11 @@ export default function ReplenishProductForm({
     const lot = formData.get("lot") as string;
     const notes = formData.get("notes") as string;
 
+    if (!unit || !unit.trim()) {
+      showError({ message: "Unit is required." });
+      return;
+    }
+
     const perUnitPrice = parseFloat(price) / Number(quantity);
     const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
 
@@ -98,7 +103,7 @@ export default function ReplenishProductForm({
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto]"
         onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
@@ -196,7 +201,7 @@ export default function ReplenishProductForm({
               id="notes"
               name="notes"
               className={cn(
-                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                 "focus:border-primary/60 focus:ring-2 focus:ring-primary/40",

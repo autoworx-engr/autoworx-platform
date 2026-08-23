@@ -747,7 +747,7 @@ export default function InvoiceModalBody({
                   <br className="md:hidden" />
                   {company?.city && company?.state && ", "}
                   {company?.state && `${company.state}`}
-                  {company?.state && company?.zip && " "}
+                  {company?.state && company?.zip && " - "}
                   {company?.zip && `${company.zip}`}
                 </p>
 

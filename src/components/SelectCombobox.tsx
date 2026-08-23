@@ -196,7 +196,7 @@ export default function SelectCombobox<T>({
           <ComboboxList
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="mb-5 flex max-h-40 flex-col overflow-y-auto thin-scrollbar"
+            className="mb-5 flex max-h-40 flex-col overflow-y-auto"
           >
             {(item) => {
               const key = (item as any)?.id

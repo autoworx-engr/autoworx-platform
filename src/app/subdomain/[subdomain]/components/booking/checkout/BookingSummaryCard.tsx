@@ -8,6 +8,7 @@ interface BookingSummaryCardProps {
   serviceFeeRate: number;
   tax: number;
   taxRate: number;
+  isTaxEnabled?: boolean;
   giftCardRedeemedPreview: number;
   adjustedGrandTotal: number;
   effectiveDepositDue: number;
@@ -22,6 +23,7 @@ export const BookingSummaryCard = ({
   serviceFeeRate,
   tax,
   taxRate,
+  isTaxEnabled = true,
   giftCardRedeemedPreview,
   adjustedGrandTotal,
   effectiveDepositDue,
@@ -58,10 +60,10 @@ export const BookingSummaryCard = ({
           <span>${shopFee}</span>
         </div>
       )}
-      {tax > 0 && (
+      {isTaxEnabled && (
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Tax ({taxRate}%)</span>
-          <span>${tax}</span>
+          <span>${tax.toFixed(2)}</span>
         </div>
       )}
       {giftCardRedeemedPreview > 0 && (

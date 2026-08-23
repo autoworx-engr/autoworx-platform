@@ -13,14 +13,12 @@ export default function WeekCalendar({
 }) {
   moment.updateLocale("en", { week: { dow: getWeekStartNumber(weekStart) } });
 
-  // Parse the selected week
   const [year, weekNum] = selectedWeek.split("-W");
   const [selectedYear, setSelectedYear] = useState(parseInt(year));
   const [viewMonth, setViewMonth] = useState(
     moment().year(parseInt(year)).week(parseInt(weekNum)).month(),
   );
 
-  // Get weeks in the month with consistent week numbering
   const getWeeksInViewMonth = () => {
     const firstDayOfMonth = moment()
       .year(selectedYear)
@@ -28,24 +26,19 @@ export default function WeekCalendar({
       .startOf("month");
     const lastDayOfMonth = moment(firstDayOfMonth).endOf("month");
 
-    // Add a week before and after to ensure we cover the entire month's view
     const startDate = moment(firstDayOfMonth).subtract(1, "week");
     const endDate = moment(lastDayOfMonth).add(1, "week");
 
     const weeks = [];
     let currentDay = moment(startDate).startOf("week");
 
-    // Iterate through all weeks that overlap with the month
     while (currentDay.isBefore(endDate)) {
-      // Use week() consistently instead of mixing isoWeek() and week()
       const weekNumber = currentDay.week();
-      // Get the correct year for the week (important for weeks crossing year boundaries)
       const weekYear = currentDay.weekYear();
 
       const weekStart = moment(currentDay);
       const weekEnd = moment(currentDay).endOf("week");
 
-      // Only include this week if it overlaps with the current view month
       const isInViewMonth =
         (weekStart.month() === viewMonth &&
           weekStart.year() === selectedYear) ||

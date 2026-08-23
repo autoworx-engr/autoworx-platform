@@ -171,48 +171,46 @@ const TwoFactorVerification: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex font-sans text-slate-900">
-      <div className="flex-1 lg:ml-20 flex items-center justify-center p-4">
-        <div className="w-full max-w-[480px] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-8 pt-8 pb-6 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-50 text-blue-600 rounded-full mb-6">
-              <ShieldCheck size={28} />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              Verification Required
-            </h2>
-            <p className="text-slate-500 mt-2 text-sm leading-relaxed">
-              Please enter the 6-digit code sent to your device.
+    <div className="w-full max-w-[480px] bg-white font-sans text-slate-900 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="px-4 sm:px-8 pt-8 pb-6 text-center">
+        <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-50 text-blue-600 rounded-full mb-6">
+          <ShieldCheck size={28} />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900">
+          Verification Required
+        </h2>
+        <p className="text-slate-500 mt-2 text-sm leading-relaxed">
+          Please enter the 6-digit code sent to your device.
+        </p>
+      </div>
+
+      <div className="px-4 sm:px-8 pb-8">
+        {isSuccess ? (
+          <div className="flex flex-col items-center justify-center py-8 text-green-600">
+            <CheckCircle2 size={48} className="mb-4" />
+            <h3 className="text-xl font-bold">Verification Successful</h3>
+            <p className="text-slate-500 text-sm mt-2">
+              Redirecting to dashboard...
             </p>
           </div>
-
-          <div className="px-8 pb-8">
-            {isSuccess ? (
-              <div className="flex flex-col items-center justify-center py-8 text-green-600">
-                <CheckCircle2 size={48} className="mb-4" />
-                <h3 className="text-xl font-bold">Verification Successful</h3>
-                <p className="text-slate-500 text-sm mt-2">
-                  Redirecting to dashboard...
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="flex justify-between gap-2 mb-8">
-                  {otp.map((digit, idx) => (
-                    <input
-                      key={idx}
-                      ref={(el) => {
-                        inputRefs.current[idx] = el;
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      value={digit}
-                      onChange={(e) => handleChange(e, idx)}
-                      onKeyDown={(e) => handleKeyDown(e, idx)}
-                      onFocus={() => setActiveIdx(idx)}
-                      onPaste={handlePaste}
-                      className={`
-                                w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-semibold rounded-lg border 
+        ) : (
+          <>
+            <div className="flex justify-between gap-1 sm:gap-2 mb-8">
+              {otp.map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => {
+                    inputRefs.current[idx] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  value={digit}
+                  onChange={(e) => handleChange(e, idx)}
+                  onKeyDown={(e) => handleKeyDown(e, idx)}
+                  onFocus={() => setActiveIdx(idx)}
+                  onPaste={handlePaste}
+                  className={`
+                                w-10 h-12 sm:w-14 sm:h-16 text-center text-lg sm:text-xl font-semibold rounded-lg border 
                                 outline-none transition-all duration-200
                                 ${
                                   error
@@ -222,61 +220,59 @@ const TwoFactorVerification: React.FC = () => {
                                       : "border-slate-200 bg-white text-slate-800 hover:border-slate-300"
                                 }
                             `}
-                    />
-                  ))}
-                </div>
+                />
+              ))}
+            </div>
 
-                {error && (
-                  <div className="flex items-center gap-2 text-red-600 text-sm font-medium mb-6 bg-red-50 p-3 rounded-lg border border-red-100">
-                    <AlertCircle size={16} />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => startTransition(() => handleVerify())}
-                  className="w-full disabled:bg-slate-200 bg-[#4F46E5] hover:bg-[#4338ca] text-white font-medium py-3.5 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                  disabled={pending}
-                >
-                  Verify Identity
-                </button>
-
-                <div className="mt-6 text-center">
-                  <p className="text-slate-400 text-xs uppercase tracking-wide font-semibold mb-2">
-                    Didn't receive code?
-                  </p>
-
-                  {cooldown > 0 ? (
-                    <span className="text-slate-500 text-sm font-medium flex items-center justify-center gap-2">
-                      <RefreshCw size={14} className="animate-spin" />
-                      Resend in {cooldown}s
-                    </span>
-                  ) : (
-                    <button
-                      onClick={handleResendRefactorCode}
-                      className="text-blue-600 font-semibold text-sm hover:text-blue-700 hover:underline"
-                    >
-                      Resend Code
-                    </button>
-                  )}
-                </div>
-              </>
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 text-sm font-medium mb-6 bg-red-50 p-3 rounded-lg border border-red-100">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
             )}
-          </div>
 
-          <div className="bg-slate-50 px-8 py-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-            <span>Secure connection</span>
             <button
-              onClick={() => {
-                clearStore();
-              }}
-              className="flex items-center gap-1 hover:text-slate-800 transition-colors"
+              onClick={() => startTransition(() => handleVerify())}
+              className="w-full disabled:bg-slate-200 bg-[#4F46E5] hover:bg-[#4338ca] text-white font-medium py-3.5 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={pending}
             >
-              <ArrowLeft size={12} />
-              Back to Login
+              Verify Identity
             </button>
-          </div>
-        </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-slate-400 text-xs uppercase tracking-wide font-semibold mb-2">
+                Didn't receive code?
+              </p>
+
+              {cooldown > 0 ? (
+                <span className="text-slate-500 text-sm font-medium flex items-center justify-center gap-2">
+                  <RefreshCw size={14} className="animate-spin" />
+                  Resend in {cooldown}s
+                </span>
+              ) : (
+                <button
+                  onClick={handleResendRefactorCode}
+                  className="text-blue-600 font-semibold text-sm hover:text-blue-700 hover:underline"
+                >
+                  Resend Code
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="bg-slate-50 px-4 sm:px-8 py-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+        <span>Secure connection</span>
+        <button
+          onClick={() => {
+            clearStore();
+          }}
+          className="flex items-center gap-1 hover:text-slate-800 transition-colors"
+        >
+          <ArrowLeft size={12} />
+          Back to Login
+        </button>
       </div>
     </div>
   );

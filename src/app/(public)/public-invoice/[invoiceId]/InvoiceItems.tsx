@@ -1,6 +1,7 @@
 "use client";
 
 import type { db } from "@/lib/db";
+import { stripHtml } from "@/utils/stripHtml";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
@@ -61,7 +62,7 @@ export function InvoiceItems({
 
         {openService === item.id && (
           <>
-            <p>{item.serviceDesc || item.service.description}</p>
+            <p>{stripHtml(item.serviceDesc || item.service.description)}</p>
             <div className="mt-2 text-primary">
               <div>
                 {item.materials.map((material, index) => {

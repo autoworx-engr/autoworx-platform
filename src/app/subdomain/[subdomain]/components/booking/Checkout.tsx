@@ -345,7 +345,9 @@ export const Checkout = () => {
         normalizedTotals = {
           subtotal: Number(apiTotals.subtotal || 0),
           tax: Number(apiTotals.tax || 0),
+          taxRate: Number(apiTotals.taxRate || 0),
           serviceFee: Number(apiTotals.serviceFee || 0),
+          serviceFeeRate: Number(apiTotals.serviceFeeRate || 0),
           grandTotal: Number(apiTotals.grandTotal || 0),
           giftCardRedeemed: Number(apiTotals.giftCardRedeemed || 0),
           depositRequired: Number(apiTotals.depositRequired || 0),
@@ -450,6 +452,7 @@ export const Checkout = () => {
         serviceFeeRate={totals.serviceFeeRate}
         tax={totals.tax}
         taxRate={totals.taxRate}
+        isTaxEnabled={totals.isTaxEnabled}
         giftCardRedeemedPreview={totals.giftCardRedeemedPreview}
         adjustedGrandTotal={totals.adjustedGrandTotal}
         effectiveDepositDue={totals.effectiveDepositDue}

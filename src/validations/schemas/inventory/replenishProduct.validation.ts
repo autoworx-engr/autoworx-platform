@@ -27,9 +27,9 @@ export const replenishProductValidationSchema = z.object({
       invalid_type_error: "Unit must be a string",
       required_error: "Unit is required",
     })
-    .max(5, "Unit must be less than 5 characters")
-    .optional()
-    .nullish(),
+    .trim()
+    .min(1, "Unit is required")
+    .max(5, "Unit must be less than 5 characters"),
   lot: z
     .string()
     .trim()

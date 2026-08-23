@@ -11,7 +11,15 @@ import { errorToast } from "@/lib/toast";
 import { addMinutes } from "@/utils/time";
 import type { User } from "@prisma/client";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Bell, Calendar, ChevronDown, Hash, Plus, Search } from "lucide-react";
+import {
+  Bell,
+  Calendar,
+  Check,
+  ChevronDown,
+  Hash,
+  Plus,
+  Search,
+} from "lucide-react";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import AssignUsers from "./AssignUsers";
@@ -96,7 +104,7 @@ export default function AppointmentForm({
   handleDate,
 }: AppointmentFormProps) {
   return (
-    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
+    <div className="h-full sm:h-full overflow-y-auto max-h-[80vh] lg:max-h-none">
       <div className="space-y-2 p-4 sm:p-6">
         <AppointmentTitleSelectAndAdd
           value={title}
@@ -183,8 +191,8 @@ export default function AppointmentForm({
             here, so Sales and Technician are no longer split apart. */}
         <AssignUsers
           assignedUsers={assignedUsers}
-          title="+ Assign Team Mate"
-          emptyMessage="No team mate assigned yet."
+          title="+ Assign Teammate"
+          emptyMessage="No teammate assigned yet."
           onAssignUser={(user: User) =>
             setAssignedUsers((prev) => [...prev, user])
           }
@@ -296,41 +304,61 @@ export default function AppointmentForm({
 
                   <div className="max-h-72 overflow-y-auto overflow-x-hidden px-1">
                     {filteredDraftEstimateOptions.length > 0 ? (
-                      filteredDraftEstimateOptions.map((item) => (
-                        <DropdownMenu.Item
-                          key={item.id}
-                          onSelect={() => {
-                            setDraft(item.id);
-                            setDraftOpen(false);
-                          }}
-                          className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-primary/10 dark:hover:bg-slate-800"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                                {item.vehicle}
+                      filteredDraftEstimateOptions.map((item) => {
+                        const isSelected = item.id === draft;
+                        return (
+                          <DropdownMenu.Item
+                            key={item.id}
+                            onSelect={() => {
+                              setDraft(item.id);
+                              setDraftOpen(false);
+                            }}
+                            className={cn(
+                              "group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-primary/10 dark:hover:bg-slate-800",
+                              isSelected && "bg-primary/10",
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span
+                                  className={cn(
+                                    "truncate text-sm text-slate-700 dark:text-slate-200",
+                                    isSelected
+                                      ? "font-semibold"
+                                      : "font-medium",
+                                  )}
+                                >
+                                  {item.vehicle}
+                                </span>
+                                {isSelected && (
+                                  <Check
+                                    size={14}
+                                    strokeWidth={3}
+                                    className="shrink-0 text-primary"
+                                  />
+                                )}
+                              </div>
+                              <span className="shrink-0 text-sm font-bold text-primary">
+                                ${item.price.toFixed(2)}
                               </span>
                             </div>
-                            <span className="shrink-0 text-sm font-bold text-primary">
-                              ${item.price.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-slate-400">
-                            <Hash size={10} />
-                            {item.id}{" "}
-                            <span
-                              className={cn(
-                                "shrink-0 rounded px-1.5 text-[8px] font-bold uppercase tracking-wide",
-                                item.type === "Invoice"
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-violet-100 text-violet-700",
-                              )}
-                            >
-                              {item.type}
-                            </span>
-                          </div>
-                        </DropdownMenu.Item>
-                      ))
+                            <div className="flex items-center gap-1 text-xs text-slate-400">
+                              <Hash size={10} />
+                              {item.id}{" "}
+                              <span
+                                className={cn(
+                                  "shrink-0 rounded px-1.5 text-[8px] font-bold uppercase tracking-wide",
+                                  item.type === "Invoice"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : "bg-violet-100 text-violet-700",
+                                )}
+                              >
+                                {item.type}
+                              </span>
+                            </div>
+                          </DropdownMenu.Item>
+                        );
+                      })
                     ) : (
                       <div className="py-6 text-center text-xs text-slate-400">
                         No results found
@@ -367,7 +395,7 @@ export default function AppointmentForm({
           <Textarea
             name="notes"
             placeholder="Notes"
-            className="max-h-[220px] min-h-[96px] resize-y thin-scrollbar"
+            className="max-h-[220px] min-h-[96px] resize-y"
             rows={3}
             maxLength={1000}
             value={notes}
@@ -428,7 +456,7 @@ export default function AppointmentForm({
 
       {/* Mobile right panel — horizontal padding lines its content up with the
           form sections above; Reminder's own wrappers pad vertically only. */}
-      <div className="relative lg:hidden h-full row-span-2 thin-scrollbar divide-y bg-background px-4 pb-6 sm:px-6">
+      <div className="relative lg:hidden h-full row-span-2 divide-y bg-background px-4 pb-6 sm:px-6">
         {tab === Tab.Schedule ? (
           <div
             ref={containerRef}

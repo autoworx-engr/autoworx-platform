@@ -14,9 +14,10 @@ export interface Service {
   description: string;
   price: number;
   estimatedMinutes: number;
-  category: string;
+  category: string[];
   images: string[];
   vehicleTypePricing: VehicleTypePricing;
+  materialTotal?: number;
 }
 
 export interface CartItem {
@@ -42,7 +43,9 @@ export interface BookingData {
 export interface BookingTotals {
   subtotal: number;
   tax: number;
+  taxRate?: number;
   serviceFee: number;
+  serviceFeeRate?: number;
   grandTotal: number;
   giftCardRedeemed?: number;
   depositRequired?: number;

@@ -74,7 +74,7 @@ export function InspectionItems({
               <div className="col-span-3 text-center">Passenger</div>
             </div>
 
-            <div className="thin-scrollbar max-h-80 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto">
               {inspectionData.map((item, index) => (
                 <div
                   key={index}

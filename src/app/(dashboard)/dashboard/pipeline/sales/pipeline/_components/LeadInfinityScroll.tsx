@@ -151,7 +151,7 @@ export default function LeadInfinityScroll({
       </h2>
       <ul
         ref={scrollRef}
-        className="thin-scrollbar mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
+        className="mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
         style={{ maxHeight: "65vh" }}
       >
         {children(leads)}

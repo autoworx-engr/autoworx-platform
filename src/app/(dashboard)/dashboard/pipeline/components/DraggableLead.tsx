@@ -418,17 +418,29 @@ const DraggableLead = ({
 
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
-          {!isTeamPipeline && (
-            <Link
-              href={`/dashboard/communication/client/${lead.clientId}?chat=true`}
-              className={`group relative mt-1 ${isTechnician ? "hidden" : ""}`}
-            >
-              <MessageCircleMore size={20} />
-              <span className="invisible absolute bottom-full left-14 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                Communications
+          {!isTeamPipeline &&
+            (lead.clientId ? (
+              <Link
+                href={`/dashboard/communication/client/${lead.clientId}?chat=true`}
+                className={`group relative mt-1 ${isTechnician ? "hidden" : ""}`}
+              >
+                <MessageCircleMore size={20} />
+                <span className="invisible absolute bottom-full left-14 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                  Communications
+                </span>
+              </Link>
+            ) : (
+              // Without a client there's no conversation to open, so this is
+              // greyed out instead of linking to /client/null.
+              <span
+                className={`group relative mt-1 cursor-not-allowed opacity-40 ${isTechnician ? "hidden" : ""}`}
+              >
+                <MessageCircleMore size={20} />
+                <span className="invisible absolute bottom-full left-14 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                  Communications
+                </span>
               </span>
-            </Link>
-          )}
+            ))}
 
           <div className="group relative mx-0 mt-1 p-0">
             <WorkOrderModal
@@ -452,6 +464,9 @@ const DraggableLead = ({
 
           {!isTeamPipeline && (
             <button
+              // The modal only renders once a client is selected, so without
+              // one this used to look clickable and then do nothing.
+              disabled={!lead?.clientId}
               onClick={() => {
                 if (!searchParams) return;
                 if (lead?.clientId) {
@@ -470,7 +485,7 @@ const DraggableLead = ({
                 }
                 setIsAppointmentModalOpen?.(true);
               }}
-              className="group relative"
+              className="group relative disabled:cursor-not-allowed disabled:opacity-40"
             >
               {lead?.appointment ? (
                 <CalendarCheck

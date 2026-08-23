@@ -15,7 +15,6 @@ export default function DayCalendar({
 }) {
   const [viewDate, setViewDate] = useState(moment(selectedDate));
 
-  // Apply the weekStart configuration globally
   useEffect(() => {
     const weekStartNumber = getWeekStartNumber(weekStart);
     moment.updateLocale("en", {
@@ -25,26 +24,22 @@ export default function DayCalendar({
     });
   }, [weekStart]);
 
-  // Get days of the week starting from weekStart
   const daysOfWeek = [];
   const weekStartNumber = getWeekStartNumber(weekStart);
   for (let i = 0; i < 7; i++) {
     daysOfWeek.push((i + weekStartNumber) % 7);
   }
 
-  // Get days for the current month view
   const getDaysInMonth = () => {
     const firstDay = moment(viewDate).startOf("month");
     const startWeekday = firstDay.day();
 
-    // Adjust for week start day
     let daysToGoBack = startWeekday - weekStartNumber;
     if (daysToGoBack < 0) daysToGoBack += 7;
 
     const startDate = moment(firstDay).subtract(daysToGoBack, "days");
     const days = [];
 
-    // Generate 6 weeks of dates (42 days)
     for (let i = 0; i < 42; i++) {
       const currentDate = moment(startDate).add(i, "days");
       days.push({
@@ -104,18 +99,14 @@ export default function DayCalendar({
       </div>
 
       <div className="grid grid-cols-7 gap-1">
-        {/* Render day headers */}
         {daysOfWeek.map((day) => (
           <div
             key={day}
             className="py-1 text-center text-xs font-medium text-gray-500"
           >
             {moment().day(day).format("dd")}{" "}
-            {/* Short day name (e.g., Su, Mo, Tu) */}
           </div>
         ))}
-
-        {/* Render days */}
         {days.map((day, index) => (
           <button
             key={index}

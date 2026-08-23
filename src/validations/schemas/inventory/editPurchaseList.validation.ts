@@ -37,8 +37,8 @@ export const editPurchaseListValidation = z.object({
       invalid_type_error: "Unit must be a string",
       required_error: "Unit is required",
     })
-    .optional()
-    .nullish(),
+    .trim()
+    .min(1, "Unit is required"),
   lot: z
     .string()
     .trim()

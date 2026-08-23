@@ -61,7 +61,7 @@ export default async function PerformanceBoxForSalesUser() {
     <div
       className={cn(
         `
-          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full overflow-y-auto thin-scrollbar
+          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full overflow-y-auto
 
           // Glassmorphism aesthetic (Replaces old shadow-lg)
           bg-white/50 dark:bg-slate-900/50

@@ -54,7 +54,7 @@ const Timezone = ({
                       : "text-gray-700",
                 ].join(" "),
               menuList: () =>
-                "max-h-60 overflow-y-auto thin-scrollbar bg-white rounded-lg shadow-lg border border-gray-200",
+                "max-h-60 overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200",
               singleValue: () => "text-gray-900 font-medium",
               placeholder: () => "text-gray-400",
             }}

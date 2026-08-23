@@ -49,7 +49,9 @@ const AppointmentTitleSelectAndAdd = ({
   // Always hold the latest selected value so the delete handler can decide
   // whether to clear the field without relying on a stale closure.
   const valueRef = useRef(value);
-  valueRef.current = value;
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   // Memoize options to prevent unnecessary re-renders
   const options = useMemo<Option[]>(() => {
@@ -231,7 +233,7 @@ const AppointmentTitleSelectAndAdd = ({
 
   return (
     <SelectorWithAdd
-      label={isLoading ? "Appointment Title (loading…)" : "Appointment Title"}
+      label="Appointment Title"
       name="appointmentTitle"
       options={enhancedOptions}
       value={selectorValue}
@@ -249,6 +251,7 @@ const AppointmentTitleSelectAndAdd = ({
       selectCategory={false}
       placeholder="Free Consultation, Design Consultation..."
       disabled={disabled}
+      isLoading={isLoading}
       required={true}
       error={error}
     />

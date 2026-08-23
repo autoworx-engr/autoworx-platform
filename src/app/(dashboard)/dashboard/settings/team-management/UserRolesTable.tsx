@@ -109,7 +109,7 @@ export default function UserRolesTable() {
 
       <div className="px-4 pb-4">
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="thin-scrollbar h-full overflow-auto 2xl:max-h-[calc(100vh-450px)]">
+          <div className="h-full overflow-auto 2xl:max-h-[calc(100vh-450px)]">
             <table className="w-full min-w-[720px] border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50/90">

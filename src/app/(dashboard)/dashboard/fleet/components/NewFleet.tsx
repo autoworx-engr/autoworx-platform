@@ -17,6 +17,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
 import { CircleUserRound, PencilLineIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { JSX } from "react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
@@ -33,13 +34,14 @@ export default function NewFleet({
   buttonElement?: JSX.Element;
   setClient?: React.Dispatch<React.SetStateAction<Client | null>>;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [preferredPaymentTerm, setPreferredPaymentTerm] = useState<
     string | null
   >(null);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
-  const [tag, setTag] = useState<Tag | undefined>(fleet?.tag!);
+  const [tag, setTag] = useState<Tag | undefined>(fleet?.tag ?? undefined);
   const [profilePic, setProfilePic] = useState<File | null | string>(
     fleet ? fleet.photo : null,
   );
@@ -72,6 +74,9 @@ export default function NewFleet({
         fleet ? fleet?.fleet!.preferredPaymentTerm : null,
       );
       setZip(fleet?.zip ?? "");
+      // Re-read on every open: closing the modal resets the form, so without
+      // this the tag stayed blank on the second open even though it was saved.
+      setTag(fleet?.tag ?? undefined);
     }
   }, [isEdit, fleet, open]);
 
@@ -179,13 +184,20 @@ export default function NewFleet({
         message: res.message,
       });
     } else if (res.type === "success") {
-      useListsStore.setState(({ customers }) => ({
-        customers: [...customers, res.data],
-        newAddedCustomer: res.data,
-      }));
-      setClient && setClient(res?.data);
+      // Only a new fleet belongs in the customer list; on edit this appended a
+      // duplicate entry for a client that's already there.
+      if (!isEdit) {
+        useListsStore.setState(({ customers }) => ({
+          customers: [...customers, res.data],
+          newAddedCustomer: res.data,
+        }));
+        setClient && setClient(res?.data);
+      }
       resetForm();
       setOpen(false);
+      // The fleet list is server-rendered, so pull the updated row down before
+      // the modal can be reopened against stale props.
+      router.refresh();
       successToast(`Fleet ${isEdit ? "updated" : "created"} successfully`);
     }
   }
@@ -323,7 +335,7 @@ export default function NewFleet({
 
         <FormError />
 
-        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="fleetName"

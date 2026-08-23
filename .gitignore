@@ -34,6 +34,7 @@ yarn-error.log*
 .env
 .env*.local
 .env.production
+graphify-out
 
 # vercel
 .vercel

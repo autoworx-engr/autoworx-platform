@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Filter } from "lucide-react";
+import { useState } from "react";
 import { Button } from "../../../../../../components/ui/button";
 import {
   DropdownMenu,
@@ -91,7 +91,7 @@ export function CalendarFilterDropdown({
                 : "text-slate-500"
             }`}
           >
-            Team Mate
+            Teammate
           </button>
           <button
             type="button"
@@ -138,7 +138,7 @@ export function CalendarFilterDropdown({
                 </>
               ) : (
                 <div className="px-3 py-3 text-sm text-slate-500">
-                  No team mate available
+                  No teammate available
                 </div>
               )}
             </>

@@ -110,7 +110,12 @@ function ServiceBillSummary({
         ? Number((Number(labor.charge) * Number(labor.hours)).toFixed(2))
         : 0;
 
-      newServicesTotal += materialCost + laborCost;
+      const laborDiscount = labor?.discount
+        ? parseFloat(labor.discount.toString())
+        : 0;
+
+      newServicesTotal +=
+        materialCost + laborCost - materialDiscount - laborDiscount;
     });
 
     setSubtotal(newServicesTotal);
@@ -577,10 +582,6 @@ export default function ServiceCreateClient({
           await createShopService(payload);
         }
 
-        reset();
-        setServiceInfo(INITIAL_SERVICE_INFO);
-        setSelectedImageFile(null);
-        setValidationErrors({});
         router.push(`/dashboard/virtual-shop/admin/${selectedShopId}/services`);
         router.refresh();
       } catch (error) {
@@ -618,7 +619,7 @@ export default function ServiceCreateClient({
 
           <TabsContent
             value="service-info"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto p-2"
           >
             <ServiceInfo
               value={serviceInfo}
@@ -630,7 +631,7 @@ export default function ServiceCreateClient({
 
           <TabsContent
             value="create"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto p-2"
           >
             <CreateTab />
           </TabsContent>
@@ -638,7 +639,7 @@ export default function ServiceCreateClient({
       </div>
 
       <div className="flex-grow w-full min-h-0 xl:max-w-[32%] xl:self-stretch app-shadow grid grid-rows-[minmax(0,1fr),auto,auto] divide-y rounded-md bg-slate-50 overflow-hidden">
-        <div className="min-h-0 overflow-y-auto thin-scrollbar">
+        <div className="min-h-0 overflow-y-auto">
           <Create />
         </div>
 

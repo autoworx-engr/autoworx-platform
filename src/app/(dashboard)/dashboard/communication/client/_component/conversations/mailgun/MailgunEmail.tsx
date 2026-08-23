@@ -11,6 +11,7 @@ export default async function MailGunEmail({ clientId }: { clientId: number }) {
     where: { id: clientId },
     select: {
       email: true,
+      photo: true,
     },
   });
 
@@ -31,6 +32,7 @@ export default async function MailGunEmail({ clientId }: { clientId: number }) {
           conversations={conversations}
           clientId={clientId}
           clientEmail={!!client?.email}
+          clientPhoto={client?.photo}
         />
       ) : (
         <RedirectToSettings

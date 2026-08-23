@@ -355,7 +355,7 @@ export default function AddNewEmployee({
 
         <FormError />
 
-        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="firstName"

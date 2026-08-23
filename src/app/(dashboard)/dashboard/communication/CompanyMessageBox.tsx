@@ -70,6 +70,7 @@ export default function CompanyMessageBox({
   const prevScrollHeightRef = useRef(0);
   const isLoadingOlderRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [showJump, setShowJump] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
@@ -143,13 +144,16 @@ export default function CompanyMessageBox({
 
   // Initial scroll to bottom
   useEffect(() => {
-    if (messages.length > 0 && !isReady) {
+    if (messages.length > 0 && (!isReady || isImageLoaded)) {
       requestAnimationFrame(() => {
         bottomAnchorRef.current?.scrollIntoView({ block: "end" });
-        setTimeout(() => setIsReady(true), 200);
+        setIsImageLoaded(false);
+        if (!isReady) {
+          setTimeout(() => setIsReady(true), 200);
+        }
       });
     }
-  }, [messages.length, isReady]);
+  }, [messages.length, isReady, isImageLoaded]);
 
   // Auto-scroll when a new live message arrives (only if user is near bottom)
   useEffect(() => {
@@ -357,7 +361,7 @@ export default function CompanyMessageBox({
     >
       {/* 🔹 Header */}
       <div
-        className={`flex items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0 z-30"}`}
+        className={`flex shrink-0 items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0 z-30"}`}
       >
         {/* Left Side */}
         <div className="flex items-center gap-2">
@@ -382,7 +386,7 @@ export default function CompanyMessageBox({
       <div className="relative flex-1 min-h-0">
         <div
           ref={messageBoxRef}
-          className="h-full overflow-y-auto p-4 space-y-3"
+          className="h-full overflow-y-auto p-2 space-y-3"
         >
           {/* Top loader for older messages */}
           {!messagesLoading && messages.length > 0 && (
@@ -666,7 +670,7 @@ export default function CompanyMessageBox({
           </div>
 
           {/* Scrollable attachments */}
-          <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
+          <div className="max-h-64 overflow-y-auto px-4 pb-4">
             {/* Fixed responsive grid with minimum item width */}
             <div
               className="gap-3 pt-3"
@@ -737,7 +741,7 @@ export default function CompanyMessageBox({
       )}
       <form
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
-        className={`flex relative items-center gap-2 border-t bg-gray-100 p-3 ${onBack && "sticky bottom-0 right-0 left-0"}`}
+        className={`flex relative shrink-0 items-center gap-2 border-t bg-gray-100 p-3 ${onBack && "sticky bottom-0 right-0 left-0"}`}
       >
         {/* attachment or estimate dropdown */}
         {showAttachment && (

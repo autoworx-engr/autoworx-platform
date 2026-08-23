@@ -171,7 +171,7 @@ export default function SearchCollaborationModal({}: TProps) {
                 {/* user list */}
                 <div
                   ref={scrollContainerRef}
-                  className="thin-scrollbar flex h-72 flex-col items-start space-y-2 overflow-y-auto p-1"
+                  className="flex h-72 flex-col items-start space-y-2 overflow-y-auto p-1"
                 >
                   {isLoading && admins.length === 0 ? (
                     <div className="flex w-full items-center justify-center py-8 text-sm text-slate-400">

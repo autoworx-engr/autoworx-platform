@@ -39,7 +39,7 @@ export default function LogoutBtn({ className, ...props }: TProps) {
 
       await signOut({ redirect: false });
 
-      router.push("/login");
+      window.location.replace("/login");
     } catch (err: any) {
       errorToast("Logout failed");
     }

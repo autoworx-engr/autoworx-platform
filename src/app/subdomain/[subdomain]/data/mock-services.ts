@@ -10,7 +10,7 @@ export const mockServices: Service[] = [
       "Quick exterior wash with spray wax protection for a showroom shine.",
     price: 49,
     estimatedMinutes: 45,
-    category: "Maintenance",
+    category: ["Maintenance"],
     images: [
       "https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=600&h=400&fit=crop",
     ],
@@ -23,7 +23,7 @@ export const mockServices: Service[] = [
       "Full vacuum, steam cleaning, leather conditioning, and dashboard treatment.",
     price: 129,
     estimatedMinutes: 120,
-    category: "Detailing",
+    category: ["Detailing"],
     images: [
       "https://images.unsplash.com/photo-1507136566006-cfc505b114fc?w=600&h=400&fit=crop",
     ],
@@ -36,7 +36,7 @@ export const mockServices: Service[] = [
       "Complete interior and exterior detailing. Paint decontamination, clay bar, polish, and interior deep clean.",
     price: 299,
     estimatedMinutes: 300,
-    category: "Detailing",
+    category: ["Detailing"],
     images: [
       "https://images.unsplash.com/photo-1601362840469-51e4d8d58785?w=600&h=400&fit=crop",
     ],
@@ -49,7 +49,7 @@ export const mockServices: Service[] = [
       "Remove light swirls and scratches with a single-stage machine polish.",
     price: 399,
     estimatedMinutes: 360,
-    category: "Paint Correction",
+    category: ["Paint Correction"],
     images: [
       "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=400&fit=crop",
     ],
@@ -62,7 +62,7 @@ export const mockServices: Service[] = [
       "Advanced multi-step correction for heavy swirls, oxidation, and deep scratches.",
     price: 799,
     estimatedMinutes: 480,
-    category: "Paint Correction",
+    category: ["Paint Correction"],
     images: [
       "https://images.unsplash.com/photo-1600706432502-77a0e2e32431?w=600&h=400&fit=crop",
     ],
@@ -75,7 +75,7 @@ export const mockServices: Service[] = [
       "Professional-grade 1-year ceramic coating for durable paint protection and hydrophobic finish.",
     price: 599,
     estimatedMinutes: 240,
-    category: "Ceramic Coating",
+    category: ["Ceramic Coating"],
     images: [
       "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600&h=400&fit=crop",
     ],
@@ -88,7 +88,7 @@ export const mockServices: Service[] = [
       "Premium 5-year ceramic coating with multi-layer application for maximum durability.",
     price: 1299,
     estimatedMinutes: 480,
-    category: "Ceramic Coating",
+    category: ["Ceramic Coating"],
     images: [
       "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=600&h=400&fit=crop",
     ],
@@ -101,7 +101,7 @@ export const mockServices: Service[] = [
       "Thorough engine bay cleaning, degreasing, and dressing for a clean engine compartment.",
     price: 89,
     estimatedMinutes: 60,
-    category: "Detailing",
+    category: ["Detailing"],
     images: [
       "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&h=400&fit=crop",
     ],
@@ -114,7 +114,7 @@ export const mockServices: Service[] = [
       "Restore cloudy, yellowed headlights to crystal clear with UV protective sealant.",
     price: 79,
     estimatedMinutes: 45,
-    category: "Maintenance",
+    category: ["Maintenance"],
     images: [
       "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&h=400&fit=crop",
     ],
@@ -127,7 +127,7 @@ export const mockServices: Service[] = [
       "Deep clean wheels, dress tires, and apply ceramic wheel coating for lasting protection.",
     price: 149,
     estimatedMinutes: 90,
-    category: "Maintenance",
+    category: ["Maintenance"],
     images: [
       "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=400&fit=crop",
     ],

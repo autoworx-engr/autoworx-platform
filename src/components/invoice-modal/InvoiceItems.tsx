@@ -3,6 +3,7 @@
 import type { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
+import { stripHtml } from "@/utils/stripHtml";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
@@ -163,7 +164,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
         {(openService === item.id || isPrinting) && (
           <>
             <p className="whitespace-pre-wrap">
-              {item.serviceDesc || item.service!.description}
+              {stripHtml(item.serviceDesc || item.service!.description)}
             </p>
             <div className="mt-2 text-primary">
               {item.materials.map((material, index) => {

@@ -1,27 +1,27 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import { completeTask } from "@/actions/task/completeTask";
 import { deleteTask } from "@/actions/task/deleteTask";
-import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import {
   appointmentQueryKey,
   taskQueryKey,
 } from "@/app/(dashboard)/dashboard/task/_constant";
-import { errorToast, successToast } from "@/lib/toast";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { errorToast, successToast } from "@/lib/toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { Popconfirm } from "antd";
 import {
   CheckCircle,
-  PencilLineIcon,
   MessageSquare,
+  PencilLineIcon,
   Trash2,
 } from "lucide-react";
-import { Popconfirm } from "antd";
 import moment from "moment";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import { CustomEventProps } from "../../_utils/calendar.types";
-import { isHexColor, lightenHex, darkenHex } from "../../_utils/colorUtils";
+import { darkenHex, isHexColor, lightenHex } from "../../_utils/colorUtils";
 import { AppointmentDetailCard } from "./AppointmentDetailCard";
 import { TaskDetailCard } from "./TaskDetailCard";
 

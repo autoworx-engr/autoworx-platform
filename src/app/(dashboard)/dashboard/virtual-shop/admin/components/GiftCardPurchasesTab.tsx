@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GiftCardPurchaseStats } from "./gift-card-purchases/GiftCardPurchaseStats";
 import { GiftCardStatusTabs } from "./gift-card-purchases/GiftCardStatusTabs";
@@ -51,7 +51,11 @@ export default function GiftCardPurchasesTab({
     [pathname, router, searchParams],
   );
 
+  const lastPushedSearchRef = useRef(search);
+
   useEffect(() => {
+    if (search === lastPushedSearchRef.current) return;
+    lastPushedSearchRef.current = search;
     setSearchInput(search);
   }, [search]);
 
@@ -59,6 +63,7 @@ export default function GiftCardPurchasesTab({
     const trimmed = searchInput.trim();
     if (trimmed === search.trim()) return;
     const timeout = setTimeout(() => {
+      lastPushedSearchRef.current = trimmed;
       updateQuery({ search: trimmed || undefined, page: undefined });
     }, 400);
     return () => clearTimeout(timeout);

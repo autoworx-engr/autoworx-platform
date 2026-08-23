@@ -597,7 +597,7 @@ const CampaignForm = ({
                         ? getTimeFromISOString(formData.startTime)
                         : null
                     }
-                    className={`${error.startTime ? "!border-red-500" : ""}`}
+                    className={`!h-[38px] ${error.startTime ? "!border-red-500" : ""}`}
                   />
 
                   {error.startTime && (

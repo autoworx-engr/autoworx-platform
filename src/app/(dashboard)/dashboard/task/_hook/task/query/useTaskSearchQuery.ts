@@ -13,14 +13,7 @@ export type TaskSearchItem = Task & {
   } | null;
 };
 
-/**
- * Server-paginated task search. Fetches one page at a time (skip/take) and
- * exposes fetchNextPage so the calendar search dropdown can infinite-scroll
- * against the server rather than slicing a fully-loaded list client-side.
- */
 export default function useTaskSearchQuery(searchTerm: string) {
-  // Surrounding whitespace must never reach the `contains` filter — " test"
-  // matches nothing in the DB even when "test" does.
   const term = searchTerm.trim();
   const nameFilter = clientNameFilter(term);
 

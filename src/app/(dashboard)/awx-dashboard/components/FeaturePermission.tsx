@@ -459,7 +459,7 @@ export default function FeaturePermission({
   }
 
   return (
-    <div className="h-full lg:h-[82vh] overflow-y-auto thin-scrollbar mx-auto min-w-full rounded-lg border border-gray-200 bg-white px-2 py-4 shadow-sm lg:p-8">
+    <div className="h-full lg:h-[82vh] overflow-y-auto mx-auto min-w-full rounded-lg border border-gray-200 bg-white px-2 py-4 shadow-sm lg:p-8">
       <div className="space-y-1 px-4">
         {/* Header with Master Toggle */}
         <div className="flex items-center justify-between border-b-2 border-[#66738C] pb-3">

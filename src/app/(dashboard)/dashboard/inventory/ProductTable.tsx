@@ -144,7 +144,7 @@ export default function ProductTable({
         <div className="h-20 lg:hidden" />
       </div>
 
-      <div className="thin-scrollbar hidden lg:block pb-4 h-[calc(70vh-78px)] overflow-auto overflow-x-clip">
+      <div className="hidden lg:block pb-4 h-[calc(70vh-78px)] overflow-auto overflow-x-clip">
         <table className="w-full">
           <thead className="bg-background sticky top-0 ">
             <tr className="h-10 border-b">

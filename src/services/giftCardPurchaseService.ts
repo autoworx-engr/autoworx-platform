@@ -14,10 +14,12 @@ import {
   GiftCardPurchaseType,
 } from "@prisma/client";
 import { type TransactionClient } from "@/lib/db";
+import { maskGiftCardCode } from "@/utils/maskGiftCardCode";
 import {
   normalizePhoneForStorage,
   phoneLookupWhereClause,
 } from "@/utils/normalizePhone";
+import moment from "moment";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
@@ -210,7 +212,13 @@ export async function buildGiftCardPurchaseContext(
       throw new AppError(400, "Invalid or inactive promo code");
     }
 
-    if (promo.expireDate && new Date(promo.expireDate) < new Date()) {
+    // Inclusive of the expiry day itself: expireDate is stored as midnight UTC,
+    // so a plain `<` comparison rejected the code for the whole of the day the
+    // admin picked as its last valid date.
+    if (
+      promo.expireDate &&
+      moment.utc(promo.expireDate).endOf("day").isBefore(moment())
+    ) {
       throw new AppError(400, "Promo code has expired");
     }
 
@@ -617,7 +625,7 @@ export async function issueGiftCardFromContext(
 
   await sendGiftCardNotifications(tx, input, context, code);
 
-  const maskedCode = `${code.split("-")[0]}-****-${code.split("-")[2]}`;
+  const maskedCode = maskGiftCardCode(code);
 
   // Recipient notifications above cover the "here's your gift card" case.
   // When gifting to someone else, the purchaser is charged but otherwise

@@ -132,7 +132,7 @@ export default function InvoiceEstimateModal({
         </div>
 
         {/* Scrollable body */}
-        <div className="thin-scrollbar scrollbar-thumb-slate-200 scrollbar-track-transparent dark:scrollbar-thumb-slate-700 flex-1 space-y-2 overflow-y-auto py-1">
+        <div className="scrollbar-thumb-slate-200 scrollbar-track-transparent dark:scrollbar-thumb-slate-700 flex-1 space-y-2 overflow-y-auto py-1">
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
 
           {/* Vehicle Information Section */}

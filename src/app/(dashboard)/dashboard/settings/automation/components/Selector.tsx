@@ -206,7 +206,7 @@ export function Selector({
               </div>
             )}
 
-            <div className="thin-scrollbar max-h-52 overflow-y-auto py-1">
+            <div className="max-h-52 overflow-y-auto py-1">
               {filteredOptions?.length > 0 ? (
                 filteredOptions.map((opt) => {
                   const isSelected = selectedValue === opt.id.toString();

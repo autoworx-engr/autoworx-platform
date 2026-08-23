@@ -91,7 +91,7 @@ export function CalendarSearchDropdown({
         className="absolute z-50 mt-2 w-full lg:w-80 xl:w-80 overflow-hidden rounded-xl ring-1 ring-slate-900/5 dark:ring-slate-700/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-xl"
       >
         <div
-          className="max-h-80 overflow-y-auto thin-scrollbar"
+          className="max-h-80 overflow-y-auto"
           onScroll={(e) => {
             if (!hasMore) return;
             const el = e.currentTarget;

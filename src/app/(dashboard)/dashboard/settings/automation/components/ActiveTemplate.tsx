@@ -14,7 +14,7 @@ type TemplateProps = {
   iconBtnClassName?: string;
   handleFileAttachment: (
     event: ChangeEvent<HTMLInputElement>,
-    type: string
+    type: string,
   ) => void;
   label?: string;
   attachments?: { fileUrl: string; id: number; isLocal?: boolean }[];
@@ -54,7 +54,7 @@ const ActiveTemplate = ({
 }: TemplateProps) => {
   const handleDeleteAttachment = (
     e: React.MouseEvent<HTMLButtonElement>,
-    fileToRemove: { fileUrl: string }
+    fileToRemove: { fileUrl: string },
   ) => {
     e.stopPropagation();
     const updatedAttachments =
@@ -76,7 +76,7 @@ const ActiveTemplate = ({
           type="text"
           value={subjectValue || ""}
           placeholder="Subject"
-          className={`mb-1 w-full rounded-sm border bg-background px-2 py-0.5 leading-6 outline-none ${subjectError ? "border-red-500 focus:border-red-500" : "border-slate-400"}`}
+          className={`mb-1 w-full rounded-sm border bg-background px-2 py-1 leading-6 outline-none ${subjectError ? "border-red-500 focus:border-red-500" : "border-slate-400"}`}
           onChange={(e) =>
             subjectName && handleChange(subjectName, e.target.value)
           }

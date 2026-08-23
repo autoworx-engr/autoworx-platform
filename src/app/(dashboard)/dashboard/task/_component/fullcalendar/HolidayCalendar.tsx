@@ -26,7 +26,6 @@ export default function HolidayCalendar() {
   const queryClient = useQueryClient();
   const [isDirty, setIsDirty] = useState(false);
 
-  // Reset dirty flag when month/year changes (new context = fresh state)
   useEffect(() => {
     setIsDirty(false);
   }, [selectedMonth, selectedYear]);
@@ -37,18 +36,15 @@ export default function HolidayCalendar() {
   );
 
   const holidaysFormatted = holidays?.map((holiday) => {
-    // Use UTC date string to avoid timezone shift — e.g. "2026-04-22T00:00:00Z"
-    // interpreted in local time could show as Apr 21 in UTC-X timezones.
     const dateOnly = moment
       .utc(holiday.date as unknown as string)
       .format("YYYY-MM-DD");
     return new DateObject(dateOnly);
   });
 
-  // Save holidays when month changes or Apply is clicked
   const handleAddHoliday = async (fromMonthChange: boolean = false) => {
     if (!authUser?.companyId) return;
-    console.log({ fromMonthChange });
+    // console.log({ fromMonthChange });
 
     try {
       const totalHolidays = holidaysFormatted.map((date) => ({

@@ -178,6 +178,17 @@ export async function POST(req: NextRequest) {
 
     const { name, imageUrl, isActive, isDefault } = parsedBody.data;
 
+    const duplicateTemplate = await db.giftCardTemplate.findFirst({
+      where: { shopId, name: { equals: name, mode: "insensitive" } },
+    });
+
+    if (duplicateTemplate) {
+      throw new AppError(
+        409,
+        "A template with this name already exists for this shop",
+      );
+    }
+
     const newTemplate = await db.$transaction(async (tx) => {
       // If we are setting this newly created template as default, turn off default for all others
       if (isDefault) {

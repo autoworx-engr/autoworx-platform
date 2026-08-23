@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { maskGiftCardCode } from "@/utils/maskGiftCardCode";
 import { settleGiftCardPurchasePayment } from "@/services/giftCardPurchaseSettlementService";
 import { TransactionType } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -120,8 +121,7 @@ export async function POST(req: Request) {
     });
 
     if (issued?.giftCard?.orderNumber) {
-      const codeParts = issued.giftCard.code.split("-");
-      const maskedCode = `${codeParts[0]}-****-${codeParts[2] || "****"}`;
+      const maskedCode = maskGiftCardCode(issued.giftCard.code);
       const issuedAmount = Number(
         issued.amount ?? issued.giftCard.initialBalance ?? 0,
       );

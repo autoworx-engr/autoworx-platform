@@ -14,6 +14,7 @@ import {
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import { formatAmount, useAmountField } from "@/hooks/useAmountField";
+import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
@@ -85,6 +86,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
+
+  const { data: company } = useCompanyQuery();
+  const companyName = company?.name ?? "";
+
+  // Cash is received by the shop, so the field defaults to the company name
+  useEffect(() => {
+    if (companyName) setCash((prev) => prev || companyName);
+  }, [companyName]);
   const [depositMethod, setDepositMethod] = useState("");
   const [depositNotes, setDepositNotes] = useState("");
 
@@ -109,7 +118,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setCard("");
     setCardType("MASTERCARD");
     setCheck("");
-    setCash("");
+    setCash(companyName);
     setAmount(totalDue);
     setDeposit(totalDue);
     setPaymentMethod(null);

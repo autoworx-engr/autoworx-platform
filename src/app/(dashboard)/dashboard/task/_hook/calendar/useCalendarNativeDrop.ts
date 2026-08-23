@@ -46,8 +46,6 @@ function findDropDate(
 }
 
 function findDropTime(e: React.DragEvent<HTMLDivElement>): string | null {
-  // Walk up from the actual drop target — tr[data-time] is an ancestor
-  // in FullCalendar's timeGrid slot table
   let el = e.target as HTMLElement | null;
   while (el) {
     if (el.dataset.time) return el.dataset.time;

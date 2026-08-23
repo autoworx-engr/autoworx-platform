@@ -267,12 +267,14 @@ export default function EstimateAndInvoicePage() {
                   val: termPolicy.terms,
                   key: "terms",
                   len: currentTermsLength,
+                  placeholder: "Enter your terms and conditions here...",
                 },
                 {
                   label: "Privacy Policy",
                   val: termPolicy.policy,
                   key: "policy",
                   len: currentPolicyLength,
+                  placeholder: "Enter your privacy policy here...",
                 },
               ].map((field) => (
                 <div key={field.key} className="space-y-2">
@@ -284,7 +286,7 @@ export default function EstimateAndInvoicePage() {
                   <div className="relative group">
                     <textarea
                       className={cn(
-                        "h-48 2xl:h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-primary/5",
+                        "h-48 2xl:h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all focus:bg-white focus:ring-4 focus:ring-primary/5",
                         field.len > maxLength
                           ? "border-2 border-red-400"
                           : "border border-slate-200 focus:border-primary/30",
@@ -296,6 +298,7 @@ export default function EstimateAndInvoicePage() {
                           [field.key]: e.target.value,
                         })
                       }
+                      placeholder={field.placeholder}
                     />
                     <div
                       className={cn(

@@ -172,7 +172,7 @@ export default function Selector<T>({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
+        className="flex max-h-48 flex-col overflow-y-auto py-1"
       >
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-6 px-4">
@@ -224,24 +224,26 @@ export default function Selector<T>({
                   {(onRemoveItem || isSelected) && (
                     <div className="flex shrink-0 items-center gap-1">
                       {onRemoveItem && (
-                        <Popconfirm
-                          title="Are you sure to delete this item?"
-                          onConfirm={(e) => {
-                            e?.stopPropagation();
-                            onRemoveItem(
-                              item,
-                              e as unknown as React.MouseEvent,
-                            );
-                          }}
-                          onCancel={(e) => {
-                            e?.stopPropagation();
-                          }}
-                          okText="Yes"
-                          cancelText="No"
-                          placement="topRight"
-                        >
-                          <X cursor={"pointer"} color="#f87171" size={20} />
-                        </Popconfirm>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Popconfirm
+                            title="Are you sure to delete this item?"
+                            onConfirm={(e) => {
+                              e?.stopPropagation();
+                              onRemoveItem(
+                                item,
+                                e as unknown as React.MouseEvent,
+                              );
+                            }}
+                            onCancel={(e) => {
+                              e?.stopPropagation();
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="topRight"
+                          >
+                            <X cursor={"pointer"} color="#f87171" size={20} />
+                          </Popconfirm>
+                        </div>
                       )}
                       {isSelected && (
                         <span className="flex w-4 shrink-0 items-center justify-center">

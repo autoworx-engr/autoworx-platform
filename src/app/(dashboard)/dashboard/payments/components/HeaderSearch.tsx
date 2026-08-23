@@ -42,15 +42,15 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
             onChange={(e) => setFilter({ search: e.target.value })}
           />
         </div>
-        <div className="z-50 flex w-full flex-wrap items-center gap-4 sm:flex-nowrap lg:w-auto">
-          <div className="transition-transform hover:scale-[1.01] z-50">
+        <div className="z-50 flex w-full min-w-0 flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4 lg:w-auto">
+          <div className="z-50 min-w-0 flex-1 sm:flex-none">
             <DateRange
               dateRange={dateRange}
               onOk={(start, end) => setFilter({ dateRange: [start, end] })}
               onCancel={() => setFilter({ dateRange: [null, null] })}
             />
           </div>
-          <div className="transition-transform hover:scale-[1.01]">
+          <div className="shrink-0">
             <FilterforPayment />
           </div>
         </div>

@@ -629,6 +629,17 @@ export const CheckoutV1 = () => {
   }, 0);
   const subtotal = Number((serviceBaseTotal + vehicleExtraTotal).toFixed(2));
 
+  // Tax base: material price only (labor is excluded), same as invoice/estimate
+  const materialSubtotal = Number(
+    cart
+      .reduce(
+        (sum, item) =>
+          sum + Number(item.service.materialTotal || 0) * item.quantity,
+        0,
+      )
+      .toFixed(2),
+  );
+
   const taxRateRaw = shop?.company?.tax ?? settings.taxPercent;
   const serviceFeeRateRaw =
     shop?.company?.serviceFee ?? settings.shopFeePercent;
@@ -642,12 +653,12 @@ export const CheckoutV1 = () => {
     bookingSettings?.isServiceFeeEnabled ?? settings.shopFeeEnabled;
   const isTaxEnabled = bookingSettings?.isTaxEnabled ?? settings.taxEnabled;
 
-  // Tax and fee on original subtotal (gift card never affects rates)
+  // Fee on original subtotal, tax on material price (gift card never affects rates)
   const shopFee = isServiceFeeEnabled
     ? Number(((subtotal * serviceFeeRate) / 100).toFixed(2))
     : 0;
   const tax = isTaxEnabled
-    ? Number(((subtotal * taxRate) / 100).toFixed(2))
+    ? Number(((materialSubtotal * taxRate) / 100).toFixed(2))
     : 0;
   const rawGrandTotal = Number((subtotal + shopFee + tax).toFixed(2));
 
@@ -749,10 +760,10 @@ export const CheckoutV1 = () => {
               <span>${shopFee}</span>
             </div>
           )}
-          {tax > 0 && (
+          {isTaxEnabled && (
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Tax ({taxRate}%)</span>
-              <span>${tax}</span>
+              <span>${tax.toFixed(2)}</span>
             </div>
           )}
           {giftCardRedeemedPreview > 0 && (
