@@ -334,8 +334,8 @@ export default function SearchScroll({
               className={cn(
                 "flex h-12 w-full items-center gap-2 rounded-2xl border-2 px-4 transition-all duration-200 sm:w-auto",
                 "text-sm font-semibold outline-none active:scale-95",
-                selectedType !== null
-                  ? "border-primary/40 bg-primary/5 text-primary"
+                selectedType !== undefined || showColumnFilter
+                  ? "border-primary/40 bg-primary/5 text-primary ring-4 ring-primary/10"
                   : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50",
               )}
               aria-label="Filter by Type"

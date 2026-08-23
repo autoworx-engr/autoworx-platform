@@ -59,10 +59,11 @@ export default function EmployeeFilter() {
               <Search className="w-5 h-5" />
             </span>
             <input
-              name="search"
+              name="employee-filter-search"
+              id="employee-filter-search"
               type="text"
               className="
-                w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 
+                w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200
                 placeholder:text-slate-400 focus:outline-none
               "
               placeholder="Search by Employee ID, Name, Email..."
@@ -70,9 +71,11 @@ export default function EmployeeFilter() {
                 setSearchInput(e.target.value);
                 handleSearchChange(e.target.value.trim());
               }}
-              autoComplete="off"
+              autoComplete="new-password"
               autoCorrect="off"
               spellCheck="false"
+              data-lpignore="true"
+              data-1p-ignore="true"
             />
           </div>
 

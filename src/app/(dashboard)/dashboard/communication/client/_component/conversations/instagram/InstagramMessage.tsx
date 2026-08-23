@@ -61,7 +61,10 @@ export default function InstagramMessage({ message }: { message: TMessage }) {
       )}
 
       <div
-        className={cn("max-w-[85%] sm:max-w-[70%]", isOutgoing && "ml-auto")}
+        className={cn(
+          "min-w-0 max-w-[85%] sm:max-w-[70%]",
+          isOutgoing && "ml-auto",
+        )}
       >
         {(!!text || hasAttachments) && (
           <div
@@ -73,7 +76,7 @@ export default function InstagramMessage({ message }: { message: TMessage }) {
             )}
           >
             {text && (
-              <div className="break-words whitespace-pre-wrap">
+              <div className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                 {makeLinksClickable(text)}
               </div>
             )}

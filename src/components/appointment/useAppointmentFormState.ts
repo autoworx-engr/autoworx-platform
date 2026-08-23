@@ -132,7 +132,7 @@ export function useAppointmentFormState({
     !!client?.id && (estimatesLoading || invoicesLoading);
 
   const timezone = useCompanyTimezone();
-  const today = moment().format("YYYY-MM-DD");
+  const today = moment().tz(timezone).format("YYYY-MM-DD");
 
   const [tab, setTab] = useState(Tab.Reminder);
   const [date, setDate] = useState<string | undefined>(
@@ -260,8 +260,6 @@ export function useAppointmentFormState({
   }, [estimates, invoices]);
 
   const filteredDraftEstimateOptions = useMemo(() => {
-    // Normalised so a stray or doubled space in the query still matches, the
-    // same way the other pickers in this modal search.
     const term = normalizeSearch(draftSearch);
     if (!term) return draftEstimateOptions;
     return draftEstimateOptions.filter(
@@ -549,9 +547,6 @@ export function useAppointmentFormState({
     if (!draftOpen) setDraftSearch("");
   }, [draftOpen]);
 
-  // The lead's estimate can be created while this modal is already mounted, so
-  // the prefill follows the prop instead of only its initial value. Never
-  // clears: an absent id must not undo a selection the user just made.
   useEffect(() => {
     if (fromEdit || !draftEstimateId) return;
     setDraft(draftEstimateId);
@@ -562,10 +557,6 @@ export function useAppointmentFormState({
     if (fromEdit && !appointment) return;
     const currentClientId = client?.id ?? null;
     if (prevDraftClientId.current === undefined) {
-      // Seeded from the client the form was opened for rather than from state:
-      // `client` is still null on the render that hydrates it, so reading it
-      // here saw null -> client id as a switch on the next render and cleared
-      // the invoice that came in with the appointment or the lead.
       prevDraftClientId.current = fromEdit
         ? (appointment?.client?.id ?? currentClientId)
         : (clientId ?? currentClientId);

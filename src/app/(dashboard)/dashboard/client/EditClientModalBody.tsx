@@ -15,6 +15,11 @@ import { DEFAULT_IMAGE_URL, isDefaultClientSourceName } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
+import {
+  isValidEmail,
+  lowercaseEmailInput,
+  normalizeEmail,
+} from "@/utils/email";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
@@ -121,7 +126,9 @@ export default function EditClientModalBody({
       ?.value as string;
     const lastName =
       document.querySelector<HTMLInputElement>("#lastName")?.value;
-    const email = document.querySelector<HTMLInputElement>("#email")?.value;
+    const email = normalizeEmail(
+      document.querySelector<HTMLInputElement>("#email")?.value ?? "",
+    );
     const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
     const mobile =
       countryCode && phoneNumber
@@ -135,6 +142,14 @@ export default function EditClientModalBody({
 
     if (!firstName?.trim()) {
       showError({ field: "firstName", message: "First name is required." });
+      return;
+    }
+
+    if (email && !isValidEmail(email)) {
+      showError({
+        field: "email",
+        message: "Please enter a valid email address.",
+      });
       return;
     }
 
@@ -339,8 +354,21 @@ export default function EditClientModalBody({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <SlimInput
             name="email"
+            type="email"
             label="Email"
-            defaultValue={resolvedClient?.email!}
+            defaultValue={normalizeEmail(resolvedClient?.email ?? "")}
+            onChange={(e) => {
+              const value = lowercaseEmailInput(e.target);
+
+              if (value && !isValidEmail(value)) {
+                showError({
+                  field: "email",
+                  message: "Please enter a valid email address.",
+                });
+              } else {
+                clearError();
+              }
+            }}
           />
           <div className="w-full">
             {clientData ? (

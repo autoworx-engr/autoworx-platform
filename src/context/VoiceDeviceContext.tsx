@@ -10,6 +10,7 @@ import {
 import { Call, Device } from "@twilio/voice-sdk";
 import { InfobipRTCEvent, CallsApiEvent } from "infobip-rtc";
 import { pusher } from "@/lib/pusher/client";
+import { webIdentity } from "@/lib/twilio/identity";
 import { useSession } from "next-auth/react";
 
 type VoiceProvider = "TWILIO" | "INFOBIP";
@@ -336,7 +337,10 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
     const response = await fetch("/api/twilio/token", {
       method: "POST",
-      body: JSON.stringify({ identity: twilioPhoneNumber, companyId }),
+      body: JSON.stringify({
+        identity: webIdentity(twilioPhoneNumber),
+        companyId,
+      }),
       headers: { "Content-Type": "application/json" },
     });
 

@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const params = formDataToParams(formData);
 
-    const callSid = params.CallSid;
+    const { searchParams } = new URL(request.url);
+    const callSid = searchParams.get("callId") || params.CallSid;
     const dialCallStatus = params.DialCallStatus ?? "";
     const callStatus = params.CallStatus ?? "";
 
@@ -35,8 +36,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Look up the call (and the credentials we need for signature verification)
-    // up front so we can both verify and process inside the 15s window.
     const call = await db.clientCall.findFirst({
       where: { callSid },
       select: {
@@ -63,16 +62,6 @@ export async function POST(request: Request) {
       where: { companyId: call.companyId },
       select: { authToken: true },
     });
-
-    // TEMP: signature verification disabled for debugging
-    // const verification = await verifyTwilioSignature(
-    //   request,
-    //   params,
-    //   twilioCredentials?.authToken ?? null,
-    // );
-    // if (!verification.ok) {
-    //   return new Response("Forbidden", { status: 403 });
-    // }
 
     await processCallStatus({
       callId: call.id,
@@ -131,14 +120,8 @@ async function processCallStatus({
   const finalStatus = dialCallStatus || callStatus;
   const isMissedCall = !!finalStatus && MISSED_STATUSES.has(finalStatus);
 
-  // Only fire the missed-call side effects on the transition into "missed" —
-  // Twilio can deliver the status callback more than once, and a duplicate
-  // must not send the client a second text-back.
   const alreadyMissed = MISSED_STATUSES.has(currentStatus ?? "");
 
-  // Only an inbound call the client placed is something we "missed" — when we
-  // rang them and they didn't pick up there is nothing to notify the team about
-  // and texting them "sorry we missed your call" would read as nonsense.
   if (isMissedCall && !alreadyMissed && direction === "inbound") {
     await sendClientCallMissedNotification({ companyId, clientId, clientName });
     await sendMissedCallTextBack({ companyId, clientId, call: { from, to } });
@@ -150,10 +133,6 @@ async function processCallStatus({
   } else if (MISSED_STATUSES.has(dialCallStatus)) {
     newStatus = "no-answer";
   } else if (!dialCallStatus) {
-    // No DialCallStatus means the <Dial> never ran to completion — the caller
-    // hung up while it was still ringing, or the leg failed before bridging.
-    // Fall back to the parent CallStatus so the row doesn't stay "ringing"
-    // forever (the bug that showed months-old calls as still ringing).
     if (MISSED_STATUSES.has(callStatus)) {
       newStatus = "no-answer";
     } else if (callStatus === "completed") {
@@ -169,8 +148,6 @@ async function processCallStatus({
     });
     await updateCallChatTrack({ clientId, status: newStatus, direction });
 
-    // Push the settled status to any open phone tab so it stops showing
-    // "Ringing…" without the user having to reload the page.
     try {
       await getPusherInstance().trigger(
         `company-${companyId}`,
