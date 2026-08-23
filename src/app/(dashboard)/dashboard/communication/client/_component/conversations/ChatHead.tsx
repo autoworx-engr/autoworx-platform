@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ChannelUnreadIndicator from "./ChannelUnreadIndicator";
 
 function MessengerIcon({ className }: { className?: string }) {
   return (
@@ -140,14 +141,9 @@ export default function ChatHead({
       )}
     >
       {clientConversationTrack && !clientConversationTrack?.emailIsRead && (
-        <span className="absolute -top-1 -right-1 z-10">
-          <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-            {clientConversationTrack.emailIsUnReadCount > 9
-              ? "9+"
-              : clientConversationTrack.emailIsUnReadCount || 1}
-          </span>
-        </span>
+        <ChannelUnreadIndicator
+          count={clientConversationTrack.emailIsUnReadCount}
+        />
       )}
       <AtSign
         className="w-5 h-5 text-white"
@@ -171,14 +167,9 @@ export default function ChatHead({
       )}
     >
       {clientConversationTrack && !clientConversationTrack?.smsIsRead && (
-        <span className="absolute -top-1 -right-1 z-10">
-          <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-            {clientConversationTrack.smsUnReadCount > 9
-              ? "9+"
-              : clientConversationTrack.smsUnReadCount || 1}
-          </span>
-        </span>
+        <ChannelUnreadIndicator
+          count={clientConversationTrack.smsUnReadCount}
+        />
       )}
       <svg
         fill="#ffffff"
@@ -224,12 +215,9 @@ export default function ChatHead({
       )}
     >
       {clientConversationTrack && !clientConversationTrack?.messengerIsRead && (
-        <span className="absolute -top-1 -right-1 z-10">
-          <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-            {clientConversationTrack.messengerUnReadCount ?? 1}
-          </span>
-        </span>
+        <ChannelUnreadIndicator
+          count={clientConversationTrack.messengerUnReadCount}
+        />
       )}
       <MessengerIcon className="w-5 h-5 text-white" />
     </button>
@@ -251,12 +239,9 @@ export default function ChatHead({
     >
       {clientConversationTrack &&
         !(clientConversationTrack as any)?.instagramIsRead && (
-          <span className="absolute -top-1 -right-1 z-10">
-            <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-              {(clientConversationTrack as any).instagramUnReadCount ?? 1}
-            </span>
-          </span>
+          <ChannelUnreadIndicator
+            count={(clientConversationTrack as any).instagramUnReadCount}
+          />
         )}
       <svg
         viewBox="0 0 24 24"
