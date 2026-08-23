@@ -20,6 +20,7 @@ import {
   calcMaterialSubtotal,
   mapInvoiceItemsForCreate,
 } from "@/services/shopServiceInvoiceItems";
+import { clientNameFilter } from "@/app/(dashboard)/dashboard/task/_utils/clientNameSearch";
 
 import z from "zod";
 
@@ -520,15 +521,9 @@ export async function GET(req: Request) {
 
     if (search) {
       const searchNum = parseInt(search, 10);
+      const nameFilter = clientNameFilter(search);
       baseWhereClause.OR = [
-        {
-          client: {
-            OR: [
-              { firstName: { contains: search, mode: "insensitive" } },
-              { lastName: { contains: search, mode: "insensitive" } },
-            ],
-          },
-        },
+        ...(nameFilter ? [{ client: nameFilter }] : []),
         {
           vehicle: {
             OR: [
