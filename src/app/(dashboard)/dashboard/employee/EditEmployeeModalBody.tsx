@@ -427,6 +427,7 @@ export default function EditClientModalBody({
             <Password
               name="changePassword"
               required
+              autoComplete="new-password"
               className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
             />
           </div>
