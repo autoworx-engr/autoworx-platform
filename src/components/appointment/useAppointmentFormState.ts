@@ -132,7 +132,7 @@ export function useAppointmentFormState({
     !!client?.id && (estimatesLoading || invoicesLoading);
 
   const timezone = useCompanyTimezone();
-  const today = moment().format("YYYY-MM-DD");
+  const today = moment().tz(timezone).format("YYYY-MM-DD");
 
   const [tab, setTab] = useState(Tab.Reminder);
   const [date, setDate] = useState<string | undefined>(
