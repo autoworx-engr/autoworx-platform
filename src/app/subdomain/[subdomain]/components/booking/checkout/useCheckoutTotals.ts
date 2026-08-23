@@ -69,6 +69,17 @@ export const useCheckoutTotals = ({
   }, 0);
   const subtotal = Number((serviceBaseTotal + vehicleExtraTotal).toFixed(2));
 
+  // Tax base: material price only (labor is excluded), same as invoice/estimate
+  const materialSubtotal = Number(
+    cart
+      .reduce(
+        (sum, item) =>
+          sum + Number(item.service.materialTotal || 0) * item.quantity,
+        0,
+      )
+      .toFixed(2),
+  );
+
   const taxRateRaw = companyTax ?? settings.taxPercent;
   const serviceFeeRateRaw = companyServiceFee ?? settings.shopFeePercent;
   const taxRate = Number.isFinite(Number(taxRateRaw)) ? Number(taxRateRaw) : 0;
@@ -84,7 +95,7 @@ export const useCheckoutTotals = ({
     ? Number(((subtotal * serviceFeeRate) / 100).toFixed(2))
     : 0;
   const tax = isTaxEnabled
-    ? Number(((subtotal * taxRate) / 100).toFixed(2))
+    ? Number(((materialSubtotal * taxRate) / 100).toFixed(2))
     : 0;
   const rawGrandTotal = Number((subtotal + shopFee + tax).toFixed(2));
 
@@ -116,6 +127,7 @@ export const useCheckoutTotals = ({
 
   return {
     subtotal,
+    materialSubtotal,
     shopFee,
     serviceFeeRate,
     tax,
@@ -128,6 +140,8 @@ export const useCheckoutTotals = ({
     payableDeposit,
     effectiveDepositDue,
     hasPendingBookingPayment,
+    isTaxEnabled,
+    isServiceFeeEnabled,
     isDepositEnabled,
     depositType,
     depositValue,

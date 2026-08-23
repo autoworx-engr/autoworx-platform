@@ -132,7 +132,7 @@ export default async function EmployeeInformation({
       {/* --- MOBILE VIEW --- */}
       <div className="relative md:hidden">
         <div className="absolute right-2 top-2 z-10">
-          {canEdit && <EditEmployee employee={employee} settingIcon />}
+          {canEdit && <EditEmployee employee={employee} />}
         </div>
         <ResponsiveEmployeeCard data={employee} index={0} />
       </div>

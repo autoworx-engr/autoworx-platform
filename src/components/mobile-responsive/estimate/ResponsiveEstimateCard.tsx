@@ -118,7 +118,11 @@ export default function ResponsiveEstimateCard({
         </Button>
         <Button variant="outline">
           <Link
-            href={`/dashboard/estimate/edit/${id}?clientId=${clientId}`}
+            href={
+              clientId != null
+                ? `/dashboard/estimate/edit/${id}?clientId=${clientId}`
+                : `/dashboard/estimate/edit/${id}`
+            }
             className="text-xl text-blue-600"
             onClick={() => setActionType("edit")}
           >

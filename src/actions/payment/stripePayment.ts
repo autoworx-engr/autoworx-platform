@@ -147,6 +147,7 @@ export const createStripePaymentLink = async ({
                   shopBookingId,
                   invoiceId: shopBooking?.invoiceId,
                   amount,
+                  tip: tip || "0",
                   payType: "virtual_shop_deposit",
                 })
               : paymentId
@@ -154,6 +155,7 @@ export const createStripePaymentLink = async ({
                     companyId,
                     paymentRef: paymentId,
                     amount,
+                    tip: tip || "0",
                     payType: "virtual_shop_gift_card",
                     giftCardSource,
                     giftCardCode,

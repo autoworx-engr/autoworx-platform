@@ -6,9 +6,8 @@ import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
 import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
 import { Card, CardContent } from "@/components/ui/card";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { usePermissionStore } from "@/stores/permissionStore";
 import { stateStore } from "@/stores/stateStore";
-import { canAccessEstimate } from "@/utils/permissions";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { Appointment, Lead } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -35,7 +34,6 @@ const QuickLink = () => {
   const [isLeadOpen, setIsLeadOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { permissions } = usePermissionStore();
 
   // New state for the vehicle flow
   const [isVehiclePromptOpen, setIsVehiclePromptOpen] = useState(false);
@@ -94,7 +92,7 @@ const QuickLink = () => {
     setIsVehiclePromptOpen(true);
   };
 
-  const canCreateEstimate = canAccessEstimate(permissions);
+  const canCreateEstimate = useCanAccessRoute("/dashboard/estimate/create");
 
   const actions = [
     {
@@ -207,7 +205,7 @@ const QuickLink = () => {
                         <NewCustomer
                           onClientCreated={handleClientCreated} // PASS THE NEW HANDLER
                           buttonElement={
-                            <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">
+                            <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition text-center hover:bg-[#F4F6FF]">
                               <action.icon className="h-5 w-5 text-primary" />
                               <span className="text-sm font-medium text-gray-700">
                                 {action.label}

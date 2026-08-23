@@ -1,8 +1,9 @@
 import { useState } from "react";
 
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Check, Tag, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import moment from "moment";
+import { Tag, X } from "lucide-react";
 import { GiftCardDiscount } from "../../data/gift-card-types";
 
 interface Props {
@@ -26,11 +27,13 @@ const DiscountCode = ({
     const match = discounts.find(
       (d) => d.code.toUpperCase() === code.toUpperCase(),
     );
-    if (
-      match &&
-      match.usedCount < match.usageLimit &&
-      new Date(match.expiryDate) > new Date()
-    ) {
+    // Compared in UTC because expiryDate holds midnight UTC of that day, and
+    // the expiry day itself still counts as valid — same rule the purchase
+    // endpoint applies to the code.
+    const isExpired =
+      !!match?.expiryDate &&
+      moment.utc(match.expiryDate).endOf("day").isBefore(moment());
+    if (match && match.usedCount < match.usageLimit && !isExpired) {
       setStatus("success");
       onApply(match);
     } else {

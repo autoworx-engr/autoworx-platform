@@ -25,6 +25,7 @@ export const materialCreateValidationSchema = z.object({
   cost: z
     .number({ invalid_type_error: "Cost must be a number" })
     .nonnegative({ message: "Cost must be a positive value" })
+    .max(99999999, { message: "Cost must be less than 100,000,000" })
     .optional()
     .default(0),
   quantity: z
@@ -43,10 +44,12 @@ export const materialCreateValidationSchema = z.object({
   sell: z
     .number({ invalid_type_error: "Sell price must be a number" })
     .nonnegative({ message: "Sell price must be a positive value" })
-    .min(1, { message: "You must put a sell price" }),
+    .min(1, { message: "You must put a sell price" })
+    .max(99999999, { message: "Sell price must be less than 100,000,000" }),
   discount: z
     .number({ invalid_type_error: "Discount must be a number" })
     .nonnegative({ message: "Discount must be a positive value" })
+    .max(99999999, { message: "Discount must be less than 100,000,000" })
     .optional()
     .default(0),
   addToInventory: z.boolean().optional().default(false),
@@ -79,6 +82,7 @@ export const updateMaterialValidationSchema = z.object({
   cost: z
     .number({ invalid_type_error: "Cost must be a number" })
     .nonnegative({ message: "Cost must be a positive value" })
+    .max(99999999, { message: "Cost must be less than 100,000,000" })
     .optional()
     .default(0),
   quantity: z
@@ -97,10 +101,12 @@ export const updateMaterialValidationSchema = z.object({
   sell: z
     .number({ invalid_type_error: "Sell price must be a number" })
     .nonnegative({ message: "Sell price must be a positive value" })
-    .min(1, { message: "You must put a sell price" }),
+    .min(1, { message: "You must put a sell price" })
+    .max(99999999, { message: "Sell price must be less than 100,000,000" }),
   discount: z
     .number({ invalid_type_error: "Discount must be a number" })
     .nonnegative({ message: "Discount must be a positive value" })
+    .max(99999999, { message: "Discount must be less than 100,000,000" })
     .optional()
     .default(0),
 });

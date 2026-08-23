@@ -7,7 +7,7 @@ import generateZapierToken from "@/lib/generateZapierToken";
 
 import { insertPreloadedData } from "@/lib/insertPreloadedData";
 import { TErrorHandler } from "@/types/globalError";
-import { createUserValidation } from "@/validations/schemas/auth/user.validation";
+import { registerRequestValidation } from "@/validations/schemas/auth/user.validation";
 import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
@@ -21,7 +21,7 @@ interface RegisterData {
   password: string;
   company: string;
   accessCode: string;
-  timezone: string;
+  timezone?: string;
 }
 
 interface Response {
@@ -56,13 +56,16 @@ export async function register({
   timezone,
 }: RegisterData): Promise<Response> {
   try {
-    const userInfo = await createUserValidation.parseAsync({
+    // Validated here as well as at the route: the action is callable directly,
+    // so it cannot rely on its caller having checked the input.
+    const userInfo = await registerRequestValidation.parseAsync({
       firstName,
       lastName,
       email,
       password,
       company,
       accessCode,
+      timezone,
     });
 
     if (accessCode !== ACCESS_CODE) {
@@ -88,7 +91,7 @@ export async function register({
           data: {
             name: userInfo.company,
             zapierToken: generateZapierToken(),
-            timezone,
+            timezone: userInfo.timezone,
           },
         });
 
@@ -127,17 +130,17 @@ export async function register({
             { title: "Payments", permission_name: "payments", enabled: true },
             { title: "Directory", permission_name: "directory", enabled: true },
             {
-              title: "Client",
+              title: "Directory (Client)",
               permission_name: "clientDirectory",
               enabled: true,
             },
             {
-              title: "Employee",
+              title: "Directory (Employee)",
               permission_name: "employeeDirectory",
               enabled: true,
             },
             {
-              title: "Fleet",
+              title: "Directory (Fleet)",
               permission_name: "fleetDirectory",
               enabled: true,
             },
@@ -165,6 +168,11 @@ export async function register({
             {
               title: "Sales Pipeline",
               permission_name: "salesPipeline",
+              enabled: true,
+            },
+            {
+              title: "Team Pipeline",
+              permission_name: "teamPipeline",
               enabled: true,
             },
             {
@@ -215,6 +223,11 @@ export async function register({
             {
               title: "Service Automation",
               permission_name: "serviceAutomation",
+              enabled: true,
+            },
+            {
+              title: "Tag Automation",
+              permission_name: "tagAutomation",
               enabled: true,
             },
             {

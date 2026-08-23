@@ -1,17 +1,27 @@
 "use server";
 
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { revalidatePath } from "next/cache";
 import { getLastClockInOutForUser } from "./clockIn";
 
-export async function takeBreak({ clockInOutId }: { clockInOutId: number }) {
+export async function takeBreak({
+  clockInOutId,
+  timezone,
+}: {
+  clockInOutId: number;
+  timezone?: string;
+}) {
   try {
     await getUser();
+    const now = companyNow(timezone);
     const clockedIn = await db.clockBreak.create({
       data: {
         clockInOutId,
-        breakStart: new Date(),
+        breakStart: now,
+        createdAt: now,
+        updatedAt: now,
       },
     });
     revalidatePath("/");
@@ -22,15 +32,23 @@ export async function takeBreak({ clockInOutId }: { clockInOutId: number }) {
   }
 }
 
-export async function stopBreak({ clockBreakId }: { clockBreakId: number }) {
+export async function stopBreak({
+  clockBreakId,
+  timezone,
+}: {
+  clockBreakId: number;
+  timezone?: string;
+}) {
   try {
     await getUser();
+    const now = companyNow(timezone);
     const breakStop = await db.clockBreak.update({
       where: {
         id: clockBreakId,
       },
       data: {
-        breakEnd: new Date(),
+        breakEnd: now,
+        updatedAt: now,
       },
     });
     revalidatePath("/");

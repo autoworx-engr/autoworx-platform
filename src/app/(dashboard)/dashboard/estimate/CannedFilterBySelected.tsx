@@ -99,9 +99,9 @@ export default function CannedFilterBySelection({
             ? "rounded-b-none border-b-0 shadow-lg"
             : "shadow-sm hover:shadow-md",
         )}
-        title={`Filter by ${filterText}`}
+        title={selectedItem || `Filter by ${filterText}`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <Filter className="w-4 h-4 shrink-0" />
           <span className="truncate">
             {selectedItem ? selectedItem : filterText}
@@ -117,33 +117,37 @@ export default function CannedFilterBySelection({
       {isModalOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 right-0 z-50 flex max-h-56 w-full flex-col space-y-1 overflow-y-auto thin-scrollbar rounded-b-lg border border-t-0 border-gray-300 bg-white p-3 shadow-xl md:w-48"
+          className="absolute left-0 right-0 z-50 flex max-h-56 w-full flex-col overflow-hidden rounded-b-lg border border-t-0 border-gray-300 bg-white shadow-xl md:w-48"
         >
-          {items.map((item) => (
+          <div className="flex min-h-0 flex-1 flex-col space-y-1 overflow-y-auto p-3 pb-2">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleSelection(item.name)}
+                className={`text-sm flex items-center p-2 rounded-md text-start transition-colors duration-150 border ${
+                  item.name === selectedItem
+                    ? "bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+          <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-2">
             <button
-              key={item.id}
-              onClick={() => handleSelection(item.name)}
-              className={`text-sm flex items-center p-2 rounded-md text-start transition-colors duration-150 border ${
-                item.name === selectedItem
-                  ? "bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
+              onClick={handleClear}
+              disabled={!selectedItem}
+              className={cn(
+                "w-full border rounded-md border-gray-200 bg-white py-2 text-sm font-medium transition-colors",
+                !selectedItem
+                  ? "text-gray-300 cursor-not-allowed bg-gray-50 hover:text-gray-300 hover:bg-gray-50"
+                  : "text-red-500 hover:text-red-700",
+              )}
             >
-              {item.name}
+              Clear Filter
             </button>
-          ))}
-          <button
-            onClick={handleClear}
-            disabled={!selectedItem}
-            className={cn(
-              "sticky -bottom-2 z-50 border rounded-md border-gray-200 bg-white py-2 mt-1 text-sm font-medium transition-colors",
-              !selectedItem
-                ? "text-gray-300 cursor-not-allowed bg-gray-50 hover:text-gray-300 hover:bg-gray-50"
-                : "text-red-500 hover:text-red-700",
-            )}
-          >
-            Clear Filter
-          </button>
+          </div>
         </div>
       )}
     </div>

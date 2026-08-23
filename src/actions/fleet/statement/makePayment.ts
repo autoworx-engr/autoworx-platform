@@ -21,6 +21,8 @@ export async function makeFleetStatementPayment(data: {
   cardType?: CardType;
   paymentMethodId?: number;
   receivedCash?: string;
+  depositMethod?: string;
+  depositNotes?: string;
 }): Promise<ServerAction | TErrorHandler> {
   try {
     // Validate input
@@ -187,20 +189,53 @@ export async function makeFleetStatementPayment(data: {
                 });
                 break;
 
+              case "DEPOSIT":
+                payment = await tx.payment.create({
+                  data: {
+                    invoiceId: invoice.id,
+                    type: "DEPOSIT",
+                    date: paymentDate,
+                    notes:
+                      data.depositNotes ||
+                      data.notes ||
+                      `Fleet statement payment - ${statement.id}`,
+                    amount: paymentAmount,
+                    companyId: companyId,
+                    deposit: {
+                      create: {
+                        depositMethod: data.depositMethod,
+                        depositNotes: data.depositNotes,
+                      },
+                    },
+                  },
+                  include: { deposit: true },
+                });
+                break;
+
               default:
                 throw new Error("Invalid payment method");
             }
 
-            // Compute updated totals in integer cents to avoid float drift
-            const newTotalPaymentCents =
-              toInt(Number(invoice.totalPayment)) + paymentCents;
+            // Compute updated totals in integer cents to avoid float drift.
+            // A DEPOSIT doesn't count toward totalPayment (mirrors newPayment.ts) —
+            // it's tracked in invoice.deposit instead, so due = grandTotal - (totalPayment + deposit)
+            const isDeposit = data.paymentMethod === "DEPOSIT";
+            const currentDepositCents = toInt(Number(invoice.deposit));
+            const newTotalPaymentCents = isDeposit
+              ? toInt(Number(invoice.totalPayment))
+              : toInt(Number(invoice.totalPayment)) + paymentCents;
+            const newDepositCents = isDeposit
+              ? currentDepositCents + paymentCents
+              : currentDepositCents;
             const newDueCents =
-              toInt(Number(invoice.grandTotal)) - newTotalPaymentCents;
+              toInt(Number(invoice.grandTotal)) -
+              (newTotalPaymentCents + newDepositCents);
 
             await tx.invoice.update({
               where: { id: invoice.id },
               data: {
                 totalPayment: newTotalPaymentCents / 100,
+                deposit: newDepositCents / 100,
                 due: Math.max(0, newDueCents / 100),
                 type: "Invoice",
                 convertedAt:

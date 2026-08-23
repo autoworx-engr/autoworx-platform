@@ -30,7 +30,7 @@ import {
   convertSecondsToTime,
   convertTimeToSeconds,
 } from "@/utils/timeConvertToSeconds";
-import { Spin } from "antd";
+import CarLoading from "@/components/common/CarLoading";
 import InfoCard from "./InfoCard";
 import { getConditionHelp, TipBox } from "./TagautomationHelper";
 import { TEMPLATE_VARIABLES } from "./TemplateVariable";
@@ -196,9 +196,10 @@ const TagRuleForm = ({
         setInitialFormData(initialData);
 
         setActiveTemplate(
-          tagAutomationCommunication?.communicationType === "BOTH"
+          tagAutomationCommunication?.communicationType === "BOTH" ||
+            !tagAutomationCommunication?.communicationType
             ? "SMS"
-            : tagAutomationCommunication?.communicationType,
+            : tagAutomationCommunication.communicationType,
         );
       } else {
         const initialData: Rule = {
@@ -364,6 +365,10 @@ const TagRuleForm = ({
     if (field === "communicationType") {
       if (value === "EMAIL") setActiveTemplate("EMAIL");
       else if (value === "SMS") setActiveTemplate("SMS");
+    }
+
+    if (field === "condition_type" && value === "communication") {
+      setActiveTemplate((prev) => (prev === "EMAIL" ? "EMAIL" : "SMS"));
     }
 
     if (error[field]) {
@@ -603,7 +608,7 @@ const TagRuleForm = ({
   if (isLoading || isFetching || stagesLoading || isAllTagRuleLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }

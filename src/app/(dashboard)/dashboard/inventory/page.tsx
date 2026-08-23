@@ -91,7 +91,7 @@ const getInventoryItem = cache(
         OR: search ? searchFilterOR : undefined,
         ...(category ? { category: { name: category } } : {}),
       };
-      const [fetchedItems, fetchedCount] = await Promise.all([
+      const fetchPage = (skip?: number) =>
         db.inventoryProduct.findMany({
           where: whereClause,
           include: {
@@ -99,11 +99,23 @@ const getInventoryItem = cache(
             vendor: true,
             User: type === "Supply" ? true : false,
           },
-          ...(search ? {} : { skip: (page - 1) * limit, take: limit }),
-          orderBy: { name: "asc" },
-        }),
+          ...(skip === undefined ? {} : { skip, take: limit }),
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        });
+
+      const [fetchedItems, fetchedCount] = await Promise.all([
+        fetchPage(search ? undefined : (page - 1) * limit),
         db.inventoryProduct.count({ where: whereClause }),
       ]);
+
+      if (
+        !search &&
+        page > 1 &&
+        fetchedItems.length === 0 &&
+        fetchedCount > 0
+      ) {
+        return { data: await fetchPage(0), totalItems: fetchedCount };
+      }
 
       if (search && searchTerms.length > 0) {
         const filtered = fetchedItems.filter((item) => {
@@ -180,7 +192,7 @@ export default async function Page(props: {
 
       <header className="flex justify-between p-3 md:p-0">
         <div className="flex items-center">
-          <Title className="text-[20px] md:text-2xl">Inventory</Title>
+          <Title>Inventory</Title>
         </div>
 
         {(user?.employeeType === "Admin" ||

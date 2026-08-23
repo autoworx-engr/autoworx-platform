@@ -16,6 +16,7 @@ import moment from "moment-timezone";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RefundModal from "./RefundModal";
+import CarLoading from "@/components/common/CarLoading";
 
 export default function PaymentTable() {
   const { search, dateRange, amount, paidStatus, paymentMethod } =
@@ -135,10 +136,10 @@ export default function PaymentTable() {
           </h3>
         </div>
 
-        <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
-          <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background transform-gpu">
+          <div className="flex-1 overflow-auto no-visible-scrollbar transform-gpu">
             {/* Mobile View */}
-            <div className="lg:hidden p-4 space-y-4">
+            <div className="lg:hidden px-2 py-4 space-y-4">
               {loading ? (
                 <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                   <h3 className="mb-2 text-lg font-bold text-slate-500">
@@ -167,7 +168,7 @@ export default function PaymentTable() {
                 rows.map((item, index) => (
                   <div
                     key={item.id}
-                    className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${
+                    className={`w-full rounded-lg border border-gray-100 p-6 shadow-md ${
                       index % 2 !== 0
                         ? "bg-blue-50/80 dark:bg-slate-900"
                         : "bg-white dark:bg-slate-900"
@@ -255,11 +256,7 @@ export default function PaymentTable() {
             {/* Desktop View */}
             <div className="hidden lg:block">
               {loading ? (
-                <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-                  <h3 className="mb-2 text-lg font-bold text-slate-500">
-                    Loading payments...
-                  </h3>
-                </div>
+                <CarLoading />
               ) : rows.length === 0 ? (
                 <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                   <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">

@@ -30,7 +30,9 @@ export function CreateEstimateActionsButtons({
         <button
           onClick={() => {
             if (clientId) {
-              router.push(`/dashboard/communication/client/${clientId}`);
+              router.push(
+                `/dashboard/communication/client/${clientId}?chat=true`,
+              );
             }
           }}
           className={btnCN}

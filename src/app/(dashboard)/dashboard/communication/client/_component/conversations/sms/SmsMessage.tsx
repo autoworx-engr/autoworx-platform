@@ -3,19 +3,27 @@ import { makeLinksClickable } from "@/components/MakeLinkClickable";
 import { cn } from "@/lib/cn";
 import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
 import Image from "next/image";
+import MissedCallDivider from "./MissedCallDivider";
 import SMSAttachment from "./SMSAttachment";
 
 export default function SmsMessage({
   message,
+  clientPhoto,
 }: {
+  clientPhoto?: string | null;
   message: ClientSMS & {
     user?: {
       firstName: string;
       lastName: string | null;
     } | null;
     attachments: ClientSmsAttachments[];
+    messageType?: string | null;
   };
 }) {
+  if (message.messageType === "MISSED_CALL") {
+    return <MissedCallDivider at={message.createdAt} />;
+  }
+
   const isIncoming = message.sentBy !== "Company";
   const text = (message.message ?? "").trim();
   const hasAttachments = (message.attachments?.length ?? 0) > 0;
@@ -50,27 +58,36 @@ export default function SmsMessage({
       {/* Avatar (incoming only) */}
       {isIncoming && (
         <Image
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNL_ZnOTpXSvhf1UaK7beHey2BX42U6solRA&s"
-          alt="Client avatar"
+          src={
+            clientPhoto?.includes("autoworx-production")
+              ? clientPhoto
+              : "/images/default.png"
+          }
+          alt="Messenger user"
           width={30}
           height={30}
-          className="mt-1 rounded-full ring-1 ring-white/50"
+          className="mt-1 rounded-full ring-1 ring-[#0866FF]/40"
         />
       )}
 
       <div
         className={cn("max-w-[85%] sm:max-w-[70%]", !isIncoming && "ml-auto")}
       >
-        {/* Bubble — only render when there's text or attachments */}
+        {/* Bubble — only render when there's text or attachments. Attachment-only
+            messages skip the colored bubble entirely so the images float on
+            their own instead of sitting inside a solid background. */}
         {(!!text || hasAttachments) && (
           <div
             className={cn(
-              "group relative w-fit rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
-              "select-text hover:shadow-md",
+              "group relative w-fit text-[14px] transition select-text",
               !isIncoming && "ml-auto",
-              isIncoming
-                ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+              text &&
+                cn(
+                  "rounded-2xl px-3 py-2 shadow-sm ring-1 hover:shadow-md",
+                  isIncoming
+                    ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
+                    : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                ),
             )}
           >
             {/* Text */}

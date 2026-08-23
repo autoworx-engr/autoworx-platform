@@ -5,7 +5,7 @@ import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
 import { useServerGet } from "@/hooks/useServerGet";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Funnel } from "lucide-react";
 import { useEffect, useState } from "react";
 import Select from "./Select";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
@@ -54,31 +54,47 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-x-12 rounded-xl border px-4 py-2"
+          className={cn(
+            "relative flex items-center gap-x-2 sm:gap-x-12 rounded-xl border px-4 py-2 whitespace-nowrap",
+            hasActiveFilters && "border-primary/40 bg-primary/5",
+          )}
           aria-label="Customise options"
         >
-          <span>Filter</span>
+          <span className="flex items-center gap-x-2">
+            <Funnel
+              size={18}
+              className={cn(
+                "shrink-0",
+                hasActiveFilters ? "text-primary" : "text-slate-500",
+              )}
+            />
+            Filter
+          </span>
           <ChevronDown />
+          {hasActiveFilters && (
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />
+          )}
         </button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 z-50 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
+          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade w-[260px] rounded-xl bg-background p-3 z-50 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
           sideOffset={5}
+          collisionPadding={12}
         >
-          <div className="flex flex-col gap-y-2 px-4">
+          <div className="flex flex-col gap-y-2">
             <Select
               label="Status"
               items={[
                 { id: "all", value: "All", label: "All" },
                 ...columnStatus
-                .filter((column)=> column.title !== "Delivered")
-                .map((column) => ({
-                  id: column.id,
-                  value: column.title,
-                  label: column.title,
-                })),
+                  .filter((column) => column.title !== "Delivered")
+                  .map((column) => ({
+                    id: column.id,
+                    value: column.title,
+                    label: column.title,
+                  })),
               ]}
               onChange={(value) =>
                 setFilter({ status: value === "All" ? "" : value })

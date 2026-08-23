@@ -3,6 +3,13 @@ import {
   generatedRegistry,
   type SearchItem,
 } from "@/lib/search-registry.generated";
+import {
+  canAccessWithFeatureKey,
+  canAccessWithPermissionKey,
+} from "@/lib/routeAccess";
+import { useGetPermissions } from "@/hooks/permissions/useGetPermissions";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 
 const MAX_RESULTS = 20;
 
@@ -37,15 +44,36 @@ function scoreItem(item: SearchItem, query: string): number {
 
 export function useSearch() {
   const [query, setQuery] = useState("");
+  const user = useGetCurrentUser();
+  const { data: permissions } = useGetPermissions(
+    user?.companyId,
+    user?.id ? Number(user.id) : undefined,
+  );
+  const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+
+  // Mirrors PrivateRoute so an item only shows here if navigating to it wouldn't
+  // be blocked: the company feature must be entitled, and for user permissions
+  // the company permission takes priority with both company AND user allowed.
+  // Both keys are resolved from the route maps when the registry is generated,
+  // so this filter needs no route lookup at runtime.
+  const accessibleRegistry = useMemo(
+    () =>
+      generatedRegistry.filter(
+        (item) =>
+          canAccessWithFeatureKey(item.featureKey, companyFeaturePermission) &&
+          canAccessWithPermissionKey(item.permissionKey, permissions ?? null),
+      ),
+    [permissions, companyFeaturePermission],
+  );
 
   const results = useMemo(() => {
     const q = query.trim();
 
     if (!q) {
-      return generatedRegistry.slice(0, MAX_RESULTS);
+      return accessibleRegistry.slice(0, MAX_RESULTS);
     }
 
-    return generatedRegistry
+    return accessibleRegistry
       .map((item) => ({
         item,
         score: scoreItem(item, q),
@@ -54,7 +82,7 @@ export function useSearch() {
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_RESULTS)
       .map((result) => result.item);
-  }, [query]);
+  }, [query, accessibleRegistry]);
 
   return {
     query,

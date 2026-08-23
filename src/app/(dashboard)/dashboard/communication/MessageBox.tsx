@@ -2,27 +2,27 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
-import {
-  GROUP_NAME_MAX_LENGTH,
-  normalizeGroupName,
-} from "@/lib/utils/groupName";
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
 import { successToast } from "@/lib/toast";
+import {
+  GROUP_NAME_MAX_LENGTH,
+  normalizeGroupName,
+} from "@/lib/utils/groupName";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { sendType } from "@/types/Chat";
-import { useQueryClient } from "@tanstack/react-query";
 import { Attachment, Group, User } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
 import { format } from "date-fns";
 import {
   ArrowLeft,
   CircleCheckBig,
   CircleX,
+  PencilLineIcon,
   SendHorizontal,
   Settings,
-  SquarePen,
   X,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -42,6 +42,7 @@ import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
 import MessageListSkeleton from "./MessageListSkeleton";
+import { useMessageDraft } from "./_hooks/useMessageDraft";
 
 type TSection = "collaboration" | "internal";
 
@@ -81,7 +82,18 @@ export default function MessageBox({
   const { data: session } = useSession();
   const attachmentRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState("");
+  const draftTargetId = fromGroup ? group?.id : receiverUser?.id;
+  const draftChannel =
+    section === "internal" ? (fromGroup ? "group" : "dm") : "";
+  const {
+    draftText: message,
+    setDraftText: setMessage,
+    clearDraft,
+  } = useMessageDraft({
+    section,
+    channel: draftChannel,
+    targetId: draftTargetId,
+  });
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [openSettings, setOpenSettings] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
@@ -221,11 +233,22 @@ export default function MessageBox({
           createdAt: new Date(),
         };
         setMessages((messages) => [...messages, newMessage]);
-        setMessage("");
+        clearDraft();
         setMultiAttachmentFile(null);
-        setLastMessage(json.chatTrack);
-        queryClient.invalidateQueries({ queryKey: ["internal", "users"] });
-        queryClient.invalidateQueries({ queryKey: ["internal", "groups"] });
+        if (json.chatTrack) {
+          setLastMessage(json.chatTrack);
+        } else if (json.newMessage) {
+          setLastMessage({ message: json.newMessage } as Parameters<
+            typeof setLastMessage
+          >[0]);
+        }
+        // Keys carry companyId + search, so match by prefix rather than
+        // guessing the exact tuple.
+        queryClient.invalidateQueries({
+          predicate: (query) =>
+            query.queryKey[0] === "internal" &&
+            (query.queryKey[1] === "users" || query.queryKey[1] === "groups"),
+        });
         router.refresh();
       } else {
         toast.error(json.message);
@@ -325,24 +348,13 @@ export default function MessageBox({
   return (
     <div
       className={cn(
-        "app-shadow flex h-[calc(100vh-50px)] w-full flex-col justify-between overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
+        "app-shadow flex h-[calc(100dvh-56px)] w-full flex-col overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
         totalMessageBox > 2 && "sm:h-[44vh]",
       )}
     >
-      {/* name and delete */}
-      <div className="hidden items-center justify-between rounded-md bg-background px-2 py-1 sm:flex">
-        <p className="text-sm">
-          {fromGroup ? "Group Message" : "User Message"}
-        </p>
-        <X
-          className="cursor-pointer w-5 h-5"
-          onClick={fromGroup ? handleGroupClose : handleUserClose}
-        />
-      </div>
-
       {/* Chat Header */}
-      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
-        <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
+        <div className="flex items-center gap-3">
           <button onClick={handleBack} className="flex-shrink-0 sm:hidden">
             <ArrowLeft size={20} className="font-bold" />
           </button>
@@ -449,7 +461,7 @@ export default function MessageBox({
                     </>
                   ) : (
                     <>
-                      <SquarePen
+                      <PencilLineIcon
                         className="ml-3 size-6 cursor-pointer"
                         onClick={() => setIsGroupNameEdited(true)}
                       />
@@ -466,18 +478,19 @@ export default function MessageBox({
           )}
         </div>
 
-        {/* <div className="flex items-center gap-x-4">
-          <div className="rounded-full bg-[#579FA5] p-1">
-            <FiMessageCircle className="size-6" />
-          </div>
-          <Image src="/icons/Email.png" alt="email" width={24} height={24} />
-          <Image src="/icons/Phone.png" alt="phone" width={20} height={15} />
-        </div> */}
+        <button
+          type="button"
+          onClick={fromGroup ? handleGroupClose : handleUserClose}
+          className="flex-shrink-0 rounded-full p-1 text-white transition-colors hover:bg-white/15"
+          aria-label="Close chat"
+        >
+          <X className="size-5" />
+        </button>
       </div>
 
       {/* group user setting */}
       {fromGroup && openSettings && (
-        <div className="flex w-full items-center justify-between rounded-sm bg-[#D9D9D9] p-3">
+        <div className="flex w-full shrink-0 items-center justify-between rounded-sm bg-[#D9D9D9] p-3">
           <div className="flex flex-wrap items-center gap-2">
             {group?.users.map((user: User) => (
               <div
@@ -515,10 +528,7 @@ export default function MessageBox({
       {/* Messages */}
       <div
         id="messageBox"
-        className={cn(
-          "overflow-y-scroll",
-          totalMessageBox > 2 ? "h-[calc(100%-60px)]" : "h-[82%]",
-        )}
+        className="min-h-0 flex-1 overflow-y-scroll"
         ref={messageBoxRef}
       >
         {topSlot}
@@ -586,7 +596,7 @@ export default function MessageBox({
       {multiAttachmentFile && multiAttachmentFile.length > 0 && (
         <div
           className={cn(
-            "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
+            "relative w-full shrink-0 rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
             totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64",
           )}
         >
@@ -602,7 +612,7 @@ export default function MessageBox({
           </div>
 
           {/* Scrollable attachments */}
-          <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
+          <div className="max-h-64 overflow-y-auto px-4 pb-4">
             {/* Fixed responsive grid with minimum item width */}
             <div
               className="gap-3 pt-3"
@@ -668,8 +678,8 @@ export default function MessageBox({
       {/* Input */}
       <form
         className={cn(
-          "relative flex items-center gap-2 bg-[#D9D9D9] p-2",
-          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]",
+          "relative flex shrink-0 items-center gap-2 border-t bg-gray-100 p-3",
+          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "min-h-[50px]",
         )}
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
       >
@@ -716,7 +726,7 @@ export default function MessageBox({
         <input
           type="text"
           placeholder="Send Message..."
-          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
+          className="h-10 flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />

@@ -35,22 +35,22 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
             type="text"
             placeholder={
               activeTab === "transactions"
-                ? "Search by Customer..."
+                ? "Search by Invoice ID, Customer, Vehicle..."
                 : "Search..."
             }
             className="w-full bg-transparent pl-3 text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
             onChange={(e) => setFilter({ search: e.target.value })}
           />
         </div>
-        <div className="z-50 flex w-full flex-wrap items-center gap-4 sm:flex-nowrap lg:w-auto">
-          <div className="transition-transform hover:scale-[1.01] z-50">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4 lg:w-auto">
+          <div className="min-w-0 flex-1 sm:flex-none">
             <DateRange
               dateRange={dateRange}
               onOk={(start, end) => setFilter({ dateRange: [start, end] })}
               onCancel={() => setFilter({ dateRange: [null, null] })}
             />
           </div>
-          <div className="transition-transform hover:scale-[1.01]">
+          <div className="shrink-0">
             <FilterforPayment />
           </div>
         </div>
@@ -58,7 +58,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
 
       <div className="flex shrink-0">
         <Link
-          href="/dashboard/reporting/payments"
+          href="/dashboard/reporting/payments?view=payments"
           className="
             group relative flex items-center gap-3 pl-3 pr-4 py-2 rounded-xl
             bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900

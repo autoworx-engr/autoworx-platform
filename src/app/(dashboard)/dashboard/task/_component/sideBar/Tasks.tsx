@@ -1,21 +1,19 @@
 "use client";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import { cn } from "@/lib/cn";
-import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
+import TaskListItem from "@/components/task/TaskListItem";
+import TaskListSkeleton from "@/components/ui/TaskListSkeleton";
 import { Task } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
 import { useEffect, useRef } from "react";
+import EmptyMsg from "../../../../../../components/common/EmptyMsg";
 import { taskQueryKey } from "../../_constant";
 import { useDate } from "../../_hook/lib/useDate";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
 import TaskError from "../ui/TaskError";
-import TaskNotFound from "../ui/TaskNotFound";
 import TaskSpinner from "../ui/TaskSpinner";
 import { MinimizeButton } from "./MinimizeButton";
-import TaskListItem from "@/components/task/TaskListItem";
-import TaskListSkeleton from "@/components/ui/TaskListSkeleton";
 
 export default function Tasks() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -37,7 +35,6 @@ export default function Tasks() {
 
   const tasks = data?.pages?.flatMap((page) => page.data) || [];
   const queryClient = useQueryClient();
-  const minimized = useCalendarSidebarStore((x) => x.minimized);
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -95,7 +92,7 @@ export default function Tasks() {
   } else if (!isLoading && isError) {
     content = <TaskError message="Failed to load task" />;
   } else if (!isLoading && !isError && tasks && tasks?.length === 0) {
-    content = <TaskNotFound message={"No Task found"} />;
+    content = <EmptyMsg message={"No Task found"} />;
   } else if (!isLoading && !isError && tasks && tasks?.length > 0) {
     content = (
       <div className="flex flex-col gap-2">
@@ -113,43 +110,33 @@ export default function Tasks() {
   }
 
   return (
-    <div
-      className={cn(
-        "md:app-shadow relative flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
-        minimized || "p-3",
-      )}
-    >
-      <h2 className="-mt-4 flex items-center justify-between md:-mt-0">
-        {!minimized && (
-          <div className=" text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
-            Task List
-          </div>
-        )}
+    <div className="md:app-shadow relative flex h-full min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden rounded-lg py-2 md:max-w-80 md:bg-background md:p-3">
+      {/* The mobile sheet already titles itself, so this only shows on desktop. */}
+      <h2 className="hidden items-center justify-between md:flex">
+        <div className="text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
+          Task List
+        </div>
         <div className="hidden md:block">
           <MinimizeButton />
         </div>
       </h2>
 
-      {!minimized && (
-        <div className="thin-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:max-h-full">
-          {content}
-          <div ref={ref} className="text-center text-sm text-gray-500">
-            {isFetchingNextPage ? (
-              <TaskSpinner />
-            ) : hasNextPage ? (
-              "Scroll to load more"
-            ) : (
-              tasks.length !== 0 && "No more tasks"
-            )}
-          </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:max-h-full">
+        {content}
+        <div ref={ref} className="text-center text-sm text-gray-500">
+          {isFetchingNextPage ? (
+            <TaskSpinner />
+          ) : hasNextPage ? (
+            "Scroll to load more"
+          ) : (
+            tasks.length !== 0 && "No more tasks"
+          )}
         </div>
-      )}
+      </div>
 
-      {!minimized && (
-        <div className="mt-auto w-full">
-          <TaskCreateOrEdit onTaskCreated={handleTaskCreated} />
-        </div>
-      )}
+      <div className="mt-auto w-full">
+        <TaskCreateOrEdit onTaskCreated={handleTaskCreated} />
+      </div>
     </div>
   );
 }

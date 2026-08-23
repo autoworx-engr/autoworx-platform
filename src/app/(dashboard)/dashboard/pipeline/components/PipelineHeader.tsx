@@ -73,10 +73,7 @@ export default function PipelineHeader({
   return (
     <header className="flex items-center justify-between p-4">
       <div className="flex w-full items-center justify-between lg:justify-start">
-        <PipelineTypeSelector
-          currentType={type as "sales" | "shop" | "team"}
-          employeeType={currentUser?.employeeType}
-        />
+        <PipelineTypeSelector currentType={type as "sales" | "shop" | "team"} />
 
         {type !== "team" && (
           <nav className="lg:hidden">
@@ -111,7 +108,7 @@ export default function PipelineHeader({
         {type !== "team" && (
           <nav className="hidden lg:block w-full lg:w-auto mt-2 lg:mt-0">
             <ul
-              className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm"
+              className="flex items-center gap-1.5 p-1.5 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm"
               ref={tabsContainerRef}
             >
               {toggleButtons.map((button, index) => {

@@ -3,7 +3,6 @@ import LaborCreate from "@/app/(dashboard)/dashboard/estimate/create/LaborCreate
 import MaterialCreate from "@/app/(dashboard)/dashboard/estimate/create/MaterialCreate";
 import ServiceCreate from "@/app/(dashboard)/dashboard/estimate/create/ServiceCreate";
 import ItemSelector from "@/components/ItemSelector";
-import { SelectTags } from "@/components/Lists/SelectTags";
 import MobileItemSelector from "@/components/MobileItemSelector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -42,7 +41,6 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
     SERVICE: [-1, -1],
     MATERIAL: [-1, -1],
     LABOR: [-1, -1],
-    TAG: [-1, -1],
   });
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
@@ -122,11 +120,14 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
   if (type === "LABOR") return <LaborCreate />;
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center gap-y-2">
+    <div className="relative flex h-full w-full flex-col gap-y-3">
       {items.map((item, i) => (
-        <Card key={item.id} className="w-[330px]">
-          <CardContent className="m-2 flex flex-col gap-y-3 p-3">
-            {["service", "materials", "labor", "tags"].map((itemKey, j) => {
+        <Card
+          key={item.id}
+          className={cn("w-full", i === items.length - 1 && "mb-20")}
+        >
+          <CardContent className="flex flex-col gap-y-3 p-3 pt-4 sm:p-4">
+            {["service", "materials", "labor"].map((itemKey, j) => {
               switch (itemKey) {
                 case "service":
                   return (
@@ -417,35 +418,10 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                       />
                     </div>
                   );
-                case "tags":
-                  return (
-                    <div key={`tags-${item.id}`}>
-                      <Label className="mb-1 font-semibold text-slate-600">
-                        Tags
-                      </Label>
-                      <SelectTags
-                        type="TAG"
-                        value={item.tags}
-                        setValue={(tags) => {
-                          useEstimateCreateStore.setState((x) =>
-                            create(x, (x) => {
-                              x.items[i].tags =
-                                tags instanceof Function
-                                  ? tags(item.tags)
-                                  : tags;
-                            }),
-                          );
-                        }}
-                        index={[i, j]}
-                        dropdownsOpen={dropdownsOpen}
-                        setDropdownsOpen={setDropdownsOpen}
-                      />
-                    </div>
-                  );
               }
             })}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
             <Button
               type="button"
               onClick={() => {
@@ -453,7 +429,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                   items: x.items.filter((row) => row.id !== item.id),
                 }));
               }}
-              className="bg-none bg-red-50 text-red-500"
+              className="bg-none bg-red-50 text-red-500 hover:bg-red-100"
             >
               Remove
               <CircleX size="1.2em" />

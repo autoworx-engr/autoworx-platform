@@ -620,12 +620,65 @@ export const getLeadsWithCountOptimized = async ({
 
     const vehicleMap = new Map(vehicles.map((v) => [v.id, v]));
 
-    // Process leads more efficiently without additional database calls
+    const matchesLead = (
+      client: { companyId: number; leadId: number | null },
+      leadId: number,
+    ) => client.companyId === companyId && client.leadId === leadId;
+
+    // The Client reverse relation only covers clients that point back at the
+    // lead (client.leadId). A lead linked the other way round — lead.clientId
+    // set, e.g. an existing client attached to the lead afterwards — misses it
+    // and would come back client-less, so those ids are resolved here in one
+    // batched query rather than per lead.
+    const unlinkedClientIds = Array.from(
+      new Set(
+        leadsData
+          .filter((lead) => !lead.Client.some((c) => matchesLead(c, lead.id)))
+          .map((lead) => lead.clientId)
+          .filter((id): id is number => id !== null),
+      ),
+    );
+
+    const unlinkedClients =
+      unlinkedClientIds.length > 0
+        ? await db.client.findMany({
+            where: { companyId, id: { in: unlinkedClientIds } },
+            include: {
+              appointments: {
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
+                take: 1,
+                select: {
+                  id: true,
+                  title: true,
+                  date: true,
+                  startTime: true,
+                  endTime: true,
+                },
+              },
+              conversationsTrack: {
+                select: {
+                  smsIsRead: true,
+                  emailIsRead: true,
+                },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
+              },
+            },
+          })
+        : [];
+
+    const unlinkedClientMap = new Map(unlinkedClients.map((c) => [c.id, c]));
+
+    // Process leads without per-lead database calls
     const leadsDataWithClient: LeadWithSalesUser[] = leadsData.map((lead) => {
-      let client = lead.Client.find(
-        (client: any) =>
-          client.companyId === companyId && client.leadId === lead.id,
-      );
+      const client =
+        lead.Client.find((c) => matchesLead(c, lead.id)) ??
+        (lead.clientId ? unlinkedClientMap.get(lead.clientId) : undefined);
 
       const appointments = client?.appointments ?? [];
 
@@ -695,7 +748,6 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         column: true,
       },
     });
-    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     if (updatedLead.column?.title === "Converted") {
       sendLeadStageChangeOrCloseNotification({
@@ -732,6 +784,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         columnId: newColumnId,
       });
     } catch (error) {
+      console.log("error", error);
       console.log("updateCommunicationAutomationTrigger error", error);
     }
 
@@ -742,6 +795,8 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
       leadId: leadId,
       conditionType: "post_tag",
     });
+
+    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     // if (response?.success) {
     //   console.log("response", response?.data);

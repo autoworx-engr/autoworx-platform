@@ -79,63 +79,93 @@ export default function Message({
             message.sender === "CLIENT" ? "items-start" : "items-end",
           )}
         >
-          {message.attachment &&
-            message.attachment.length > 0 &&
-            message.attachment.map((attachment, index) => {
-              const handleLoad = () => {
-                if (message?.attachment?.length! - 1 === index) {
-                  setIsImageLoaded(true);
-                }
-              };
+          {message.attachment && message.attachment.length > 0 && (
+            <>
+              {/* Image attachments — compact wrapping grid, matching the client inbox */}
+              {(() => {
+                const images = message.attachment!.filter((a) =>
+                  a.fileType.includes("image"),
+                );
+                if (images.length === 0) return null;
+                return (
+                  <div
+                    className="grid w-fit gap-1.5"
+                    style={{
+                      gridTemplateColumns: `repeat(${Math.min(images.length, 3)}, 6rem)`,
+                    }}
+                  >
+                    {images.map((attachment) => {
+                      const originalIndex =
+                        message.attachment!.indexOf(attachment);
+                      const handleLoad = () => {
+                        if (message.attachment!.length - 1 === originalIndex) {
+                          setIsImageLoaded(true);
+                        }
+                      };
+                      const currentImageIndex = allImageUrls?.indexOf(
+                        attachment.fileUrl,
+                      );
+                      return (
+                        <div key={attachment.fileName} className="relative">
+                          <Link
+                            href={`/dashboard/communication/photo?urls=${encodeURIComponent(
+                              JSON.stringify(allImageUrls),
+                            )}&index=${currentImageIndex}`}
+                            className="block overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-black/20 dark:ring-white/15 dark:hover:ring-white/30"
+                          >
+                            <Image
+                              src={attachment.fileUrl}
+                              alt=""
+                              onLoad={handleLoad}
+                              width={96}
+                              height={96}
+                              className="h-24 w-24 object-cover"
+                            />
+                          </Link>
+                          <button
+                            onClick={() => onDownload(attachment.fileUrl!)}
+                            aria-label="Download attachment"
+                            className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white"
+                          >
+                            <CloudDownload size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
-              const currentImageIndex = allImageUrls?.indexOf(
-                attachment?.fileUrl,
-              );
-              return (
-                <div
-                  key={attachment.fileName}
-                  className={cn(
-                    "flex items-center justify-center",
-                    message.sender === "CLIENT"
-                      ? "flex-row"
-                      : "flex-row-reverse",
-                  )}
-                >
-                  {attachment.fileType.includes("image") ? (
-                    <Link
-                      href={`/dashboard/communication/photo?urls=${encodeURIComponent(
-                        JSON.stringify(allImageUrls),
-                      )}&index=${currentImageIndex}`}
-                    >
-                      <Image
-                        src={attachment.fileUrl}
-                        alt=""
-                        // placeholder="blur"
-                        // blurDataURL=""
-                        className="aspect-auto cursor-pointer rounded-sm border"
-                        onLoad={handleLoad}
-                        width={200}
-                        height={200}
-                      />
-                    </Link>
-                  ) : (
+              {/* Non-image attachments — file chip per row */}
+              {message.attachment
+                .filter((a) => !a.fileType.includes("image"))
+                .map((attachment) => (
+                  <div
+                    key={attachment.fileName}
+                    className={cn(
+                      "flex items-center justify-center",
+                      message.sender === "CLIENT"
+                        ? "flex-row"
+                        : "flex-row-reverse",
+                    )}
+                  >
                     <div className="min-h-16 space-y-1 rounded-md bg-[#006D77] px-5 py-2 text-white">
                       <p>{attachment.fileName}</p>
                       <p>file size: {attachment.fileSize}</p>
                     </div>
-                  )}
-                  <button onClick={() => onDownload(attachment?.fileUrl!)}>
-                    <CloudDownload
-                      size={30}
-                      className={cn(
-                        "cursor-pointer",
-                        message.sender === "CLIENT" ? "ml-6" : "mr-6",
-                      )}
-                    />
-                  </button>
-                </div>
-              );
-            })}
+                    <button onClick={() => onDownload(attachment.fileUrl!)}>
+                      <CloudDownload
+                        size={30}
+                        className={cn(
+                          "cursor-pointer",
+                          message.sender === "CLIENT" ? "ml-6" : "mr-6",
+                        )}
+                      />
+                    </button>
+                  </div>
+                ))}
+            </>
+          )}
 
           {message.message && (
             <div
@@ -164,19 +194,6 @@ export default function Message({
               )}
               <p className="whitespace-pre-wrap break-words text-sm leading-snug">
                 {message.message}
-                {/* Inline time at the end so short messages keep it on the
-                    same line; long/wrapped messages let it sit on its own
-                    line, right-aligned. */}
-              </p>
-              <p
-                className={cn(
-                  "select-none whitespace-nowrap text-[10px] leading-none justify-end flex",
-                  message.sender === "CLIENT"
-                    ? "text-zinc-500 dark:text-zinc-400"
-                    : "text-white/70",
-                )}
-              >
-                {messageTime}
               </p>
             </div>
           )}
@@ -235,20 +252,14 @@ export default function Message({
               )}
             </>
           )}
-          {/* External timestamp only for attachment-only / estimate-only rows;
-              text bubbles render their own inline time. */}
-          {!message.message &&
-            (message?.requestEstimate ||
-              (message.attachment && message.attachment.length > 0)) && (
-              <p
-                className={cn(
-                  "mt-1 text-[10px] text-gray-400",
-                  message.sender === "CLIENT" ? "text-left" : "text-right",
-                )}
-              >
-                {messageTime}
-              </p>
+          <p
+            className={cn(
+              "mt-1 text-[10px] text-gray-400",
+              message.sender === "CLIENT" ? "text-left" : "text-right",
             )}
+          >
+            {messageTime}
+          </p>
         </div>
       </div>
     </div>

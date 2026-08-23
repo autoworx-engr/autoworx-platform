@@ -1,6 +1,5 @@
 import TaskError from "@/app/(dashboard)/dashboard/task/_component/ui/TaskError";
-import TaskNotFound from "@/app/(dashboard)/dashboard/task/_component/ui/TaskNotFound";
-import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
+import EmptyMsg from "@/components/common/EmptyMsg";
 import useEmployeeQuery from "@/hooks/query-hook/useEmployeeQuery";
 import { EmployeeType, User } from "@prisma/client";
 import { Search, X } from "lucide-react";
@@ -9,8 +8,9 @@ import Avatar from "../Avatar";
 
 type TAssignedUser = {
   title: string;
-  employeeType: EmployeeType;
+  employeeType?: EmployeeType;
   assignedUsers: User[];
+  emptyMessage?: string;
   onAssignUser?: (user: User) => void;
   onRemoveAssignedUser?: (user: User) => void;
 };
@@ -19,9 +19,12 @@ export default function AssignUsers({
   title,
   employeeType,
   assignedUsers,
+  emptyMessage,
   onAssignUser,
   onRemoveAssignedUser,
 }: TAssignedUser) {
+  // "employee" reads correctly for the unfiltered list; a type narrows it.
+  const employeeLabel = employeeType ?? "employee";
   const {
     data: employees = [],
     isLoading,
@@ -60,42 +63,71 @@ export default function AssignUsers({
     // No need to manually update employeeList as the useEffect will handle it
   };
 
+  // Filter before rendering so the empty state reflects the *searched* list —
+  // checking employeeList alone showed a blank box when a search matched
+  // nothing. Trimmed so surrounding whitespace can't discard every match.
+  const normalizedSearch = assignedEmployeeSearch.trim().toLowerCase();
+  const visibleEmployees = normalizedSearch
+    ? employeeList.filter((employee) =>
+        `${employee.firstName} ${employee.lastName}`
+          .toLowerCase()
+          .includes(normalizedSearch),
+      )
+    : employeeList;
+
   let content = null;
   if (isLoading && !isError) {
-    content = <TaskSpinner />;
+    // Skeleton rows mirror the real employee rows below, so the box keeps its
+    // shape instead of collapsing around a lone spinner.
+    content = (
+      <div className="space-y-0.5 p-1" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Loading employees…</span>
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex items-center gap-3 px-2.5 py-2">
+            <div className="h-8 w-8 flex-shrink-0 animate-pulse rounded-full bg-slate-200" />
+            <div
+              className="h-3.5 animate-pulse rounded bg-slate-200"
+              style={{ width: `${55 - row * 10}%` }}
+            />
+          </div>
+        ))}
+      </div>
+    );
   } else if (!isLoading && isError) {
     content = (
-      <TaskError message={`Failed to load ${employeeType} user data`} />
+      <TaskError message={`Failed to load ${employeeLabel} user data`} />
     );
-  } else if (!isLoading && !isError && employeeList.length === 0) {
-    content = <TaskNotFound message={`No ${employeeType} user found`} />;
-  } else if (!isLoading && !isError && employeeList.length > 0) {
+  } else if (!isLoading && !isError && visibleEmployees.length === 0) {
     content = (
-      <div className="thin-scrollbar max-h-[220px] space-y-0.5 overflow-y-auto p-1">
-        {employeeList
-          .filter((employee) => {
-            const fullName =
-              `${employee.firstName} ${employee.lastName}`.toLowerCase();
-            return fullName.includes(assignedEmployeeSearch.toLowerCase());
-          })
-          .map((employee, index) => (
-            <button
-              key={`${employee.id}-${index}`}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent"
-              onClick={() => doAssignUser(employee)}
-              type="button"
-            >
-              <Avatar
-                photo={employee.image}
-                width={32}
-                height={32}
-                alt={`${employee.firstName} ${employee.lastName}`}
-              />
-              <p className="text-sm font-medium text-slate-700">
-                {employee.firstName} {employee.lastName}
-              </p>
-            </button>
-          ))}
+      <EmptyMsg
+        message={
+          normalizedSearch
+            ? `No ${employeeLabel} user matches "${assignedEmployeeSearch.trim()}"`
+            : `No ${employeeLabel} user found`
+        }
+      />
+    );
+  } else if (!isLoading && !isError && visibleEmployees.length > 0) {
+    content = (
+      <div className="max-h-[220px] space-y-0.5 overflow-y-auto p-1">
+        {visibleEmployees.map((employee, index) => (
+          <button
+            key={`${employee.id}-${index}`}
+            className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent"
+            onClick={() => doAssignUser(employee)}
+            type="button"
+          >
+            <Avatar
+              photo={employee.image}
+              width={32}
+              height={32}
+              alt={`${employee.firstName} ${employee.lastName}`}
+            />
+            <p className="text-sm font-medium text-slate-700">
+              {employee.firstName} {employee.lastName}
+            </p>
+          </button>
+        ))}
       </div>
     );
   }
@@ -105,7 +137,10 @@ export default function AssignUsers({
       <button
         type="button"
         className="group relative mb-4 font-medium text-primary transition-all duration-300"
-        onClick={() => setAddEmployeePersonOpen(true)}
+        onClick={() => {
+          setAssignedEmployeeSearch("");
+          setAddEmployeePersonOpen(true);
+        }}
       >
         {title}
         {/* <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-primary" /> */}
@@ -144,9 +179,10 @@ export default function AssignUsers({
 
         {assignedUsers.length === 0 && (
           <p className="ml-1 text-xs italic text-slate-400">
-            {employeeType === "Sales"
-              ? "No sales person assigned yet."
-              : "No Technician assigned yet."}
+            {emptyMessage ??
+              (employeeType === "Sales"
+                ? "No sales person assigned yet."
+                : "No Technician assigned yet.")}
           </p>
         )}
       </div>
@@ -168,14 +204,16 @@ export default function AssignUsers({
                 placeholder="Search Employees..."
                 value={assignedEmployeeSearch}
                 onChange={(e) => setAssignedEmployeeSearch(e.target.value)}
-                autoFocus
               />
             </div>
 
             {/* Close Search Button */}
             <button
               type="button"
-              onClick={() => setAddEmployeePersonOpen(false)}
+              onClick={() => {
+                setAssignedEmployeeSearch("");
+                setAddEmployeePersonOpen(false);
+              }}
               className="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <X size={18} strokeWidth={2} />

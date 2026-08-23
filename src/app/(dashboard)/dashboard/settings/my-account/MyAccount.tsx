@@ -274,6 +274,7 @@ const MyAccount = ({ user }: { user: User }) => {
                       [e.target.name]: e.target.value,
                     });
                   }}
+                  placeholder="Address"
                 />
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
@@ -286,6 +287,7 @@ const MyAccount = ({ user }: { user: User }) => {
                       [e.target.name]: e.target.value,
                     });
                   }}
+                  placeholder="City"
                 />
                 <SlimInput
                   name="state"
@@ -296,11 +298,13 @@ const MyAccount = ({ user }: { user: User }) => {
                       [e.target.name]: e.target.value,
                     });
                   }}
+                  placeholder="State"
                 />
                 <SlimInput
                   name="zip"
                   value={userInfo?.zip || ""}
                   onChange={handleZipChange}
+                  placeholder="Zip Code"
                 />
               </div>
               <div className="mt-8 flex justify-end border-t border-slate-100 pt-6">
@@ -372,6 +376,7 @@ const MyAccount = ({ user }: { user: User }) => {
                     name="description"
                     label="Description"
                     value={leaveRequest.description}
+                    rows={3}
                     onChange={(e) =>
                       setLeaveRequest({
                         ...leaveRequest,

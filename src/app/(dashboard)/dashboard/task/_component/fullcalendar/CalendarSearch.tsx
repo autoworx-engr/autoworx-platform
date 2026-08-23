@@ -34,8 +34,9 @@ export default function CalendarSearch({ type }: { type: string }) {
           type="text"
           value={searchTerm}
           onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setIsDropdownOpen(e.target.value.trim() !== "");
+            const value = e.target.value.trimStart();
+            setSearchTerm(value);
+            setIsDropdownOpen(value !== "");
           }}
           onFocus={() => {
             if (searchTerm.trim() !== "") {

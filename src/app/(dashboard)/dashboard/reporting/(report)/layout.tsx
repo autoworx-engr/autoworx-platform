@@ -93,14 +93,14 @@ export default function ReportLayout({ children }: TProps) {
       {permissions?.role === "Admin" || permissions?.role === "Manager" ? (
         <div>
           <div className="flex flex-col p-5 lg:flex-row lg:items-center">
-            <h1 className="mb-4 text-center text-slate-600 text-2xl font-bold lg:mb-0 lg:mr-4 md:text-left">
+            <h1 className="mb-4  text-slate-600 text-2xl font-bold lg:mb-0 lg:mr-4 text-left">
               Reporting
             </h1>
 
             {/* Tab Navigation */}
             <nav className="mt-2 lg:mt-0 w-full md:w-auto">
               <ul
-                className="flex md:inline-flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm w-full md:w-auto"
+                className="flex md:inline-flex items-center gap-1.5 p-1.5 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm w-full md:w-auto"
                 ref={tabsContainerRef}
               >
                 {toggleButtons.map((button, index) => {

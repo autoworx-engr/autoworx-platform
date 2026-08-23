@@ -1,7 +1,6 @@
 "use client";
 
 import { addEmployee } from "@/actions/employee/add";
-import { getCompany } from "@/actions/settings/getCompany";
 import SelectEmployeeType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeType";
 import {
   Dialog,
@@ -16,11 +15,11 @@ import Password from "@/components/Password";
 import { SlimInput } from "@/components/SlimInput";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Label } from "@/components/ui/label";
-import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
+import { isValidEmail, normalizeEmail } from "@/utils/email";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
-import { SquarePen, CircleUserRound as UserIcon } from "lucide-react";
+import { PencilLineIcon, CircleUserRound as UserIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
@@ -37,6 +36,7 @@ export default function AddNewEmployee({
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  const [email, setEmail] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const phoneDataRef = useRef({
@@ -49,7 +49,6 @@ export default function AddNewEmployee({
     salaryAmount: number;
   } | null>(null);
 
-  const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
   const { mobile, country, countryIsoCode } = phoneDataRef.current;
 
@@ -70,9 +69,6 @@ export default function AddNewEmployee({
       document.querySelector<HTMLInputElement>("[name='firstName']")?.value;
     const lastName =
       document.querySelector<HTMLInputElement>("[name='lastName']")?.value;
-    const email =
-      document.querySelector<HTMLInputElement>("[name='email']")?.value;
-
     const mobileNumber =
       country && mobile ? `${country}${mobile}` : mobile || "";
     const address =
@@ -121,7 +117,7 @@ export default function AddNewEmployee({
     }
 
     // Validate email format
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidEmail(email)) {
       showError({
         field: "email",
         message: "Please enter a valid email address.",
@@ -207,14 +203,13 @@ export default function AddNewEmployee({
       const res = await addEmployee({
         firstName,
         lastName,
-        email,
+        email: normalizeEmail(email),
         mobileNumber: mobileNumber,
         countryCode: countryIsoCode,
         address,
         city,
         state,
         zip,
-        companyName: companyName?.name,
         commission: commission ? Number(commission) : undefined,
         date,
         type: type as EmployeeType,
@@ -231,6 +226,7 @@ export default function AddNewEmployee({
 
         return;
       } else if (res.type === "success") {
+        setEmail("");
         setOpen(false);
         onSuccess && onSuccess(res.data);
       }
@@ -242,6 +238,7 @@ export default function AddNewEmployee({
 
   const handleClose = () => {
     clearError();
+    setEmail("");
     setProfilePic(null);
     setSalaryData(null);
     setSalaryTypeOpen(false);
@@ -306,7 +303,7 @@ export default function AddNewEmployee({
                 htmlFor="profilePicture"
                 className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
               >
-                <SquarePen className="w-3 h-3 text-white" />
+                <PencilLineIcon className="w-3 h-3 text-white" />
               </label>
               <input
                 type="file"
@@ -359,7 +356,7 @@ export default function AddNewEmployee({
 
         <FormError />
 
-        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="firstName"
@@ -383,16 +380,19 @@ export default function AddNewEmployee({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="email"
+              type="email"
               placeholder="Enter email address"
               required
+              value={email}
               onChange={(e: any) => {
-                const value = e.target.value;
-                if (!value.trim()) {
+                const value = normalizeEmail(e.target.value);
+                setEmail(value);
+                if (!value) {
                   showError({
                     field: "email",
                     message: "Email is required.",
                   });
-                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                } else if (!isValidEmail(value)) {
                   showError({
                     field: "email",
                     message: "Please enter a valid email address.",
@@ -437,6 +437,16 @@ export default function AddNewEmployee({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              name="username"
+              autoComplete="username"
+              value={email}
+              readOnly
+              hidden
+              aria-hidden="true"
+              tabIndex={-1}
+            />
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password" className="text-base">
                 Password <span className="text-destructive">*</span>
@@ -445,6 +455,7 @@ export default function AddNewEmployee({
                 name="password"
                 placeholder="Enter password"
                 required={true}
+                autoComplete="new-password"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -455,6 +466,7 @@ export default function AddNewEmployee({
                 name="confirmPassword"
                 placeholder="Enter confirm password"
                 required={true}
+                autoComplete="new-password"
               />
             </div>
           </div>
@@ -482,13 +494,9 @@ export default function AddNewEmployee({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-between">
             <SlimInput
-              name="companyName"
-              placeholder="Enter company name"
-              defaultValue={companyName?.name}
-            />
-            <SlimInput
+              rootClassName="flex-1"
               name="commission"
               label="Commission %"
               placeholder="commission"

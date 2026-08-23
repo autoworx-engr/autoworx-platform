@@ -8,17 +8,23 @@ import FormError from "@/components/FormError";
 import NewClientSource from "@/components/Lists/NewClientSource";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import { useClientSourcePicker } from "@/components/Lists/useClientSourcePicker";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
-import { DEFAULT_IMAGE_URL } from "@/lib/consts";
+import { DEFAULT_IMAGE_URL, isDefaultClientSourceName } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
+import {
+  isValidEmail,
+  lowercaseEmailInput,
+  normalizeEmail,
+} from "@/utils/email";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
+import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import useClientByIdQuery, {
@@ -52,11 +58,20 @@ export default function EditClientModalBody({
   const { data: queryClientSources = [] } = useClientSourcesQuery();
 
   const resolvedClient = clientData ?? client;
-  console.log("Resolved client data:", resolvedClient); // Debug log to check client data
-  console.log("Client: ", client); // Debug log to check initial client prop
+  // console.log("Resolved client data:", resolvedClient); // Debug log to check client data
+  // console.log("Client: ", client); // Debug log to check initial client prop
   const [clientSource, setClientSource] = useState<Source | null>(
     resolvedClient.source,
   );
+
+  // resolvedClient.source is only correct once clientData has loaded
+  // (the list-row client prop doesn't include the source relation).
+  useEffect(() => {
+    if (clientData) {
+      setClientSource(clientData.source ?? null);
+    }
+  }, [clientData]);
+
   const [pending, startTransition] = useTransition();
 
   const queryClient = useQueryClient();
@@ -94,6 +109,16 @@ export default function EditClientModalBody({
     }
   }
 
+  const { displaySources, isCreatingSource, selectClientSource } =
+    useClientSourcePicker({
+      sources: queryClientSources,
+      setSources: (updater) =>
+        queryClient.setQueryData<Source[]>([CLIENT_SOURCES_KEY], (prev = []) =>
+          updater(prev),
+        ),
+      setClientSource,
+    });
+
   async function handleSubmit() {
     clearError();
     let photo;
@@ -101,7 +126,9 @@ export default function EditClientModalBody({
       ?.value as string;
     const lastName =
       document.querySelector<HTMLInputElement>("#lastName")?.value;
-    const email = document.querySelector<HTMLInputElement>("#email")?.value;
+    const email = normalizeEmail(
+      document.querySelector<HTMLInputElement>("#email")?.value ?? "",
+    );
     const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
     const mobile =
       countryCode && phoneNumber
@@ -115,6 +142,14 @@ export default function EditClientModalBody({
 
     if (!firstName?.trim()) {
       showError({ field: "firstName", message: "First name is required." });
+      return;
+    }
+
+    if (email && !isValidEmail(email)) {
+      showError({
+        field: "email",
+        message: "Please enter a valid email address.",
+      });
       return;
     }
 
@@ -238,7 +273,7 @@ export default function EditClientModalBody({
               htmlFor="profilePicture"
               className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer  transition-colors"
             >
-              <SquarePen className="w-3 h-3 text-white" />
+              <PencilLineIcon className="w-3 h-3 text-white" />
             </label>
             <input
               type="file"
@@ -319,8 +354,21 @@ export default function EditClientModalBody({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <SlimInput
             name="email"
+            type="email"
             label="Email"
-            defaultValue={resolvedClient?.email!}
+            defaultValue={normalizeEmail(resolvedClient?.email ?? "")}
+            onChange={(e) => {
+              const value = lowercaseEmailInput(e.target);
+
+              if (value && !isValidEmail(value)) {
+                showError({
+                  field: "email",
+                  message: "Please enter a valid email address.",
+                });
+              } else {
+                clearError();
+              }
+            }}
           />
           <div className="w-full">
             {clientData ? (
@@ -428,33 +476,36 @@ export default function EditClientModalBody({
                   setOpenClientSource={setOpenClientSource}
                 />
               }
-              items={queryClientSources}
+              items={displaySources}
               displayList={(clientSource: Source) => (
                 <div className="flex">
                   <button
                     className="w-full text-left text-sm font-bold"
                     onClick={() => {
-                      setClientSource(clientSource);
+                      selectClientSource(clientSource);
                       setOpenClientSource(false);
                     }}
                     type="button"
                   >
                     {clientSource.name}
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => deleteClientSource(clientSource.id)}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
+                  {clientSource.id >= 0 &&
+                    !isDefaultClientSourceName(clientSource.name) && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => deleteClientSource(clientSource.id)}
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                 </div>
               )}
               selectedItem={clientSource}
               setSelectedItem={setClientSource}
               onSearch={(search: string) =>
-                queryClientSources.filter((s: Source) =>
+                displaySources.filter((s: Source) =>
                   s.name.toLowerCase().includes(search.toLowerCase()),
                 )
               }
@@ -520,7 +571,7 @@ export default function EditClientModalBody({
           Cancel
         </DialogClose>
         <button
-          disabled={pending || isLoading}
+          disabled={pending || isLoading || isCreatingSource}
           type="button"
           onClick={() => startTransition(handleSubmit)}
           className="

@@ -1,4 +1,5 @@
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import BackButton from "@/components/BackButton";
 import EditVendor from "@/components/Lists/EditVendor";
 import Title from "@/components/Title";
 import {
@@ -12,13 +13,13 @@ import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
 import {
-  ArrowLeft,
   Building2,
   DollarSign,
   Edit,
   Globe,
   Hash,
   Mail,
+  PencilLineIcon,
   Phone,
   User,
 } from "lucide-react";
@@ -132,15 +133,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       <Title
         className={`flex items-center gap-2 ${BASE_TEXT_COLOR} text-xl lg:text-2xl font-bold mb-4 mt-2`}
       >
-        <Link
-          href={`/dashboard/inventory/vendor?vendorId=${id}`}
-          className="flex items-center"
-        >
-          <ArrowLeft
-            size={20}
-            className="text-slate-600 dark:text-white rounded-full p-1 hover:bg-slate-100 dark:hover:bg-slate-700/50 active:scale-[0.95] transition-all"
-          />
-        </Link>
+        <BackButton href={`/dashboard/inventory/vendor?vendorId=${id}`} />
         Purchase History for {vendor?.name}
       </Title>
       <div className="mt-2 flex h-full flex-col-reverse gap-8 lg:flex-row">
@@ -150,7 +143,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           className="h-[90%] w-full border overflow-hidden rounded-xl hidden lg:block lg:w-[70%]"
         >
           <div
-            className={`h-full overflow-auto thin-scrollbar rounded-xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-800 shadow-xl ${TRANSITION_UTILITY}`}
+            className={`h-full overflow-auto rounded-xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-800 shadow-xl ${TRANSITION_UTILITY}`}
           >
             {/* Transactions Table (Desktop) */}
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
@@ -312,9 +305,9 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
                 button={
                   // Primary Button Style for Edit Action
                   <button
-                    className={`flex items-center gap-1 rounded-lg bg-[${ACCENT_COLOR}] text-white font-medium px-4 py-2 text-sm shadow-md shadow-[${ACCENT_COLOR}]/30 hover:-translate-y-0.5 ${TRANSITION_UTILITY}`}
+                    className={`flex items-center gap-1 rounded-lg bg-[${ACCENT_COLOR}] text-black font-medium px-4 py-2 text-sm shadow-md shadow-[${ACCENT_COLOR}]/30 hover:-translate-y-0.5 ${TRANSITION_UTILITY}`}
                   >
-                    <Edit size={16} />
+                    <PencilLineIcon size={16} />
                     Edit
                   </button>
                 }

@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import getAppointments from "@/actions/task/getAppointments";
 import { appointmentQueryKey } from "../../../_constant";
+import { clientNameFilter } from "../../../_utils/clientNameSearch";
 import { Appointment } from "@prisma/client";
 
 export const APPOINTMENT_SEARCH_PAGE_SIZE = 10;
@@ -10,38 +11,28 @@ export type AppointmentSearchItem = Appointment & {
   vehicle: { id: number; make: string; model: string; year: string } | null;
 };
 
-/**
- * Server-paginated appointment search. Fetches one page at a time (skip/take)
- * so the calendar search dropdown can infinite-scroll against the server.
- */
 export default function useAppointmentSearchQuery(searchTerm: string = "") {
+  const term = searchTerm.trim();
+  const nameFilter = clientNameFilter(term);
+
   return useInfiniteQuery({
-    queryKey: [appointmentQueryKey.allAppointments, "search", searchTerm],
+    queryKey: [appointmentQueryKey.allAppointments, "search", term],
     initialPageParam: 0,
     queryFn: async ({ pageParam = 0 }) => {
       const response = await getAppointments({
         where: {
           OR: [
-            { title: { contains: searchTerm, mode: "insensitive" } },
+            { title: { contains: term, mode: "insensitive" } },
+            ...(nameFilter ? [{ client: nameFilter }] : []),
             {
-              client: {
-                firstName: { contains: searchTerm, mode: "insensitive" },
-              },
+              vehicle: { make: { contains: term, mode: "insensitive" } },
             },
             {
-              client: {
-                lastName: { contains: searchTerm, mode: "insensitive" },
-              },
+              vehicle: { model: { contains: term, mode: "insensitive" } },
             },
-            {
-              vehicle: { make: { contains: searchTerm, mode: "insensitive" } },
-            },
-            {
-              vehicle: { model: { contains: searchTerm, mode: "insensitive" } },
-            },
-            ...(isNaN(Number(searchTerm))
-              ? []
-              : [{ vehicle: { year: { equals: parseInt(searchTerm, 10) } } }]),
+            ...(term && !isNaN(Number(term))
+              ? [{ vehicle: { year: { equals: parseInt(term, 10) } } }]
+              : []),
           ],
         },
         include: {
@@ -64,6 +55,6 @@ export default function useAppointmentSearchQuery(searchTerm: string = "") {
       const loaded = lastPage.skip + lastPage.items.length;
       return loaded < lastPage.total ? loaded : undefined;
     },
-    enabled: !!searchTerm.trim(),
+    enabled: !!term,
   });
 }

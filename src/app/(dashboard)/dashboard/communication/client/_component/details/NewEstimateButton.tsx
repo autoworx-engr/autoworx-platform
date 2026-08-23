@@ -46,7 +46,7 @@ export default function NewEstimateButton({ clientId, vehicles = [] }: TProps) {
       className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#CDE4E6] bg-[#CDE4E6] px-4 py-2.5 text-xs font-semibold text-[#006D77] transition hover:bg-[#b9d9dc] disabled:cursor-not-allowed disabled:opacity-50 2xl:text-sm"
     >
       <FileText className="h-4 w-4" />
-      <span>{pending ? "Creating..." : "New estimate"}</span>
+      <span>{pending ? "Creating..." : "New Estimate"}</span>
     </button>
   );
 }

@@ -78,7 +78,7 @@ export async function GET(
 
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "GENERAL";
-    const search = searchParams.get("search") || undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
 
     const where: Record<string, any> = { companyId, type };
 

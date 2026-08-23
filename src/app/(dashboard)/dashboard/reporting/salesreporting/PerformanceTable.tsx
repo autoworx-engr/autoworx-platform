@@ -51,7 +51,7 @@ export default function PerformanceTable({
         },
         {
           label: "Average Deal Size",
-          value: `${(data.averageDealSize ?? 0).toFixed(2)} $`,
+          value: `$${(data.averageDealSize ?? 0).toFixed(2)}`,
           percentage: data.growthRates.averageDealSizeGR.rate,
           isPositive: data.growthRates.averageDealSizeGR.isPositive,
         },

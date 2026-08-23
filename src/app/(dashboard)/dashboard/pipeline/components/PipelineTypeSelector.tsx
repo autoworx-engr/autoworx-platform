@@ -1,5 +1,6 @@
 "use client";
 
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,27 +27,27 @@ const ALL_OPTIONS: { type: PipelineType; label: string; href: string }[] = [
   },
 ];
 
-function getOptions(employeeType?: string) {
-  if (employeeType === "Technician")
-    return ALL_OPTIONS.filter((o) => o.type === "shop");
-  if (employeeType === "Sales")
-    return ALL_OPTIONS.filter((o) => o.type === "sales");
-  return ALL_OPTIONS;
-}
-
 interface PipelineTypeSelectorProps {
   currentType: PipelineType;
-  employeeType?: string;
 }
 
 export default function PipelineTypeSelector({
   currentType,
-  employeeType,
 }: PipelineTypeSelectorProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
-  const options = getOptions(employeeType);
+
+  // Each pipeline has its own permission + feature key, so the switcher offers
+  // exactly the ones this user can actually open. Hooks stay in a fixed order
+  // because ALL_OPTIONS is a module-level constant.
+  const allowed: Record<PipelineType, boolean> = {
+    sales: useCanAccessRoute("/dashboard/pipeline/sales/pipeline"),
+    shop: useCanAccessRoute("/dashboard/pipeline/shop/pipeline"),
+    team: useCanAccessRoute("/dashboard/pipeline/team/pipeline"),
+  };
+
+  const options = ALL_OPTIONS.filter((option) => allowed[option.type]);
   const current = ALL_OPTIONS.find((o) => o.type === currentType);
 
   useEffect(() => {
@@ -72,7 +73,7 @@ export default function PipelineTypeSelector({
     <div className="relative mr-4" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-[26px] font-bold text-[#66738C] hover:text-[#5a66ee] transition-colors"
+        className="flex items-center gap-1 text-[26px] font-bold text-slate-600 hover:text-[#5a66ee] transition-colors"
       >
         {current?.label}
         <ChevronDown
@@ -83,7 +84,7 @@ export default function PipelineTypeSelector({
         />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-2 z-50 min-w-[190px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+        <div className="absolute top-full left-0 mt-2 z-[60] min-w-[190px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
           {options.map((option) => (
             <button
               key={option.type}

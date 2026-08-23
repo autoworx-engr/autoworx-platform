@@ -7,9 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { Bell, Calendar } from "lucide-react";
+import { useState } from "react";
 import AppointmentForm from "./AppointmentForm";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
@@ -30,6 +32,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
   } = props;
 
   const state = useAppointmentFormState(props);
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
 
   const {
     tab,
@@ -50,8 +53,6 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
     endDate,
     startTime,
     endTime,
-    times,
-    setTimes,
     confirmationTemplate,
     setConfirmationTemplate,
     reminderTemplate,
@@ -72,6 +73,18 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
   if (fromEdit && isError) {
     errorToast("Failed to fetch appointment data");
   }
+
+  const isSaveDisabled =
+    !formChanged ||
+    isSubmitting ||
+    (fromEdit && !appointmentIsFetch) ||
+    (fromEdit && !settingsIsFetched) ||
+    (fromEdit && !!client?.id && !estimateIsFetched) ||
+    !title.trim() ||
+    !date ||
+    !startTime ||
+    !endTime ||
+    (!!endDate && !!date && endDate < date);
 
   return (
     <DialogContent
@@ -139,11 +152,11 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
         />
 
         {/* Desktop right panel */}
-        <div className="hidden lg:block relative row-span-2 overflow-y-auto thin-scrollbar divide-y bg-background border-l">
+        <div className="hidden lg:block relative row-span-2 overflow-y-auto divide-y bg-background border-l">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}
-              className="absolute inset-0 divide-y overflow-y-auto thin-scrollbar"
+              className="absolute inset-0 divide-y overflow-y-auto"
             >
               <ScheduleTab
                 rows={rows}
@@ -157,27 +170,31 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
               />
             </div>
           ) : tab === Tab.Reminder ? (
-            <Reminder
-              client={client}
-              vehicle={vehicle}
-              startTime={startTime!}
-              date={date!}
-              timezone={state.timezone}
-              times={times}
-              setTimes={setTimes}
-              confirmationTemplate={confirmationTemplate}
-              setConfirmationTemplate={setConfirmationTemplate}
-              reminderTemplate={reminderTemplate}
-              setReminderTemplate={setReminderTemplate}
-              confirmationTemplateStatus={confirmationTemplateStatus}
-              setConfirmationTemplateStatus={setConfirmationTemplateStatus}
-              reminderTemplateStatus={reminderTemplateStatus}
-              setReminderTemplateStatus={setReminderTemplateStatus}
-              openConfirmation={openConfirmation}
-              openReminder={openReminder}
-              setOpenReminder={setOpenReminder}
-              setOpenConfirmation={setOpenConfirmation}
-            />
+            // px-4 replaces the horizontal padding removed from Reminder's own
+            // wrappers, which now only pad vertically. h-full lets Reminder's
+            // empty state centre itself vertically in the panel.
+            <div className="flex h-full flex-col px-4">
+              <Reminder
+                client={client}
+                vehicle={vehicle}
+                startTime={startTime!}
+                date={date!}
+                confirmationTemplate={confirmationTemplate}
+                setConfirmationTemplate={setConfirmationTemplate}
+                reminderTemplate={reminderTemplate}
+                setReminderTemplate={setReminderTemplate}
+                confirmationTemplateStatus={confirmationTemplateStatus}
+                setConfirmationTemplateStatus={setConfirmationTemplateStatus}
+                reminderTemplateStatus={reminderTemplateStatus}
+                setReminderTemplateStatus={setReminderTemplateStatus}
+                openConfirmation={openConfirmation}
+                openReminder={openReminder}
+                setOpenReminder={setOpenReminder}
+                setOpenConfirmation={setOpenConfirmation}
+                fromEdit={fromEdit}
+                hasAssignedUsers={state.assignedUsers.length > 0}
+              />
+            </div>
           ) : null}
         </div>
       </div>
@@ -197,23 +214,39 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             type="button"
             className={cn(
               "rounded-md px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200",
-              formChanged && !isSubmitting
+              !isSaveDisabled
                 ? "cursor-pointer bg-gradient-to-r from-primary to-[#5a66ee] hover:shadow-lg hover:shadow-indigo-500/30"
                 : "cursor-not-allowed bg-gray-400",
             )}
-            onClick={handleSubmit}
-            disabled={
-              !formChanged ||
-              isSubmitting ||
-              (fromEdit && !appointmentIsFetch) ||
-              (fromEdit && !settingsIsFetched) ||
-              (fromEdit && !!client?.id && !estimateIsFetched)
+            onClick={
+              // Only warn when confirmation is OFF — turning it on needs no
+              // prompt, since sending the email is the expected outcome.
+              fromEdit && !state.confirmationTemplateStatus
+                ? () => setSaveConfirmOpen(true)
+                : handleSubmit
             }
+            disabled={isSaveDisabled}
           >
             {isSubmitting ? "Saving..." : "Save"}
           </button>
         </DialogFooter>
       </div>
+
+      {/* The confirmation switch always opens OFF on edit, so warn before a
+          save silently skips the client's confirmation email. */}
+      <ConfirmModal
+        open={saveConfirmOpen}
+        onOpenChange={setSaveConfirmOpen}
+        title="Save without confirmation?"
+        description="Appointment Confirmation is OFF, so no confirmation email will be sent. Turn it on before saving if you want the client notified."
+        confirmText="Save"
+        cancelText="Go back"
+        loading={isSubmitting}
+        onConfirm={async () => {
+          await handleSubmit();
+          setSaveConfirmOpen(false);
+        }}
+      />
     </DialogContent>
   );
 }

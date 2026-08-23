@@ -14,10 +14,10 @@ import {
   User,
   Lightbulb,
   Volume2,
-  MessageSquare,
   AlertTriangle,
   Brain,
   Loader2,
+  MessageCircleMore,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -233,7 +233,7 @@ export default function PersonalityFineTuneCard() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+            <MessageCircleMore className="h-5 w-5" />
             Opening Message
           </CardTitle>
           <CardDescription>

@@ -1,10 +1,10 @@
-import Image from "next/image";
-import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
-import { Popconfirm, Tooltip } from "antd";
 import { Switch } from "@/components/Switch";
-import { useRouter } from "nextjs-toploader/app";
 import { useUpdateShopServiceStatus } from "@/hooks/virtual-shop/service/useShopService";
 import { formatDuration } from "@/lib/formatDuration";
+import { Popconfirm, Tooltip } from "antd";
+import { ImageIcon, PencilLineIcon, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "nextjs-toploader/app";
 import { useState } from "react";
 
 export type Service = {
@@ -134,15 +134,29 @@ export default function ServiceCard({
           className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md border border-slate-200 bg-white px-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:border-0 sm:bg-transparent sm:p-1.5"
           aria-label="Edit service"
         >
-          <SquarePen size={18} color="#6571FF" />
+          <PencilLineIcon size={18} color="#6571FF" />
         </button>
         <Popconfirm
-          title="Delete service"
-          description={`Are you sure you want to delete "${service.name}"?`}
+          title="Delete Service"
+          description={`Are you sure you want to delete "${
+            service.name.length > 50
+              ? `${service.name.slice(0, 50)}...`
+              : service.name
+          }"?`}
           okText="Delete"
           cancelText="Cancel"
-          okButtonProps={{ danger: true }}
+          placement="topRight"
           onConfirm={() => onDelete?.(service)}
+          onPopupClick={(e) => e.stopPropagation()}
+          overlayClassName="[&_.ant-popover-inner]:max-w-[280px] [&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800 [&_.ant-popover-message-description]:break-words"
+          okButtonProps={{
+            className:
+              "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+          }}
+          cancelButtonProps={{
+            className:
+              "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+          }}
         >
           <button
             type="button"

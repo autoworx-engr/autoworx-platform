@@ -103,7 +103,7 @@ export default function CannedLabor({
               paramKey="laborSearch"
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <CannedFilterBySelection
               selectedItem={selectedCategory}
               items={uniqueCategories}
@@ -116,7 +116,7 @@ export default function CannedLabor({
             <NewLabor
               newButton={
                 <button
-                  className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
+                  className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] w-full md:min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
@@ -150,7 +150,7 @@ export default function CannedLabor({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="overflow-y-auto thin-scrollbar h-full">
+          <TableBody className="overflow-y-auto h-full">
             {labors.length > 0 ? (
               labors.map((labor, index) => (
                 <CannedLaborItem
@@ -174,7 +174,7 @@ export default function CannedLabor({
         </Table>
       </div>
       {/* Mobile View */}
-      <div className="grid gap-4 pb-4 md:hidden mt-4">
+      <div className="grid grid-cols-1 gap-4 pb-4 md:hidden mt-4">
         {labors.length > 0 ? (
           labors.map((labor, i) => (
             <CannedLaborItem

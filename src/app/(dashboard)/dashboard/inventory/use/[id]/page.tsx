@@ -1,3 +1,4 @@
+import BackButton from "@/components/BackButton";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -16,15 +17,15 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   const { id } = params;
 
-  console.log({ id });
   if (!id) return notFound();
 
   const companyId = await getCompanyId();
 
   const productId = parseInt(id);
   const product = await db.inventoryProduct.findUnique({
-    where: { id: productId },
+    where: { id: productId, companyId },
   });
+
   const invoices = await db.invoice.findMany({
     where: { companyId, type: "Invoice" },
     select: {
@@ -46,17 +47,18 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   //   orderBy: { date: "desc" },
   // });
 
-  console.log({ product });
-
   if (!product) return notFound();
 
   return (
     <div className="app-shadow mx-auto mt-10 w-full max-w-[60rem] rounded-lg bg-background p-4">
       <div className="flex flex-col gap-4 md:flex-row">
         <div className="w-full md:w-[70%]">
-          <h3 className="text-xs font-semibold sm:text-lg">
-            Inventory Details
-          </h3>
+          <div className="mb-2 flex items-center gap-3">
+            <BackButton href="/dashboard/inventory" />
+            <h3 className="text-xs font-semibold sm:text-lg">
+              Inventory Details
+            </h3>
+          </div>
           <p className="mt-1 text-sm sm:mt-2 sm:text-base">
             <span className="font-semibold">Name: </span> {product.name}
           </p>

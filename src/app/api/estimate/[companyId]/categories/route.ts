@@ -1,3 +1,4 @@
+import { CATEGORY_NAME_MAX_LENGTH } from "@/lib/categoryConstants";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -66,7 +67,7 @@ export async function GET(
     const companyId = jwtCompanyId;
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
 
     const where: Record<string, any> = { companyId };
 
@@ -152,6 +153,16 @@ export async function POST(
     if (!name?.trim()) {
       return NextResponse.json(
         { success: false, message: "name is required" },
+        { status: 400 },
+      );
+    }
+
+    if (name.trim().length > CATEGORY_NAME_MAX_LENGTH) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Category name must be ${CATEGORY_NAME_MAX_LENGTH} characters or fewer`,
+        },
         { status: 400 },
       );
     }

@@ -56,6 +56,8 @@ export function BillSummary({
   const [originalServiceFee, setOriginalServiceFee] = useState(0);
   // Material-only subtotal used as the tax base (labor is not taxed).
   const [materialSubtotal, setMaterialSubtotal] = useState(0);
+  const [materialDiscountTotal, setMaterialDiscountTotal] = useState(0);
+  const [laborDiscountTotal, setLaborDiscountTotal] = useState(0);
   const pathname = usePathname();
   const isEditPage = pathname?.includes("/estimate/edit");
   // On edit pages, skip recalculation until the user actually modifies items.
@@ -131,10 +133,12 @@ export function BillSummary({
       let servicesTotal = 0;
       let materialsTotal = 0;
       let discountTotal = 0;
+      let materialDiscount = 0;
+      let laborDiscount = 0;
 
       items.forEach((item) => {
         const { materials, labor } = item;
-        if (!item.service && !item.labor) return;
+        if (!item.service && !item.labor && !materials?.length) return;
 
         const materialCost = materials.reduce((acc, material) => {
           return (
@@ -146,7 +150,7 @@ export function BillSummary({
           );
         }, 0);
 
-        const materialDiscount = materials.reduce((acc, material) => {
+        const itemMaterialDiscount = materials.reduce((acc, material) => {
           return (
             acc +
             (material && material.discount
@@ -155,24 +159,42 @@ export function BillSummary({
           );
         }, 0);
 
+        const itemLaborDiscount = labor?.discount
+          ? parseFloat(labor.discount.toString())
+          : 0;
+
         const laborCost = labor?.charge
           ? Number((Number(labor.charge) * Number(labor.hours)).toFixed(2))
           : 0;
 
         materialsTotal += materialCost;
         servicesTotal += materialCost + laborCost;
-        discountTotal +=
-          materialDiscount +
-          (labor?.discount ? parseFloat(labor.discount.toString()) : 0);
+        materialDiscount += itemMaterialDiscount;
+        laborDiscount += itemLaborDiscount;
+        discountTotal += itemMaterialDiscount + itemLaborDiscount;
       });
 
-      return { servicesTotal, materialsTotal, discountTotal };
+      return {
+        servicesTotal,
+        materialsTotal,
+        discountTotal,
+        materialDiscount,
+        laborDiscount,
+      };
     }
 
-    const { servicesTotal, materialsTotal, discountTotal } = calcItemTotals();
+    const {
+      servicesTotal,
+      materialsTotal,
+      discountTotal,
+      materialDiscount,
+      laborDiscount,
+    } = calcItemTotals();
     // Always keep materialSubtotal in sync so the tax toggle can use it
     // even on edit pages before the user modifies items.
     setMaterialSubtotal(materialsTotal);
+    setMaterialDiscountTotal(materialDiscount);
+    setLaborDiscountTotal(laborDiscount);
 
     if (isEditPage) {
       if (items.length === 0) {
@@ -284,20 +306,36 @@ export function BillSummary({
     setCouponLoading(false);
   }
 
+  const summaryRows: [string, string][] = [
+    ["subtotal", subtotal.toFixed(2)],
+    ["discount", discount.toFixed(2)],
+    ...(materialDiscountTotal > 0
+      ? ([["material discount", materialDiscountTotal.toFixed(2)]] as [
+          string,
+          string,
+        ][])
+      : []),
+    ...(laborDiscountTotal > 0
+      ? ([["labor discount", laborDiscountTotal.toFixed(2)]] as [
+          string,
+          string,
+        ][])
+      : []),
+    ["tax", tax.toFixed(2)],
+    // ["vehicle extra cost", vehicleExtraCost.toFixed(2)],
+    ["shop supplies", serviceFee.toFixed(2)],
+    ["deposit", deposit.toFixed(2)],
+    ["payment", totalPayment.toFixed(2)],
+    ["grand total", grandTotal.toFixed(2)],
+  ];
+
   return (
     <>
       <div className="space-y-1 p-1.5">
-        {[
-          ["subtotal", subtotal.toFixed(2)],
-          ["discount", discount.toFixed(2)],
-          ["tax", tax.toFixed(2)],
-          // ["vehicle extra cost", vehicleExtraCost.toFixed(2)],
-          ["shop supplies", serviceFee.toFixed(2)],
-          ["deposit", deposit.toFixed(2)],
-          ["payment", totalPayment.toFixed(2)],
-          ["grand total", grandTotal.toFixed(2)],
-        ].map(([title, data], index) => {
+        {summaryRows.map(([title, data], index) => {
           const isToggleItem = title === "tax" || title === "shop supplies";
+          const isDiscountBreakdown =
+            title === "material discount" || title === "labor discount";
           const toggleState =
             title === "tax" ? isTaxEnabled : isSuppliesEnabled;
           const toggleSetter =
@@ -308,9 +346,19 @@ export function BillSummary({
           return (
             <div
               key={index}
-              className="group relative flex items-center justify-between gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 transition-all hover:border-slate-200 hover:shadow-sm"
+              className={cn(
+                "group relative flex items-center justify-between gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 transition-all hover:border-slate-200 hover:shadow-sm",
+                isDiscountBreakdown && "ml-3 border-y bg-slate-50/80 py-1",
+              )}
             >
-              <div className="mr-auto text-sm font-semibold text-slate-500 capitalize">
+              <div
+                className={cn(
+                  "mr-auto capitalize",
+                  isDiscountBreakdown
+                    ? "text-xs font-medium text-slate-400"
+                    : "text-sm font-semibold text-slate-500",
+                )}
+              >
                 {title}
               </div>
 
@@ -350,7 +398,12 @@ export function BillSummary({
                       }`
                     : data
                 }
-                className="w-[200px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
+                className={cn(
+                  "w-[200px] rounded-lg px-3 py-1 text-right font-bold ring-1 ring-inset ring-slate-100 focus:outline-none",
+                  isDiscountBreakdown
+                    ? "bg-slate-200 text-xs text-slate-500"
+                    : "bg-gray-500 text-sm text-white",
+                )}
               />
             </div>
           );

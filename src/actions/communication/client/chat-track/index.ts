@@ -1,5 +1,6 @@
 "use server";
 import { db } from "@/lib/db";
+import { getManualUnreadChannels } from "./manualUnread";
 
 type AttachmentSummary = { name?: string; url?: string };
 
@@ -219,15 +220,18 @@ export async function readClientSMS(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = findClientChatTrack?.smsUnReadCount
-      ? await db.clientConversationTrack.update({
-          where: { clientId },
-          data: {
-            smsIsRead: true,
-            smsUnReadCount: 0,
-          },
-        })
-      : findClientChatTrack;
+    // A thread marked unread by hand has no count to clear, so gate on the
+    // read flag as well — otherwise opening it would never mark it read.
+    const updatedData =
+      findClientChatTrack.smsUnReadCount || !findClientChatTrack.smsIsRead
+        ? await db.clientConversationTrack.update({
+            where: { clientId },
+            data: {
+              smsIsRead: true,
+              smsUnReadCount: 0,
+            },
+          })
+        : findClientChatTrack;
     return updatedData;
   } catch (err) {
     throw err;
@@ -243,22 +247,23 @@ export async function readClientEmail(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = findClientChatTrack?.emailIsUnReadCount
-      ? await db.clientConversationTrack.update({
-          where: { clientId },
-          data: {
-            emailIsRead: true,
-            emailIsUnReadCount: 0,
-          },
-        })
-      : findClientChatTrack;
+    const updatedData =
+      findClientChatTrack.emailIsUnReadCount || !findClientChatTrack.emailIsRead
+        ? await db.clientConversationTrack.update({
+            where: { clientId },
+            data: {
+              emailIsRead: true,
+              emailIsUnReadCount: 0,
+            },
+          })
+        : findClientChatTrack;
     return updatedData;
   } catch (err) {
     throw err;
   }
 }
 
-export async function unreadClientSmsAndEmail(clientId: number) {
+export async function unreadClientConversations(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId },
@@ -268,24 +273,43 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       return initialCreateClientChatTrack(clientId);
     }
 
-    // Atomic conditional unread updates via updateMany so we don't throw when
-    // the row is already in the desired state (e.g. concurrent reader).
-    if (findClientChatTrack.lastMessageBy === "Client") {
+    // Marking a thread unread by hand means "remind me", not "a new message
+    // arrived" — so leave the counts alone. A count of 0 on an unread channel
+    // is what tells the badge to show a plain dot instead of a number, and it
+    // keeps a real inbound count from being inflated.
+    const channels = getManualUnreadChannels(findClientChatTrack);
+    if (channels.sms) {
       await db.clientConversationTrack.updateMany({
         where: { clientId, smsIsRead: true },
         data: {
           smsIsRead: false,
-          smsUnReadCount: { increment: 1 },
         },
       });
     }
 
-    if (findClientChatTrack.lastEmailBy === "Client") {
+    if (channels.email) {
       await db.clientConversationTrack.updateMany({
         where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
-          emailIsUnReadCount: { increment: 1 },
+        },
+      });
+    }
+
+    if (channels.messenger) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, messengerIsRead: true },
+        data: {
+          messengerIsRead: false,
+        },
+      });
+    }
+
+    if (channels.instagram) {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, instagramIsRead: true },
+        data: {
+          instagramIsRead: false,
         },
       });
     }
@@ -352,7 +376,7 @@ export async function readClientMessenger(clientId: number) {
       where: { clientId },
     });
     if (!track) return initialCreateClientChatTrack(clientId);
-    if (!track.messengerUnReadCount) return track;
+    if (!track.messengerUnReadCount && track.messengerIsRead) return track;
     return db.clientConversationTrack.update({
       where: { clientId },
       data: { messengerIsRead: true, messengerUnReadCount: 0 },
@@ -410,7 +434,7 @@ export async function readClientInstagram(clientId: number) {
       where: { clientId },
     });
     if (!track) return initialCreateClientChatTrack(clientId);
-    if (!track.instagramUnReadCount) return track;
+    if (!track.instagramUnReadCount && track.instagramIsRead) return track;
     return db.clientConversationTrack.update({
       where: { clientId },
       data: { instagramIsRead: true, instagramUnReadCount: 0 },
@@ -420,7 +444,7 @@ export async function readClientInstagram(clientId: number) {
   }
 }
 
-export async function readClientSmsAndEmail(clientId: number) {
+export async function readClientConversations(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId },
@@ -437,6 +461,10 @@ export async function readClientSmsAndEmail(clientId: number) {
         smsUnReadCount: 0,
         emailIsRead: true,
         emailIsUnReadCount: 0,
+        messengerIsRead: true,
+        messengerUnReadCount: 0,
+        instagramIsRead: true,
+        instagramUnReadCount: 0,
       },
     });
 

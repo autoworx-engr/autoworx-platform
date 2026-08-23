@@ -31,6 +31,8 @@ Font.register({
   fontWeight: 500,
 });
 
+Font.registerHyphenationCallback((word) => [word]);
+
 // Dummy props interface – customize as needed
 interface FleetData {
   id: string;
@@ -39,9 +41,17 @@ interface FleetData {
   model: string;
   vin: string;
   price: string;
+  paidAmount: number;
+  dueAmount: number;
   status: string;
+  paymentStatus: string;
   other?: string;
 }
+
+// Due/payment emphasis: red while a balance remains outstanding, brand
+// indigo once it's settled — used for both the "Due" and "Payment" columns.
+const dueEmphasisColor = (dueAmount: number) =>
+  dueAmount > 0 ? "#DC2626" : "#6571FF";
 
 interface CompanyDetails {
   name: string;
@@ -64,8 +74,7 @@ interface FleetCustomer {
 }
 
 interface User {
-  firstName: string;
-  lastName: string;
+  name: string;
 }
 
 interface PDFFleetStatementProps {
@@ -163,37 +172,52 @@ const styles = StyleSheet.create({
 
   // Table cells
   cellInvoice: {
-    width: "15%",
+    width: "12%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellYear: {
-    width: "10%",
+    width: "5%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellMake: {
-    width: "15%",
+    width: "9%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellModel: {
-    width: "15%",
+    width: "9%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellVin: {
-    width: "15%",
+    width: "10%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellPrice: {
-    width: "15%",
+    width: "9%",
+    paddingHorizontal: 4,
+    fontSize: 9,
+  },
+  cellPaid: {
+    width: "9%",
+    paddingHorizontal: 4,
+    fontSize: 9,
+  },
+  cellDue: {
+    width: "9%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellStatus: {
-    width: "15%",
+    width: "14%",
+    paddingHorizontal: 4,
+    fontSize: 9,
+  },
+  cellPaymentStatus: {
+    width: "14%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
@@ -371,10 +395,19 @@ export const PDFFleetStatement = ({
             <Text style={styles.headerText}>VIN</Text>
           </View>
           <View style={styles.cellPrice}>
-            <Text style={styles.headerText}>Price</Text>
+            <Text style={styles.headerText}>Amount</Text>
+          </View>
+          <View style={styles.cellPaid}>
+            <Text style={styles.headerText}>Paid</Text>
+          </View>
+          <View style={styles.cellDue}>
+            <Text style={styles.headerText}>Due</Text>
           </View>
           <View style={styles.cellStatus}>
-            <Text style={styles.headerText}>Status</Text>
+            <Text style={styles.headerText}>Invoice Status</Text>
+          </View>
+          <View style={styles.cellPaymentStatus}>
+            <Text style={styles.headerText}>Payment</Text>
           </View>
         </View>
 
@@ -399,19 +432,52 @@ export const PDFFleetStatement = ({
             <View style={styles.cellModel}>
               <Text style={styles.dataText}>{vehicle.model}</Text>
             </View>
-            {vehicle.other && (
+            {vehicle.other !== "N/A" && (
               <View style={styles.cellModel}>
                 <Text style={styles.dataText}>{vehicle.other}</Text>
               </View>
             )}
             <View style={styles.cellVin}>
-              <Text style={styles.dataText}>{vehicle.vin}</Text>
+              <Text style={[styles.dataText, { fontSize: 7 }]}>
+                {vehicle.vin}
+              </Text>
             </View>
             <View style={styles.cellPrice}>
               <Text style={styles.dataText}>{vehicle.price}</Text>
             </View>
+            <View style={styles.cellPaid}>
+              <Text style={styles.dataText}>
+                {formatCurrency(vehicle.paidAmount)}
+              </Text>
+            </View>
+            <View style={styles.cellDue}>
+              <Text
+                style={[
+                  styles.dataText,
+                  {
+                    fontWeight: "bold",
+                    color: dueEmphasisColor(vehicle.dueAmount),
+                  },
+                ]}
+              >
+                {formatCurrency(vehicle.dueAmount)}
+              </Text>
+            </View>
             <View style={styles.cellStatus}>
               <Text style={styles.dataText}>{vehicle.status}</Text>
+            </View>
+            <View style={styles.cellPaymentStatus}>
+              <Text
+                style={[
+                  styles.dataText,
+                  {
+                    fontWeight: "bold",
+                    color: dueEmphasisColor(vehicle.dueAmount),
+                  },
+                ]}
+              >
+                {vehicle.paymentStatus}
+              </Text>
             </View>
           </View>
         ))}
@@ -441,9 +507,7 @@ export const PDFFleetStatement = ({
           >
             {companyDetails?.name}
           </Text>
-          <Text style={styles.fontSize10}>
-            {user?.firstName} {user?.lastName}
-          </Text>
+          <Text style={styles.fontSize10}>{user?.name}</Text>
         </View>
 
         {/* {authorizedName && (

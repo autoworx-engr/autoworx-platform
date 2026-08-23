@@ -28,14 +28,14 @@ export default async function TopVendors() {
       acc[t?.vendorId] = (acc[t?.vendorId] || 0) + total;
       return acc;
     },
-    {}
+    {},
   );
 
   // Extract and sort top 10 vendors
   const topVendors = Object.entries(vendorTotals)
     .map(([vendorId, total]) => {
       const vendorData = vendorTransactions.find(
-        (t) => t?.vendorId === Number(vendorId)
+        (t) => t?.vendorId === Number(vendorId),
       )?.vendor;
 
       return {
@@ -52,13 +52,17 @@ export default async function TopVendors() {
   const maxTotal = Math.max(...topVendors.map((v) => v.total)) || 1;
 
   return (
-    <div className={`${SHADOW_COLOR} w-full rounded-xl h-[40%] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-6 transition-shadow duration-300 hover:shadow-2xl pb-20`}>
+    <div
+      className={`${SHADOW_COLOR} w-full rounded-xl h-[40%] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-6 transition-shadow duration-300 hover:shadow-2xl pb-20`}
+    >
       <div className="flex items-center gap-2 mb-5">
         <TrendingUp size={20} style={{ color: ACCENT_COLOR }} />
-        <h3 className="text-xl font-extrabold" style={{ color: ACCENT_COLOR }}>Top Vendors</h3>
+        <h3 className="text-xl font-extrabold" style={{ color: ACCENT_COLOR }}>
+          Top Vendors
+        </h3>
       </div>
 
-      <div className="flex flex-col gap-4 h-full overflow-y-auto thin-scrollbar">
+      <div className="flex flex-col gap-4 h-full overflow-y-auto">
         {topVendors.map((vendor, i) => {
           const progress =
             (Math.log(vendor?.total + 1) / Math.log(maxTotal + 1)) * 100;

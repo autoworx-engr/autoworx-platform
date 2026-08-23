@@ -53,7 +53,11 @@ interface EstimateCreateStore {
   inspections: InspectionType[];
   damageNotes: string | null;
   template?: InvoiceTemplate | null;
-  templateSnapshot?: Partial<EstimateCreateStore> | null;
+  templateSnapshot?:
+    | (Partial<EstimateCreateStore> & { status?: Column | null })
+    | null;
+  paymentModalOpen: boolean;
+  setPaymentModalOpen: (paymentModalOpen: boolean) => void;
   setInvoiceId: (invoiceId: string) => void;
   setType: (type: string) => void;
   setSubtotal: (subtotal: number) => void;
@@ -126,7 +130,9 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
     notes: "",
   })),
   damageNotes: "",
+  paymentModalOpen: false,
 
+  setPaymentModalOpen: (paymentModalOpen: boolean) => set({ paymentModalOpen }),
   setInvoiceId: (invoiceId: string) => set({ invoiceId }),
   setType: (type: string) => set({ type }),
   setSubtotal: (subtotal: number) => set({ subtotal }),
@@ -205,6 +211,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
         notes: "",
       })),
       damageNotes: "",
+      paymentModalOpen: false,
     }),
 
   removeMaterial({ itemIndex, materialIndex }) {

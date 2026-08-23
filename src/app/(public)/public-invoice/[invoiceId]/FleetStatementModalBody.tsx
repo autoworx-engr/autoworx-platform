@@ -122,7 +122,7 @@ export const FleetStatementModalBody: React.FC<
 
       {/* Invoice Table */}
       <div className="px-6 sm:px-10 pb-6">
-        <div className="thin-scrollbar max-h-[40vh] overflow-x-hidden overflow-y-auto rounded-xl border border-gray-200 shadow-sm">
+        <div className="max-h-[40vh] overflow-x-auto overflow-y-auto rounded-xl border border-gray-200 shadow-sm">
           <table className="w-full min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-slate-50">
               <tr className="border-b border-slate-200">

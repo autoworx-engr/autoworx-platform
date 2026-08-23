@@ -72,10 +72,15 @@ async function TemplatesPage(
         searchTerm={searchParams.searchTerm}
         startDate={searchParams.startDate}
         endDate={searchParams.endDate}
+        status={searchParams.status}
       />
 
       <NavigationTabs activeTab="d-template">
-        <TemplateTable data={templates} />
+        <TemplateTable
+          data={templates}
+          page={searchParams.page}
+          take={searchParams.take}
+        />
       </NavigationTabs>
     </div>
   );

@@ -2,8 +2,17 @@ import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
 import { Group, User } from "@prisma/client";
 import { Users } from "lucide-react";
+import { useDraftPreview } from "../../_hooks/useDraftPreview";
 
-type TGroup = Group & { users: User[]; unreadCount?: number };
+type TGroup = Group & {
+  users: User[];
+  unreadCount?: number;
+  latestMessage?: {
+    message: string;
+    senderName: string | null;
+    updatedAt: Date;
+  } | null;
+};
 
 const MAX_VISIBLE_AVATARS = 1;
 
@@ -23,6 +32,10 @@ export function GroupListItem({
   const showBadge = unreadCount > 0;
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
   const isUnread = unreadCount > 0 && !isSelectedGroup;
+  // Suppressed while this row is open — you're already looking at that text
+  // in the compose box, so re-showing it here on every keystroke is noise.
+  const draftTextLive = useDraftPreview("internal", "group", group.id);
+  const draftText = isSelectedGroup ? "" : draftTextLive;
 
   return (
     <button
@@ -105,13 +118,22 @@ export function GroupListItem({
         </p>
         <p
           className={cn(
-            "mt-0.5 text-xs",
+            "mt-0.5 line-clamp-1 text-xs",
             isSelectedGroup
               ? "text-white/80"
               : "text-zinc-500 dark:text-zinc-400",
           )}
         >
-          {memberCount} {memberCount === 1 ? "member" : "members"}
+          {draftText ? (
+            <>
+              <span className="font-semibold text-black dark:text-white">
+                Draft:
+              </span>{" "}
+              {draftText}
+            </>
+          ) : (
+            `${memberCount} ${memberCount === 1 ? "member" : "members"}`
+          )}
         </p>
       </div>
     </button>

@@ -18,9 +18,9 @@ export async function updateLabor({
 }: {
   id: number;
   name: string;
-  categoryId?: number;
+  categoryId?: number | null;
   tags?: Tag[];
-  notes?: string;
+  notes?: string | null;
   hours?: number;
   charge?: number;
   discount?: number;
@@ -45,6 +45,9 @@ export async function updateLabor({
         name,
         categoryId,
         charge,
+        notes,
+        hours,
+        discount,
       },
     });
 
@@ -78,7 +81,7 @@ export async function updateLabor({
       },
     });
 
-    revalidatePath("/estimate");
+    revalidatePath("/dashboard/estimate", "layout");
 
     return {
       success: true,

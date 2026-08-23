@@ -2,8 +2,9 @@
 
 import { completeTask } from "@/actions/task/completeTask";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
+import { errorToast, successToast } from "@/lib/toast";
 import { Task, User } from "@prisma/client";
-import { CircleCheckBig, SquarePen } from "lucide-react";
+import { CircleCheckBig, PencilLineIcon } from "lucide-react";
 import { useTransition } from "react";
 
 type TaskWithAssignedUsers = Task & {
@@ -13,9 +14,10 @@ type TaskWithAssignedUsers = Task & {
 type TProps = {
   task: TaskWithAssignedUsers;
   color?: string;
+  onTaskRemoved?: (taskId: number) => void;
 };
 
-export default function TaskActions({ task, color }: TProps) {
+export default function TaskActions({ task, color, onTaskRemoved }: TProps) {
   const [pending, startTransaction] = useTransition();
 
   return (
@@ -24,7 +26,7 @@ export default function TaskActions({ task, color }: TProps) {
         fromEdit
         taskId={task.id}
         triggerIcon={
-          <SquarePen
+          <PencilLineIcon
             className="w-4 h-4 opacity-70 hover:opacity-100 cursor-pointer"
             style={color ? { color } : undefined}
           />
@@ -36,7 +38,13 @@ export default function TaskActions({ task, color }: TProps) {
         className="disabled:text-gray-400"
         onClick={() =>
           startTransaction(async () => {
-            await completeTask(task.id);
+            const result = await completeTask(task.id);
+            if (result.type === "success") {
+              successToast("Task Completed successfully.");
+              onTaskRemoved?.(task.id);
+            } else {
+              errorToast("Failed to complete task. Please try again.");
+            }
           })
         }
       >

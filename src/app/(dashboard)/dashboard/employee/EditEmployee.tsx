@@ -1,9 +1,9 @@
 "use client";
 
 import { Dialog, DialogTrigger } from "@/components/Dialog";
-import { useState } from "react";
 import { User } from "@prisma/client";
-import { Settings, SquarePen } from "lucide-react";
+import { PencilLineIcon, Settings } from "lucide-react";
+import { useState } from "react";
 import EditClientModalBody from "./EditEmployeeModalBody";
 
 export default function EditEmployee({
@@ -31,7 +31,7 @@ export default function EditEmployee({
             {settingIcon ? (
               <Settings className="w-4 h-4 text-primary" />
             ) : (
-              <SquarePen className="w-5 h-5 text-primary" />
+              <PencilLineIcon className="w-5 h-5 text-primary" />
             )}
           </button>
         </div>

@@ -15,7 +15,7 @@ import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagA
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
 import { errorToast } from "@/lib/toast";
 import { Popconfirm, Spin } from "antd";
-import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
+import { CirclePause, CirclePlay, PencilLineIcon, Trash2 } from "lucide-react";
 import moment from "moment";
 import { FC } from "react";
 import { useDeletePipelineAutomationRule } from "../../../../../../hooks/pipeline-automation/useDeletePipelineAutomationRule";
@@ -238,7 +238,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
             onClick={() => handleSetIsEdit(item.id)}
             className="text-primary hover:text-indigo-700"
           >
-            <SquarePen size={20} />
+            <PencilLineIcon size={20} />
           </button>
 
           {(type === "pipeline" && isPipelineDeleting) ||

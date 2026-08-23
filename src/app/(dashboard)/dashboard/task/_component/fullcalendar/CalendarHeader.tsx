@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RefObject } from "react";
 import { Button } from "../../../../../../components/ui/button";
 import {
@@ -35,11 +35,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../../../components/ui/select";
+import MobileSidePanel from "../sideBar/MobileSidePanel";
 import { CalendarFilterDropdown } from "./CalendarFilterDropdown";
 import CalendarSearch from "./CalendarSearch";
 import DateSelector from "./DateSelector";
 import DisplayDate from "./DisplayDate";
-import MonthYearPicker from "./MonthYearPicker";
 import Settings from "./Settings";
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
@@ -97,13 +97,33 @@ export function CalendarHeader({
     queryFn: () => getCalenderSettings(),
   });
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { setDate, setMonth, setWeek } = useCalendarStore();
+
+  const clearDateParam = () => {
+    if (!searchParams.get("date") && !searchParams.get("time")) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("date");
+    params.delete("time");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  };
 
   const handleTodayClick = () => {
     const today = moment();
     setDate(today.format("YYYY-MM-DD"));
     setMonth(today.format("YYYY-MM"));
     setWeek(today.format("YYYY-[W]WW"));
+
+    if (type !== "day") {
+      router.push("/dashboard/task/day");
+      return;
+    }
+
+    clearDateParam();
     calendarRef.current?.getApi().today();
   };
 
@@ -114,6 +134,7 @@ export function CalendarHeader({
     setDate(next.format("YYYY-MM-DD"));
     setMonth(next.format("YYYY-MM"));
     setWeek(next.format("YYYY-[W]WW"));
+    clearDateParam();
   };
   const handlePrev = () => step(-1);
   const handleNext = () => step(1);
@@ -122,9 +143,7 @@ export function CalendarHeader({
     router.push(`/dashboard/task/${value}`);
     const fcView =
       VIEW_OPTIONS.find((v) => v.value === value)?.fcView ?? "timeGridDay";
-    const targetDate = moment().format("YYYY-MM-DD");
-
-    calendarRef.current?.getApi().changeView(fcView, targetDate);
+    calendarRef.current?.getApi().changeView(fcView, dateFormat);
   };
 
   const handleAppointmentCreate = async (
@@ -255,6 +274,8 @@ export function CalendarHeader({
           <CalendarSearch type={type} />
         </div>
 
+        <MobileSidePanel />
+
         {/* New Appointment */}
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
           user?.employeeType ?? "",
@@ -267,10 +288,8 @@ export function CalendarHeader({
 
       {/* ── Row 2: Date title + Stats ─────────────────── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-3 py-2 sm:px-4">
-        {/* Date — month view gets clickable month + year pickers; other views
-            keep the descriptive title (day/week selection is via DateSelector). */}
         <h2 className="mr-auto text-base font-semibold text-slate-900 sm:text-lg">
-          {type === "month" ? <MonthYearPicker /> : <DisplayDate type={type} />}
+          <DisplayDate type={type} />
         </h2>
 
         {/* Stats */}
@@ -293,7 +312,6 @@ export function CalendarHeader({
               Est. Revenue
             </span>
             <span className="font-semibold text-slate-900">
-              $
               {estRevenue.toLocaleString(undefined, {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,

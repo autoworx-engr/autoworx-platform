@@ -170,10 +170,16 @@ export async function editAppointment({
       let confirmationSubject = confirmationEmailTemplate?.subject || "";
       let confirmationMessage = confirmationEmailTemplate?.message || "";
 
+      const vehicleStr = vehicle
+        ? [vehicle.year, vehicle.make, vehicle.model, vehicle.other]
+            .filter(Boolean)
+            .join(" ")
+        : "";
+
       // replace the placeholders: <VEHICLE>, <CLIENT>
       confirmationSubject = confirmationSubject?.replace(
         "<VEHICLE>",
-        vehicle ? vehicle.model! : "",
+        vehicleStr,
       );
       confirmationSubject = confirmationSubject?.replace(
         "<CLIENT>",
@@ -182,7 +188,7 @@ export async function editAppointment({
 
       confirmationMessage = confirmationMessage?.replace(
         "<VEHICLE>",
-        vehicle ? vehicle.model! : "",
+        vehicleStr,
       );
       confirmationMessage = confirmationMessage?.replace(
         "<CLIENT>",

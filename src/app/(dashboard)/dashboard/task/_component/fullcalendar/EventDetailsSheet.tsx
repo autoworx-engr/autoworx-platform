@@ -1,22 +1,27 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import { completeTask } from "@/actions/task/completeTask";
 import { deleteTask } from "@/actions/task/deleteTask";
-import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import {
   appointmentQueryKey,
   taskQueryKey,
 } from "@/app/(dashboard)/dashboard/task/_constant";
-import { errorToast, successToast } from "@/lib/toast";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { CheckCircle, Edit, MessageSquare, Trash2 } from "lucide-react";
+import { errorToast, successToast } from "@/lib/toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
+import {
+  CheckCircle,
+  MessageSquare,
+  PencilLineIcon,
+  Trash2,
+} from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import { CustomEventProps } from "../../_utils/calendar.types";
-import { isHexColor, lightenHex, darkenHex } from "../../_utils/colorUtils";
+import { darkenHex, isHexColor, lightenHex } from "../../_utils/colorUtils";
 import { AppointmentDetailCard } from "./AppointmentDetailCard";
 import { TaskDetailCard } from "./TaskDetailCard";
 
@@ -325,7 +330,7 @@ export const EventDetailsSheet = ({
                   className="flex-1 justify-center shadow-sm"
                   onClick={onEditTask}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <PencilLineIcon className="h-4 w-4" />
                   Edit Task
                 </Button>
               ) : null}
@@ -336,7 +341,7 @@ export const EventDetailsSheet = ({
                   className="flex-1 justify-center shadow-sm"
                   onClick={onEditAppointment}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <PencilLineIcon className="h-4 w-4" />
                   Edit Appointment
                 </Button>
               ) : null}
@@ -368,7 +373,7 @@ export const EventDetailsSheet = ({
                 className="w-full justify-center shadow-sm"
                 onClick={handleMessageClient}
               >
-                <MessageSquare className="mr-2 h-4 w-4" />
+                <MessageSquare className="h-4 w-4" />
                 Message Client
               </Button>
             )}

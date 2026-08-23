@@ -1,5 +1,6 @@
 "use client";
 import { authorizeInvoice } from "@/actions/estimate/invoice/authorize";
+import { checkInventoryForConversion } from "@/actions/estimate/invoice/checkInventory";
 import { getInvoiceModalData } from "@/actions/estimate/invoice/getInvoiceModalData";
 import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCreated";
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
@@ -12,14 +13,16 @@ import {
   DialogOverlay,
   DialogPortal,
 } from "@/components/Dialog";
+import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
+import ComponentsLightbox from "@/components/common/LightBox";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
+import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { useServerGet } from "@/hooks/useServerGet";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
-import { usePermissionStore } from "@/stores/permissionStore";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
-import { canAccessEstimate } from "@/utils/permissions";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
   CardPayment,
@@ -56,8 +59,8 @@ import {
   Mail,
   MessageCircle,
   MessageCircleMore,
+  PencilLineIcon,
   Printer,
-  SquarePen,
   X,
 } from "lucide-react";
 import moment from "moment";
@@ -79,6 +82,10 @@ const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });
 
+const InvoicePdfActions = dynamic(() => import("./InvoicePdfActions"), {
+  ssr: false,
+});
+
 type InvoiceData = Invoice & {
   column: Column | null;
   company: Company & { TwilioCredentials: TwilioCredentials };
@@ -92,6 +99,7 @@ type InvoiceData = Invoice & {
   user: User;
   client: Client;
   vehicle: Vehicle;
+  Refund: Refund[];
   payments: (Payment & {
     card: CardPayment | null;
     check: CheckPayment | null;
@@ -106,10 +114,12 @@ export default function InvoiceModalBody({
   invoiceId,
   isPublic = false,
   isShowEdit = true,
+  fromCollaboration = false,
 }: {
   invoiceId?: string;
   isPublic?: boolean;
   isShowEdit?: boolean;
+  fromCollaboration?: boolean;
 }) {
   const searchParams = useSearchParams();
 
@@ -134,12 +144,21 @@ export default function InvoiceModalBody({
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const { runWithInventoryCheck, dialogProps: inventoryShortageDialogProps } =
+    useInventoryConfirm();
   const [activeTab, setActiveTab] = useState<
     "estimate" | "attachments" | "inspections"
   >("estimate");
   const [desktopActiveTab, setDesktopActiveTab] = useState<
     "attachments" | "inspections"
   >("attachments");
+  // This modal is reused on pages outside /dashboard/estimate/ (e.g.
+  // /dashboard/payments), where /dashboard/estimate/photo's intercepting
+  // route doesn't apply — navigating there is a real page transition that
+  // unmounts this modal's plain `open` state, so closing the photo lands
+  // back on a flat list page instead of the modal. Render the lightbox
+  // inline instead of routing to it.
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const params = new URLSearchParams(searchParams!);
   const isSuccess = params.get("success") ?? false;
 
@@ -153,8 +172,7 @@ export default function InvoiceModalBody({
   const isExportOpen = openGroup === "export";
   const isShareOpen = openGroup === "share";
 
-  const { permissions } = usePermissionStore();
-  const canEdit = canAccessEstimate(permissions);
+  const canEdit = useCanAccessRoute("/dashboard/estimate");
 
   // Detect if we're coming from an intercepted route
   const fromInterceptedRoute =
@@ -339,15 +357,11 @@ export default function InvoiceModalBody({
     }
   };
 
-  const handleSaveSignature = async (invoiceId: string) => {
-    if (!sigCanvas.current) return;
-
+  const authorizeWithSignature = async (
+    file: File,
+    allowInsufficientInventory: boolean,
+  ) => {
     try {
-      const file = getFileFromCanvas(
-        sigCanvas.current.getCanvas(),
-        `signature-${invoiceId}.png`,
-      );
-
       const formData = new FormData();
       formData.append("file", file);
 
@@ -371,14 +385,53 @@ export default function InvoiceModalBody({
         authorizedNameInput,
         data[0],
         invoice.type,
+        allowInsufficientInventory,
       );
 
       if (response?.type === "success") {
         successToast("Invoice Authorized");
+
+        setSignImage(data[0]);
+        setAuthorizedName(authorizedNameInput);
+        setInvoice((prev) =>
+          prev
+            ? {
+                ...prev,
+                signatureImage: data[0],
+                authorizedName: authorizedNameInput,
+                wasAuthorized: true,
+              }
+            : prev,
+        );
       } else {
-        errorToast("Signature upload failed");
-        console.error("Signature upload failed:");
+        errorToast(
+          (response as { message?: string })?.message ||
+            "Invoice authorization failed",
+        );
+        console.error("Invoice authorization failed:", response);
       }
+    } catch (err) {
+      errorToast("Signature upload failed");
+      console.error("Signature upload failed:", err);
+    }
+  };
+
+  const handleSaveSignature = async (invoiceId: string) => {
+    if (!sigCanvas.current) return;
+
+    try {
+      const file = getFileFromCanvas(
+        sigCanvas.current.getCanvas(),
+        `signature-${invoiceId}.png`,
+      );
+
+      // Warn about a stock shortage before the signature is uploaded or the
+      // estimate is converted, so cancelling leaves everything untouched.
+      await runWithInventoryCheck(
+        () => checkInventoryForConversion(invoice.id),
+        (allowInsufficientInventory) =>
+          authorizeWithSignature(file, allowInsufficientInventory),
+      );
     } catch (err) {
       errorToast("Signature upload failed");
       console.error("Signature upload failed:", err);
@@ -446,7 +499,7 @@ export default function InvoiceModalBody({
                         tabIndex={!canEdit ? -1 : undefined}
                         style={!canEdit ? { pointerEvents: "none" } : undefined}
                       >
-                        <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                        <PencilLineIcon className="h-4 w-4 md:h-5 md:w-5" />
                         {/* <span className="hidden md:inline">Edit</span> */}
                       </Link>
                     </span>
@@ -490,34 +543,34 @@ export default function InvoiceModalBody({
                   >
                     <div className="overflow-hidden">
                       <div className="flex items-center gap-1 pl-1">
-                        <button
-                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
-                          onClick={handlePrint}
-                        >
-                          <Printer className="h-4 w-4" />
-                          <span className="hidden md:inline">Print</span>
-                        </button>
-
-                        {client && (
-                          <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
-                            <DownloadPDF
-                              id={invoice.id}
-                              invoice={invoice}
-                              client={client}
-                              vehicle={vehicle}
-                              companyDetails={company}
-                              authorizedName={authorizedName}
-                              signImageUrl={signImage ?? undefined}
-                              isStripe={
-                                (gatewayInfo?.success &&
-                                  (gatewayInfo?.hasStripe ||
-                                    gatewayInfo?.hasAuthorizeNet) &&
-                                  parseFloat(
-                                    Number(invoice?.due ?? 0).toFixed(2),
-                                  ) > 0) ??
-                                false
-                              }
-                            />
+                        {client ? (
+                          // Print and PDF share one generated document, so
+                          // printing outputs the same file the PDF button saves.
+                          <InvoicePdfActions
+                            id={invoice.id}
+                            invoice={invoice}
+                            client={client}
+                            vehicle={vehicle}
+                            companyDetails={company}
+                            authorizedName={authorizedName}
+                            signImageUrl={signImage ?? undefined}
+                            isStripe={
+                              (gatewayInfo?.success &&
+                                (gatewayInfo?.hasStripe ||
+                                  gatewayInfo?.hasAuthorizeNet) &&
+                                parseFloat(
+                                  Number(invoice?.due ?? 0).toFixed(2),
+                                ) > 0) ??
+                              false
+                            }
+                          />
+                        ) : (
+                          <button
+                            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                            onClick={handlePrint}
+                          >
+                            <Printer className="h-4 w-4" />
+                            <span className="hidden md:inline">Print</span>
                           </button>
                         )}
                       </div>
@@ -694,7 +747,7 @@ export default function InvoiceModalBody({
                   <br className="md:hidden" />
                   {company?.city && company?.state && ", "}
                   {company?.state && `${company.state}`}
-                  {company?.state && company?.zip && " "}
+                  {company?.state && company?.zip && " - "}
                   {company?.zip && `${company.zip}`}
                 </p>
 
@@ -702,7 +755,7 @@ export default function InvoiceModalBody({
                   <p className="flex items-center gap-1.5 font-bold text-slate-500 dark:text-slate-300">
                     {company?.phone}
                   </p>
-                  <p className="max-w-[200px] break-words italic text-slate-500 dark:text-slate-500">
+                  <p className="whitespace-nowrap text-slate-500 dark:text-slate-500">
                     {company?.email}
                   </p>
                 </div>
@@ -711,11 +764,19 @@ export default function InvoiceModalBody({
           </div>
 
           <DialogClose
-            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${
-              isPublic ? "hidden" : ""
-            }`}
+            className={`absolute z-50 flex items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 print:hidden ${
+              fromCollaboration
+                ? "right-1 top-1 h-6 w-6"
+                : "right-2 top-2 h-8 w-8 md:right-3 md:top-3"
+            } ${isPublic ? "hidden" : ""}`}
           >
-            <X className="h-5 w-5 stroke-[2.5px]" />
+            <X
+              className={
+                fromCollaboration
+                  ? "h-3.5 w-3.5 stroke-[2.5px]"
+                  : "h-5 w-5 stroke-[2.5px]"
+              }
+            />
             <span className="sr-only">Close</span>
           </DialogClose>
 
@@ -805,18 +866,24 @@ export default function InvoiceModalBody({
                     <h2 className="font-bold text-slate-500">
                       Vehicle Details:
                     </h2>
-                    <div className="flex flex-row flex-wrap gap-2">
-                      <p>{vehicle?.year || ""}</p>
-                      <p>{vehicle?.make}</p>
-                      <p>{vehicle?.model}</p>
-                      {vehicle?.other && <p>{vehicle?.other}</p>}
+                    <div>
+                      <p>
+                        {[
+                          vehicle?.year,
+                          vehicle?.make,
+                          vehicle?.model,
+                          vehicle?.other,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      </p>
                     </div>
-                    <p>{vehicle?.submodel}</p>
-                    <p>{vehicle?.type}</p>
+                    {vehicle?.submodel && <p>{vehicle.submodel}</p>}
+                    {vehicle?.type && <p>{vehicle.type}</p>}
                     {vehicle?.vin && (
                       <>
                         <p>Vin Number</p>
-                        <p>{vehicle?.vin}</p>
+                        <p>{vehicle.vin}</p>
                       </>
                     )}
                   </div>
@@ -895,23 +962,31 @@ export default function InvoiceModalBody({
                           const urlsParam = encodeURIComponent(
                             JSON.stringify(allImageUrls),
                           );
-                          return (
+                          const image = (
+                            <Image
+                              src={x.photo}
+                              alt="attachment"
+                              fill
+                              className="cursor-pointer rounded-md object-cover"
+                            />
+                          );
+                          return isPublic ? (
                             <Link
-                              href={
-                                isPublic
-                                  ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                                  : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                              }
+                              href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                               key={x.id}
                               className="relative mx-auto aspect-square w-full max-w-[120px]"
                             >
-                              <Image
-                                src={x.photo}
-                                alt="attachment"
-                                fill
-                                className="cursor-pointer rounded-md object-cover"
-                              />
+                              {image}
                             </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              key={x.id}
+                              onClick={() => setLightboxIndex(index)}
+                              className="relative mx-auto aspect-square w-full max-w-[120px]"
+                            >
+                              {image}
+                            </button>
                           );
                         })}
                       </div>
@@ -946,7 +1021,7 @@ export default function InvoiceModalBody({
               {(
                 [
                   ["subtotal", invoice.subtotal],
-                  ["discount", invoice.discount],
+                  ["total discount", invoice.discount],
                   ["tax", invoice.tax],
                   // ["vehicle extra cost", invoice.vehicleExtraCost],
                   ["shop supplies", invoice?.serviceFee],
@@ -975,7 +1050,8 @@ export default function InvoiceModalBody({
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
-                              |
+                              {" "}
+                              |{" "}
                               {formatCurrency(
                                 (Number(
                                   key === "tax"
@@ -1018,7 +1094,7 @@ export default function InvoiceModalBody({
 
             {paymentEntries.length === 0 && (
               <div className="rounded-md border border-dashed p-3 text-xs text-slate-500">
-                No payment info available for this invoice.
+                Make a payment to see info
               </div>
             )}
 
@@ -1185,31 +1261,7 @@ export default function InvoiceModalBody({
                       <X size={20} className="text-white p-1" />
                     </button>
                   </div>
-                  <button
-                    // onClick={async () => {
-                    //   const res = await authorizeInvoice(
-                    //     invoice.id,
-                    //     authorizedNameInput,
-                    //     invoice.type
-                    //   );
-                    //   if (res?.type === "success") {
-                    //     successToast("Invoice Authorized");
-                    //     await authorizedLeadsConvertion(invoice.id);
-                    //     setAuthorizedName(authorizedNameInput);
-
-                    //     // Update the invoice object in state to reflect the change
-                    //     setInvoice((prev) => {
-                    //       if (!prev) return prev;
-                    //       return {
-                    //         ...prev,
-                    //         authorizedName: authorizedNameInput,
-                    //       };
-                    //     });
-                    //   }
-                    //   setShowAuthorizedName(false);
-                    // }}
-                    className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden"
-                  >
+                  <button className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden">
                     Authorize
                   </button>
                 </div>
@@ -1223,37 +1275,6 @@ export default function InvoiceModalBody({
                     <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                       Authorized
                     </span>
-                    {/* <button
-                      className="text-lg text-primary print:hidden"
-                      onClick={async () => {
-                        setShowAuthorizedName(true);
-                      }}
-                    >
-                      <MdEdit />
-                    </button>
-                    <button
-                      className="text-lg text-red-500 print:hidden"
-                      onClick={async () => {
-                        const res = await deleteInvoiceAuthorize(invoice.id);
-                        if (res?.type === "success") {
-                          successToast("Deleted Invoice Authorize");
-
-                          // Update the invoice object in state to reflect the change
-                          setInvoice((prev) => {
-                            if (!prev) return prev;
-                            return {
-                              ...prev,
-                              authorizedName: "",
-                            };
-                          });
-
-                          setAuthorizedName("");
-                          setAuthorizedNameInput("");
-                        }
-                      }}
-                    >
-                      <MdOutlineDelete />
-                    </button> */}
                   </div>
                 </div>
               )}
@@ -1337,7 +1358,7 @@ export default function InvoiceModalBody({
                 </div>
               </div>
             )}
-            {sigImageURL && (
+            {sigImageURL ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={sigImageURL}
@@ -1350,8 +1371,7 @@ export default function InvoiceModalBody({
                   Authorized
                 </span>
               </div>
-            )}
-            {invoice?.signatureImage && (
+            ) : invoice?.signatureImage ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={invoice?.signatureImage}
@@ -1364,6 +1384,8 @@ export default function InvoiceModalBody({
                   Authorized
                 </span>
               </div>
+            ) : (
+              <></>
             )}
           </div>
           {!isPrinting && (
@@ -1438,23 +1460,31 @@ export default function InvoiceModalBody({
                     const urlsParam = encodeURIComponent(
                       JSON.stringify(allImageUrls),
                     );
-                    return (
+                    const image = (
+                      <Image
+                        src={x.photo}
+                        alt="attachment"
+                        fill
+                        className="cursor-pointer object-cover object-center"
+                      />
+                    );
+                    return isPublic ? (
                       <Link
-                        href={
-                          isPublic
-                            ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                            : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                        }
+                        href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                         key={x.id}
                         className="relative aspect-square size-36 md:h-full md:w-full"
                       >
-                        <Image
-                          src={x.photo}
-                          alt="attachment"
-                          fill
-                          className="cursor-pointer object-cover object-center"
-                        />
+                        {image}
                       </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        key={x.id}
+                        onClick={() => setLightboxIndex(index)}
+                        className="relative aspect-square size-36 md:h-full md:w-full"
+                      >
+                        {image}
+                      </button>
                     );
                   })}
                   {invoice.photos.length === 0 && (
@@ -1464,6 +1494,16 @@ export default function InvoiceModalBody({
                   )}
                 </div>
               </>
+            )}
+
+            {!isPublic && lightboxIndex !== null && (
+              <ComponentsLightbox
+                getItems={invoice.photos.map((photo) => ({
+                  src: photo.photo,
+                }))}
+                startIndex={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+              />
             )}
 
             {/* Inspections Tab Content - Desktop */}
@@ -1544,6 +1584,8 @@ export default function InvoiceModalBody({
             </>
           )}
         </div>
+
+        <InventoryShortageDialog {...inventoryShortageDialogProps} />
       </DialogContentBlank>
     </DialogPortal>
   );

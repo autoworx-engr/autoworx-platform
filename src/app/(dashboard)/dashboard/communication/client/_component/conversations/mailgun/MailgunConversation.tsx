@@ -18,6 +18,7 @@ type TProps = {
   })[];
 
   newestFirst?: boolean; // optional: set true if your array is newest-first
+  clientPhoto?: string | null;
 };
 
 export const formatDate = (dateString: string) =>
@@ -31,6 +32,7 @@ export const formatDate = (dateString: string) =>
 export default function MailGunConversation({
   messages,
   newestFirst = false,
+  clientPhoto,
 }: TProps) {
   // Normalize to deterministic chronological order (oldest -> newest).
   // This prevents wrong date orientation when source/query order varies.
@@ -99,7 +101,7 @@ export default function MailGunConversation({
     <div className="relative h-full w-full">
       <div
         ref={containerRef}
-        className="thin-scrollbar h-full w-full overflow-y-auto px-2 py-2"
+        className="h-full w-full overflow-y-auto px-2 py-2"
       >
         <div className="flex w-full flex-col gap-3">
           {(() => {
@@ -145,7 +147,11 @@ export default function MailGunConversation({
                   >
                     {showAvatar ? (
                       <Image
-                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNL_ZnOTpXSvhf1UaK7beHey2BX42U6solRA&s"
+                        src={
+                          clientPhoto?.includes("autoworx-production")
+                            ? clientPhoto
+                            : "/images/default.png"
+                        }
                         alt="Client avatar"
                         width={28}
                         height={28}
@@ -165,12 +171,15 @@ export default function MailGunConversation({
                         message?.attachments?.length) && (
                         <div
                           className={cn(
-                            "group relative w-fit rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
-                            "select-text hover:shadow-md",
+                            "group relative w-fit text-[14px] transition select-text",
                             !isIncoming && "ml-auto",
-                            isIncoming
-                              ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                              : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                            message?.text?.trim() &&
+                              cn(
+                                "rounded-2xl px-3 py-2 shadow-sm ring-1 hover:shadow-md",
+                                isIncoming
+                                  ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
+                                  : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                              ),
                           )}
                         >
                           {/* Text */}

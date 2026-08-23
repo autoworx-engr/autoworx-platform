@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useCarData";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
+import { isValidEmail, normalizeEmail } from "@/utils/email";
 import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
 import Selector from "../../settings/automation/components/Selector";
 
@@ -63,6 +64,14 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     message: "",
     type: null,
   });
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      const newErrors = { ...fieldErrors };
+      delete newErrors[field];
+      setFieldErrors(newErrors);
+    }
+  };
 
   const handleServiceChange = (
     value: string | { id: string | number; title: string },
@@ -119,6 +128,21 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       } else {
         clearFieldError("phone");
       }
+    } else if (name === "email") {
+      const email = normalizeEmail(value);
+      setFormData({
+        ...formData,
+        email,
+      });
+
+      if (email && !isValidEmail(email)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          email: "Please enter a valid email address.",
+        }));
+      } else {
+        clearFieldError("email");
+      }
     } else {
       // Handle all other fields normally
       setFormData({
@@ -137,14 +161,6 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     }
   };
 
-  const clearFieldError = (field: string) => {
-    if (fieldErrors[field]) {
-      const newErrors = { ...fieldErrors };
-      delete newErrors[field];
-      setFieldErrors(newErrors);
-    }
-  };
-
   interface FormStatus {
     message: string;
     type: "success" | "error" | null;
@@ -157,6 +173,14 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       setFieldErrors((prev) => ({
         ...prev,
         name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+      }));
+      return;
+    }
+
+    if (formData.email && !isValidEmail(formData.email)) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        email: "Please enter a valid email address.",
       }));
       return;
     }
@@ -199,7 +223,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
       await createLeadFromForm({
         name: formData.name,
-        email: formData.email,
+        email: normalizeEmail(formData.email),
         phone: formData.phone,
         countryCode: formData.countryCode,
         serviceId: String(formData.service),
@@ -289,7 +313,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       <form
         id="add-lead-form"
         onSubmit={handleSubmit}
-        className="flex-1 space-y-4 overflow-y-auto px-2 py-2 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent md:px-4"
+        className="flex-1 space-y-4 overflow-y-auto px-2 py-2 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent md:px-4"
       >
         {/* Contact Information */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -309,6 +333,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             placeholder="john@example.com"
             value={formData.email}
             onChange={handleChange}
+            error={fieldErrors.email}
           />
         </div>
 

@@ -74,7 +74,7 @@ export function InspectionItems({
               <div className="col-span-3 text-center">Passenger</div>
             </div>
 
-            <div className="thin-scrollbar max-h-80 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto">
               {inspectionData.map((item, index) => (
                 <div
                   key={index}
@@ -136,7 +136,7 @@ export function InspectionItems({
                         <p className="font-bold text-primary uppercase text-[9px] mb-1 tracking-tighter">
                           Technician Notes
                         </p>
-                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
                           {item.notes}
                         </p>
                       </div>
@@ -156,7 +156,7 @@ export function InspectionItems({
                   Damage Assessment
                 </h4>
               </div>
-              <p className="text-sm italic leading-relaxed text-slate-600 dark:text-slate-400">
+              <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
                 {damageNotes}
               </p>
             </div>

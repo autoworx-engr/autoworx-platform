@@ -13,11 +13,10 @@ import AddTaskComponent from "./AddTaskComponent";
 import LeadAssign from "./LeadAssign";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { useCreateDraftEstimate } from "@/hooks/pipeline/useCreateDraftEstimate";
-import { Calendar, CalendarCheck } from "lucide-react";
+import { Calendar, CalendarCheck, MessageCircleMore } from "lucide-react";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { useRouter } from "next/navigation";
-import { canAccessEstimate } from "@/utils/permissions";
-import { usePermissionStore } from "@/stores/permissionStore";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -29,6 +28,24 @@ type TCreateDraftEstimateParams = {
   clientId?: number;
   vehicleId: number | null;
 };
+
+const TOOLTIP_CLASS =
+  "invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible";
+
+function DisabledAction({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="group relative cursor-not-allowed opacity-40">
+      {children}
+      <span className={TOOLTIP_CLASS}>{label}</span>
+    </span>
+  );
+}
 
 export default function LeadActions({ lead }: TProps) {
   const dispatch = useColumnDispatch();
@@ -44,8 +61,7 @@ export default function LeadActions({ lead }: TProps) {
     }
   }, [lead.invoiceId]);
 
-  const { permissions } = usePermissionStore();
-  const canCreateEstimate = canAccessEstimate(permissions);
+  const canCreateEstimate = useCanAccessRoute("/dashboard/estimate/create");
   // const handleCreateDraftEstimate = async ({
   //   columnId,
   //   leadId,
@@ -158,8 +174,18 @@ export default function LeadActions({ lead }: TProps) {
   }: TCreateDraftEstimateParams) => {
     try {
       // Basic validation
-      if (!clientId || !leadId || !columnId) {
-        errorToast("Missing required data to create estimate");
+      if (!clientId) {
+        errorToast("Add a client to this lead first.");
+        return;
+      }
+
+      if (!leadId) {
+        errorToast("Lead not found. Please refresh and try again.");
+        return;
+      }
+
+      if (!columnId) {
+        errorToast("Pipeline stage missing. Please refresh and try again.");
         return;
       }
 
@@ -173,6 +199,16 @@ export default function LeadActions({ lead }: TProps) {
       // Handle API error responses first (early return)
       if (!res.success && res.data?.id) {
         setInvoiceId(res.data.id);
+        // Estimate already exists — reflect it on the card right away
+        dispatch({
+          type: actionTypes.CREATE_INVOICE,
+          payload: {
+            columnId,
+            leadId,
+            isInvoiceCreated: true,
+            invoiceId: res.data.id,
+          },
+        });
         return;
       }
 
@@ -185,6 +221,9 @@ export default function LeadActions({ lead }: TProps) {
 
       successToast(res.message || "Draft estimate created");
 
+      // Reflect the new estimate on the card immediately
+      setInvoiceId(id);
+
       // Update pipeline state
       dispatch({
         type: actionTypes.CREATE_INVOICE,
@@ -192,6 +231,7 @@ export default function LeadActions({ lead }: TProps) {
           columnId,
           leadId,
           isInvoiceCreated: true,
+          invoiceId: id,
         },
       });
 
@@ -220,6 +260,7 @@ export default function LeadActions({ lead }: TProps) {
       // Navigate at the end
       router.push(`/dashboard/estimate/edit/${id}?clientId=${resClientId}`);
     } catch (err) {
+      console.log("err", err);
       errorHandler(err);
       errorToast("Failed to create draft estimate. Please try again.");
     }
@@ -277,25 +318,28 @@ export default function LeadActions({ lead }: TProps) {
       : undefined;
   const fromEdit = !!appointment?.id;
   const vehicleId = lead?.vehicleId;
-  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
+  // Only the resolved client record — lead.clientId has no foreign key and may
+  // point at a deleted client, which the appointment modal can't look up.
+  const clientId = lead?.client?.id ?? undefined;
+  const hasDraftEstimate = !!lead.isEstimateCreated && !!invoiceId;
+  const hasClient = !!clientId;
   return (
     <>
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
           {/* client message notification or redirect to client section component */}
-          <CommunicationsNoti lead={lead} />
+          {hasClient ? (
+            <CommunicationsNoti lead={lead} />
+          ) : (
+            <DisabledAction label="Communications">
+              <MessageCircleMore size={20} color="#66738C" />
+            </DisabledAction>
+          )}
           <button
-            disabled={isPending || !canCreateEstimate}
+            disabled={isPending || !canCreateEstimate || !hasClient}
             type="button"
             onClick={() => {
-              if (lead.isEstimateCreated) {
-                if (!invoiceId) {
-                  errorToast(
-                    "Invoice is missing. Please refresh and try again.",
-                  );
-                }
-                return;
-              } else {
+              if (!hasDraftEstimate) {
                 handleCreateDraftEstimate({
                   columnId: lead.columnId!,
                   leadId: lead.id,
@@ -303,10 +347,11 @@ export default function LeadActions({ lead }: TProps) {
                   vehicleId: lead?.vehicleId,
                 });
               }
+              // otherwise show estimate modal
             }}
-            className="group relative disabled:cursor-not-allowed disabled:opacity-50"
+            className="group relative disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {lead.isEstimateCreated ? (
+            {hasDraftEstimate ? (
               <PipelineInvoiceModal invoiceId={invoiceId} />
             ) : (
               <Image
@@ -321,41 +366,60 @@ export default function LeadActions({ lead }: TProps) {
             </span>
           </button>
           {/* TODO: shown a mark when create a appointment */}
-          <AppointmentCreateOrEdit
-            key={`lead-${lead.id}-appt-${appointment?.id ?? "new"}`}
-            fromEdit={fromEdit}
-            fromLead
-            appointmentId={fromEdit ? appointment?.id : undefined}
-            triggerIcon={
-              <button className="group relative">
-                {!!appointment ? (
-                  <CalendarCheck size={18} color="#6571FF" />
-                ) : (
-                  <Calendar size={18} color="#66738C" />
-                )}
+          {!hasClient && (
+            <DisabledAction label="Appointment">
+              <Calendar size={18} color="#66738C" />
+            </DisabledAction>
+          )}
+          {hasClient && (
+            <AppointmentCreateOrEdit
+              key={`lead-${lead.id}-appt-${appointment?.id ?? "new"}`}
+              fromEdit={fromEdit}
+              fromLead
+              appointmentId={fromEdit ? appointment?.id : undefined}
+              triggerIcon={
+                <button className="group relative">
+                  {!!appointment ? (
+                    <CalendarCheck size={18} color="#6571FF" />
+                  ) : (
+                    <Calendar size={18} color="#66738C" />
+                  )}
 
-                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                  Appointment
-                </span>
-              </button>
-            }
-            vehicleId={vehicleId}
-            clientId={clientId}
-            onAppointmentCreated={(appointment: Appointment) => {
-              handleUpdateAppointmentInLead(appointment, {
-                leadId: lead.id,
-                columnId: lead.columnId!,
-              });
-            }}
-            onAppointmentUpdated={(appointment: Appointment) => {
-              handleUpdateAppointmentInLead(appointment, {
-                leadId: lead.id,
-                columnId: lead.columnId!,
-              });
-            }}
-          />
+                  <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                    Appointment
+                  </span>
+                </button>
+              }
+              vehicleId={vehicleId}
+              clientId={clientId}
+              draftEstimateId={invoiceId ?? undefined}
+              onAppointmentCreated={(appointment: Appointment) => {
+                handleUpdateAppointmentInLead(appointment, {
+                  leadId: lead.id,
+                  columnId: lead.columnId!,
+                });
+              }}
+              onAppointmentUpdated={(appointment: Appointment) => {
+                handleUpdateAppointmentInLead(appointment, {
+                  leadId: lead.id,
+                  columnId: lead.columnId!,
+                });
+              }}
+            />
+          )}
           {/* add task component */}
-          <AddTaskComponent lead={lead} />
+          {hasClient ? (
+            <AddTaskComponent lead={lead} />
+          ) : (
+            <DisabledAction label="Add Task">
+              <Image
+                src="/icons/addtask.png"
+                alt="Add Task"
+                width={14}
+                height={14}
+              />
+            </DisabledAction>
+          )}
         </div>
         <LeadAssign
           lead={lead}

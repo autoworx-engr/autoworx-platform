@@ -1,8 +1,8 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { PermissionsResult } from "@/lib/getPermissions";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { filterNavList } from "@/lib/navListAuthorization";
-import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { isIosPwa } from "@/utils/isIosPwa";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
@@ -43,61 +43,19 @@ export default function MobileNav({ navList, permissions }: TProps) {
   const currentUser = useGetCurrentUser();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
-  // Helper: Check if company feature permission allows access to this route
-  function canAccessCompanyFeatureRoute(route: string): boolean {
-    if (!companyFeaturePermission || companyFeaturePermission.length === 0)
-      return true;
-    const routeWithoutQuery = route.split("?")[0];
+  // Matches TopNavbar: the shop switcher links into /dashboard/virtual-shop.
+  const canAccessVirtualShop = useCanAccessRoute("/dashboard/virtual-shop");
 
-    // Visualization visibility is controlled at route/page level (entitlements),
-    // not by company feature-permission filtering in nav.
-    if (routeWithoutQuery === "/dashboard/visualization") return true;
-
-    // Sales Agent route is controlled by plan entitlements at page/API level.
-    if (routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")) {
-      return true;
-    }
-
-    const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
-    if (!featureKey) return true;
-    if (Array.isArray(featureKey)) {
-      return featureKey.some((key) =>
-        companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled,
-        ),
-      );
-    }
-    return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled,
-    );
-  }
-
-  const buildFilteredNavList = (list: TProps["navList"]) => {
-    const permissionFiltered = filterNavList(list, permissions);
-
-    return permissionFiltered
-      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
-      .map((item) => {
-        if (!item.subnav) return item;
-
-        const filteredSubnav = item.subnav.filter((sub) =>
-          canAccessCompanyFeatureRoute(sub.link),
-        );
-
-        return {
-          ...item,
-          subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-        };
-      });
-  };
-
-  // First filter by permissions, then by company feature permission
+  // Route → key resolution (including subtree prefixes and the entitlement
+  // carve-outs) lives in filterNavList so nav and route guards can't drift.
   const [filteredNavList, setFilteredNavList] = useState(() =>
-    buildFilteredNavList(navList),
+    filterNavList(navList, permissions, companyFeaturePermission),
   );
 
   useEffect(() => {
-    setFilteredNavList(buildFilteredNavList(navList));
+    setFilteredNavList(
+      filterNavList(navList, permissions, companyFeaturePermission),
+    );
   }, [companyFeaturePermission, navList, permissions]);
   useEffect(() => {
     if (openNav) {
@@ -137,13 +95,12 @@ export default function MobileNav({ navList, permissions }: TProps) {
                 width={40}
                 height={40}
               />
-              <div className="py-0.1 absolute top-3 ml-6 rotate-12 transform gap-2 rounded-md border border-white bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-1 text-[8px] font-bold tracking-wider text-black shadow-lg">
-                Beta
-              </div>
             </Link>
           </div>
           <div className="flex items-center gap-1 px-3">
-            <ShopList iconOnly className="mr-0 w-auto" />
+            {canAccessVirtualShop && (
+              <ShopList iconOnly className="mr-0 w-auto" />
+            )}
             <button className="" onClick={() => window.location.reload()}>
               <RotateCw className="size-5 text-white" />
             </button>
@@ -191,7 +148,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
                 <CircleX strokeWidth={2} size={24} />
               </button>
             </div>
-            <ul className="mt-10 flex flex-col items-center justify-center gap-y-8">
+            <ul className="mt-10 flex w-full flex-col items-start justify-center gap-y-8 px-4">
               {filteredNavList.map((item, index) => {
                 return (
                   <MobileNavList

@@ -46,7 +46,6 @@ const filterMultipleSliders: TSliderData[] = [
     type: "price",
     min: 0,
     max: 300,
-    // defaultValue: [50, 250],
   },
   {
     id: 2,
@@ -97,8 +96,98 @@ export default async function PaymentReportPage(props: TProps) {
 
   const trimmedSearch = searchParams.search?.trim();
   if (trimmedSearch) {
-    const [firstNameTerm, ...lastNameParts] = trimmedSearch.split(/\s+/);
-    const lastNameTerm = lastNameParts.join(" ");
+    const parts = trimmedSearch.split(/\s+/);
+
+    // Bare 4-digit year, e.g. "2025" -> match vehicle.year directly
+    const yearOnly = /^\d{4}$/.test(trimmedSearch)
+      ? parseInt(trimmedSearch, 10)
+      : null;
+
+    // Try every first/last name split point, not just first-word-only
+    const nameCombinations: Prisma.PaymentWhereInput[] =
+      parts.length > 1
+        ? Array.from({ length: parts.length - 1 }, (_, idx) => {
+            const i = idx + 1;
+            const firstNameTerm = parts.slice(0, i).join(" ");
+            const lastNameTerm = parts.slice(i).join(" ");
+            return {
+              invoice: {
+                is: {
+                  client: {
+                    is: {
+                      AND: [
+                        { firstName: containsInsensitive(firstNameTerm) },
+                        { lastName: containsInsensitive(lastNameTerm) },
+                      ],
+                    },
+                  },
+                },
+              },
+            } as Prisma.PaymentWhereInput;
+          })
+        : [];
+
+    // Year + make/model combinations, e.g. "2025 Acura ADX"
+    const vehicleYearCombinations: Prisma.PaymentWhereInput[] = (() => {
+      if (parts.length < 2) return [];
+      const yearNum = /^\d{4}$/.test(parts[0]) ? parseInt(parts[0], 10) : null;
+      if (yearNum === null) return [];
+
+      const rest = parts.slice(1);
+      const results: Prisma.PaymentWhereInput[] = [];
+
+      for (let i = 1; i < rest.length; i++) {
+        const make = rest.slice(0, i).join(" ");
+        const model = rest.slice(i).join(" ");
+        results.push({
+          invoice: {
+            is: {
+              vehicle: {
+                is: {
+                  AND: [
+                    { year: yearNum },
+                    { make: containsInsensitive(make) },
+                    { model: containsInsensitive(model) },
+                  ],
+                },
+              },
+            },
+          },
+        } as Prisma.PaymentWhereInput);
+      }
+
+      const restStr = rest.join(" ");
+      results.push({
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                AND: [
+                  { year: yearNum },
+                  { make: containsInsensitive(restStr) },
+                ],
+              },
+            },
+          },
+        },
+      } as Prisma.PaymentWhereInput);
+      results.push({
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                AND: [
+                  { year: yearNum },
+                  { model: containsInsensitive(restStr) },
+                ],
+              },
+            },
+          },
+        },
+      } as Prisma.PaymentWhereInput);
+
+      return results;
+    })();
 
     filteredWhere.OR = [
       {
@@ -171,32 +260,15 @@ export default async function PaymentReportPage(props: TProps) {
           },
         },
       },
-      ...(firstNameTerm && lastNameTerm
+      ...(yearOnly !== null
         ? [
             {
-              invoice: {
-                is: {
-                  client: {
-                    is: {
-                      AND: [
-                        {
-                          firstName: {
-                            ...containsInsensitive(firstNameTerm),
-                          },
-                        },
-                        {
-                          lastName: {
-                            ...containsInsensitive(lastNameTerm),
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            },
+              invoice: { is: { vehicle: { is: { year: yearOnly } } } },
+            } as Prisma.PaymentWhereInput,
           ]
         : []),
+      ...nameCombinations,
+      ...vehicleYearCombinations,
     ];
   }
 
@@ -230,7 +302,6 @@ export default async function PaymentReportPage(props: TProps) {
         CARD: PaymentType.CARD,
         CASH: PaymentType.CASH,
         CHECK: PaymentType.CHECK,
-        CHEQUE: PaymentType.CHECK,
         OTHER: PaymentType.OTHER,
         DEPOSIT: PaymentType.DEPOSIT,
       };
@@ -350,7 +421,6 @@ export default async function PaymentReportPage(props: TProps) {
 
   return (
     <div className="space-y-5">
-      {/* filter section */}
       <div className="mb-4 mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-5">
         <Calculation content="AVERAGE VALUE" amount={averageValue} />
         <Calculation content="OUTSTANDING PAYMENT" amount={totalDue} />
@@ -369,7 +439,6 @@ export default async function PaymentReportPage(props: TProps) {
         filterMultipleSliders={filterMultipleSliders}
         searchParams={searchParams}
       />
-      {/* Replace the existing table and mobile card sections with: */}
       <PaymentDisplay
         paymentInfo={filteredPayments}
         total={filteredTotalCount}
@@ -377,7 +446,6 @@ export default async function PaymentReportPage(props: TProps) {
         page={page}
         take={take}
       />{" "}
-      {/* Keep the Analytics section */}
       <Suspense fallback="loading...">
         <AnalyticsVisibility>
           <Analytics

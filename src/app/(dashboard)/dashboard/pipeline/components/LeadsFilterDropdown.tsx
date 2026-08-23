@@ -4,7 +4,7 @@ import { LeadFilterOptions } from "@/actions/pipelines/getLeadFilterOptions";
 import { cn } from "@/lib/cn";
 import { Column, User } from "@prisma/client";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Funnel } from "lucide-react";
 import React, { useMemo } from "react";
 import SelectComponent from "./Select";
 
@@ -70,24 +70,50 @@ const LeadsFilterDropdown = React.memo(function LeadsFilterDropdown({
     [companyUsers],
   );
 
+  const hasActiveFilters = Boolean(
+    filter.assignedTo || filter.status || filter.service || filter.source,
+  );
+
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root
+      onOpenChange={(open) => {
+        if (open) {
+          window.dispatchEvent(new CustomEvent("close-date-range"));
+        }
+      }}
+    >
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center justify-between w-full rounded-xl border px-4 py-2 transition-all duration-200 focus:outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10"
+          className={cn(
+            "relative flex items-center justify-between w-full rounded-xl border px-4 py-2 transition-all duration-200 focus:outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
+            hasActiveFilters && "border-primary/40 bg-primary/5",
+          )}
           aria-label="Customise options"
         >
-          <span>Filter</span>
-          <ChevronDown size={16} />
+          <span className="flex min-w-0 items-center gap-x-2">
+            <Funnel
+              size={16}
+              className={cn(
+                "shrink-0",
+                hasActiveFilters ? "text-primary" : "text-slate-500",
+              )}
+            />
+            <span className="truncate">Filter</span>
+          </span>
+          <ChevronDown size={16} className="shrink-0" />
+          {hasActiveFilters && (
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />
+          )}
         </button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
+          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade z-50 w-[260px] rounded-xl bg-background p-3 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
           sideOffset={5}
+          collisionPadding={12}
         >
-          <div className="flex flex-col gap-y-2 px-4">
+          <div className="flex flex-col gap-y-2">
             <SelectComponent
               label="Assigned To"
               items={[
@@ -153,19 +179,17 @@ const LeadsFilterDropdown = React.memo(function LeadsFilterDropdown({
               value={filter.status || ""}
             />
 
-            <div className="px-4 pt-2">
-              <button
-                onClick={clearFilters}
-                className={cn(
-                  "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
-                  "hover:bg-red-50",
-                  " text-slate-500 hover:text-red-500",
-                  "active:scale-95 border border-slate-200 hover:border-red-100",
-                )}
-              >
-                Clear All Filters
-              </button>
-            </div>
+            <button
+              onClick={clearFilters}
+              className={cn(
+                "group mt-1 flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm transition-all duration-200",
+                "hover:bg-red-50",
+                "text-slate-500 hover:text-red-500",
+                "active:scale-95 border border-slate-200 hover:border-red-100",
+              )}
+            >
+              Clear All Filters
+            </button>
           </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

@@ -11,12 +11,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
+import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { VehicleColor } from "@prisma/client";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Popconfirm } from "antd";
+import { ChevronDown, ChevronUp, Search, X, Check } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { deleteVehicleColor } from "@/actions/vehicle/deleteVehicleColor";
 
 interface ColorSelectorProps {
   selectedColor: VehicleColor | null;
@@ -33,6 +37,24 @@ export default function ColorSelector({
   const [colors, setColors] = useState<VehicleColor[]>([]);
   const [filteredColors, setFilteredColors] = useState<VehicleColor[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setColorOpen(false);
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Fetch colors on component mount
   useEffect(() => {
@@ -76,31 +98,30 @@ export default function ColorSelector({
   }, [colorOpen]);
 
   return (
-    <div className="w-full">
-      <label className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-        {label}
-      </label>
-      <input type="hidden" name="colorId" value={selectedColor?.id || ""} />
-
+    <div className="group flex w-full flex-col gap-1.5" ref={dropdownRef}>
+      <Label className="flex items-center gap-1 text-base">{label}</Label>
       {/* Color selector */}
       <div className="relative w-full">
+        <input type="hidden" name="colorId" value={selectedColor?.id || ""} />
         <button
           type="button"
-          className={`
-            mt-1 flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700
-            bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm font-medium text-slate-600 dark:text-slate-200
-            transition-all duration-200
-            hover:border-primary hover:shadow-md focus:ring-2 focus:ring-primary/30 focus:border-primary
-          `}
+          className={cn(
+            slimInputClassName,
+            "items-center justify-between text-left",
+          )}
           onClick={() => setColorOpen(!colorOpen)}
         >
-          <span className={selectedColor ? "" : "text-slate-400"}>
+          <span className={selectedColor ? "" : "text-muted-foreground"}>
             {selectedColor
               ? selectedColor.name
               : `Select a ${label.toLowerCase()}`}
           </span>
-          <span className="text-slate-500 dark:text-slate-300">
-            {colorOpen ? <ChevronUp /> : <ChevronDown />}
+          <span className="shrink-0 opacity-60">
+            {colorOpen ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </span>
         </button>
 
@@ -120,16 +141,80 @@ export default function ColorSelector({
               />
             </div>
             <div className="thin-scrollbar max-h-48 overflow-y-auto">
-              {filteredColors.map((color) => (
-                <button
-                  key={color.id}
-                  type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 border-b border-slate-200 rounded-sm dark:border-slate-800 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  onClick={() => handleSelectColor(color)}
-                >
-                  <span>{color.name}</span>
-                </button>
-              ))}
+              {filteredColors.map((color) => {
+                const isSelected = selectedColor?.id === color.id;
+
+                return (
+                  <div
+                    key={color.id}
+                    className={cn(
+                      "group/item flex w-full cursor-pointer items-center justify-between border-b border-slate-200 px-2.5 py-2 rounded-sm dark:border-slate-800 transition-colors",
+                      isSelected
+                        ? "bg-primary/10"
+                        : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                    )}
+                    onClick={() => handleSelectColor(color)}
+                  >
+                    <div
+                      className={cn(
+                        "flex-1 min-w-0 text-left text-sm",
+                        isSelected
+                          ? "font-medium text-primary"
+                          : "text-slate-700 dark:text-slate-200",
+                      )}
+                    >
+                      {color.name}
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Popconfirm
+                          title="Are you sure to delete this color?"
+                          onConfirm={async (e) => {
+                            e?.stopPropagation();
+                            try {
+                              const res = await deleteVehicleColor(color.id);
+                              if (res.type === "success") {
+                                setColors((prev) =>
+                                  prev.filter((c) => c.id !== color.id),
+                                );
+                                setFilteredColors((prev) =>
+                                  prev.filter((c) => c.id !== color.id),
+                                );
+                                if (selectedColor?.id === color.id) {
+                                  onSelect(null);
+                                }
+                              } else {
+                                errorToast("Failed to delete color");
+                              }
+                            } catch {
+                              errorToast("Failed to delete color");
+                            }
+                          }}
+                          onCancel={(e) => e?.stopPropagation()}
+                          okText="Yes"
+                          cancelText="No"
+                          placement="topRight"
+                        >
+                          <X
+                            className="cursor-pointer text-red-400 hover:text-red-500 transition-colors"
+                            size={16}
+                          />
+                        </Popconfirm>
+                      </div>
+                      {isSelected && (
+                        <span className="flex w-4 shrink-0 items-center justify-center">
+                          <Check
+                            size={14}
+                            strokeWidth={3}
+                            className="text-primary"
+                          />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
               {filteredColors.length === 0 && (
                 <p className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">
                   No matching colors found

@@ -1,45 +1,122 @@
+import { errorToast } from "@/lib/toast";
 import { Client, ClientConversationTrack } from "@prisma/client";
+import {
+  ALLOWED_ATTACHMENT_EXTENSIONS,
+  AUDIO_EXTENSIONS,
+  IMAGE_EXTENSIONS,
+  MAX_ATTACHMENT_SIZE_MB,
+  SUPPORTED_ATTACHMENT_FORMATS_LABEL,
+} from "./attachmentExtensions";
+
+export { MAX_ATTACHMENT_SIZE_MB };
 
 export const isImage = (fileName: string = "") => {
   if (!fileName) return false;
 
-  const imageExtensions = [
-    "jpg",
-    "jpeg",
-    "png",
-    "gif",
-    "bmp",
-    "webp",
-    "svg",
-    "tiff",
-    "ico",
-    "avif",
-  ];
   const ext = fileName?.split(".")?.pop()?.toLowerCase();
 
-  return imageExtensions.includes(ext ?? "");
+  return IMAGE_EXTENSIONS.includes(ext ?? "");
 };
 
 export const isAudio = (fileName: string = "") => {
   if (!fileName) return false;
 
-  const audioExtensions = [
-    "mp3",
-    "wav",
-    "ogg",
-    "oga",
-    "opus",
-    "m4a",
-    "webm",
-    "aac",
-    "amr",
-    "3gp",
-    "flac",
-  ];
   const ext = fileName?.split(".")?.pop()?.toLowerCase();
 
-  return audioExtensions.includes(ext ?? "");
+  return AUDIO_EXTENSIONS.includes(ext ?? "");
 };
+
+// For the file inputs' `accept` attribute — a first line of defense only;
+// it doesn't affect drag-and-drop, so mergeNewAttachments below is the
+// actual enforcement.
+export const ATTACHMENT_ACCEPT = ALLOWED_ATTACHMENT_EXTENSIONS.map(
+  (ext) => `.${ext}`,
+).join(",");
+
+export const isAllowedAttachment = (file: File) => {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext);
+};
+
+/**
+ * Dedupes newly picked/dropped files against what's already staged and drops
+ * anything that fails attachment validation, toasting once per rejection
+ * reason. Shared by every channel composer (SMS, Email, Messenger) so the
+ * file-select and drag-drop handlers stay a one-liner.
+ */
+export const mergeNewAttachments = (prev: File[], picked: File[]): File[] => {
+  const duplicates: string[] = [];
+  const unsupported: string[] = [];
+  const oversized: string[] = [];
+
+  const validNewFiles = picked.filter((file) => {
+    const isDuplicate = prev.some(
+      (f) =>
+        f.name === file.name &&
+        f.size === file.size &&
+        f.lastModified === file.lastModified,
+    );
+    if (isDuplicate) {
+      duplicates.push(file.name);
+      return false;
+    }
+
+    if (!isAllowedAttachment(file)) {
+      unsupported.push(file.name);
+      return false;
+    }
+    if (file.size > MAX_ATTACHMENT_SIZE_MB * 1024 * 1024) {
+      oversized.push(file.name);
+      return false;
+    }
+
+    return true;
+  });
+
+  if (duplicates.length) {
+    errorToast(`Already uploaded: ${duplicates.join(", ")}`);
+  }
+  // One toast per rejection *reason*, not per file — otherwise attaching
+  // several unsupported files at once repeats the full format list each time.
+  if (unsupported.length) {
+    errorToast(
+      `${unsupported.map((name) => `"${name}"`).join(", ")} ${
+        unsupported.length > 1
+          ? "are not supported file types"
+          : "is not a supported file type"
+      }. Supported formats: ${SUPPORTED_ATTACHMENT_FORMATS_LABEL}`,
+    );
+  }
+  if (oversized.length) {
+    errorToast(
+      `${oversized.map((name) => `"${name}"`).join(", ")} exceed${
+        oversized.length > 1 ? "" : "s"
+      } the ${MAX_ATTACHMENT_SIZE_MB}MB limit`,
+    );
+  }
+
+  return [...prev, ...validNewFiles];
+};
+
+/**
+ * Oldest -> newest ordering for a message list, with `id` as the tie-breaker.
+ *
+ * Needed because a long AI reply is sent as several separate texts: carriers
+ * don't guarantee delivery order between them, realtime (pusher) messages are
+ * appended in arrival order, and segments persisted in the same millisecond
+ * share a `createdAt`. Sorting on (createdAt, id) makes the rendered order
+ * deterministic instead of arrival-dependent.
+ */
+export const sortMessagesChronologically = <
+  T extends { id: number; createdAt: Date | string },
+>(
+  messages: T[],
+): T[] =>
+  messages.slice().sort((a, b) => {
+    const diff =
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return diff !== 0 ? diff : a.id - b.id;
+  });
 
 export const clientSortByUpdatedMessage = (
   clients: (Client & {

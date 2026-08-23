@@ -3,31 +3,26 @@
 import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSettings";
 import { DialogClose, DialogFooter } from "@/components/Dialog";
 import Submit from "@/components/Submit";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { errorToast, successToast } from "@/lib/toast";
+import { addMinutes } from "@/utils/time";
 import { CalendarSettings, EmployeeType } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { calenderQueryKey } from "../../_constant";
 import ConnectGoogle from "./ConnectGoogle";
+import WeekDaySelect from "./WeekDaySelect";
 
-const WEEK_DAYS = [
-  "Saturday",
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-];
+const WEEKEND_TRIGGER_CLASS =
+  "border-primary bg-[#EEF0FF] text-primary focus:ring-primary";
+
+type TOpenField =
+  | "week-start"
+  | "day-start"
+  | "day-end"
+  | "weekend-1"
+  | "weekend-2";
 
 type TGeneralProps = {
   settings: CalendarSettings;
@@ -40,20 +35,28 @@ export default function General({
   onClose,
   authUser,
 }: TGeneralProps) {
-  const isAdmin = authUser?.user.employeeType === EmployeeType?.Admin;
-  const isManager = authUser?.user.employeeType === EmployeeType?.Manager;
+  const isAdmin = authUser?.user?.employeeType === EmployeeType?.Admin;
+  const isManager = authUser?.user?.employeeType === EmployeeType?.Manager;
 
   const [error, setError] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState(settings?.weekStart ?? "Monday");
   const [weekend1, setWeekend1] = useState(settings?.weekend1 ?? "Saturday");
   const [weekend2, setWeekend2] = useState(settings?.weekend2 ?? "Sunday");
+  const [dayStart, setDayStart] = useState(settings?.dayStart ?? "10:00");
+  const [dayEnd, setDayEnd] = useState(settings?.dayEnd ?? "18:00");
+  const [openField, setOpenField] = useState<TOpenField | null>(null);
+
+  const openProps = (field: TOpenField) => ({
+    open: openField === field,
+    onOpenChange: (next: boolean) =>
+      setOpenField((current) =>
+        next ? field : current === field ? null : current,
+      ),
+  });
 
   const queryClient = useQueryClient();
 
-  async function handleSave(data: FormData) {
-    const dayStart = data.get("day-start") as string;
-    const dayEnd = data.get("day-end") as string;
-
+  async function handleSave() {
     if (!dayStart || !dayEnd) {
       setError("Start time and end time are required");
       return;
@@ -100,85 +103,63 @@ export default function General({
 
       {isAdmin || isManager ? (
         <form className="flex flex-col gap-6">
-          {/* Row 1: Week Starts · Day starts · Day ends */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
             {/* Week Starts */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="week-start">Week Starts</Label>
-              <Select value={weekStart} onValueChange={setWeekStart}>
-                <SelectTrigger size="md" id="week-start" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WEEK_DAYS.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <Label htmlFor="week-start" className="text-base">
+                Week Starts
+              </Label>
+              <WeekDaySelect
+                id="week-start"
+                value={weekStart}
+                onValueChange={setWeekStart}
+                {...openProps("week-start")}
+              />
             </div>
 
             {/* Day starts */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="day-start">Day starts</Label>
-              <Input
-                type="time"
-                id="day-start"
-                name="day-start"
-                defaultValue={settings?.dayStart ?? "10:00"}
-                className="w-full"
-              />
-            </div>
+            <TimeScrollPicker
+              id="day-start"
+              label="Day starts"
+              value={dayStart}
+              maxTime="23:30"
+              onChange={setDayStart}
+              {...openProps("day-start")}
+            />
 
             {/* Day ends */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="day-end">Day ends</Label>
-              <Input
-                type="time"
-                id="day-end"
-                name="day-end"
-                defaultValue={settings?.dayEnd ?? "18:00"}
-                className="w-full"
-              />
-            </div>
+            <TimeScrollPicker
+              id="day-end"
+              label="Day ends"
+              value={dayEnd}
+              minTime={dayStart ? addMinutes(dayStart, 15) : undefined}
+              onChange={setDayEnd}
+              {...openProps("day-end")}
+            />
           </div>
 
           {/* Row 2: Show Weekends */}
           <div className="flex flex-col gap-1.5">
-            <Label>Show Weekends</Label>
+            <Label htmlFor="weekend-1" className="text-base">
+              Show Weekends
+            </Label>
             <div className="grid grid-cols-2 gap-3">
-              <Select value={weekend1} onValueChange={setWeekend1}>
-                <SelectTrigger
-                  size="md"
-                  className="w-full border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WEEK_DAYS.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <WeekDaySelect
+                id="weekend-1"
+                value={weekend1}
+                onValueChange={setWeekend1}
+                className={WEEKEND_TRIGGER_CLASS}
+                {...openProps("weekend-1")}
+              />
 
-              <Select value={weekend2} onValueChange={setWeekend2}>
-                <SelectTrigger
-                  size="md"
-                  className="w-full border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WEEK_DAYS.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <WeekDaySelect
+                id="weekend-2"
+                value={weekend2}
+                onValueChange={setWeekend2}
+                ariaLabel="Second weekend day"
+                className={WEEKEND_TRIGGER_CLASS}
+                {...openProps("weekend-2")}
+              />
             </div>
           </div>
 

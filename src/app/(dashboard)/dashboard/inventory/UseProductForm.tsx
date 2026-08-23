@@ -108,7 +108,7 @@ export default function UseProductForm({
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto]"
         onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
@@ -180,7 +180,7 @@ export default function UseProductForm({
               name="notes"
               required={false}
               className={cn(
-                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                 "focus:border-primary/60 focus:ring-2 focus:ring-primary/40",

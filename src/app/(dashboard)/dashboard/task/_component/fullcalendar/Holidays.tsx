@@ -3,9 +3,9 @@ import getHoliday from "@/actions/task/getHoliday";
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import { useSession } from "next-auth/react";
+import EmptyMsg from "../../../../../../components/common/EmptyMsg";
 import { calenderQueryKey } from "../../_constant";
 import TaskError from "../ui/TaskError";
-import TaskNotFound from "../ui/TaskNotFound";
 import TaskSpinner from "../ui/TaskSpinner";
 import HolidayCalendar from "./HolidayCalendar";
 import HolidayDeleteConfirmation from "./HolidayDeleteConfirmation";
@@ -35,7 +35,7 @@ export default function Holidays() {
   } else if (!isLoading && isError) {
     content = <TaskError message="Failed to load holidays" />;
   } else if (!isLoading && !isError && holidays && holidays.length === 0) {
-    content = <TaskNotFound message="No holidays found" />;
+    content = <EmptyMsg message="No holidays found" />;
   } else if (!isLoading && !isError && holidays && holidays.length > 0) {
     content = holidays.map((holiday, index) => (
       <div
@@ -81,7 +81,7 @@ export default function Holidays() {
       <HolidayCalendar />
       <div>
         <h3 className="text-xl font-medium lg:text-2xl">Holidays List:</h3>
-        <div className="overflow-auto h-60 [@media(min-width:426px)]:h-52 2xl:h-36 thin-scrollbar pb-2">
+        <div className="overflow-auto h-60 [@media(min-width:426px)]:h-52 2xl:h-36 pb-2">
           {content}
         </div>
       </div>

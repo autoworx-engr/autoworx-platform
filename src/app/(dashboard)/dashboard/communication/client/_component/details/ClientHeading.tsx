@@ -33,9 +33,6 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
 
   const fullName =
     `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim() || "Client";
-  const initials =
-    `${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`.toUpperCase() ||
-    "?";
   const hasPhoto =
     !!client.photo &&
     client.photo.trim() !== "" &&
@@ -71,7 +68,11 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
         <div className="flex items-start gap-3">
           {hasPhoto ? (
             <Image
-              src={client.photo}
+              src={
+                client?.photo?.includes("autoworx-production")
+                  ? client.photo
+                  : "/images/default.png"
+              }
               alt={fullName}
               width={96}
               height={96}
@@ -79,7 +80,13 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
             />
           ) : (
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/20 text-lg font-semibold ring-2 ring-white/40 2xl:h-16 2xl:w-16">
-              {initials}
+              <Image
+                src={"/images/default.png"}
+                alt={fullName}
+                width={96}
+                height={96}
+                className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-white/70 2xl:h-16 2xl:w-16"
+              />
             </div>
           )}
 

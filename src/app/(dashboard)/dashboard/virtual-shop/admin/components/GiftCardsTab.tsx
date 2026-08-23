@@ -10,6 +10,8 @@ import {
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
+import { DatePickerField } from "@/components/ui/DatePickerField";
+import { fUsDate } from "@/utils/formatDate";
 import {
   useCreateGiftCardPromo,
   useDeleteGiftCardPromo,
@@ -35,10 +37,10 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
+  PencilLineIcon,
   Plus,
   Send,
   ShieldCheck,
-  SquarePen,
   Tag,
   Trash2,
 } from "lucide-react";
@@ -184,7 +186,7 @@ function Section({
         <Icon size={20} className="text-gray-700" />
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
       </div>
-      <p className="mt-1 text-sm text-primary">{subtitle}</p>
+      <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
       <div className="mt-5">{children}</div>
     </div>
   );
@@ -337,9 +339,11 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
   const [promoExpireDate, setPromoExpireDate] = useState("2026-12-31");
   const [promoUsageLimit, setPromoUsageLimit] = useState("100");
 
+  // "YYYY-MM-DD" for the date input, read in UTC like every other date here.
   const formatDateForInput = (value?: string | null) => {
     if (!value) return "";
-    return new Date(value).toISOString().slice(0, 10);
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
   };
 
   const openCreatePromoDialog = () => {
@@ -374,10 +378,8 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
     return `$${numericValue}`;
   };
 
-  const formatPromoExpireDate = (value?: string | null) => {
-    if (!value) return "No expiry";
-    return new Date(value).toLocaleDateString();
-  };
+  const formatPromoExpireDate = (value?: string | null) =>
+    fUsDate(value) ?? "No expiry";
 
   const handleDeletePromoCode = async (id: number) => {
     if (!accessToken) {
@@ -854,15 +856,27 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                       </div>
                     </Tooltip>
                     <Popconfirm
-                      title="Delete template"
-                      description={`Delete template "${design.name}"? This action cannot be undone.`}
+                      title="Delete Template"
+                      description={`Delete template "${
+                        design.name.length > 50
+                          ? `${design.name.slice(0, 50)}...`
+                          : design.name
+                      }"? This action cannot be undone.`}
                       okText="Delete"
                       cancelText="Cancel"
-                      okButtonProps={{
-                        danger: true,
-                        loading: isDeletingTemplate,
-                      }}
+                      placement="topRight"
                       onConfirm={() => handleDeleteTemplate(design)}
+                      onPopupClick={(e) => e.stopPropagation()}
+                      overlayClassName="[&_.ant-popover-inner]:max-w-[280px] [&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800 [&_.ant-popover-message-description]:break-words"
+                      okButtonProps={{
+                        loading: isDeletingTemplate,
+                        className:
+                          "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                      }}
+                      cancelButtonProps={{
+                        className:
+                          "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                      }}
                     >
                       <button
                         type="button"
@@ -913,6 +927,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPreset1}
                     type="number"
                     min="0"
+                    placeholder="e.g. 25"
                   />
                   <SettingInput
                     label="Preset 2 ($)"
@@ -920,6 +935,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPreset2}
                     type="number"
                     min="0"
+                    placeholder="e.g. 50"
                   />
                   <SettingInput
                     label="Preset 3 ($)"
@@ -927,6 +943,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPreset3}
                     type="number"
                     min="0"
+                    placeholder="e.g. 100"
                   />
                 </div>
               )}
@@ -946,6 +963,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setMinAmount}
                     type="number"
                     min="0"
+                    placeholder="e.g. 10"
                   />
                   <SettingInput
                     label="Max ($)"
@@ -953,6 +971,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setMaxAmount}
                     type="number"
                     min="0"
+                    placeholder="e.g. 500"
                   />
                 </div>
               )}
@@ -1059,18 +1078,30 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                         onClick={() => openEditPromoDialog(promo)}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <SquarePen size={16} color={"#6571FF"} />
+                        <PencilLineIcon size={16} color={"#6571FF"} />
                       </button>
                       <Popconfirm
-                        title="Delete promo code"
-                        description={`Delete promo code "${promo.code}"? This action cannot be undone.`}
+                        title="Delete Promo Code"
+                        description={`Delete promo code "${
+                          promo.code.length > 50
+                            ? `${promo.code.slice(0, 50)}...`
+                            : promo.code
+                        }"? This action cannot be undone.`}
                         okText="Delete"
                         cancelText="Cancel"
-                        okButtonProps={{
-                          danger: true,
-                          loading: isDeletingPromo,
-                        }}
+                        placement="topRight"
                         onConfirm={() => handleDeletePromoCode(promo.id)}
+                        onPopupClick={(e) => e.stopPropagation()}
+                        overlayClassName="[&_.ant-popover-inner]:max-w-[280px] [&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800 [&_.ant-popover-message-description]:break-words"
+                        okButtonProps={{
+                          loading: isDeletingPromo,
+                          className:
+                            "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                        }}
+                        cancelButtonProps={{
+                          className:
+                            "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                        }}
                       >
                         <button
                           type="button"
@@ -1116,6 +1147,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                         e.preventDefault();
                       }
                     }}
+                    placeholder="e.g. SUMMER25"
                     className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1147,16 +1179,24 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPromoValue}
                     type="number"
                     min="0"
+                    placeholder={
+                      promoType === "Percentage" ? "e.g. 10" : "e.g. 5.00"
+                    }
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <SettingInput
-                    label="Expiry Date"
-                    value={promoExpireDate}
-                    onChange={setPromoExpireDate}
-                    type="date"
-                  />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-gray-700">
+                      Expiry Date
+                    </label>
+                    <DatePickerField
+                      value={promoExpireDate}
+                      onChange={setPromoExpireDate}
+                      minDate={new Date()}
+                      placeholder="Select date"
+                    />
+                  </div>
 
                   <SettingInput
                     label="Usage Limit"
@@ -1164,6 +1204,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={setPromoUsageLimit}
                     type="number"
                     min="0"
+                    placeholder="e.g. 100"
                   />
                 </div>
               </div>
@@ -1196,11 +1237,13 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                 label="Terms URL"
                 value={termsUrl}
                 onChange={setTermsUrl}
+                placeholder="https://example.com/terms"
               />
               <SettingInput
                 label="Privacy Policy URL"
                 value={privacyUrl}
                 onChange={setPrivacyUrl}
+                placeholder="https://example.com/privacy"
               />
             </div>
           </Section>

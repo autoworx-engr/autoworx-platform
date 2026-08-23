@@ -65,9 +65,9 @@ export default function Header({
 
       className="mt-5 flex  gap-4 lg:flex-row lg:items-center flex-col-reverse lg:justify-between"
     >
-      <div className="min-w-full lg:min-w-[500px] flex flex-col gap-x-4 rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 md:flex-row md:items-center">
+      <div className="min-w-full lg:min-w-[500px] flex flex-row items-center gap-x-4 rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100">
         {/* Search Container */}
-        <div className="group relative flex flex-1 items-center">
+        <div className="group relative flex min-w-0 flex-1 items-center">
           <Search
             size={18}
             className="absolute left-4 z-10 text-slate-400 transition-colors group-focus-within:text-primary"
@@ -79,7 +79,7 @@ export default function Header({
             placeholder={
               isTemplate
                 ? "Search by Template ID, Title"
-                : "Search ID, client, vehicle, email..."
+                : "Search by ID, client, vehicle, email..."
             }
             className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-primary/30 outline-none md:max-w-[450px]"
             defaultValue={searchTerm || ""}
@@ -105,7 +105,7 @@ export default function Header({
 
         {/* Filter Section */}
         {!isCanned && (
-          <div className="flex items-center gap-2 border-l border-slate-100 pl-0 md:pl-4">
+          <div className="flex items-center gap-2 border-l border-slate-100 pl-3 md:pl-4">
             <Filter
               startDate={startDate}
               endDate={endDate}

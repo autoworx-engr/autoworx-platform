@@ -127,7 +127,7 @@ export default function Header({
         {invoiceId || template?.id}
       </div>
 
-      {!isTemplate && (
+      {!isTemplate && isEstimateEdit && (
         <CreateEstimateActionsButtons
           status={status! || selectedStatus}
           requestEstimate={requestEstimate}
@@ -151,6 +151,7 @@ export default function Header({
               openDropdown={clientOpenDropdown}
               setOpenDropdown={setClientOpenDropdown}
               invoice={invoice}
+              confirmOnChange={isEdit}
             />
             <SelectVehicle
               value={vehicle}
@@ -164,6 +165,7 @@ export default function Header({
         )}
 
         <SelectStatus
+          key={template ? template.id : "no-template"}
           value={status || selectedStatus}
           open={statusOpenDropdown}
           setOpen={setStatusOpenDropdown}

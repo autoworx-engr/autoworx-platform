@@ -9,7 +9,7 @@ import { Prisma, PaymentType } from "@prisma/client";
 export type PaymentMethodFilter =
   | "Card"
   | "Cash"
-  | "Cheque"
+  | "Check"
   | "Other"
   | "All"
   | "Deposit"
@@ -103,6 +103,9 @@ const containsInsensitive = (value: string) => ({
   mode: "insensitive" as const,
 });
 
+const parseVehicleYear = (value: string) =>
+  /^\d{4}$/.test(value) ? Number(value) : null;
+
 function sanitizePagination(input: GetPaymentsPaginatedInput) {
   const page = Number.isFinite(input.page)
     ? Math.max(DEFAULT_PAGE, Math.floor(input.page as number))
@@ -152,7 +155,7 @@ function buildWhereInput(
     case "Cash":
       where.type = PaymentType.CASH;
       break;
-    case "Cheque":
+    case "Check":
       where.type = PaymentType.CHECK;
       break;
     case "Other":
@@ -231,8 +234,8 @@ function buildWhereInput(
       },
     ];
 
-    const searchAsYear = Number(normalizedSearch);
-    if (Number.isInteger(searchAsYear)) {
+    const searchAsYear = parseVehicleYear(normalizedSearch);
+    if (searchAsYear !== null) {
       searchConditions.push({
         invoice: {
           is: {
@@ -248,22 +251,39 @@ function buildWhereInput(
 
     const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean);
     if (searchTerms.length > 1) {
-      const [firstNameTerm, ...lastNameParts] = searchTerms;
-      const lastNameTerm = lastNameParts.join(" ");
-
       searchConditions.push({
         invoice: {
           is: {
             client: {
               is: {
-                AND: [
-                  {
-                    firstName: containsInsensitive(firstNameTerm),
-                  },
-                  {
-                    lastName: containsInsensitive(lastNameTerm),
-                  },
-                ],
+                AND: searchTerms.map((term) => ({
+                  OR: [
+                    { firstName: containsInsensitive(term) },
+                    { lastName: containsInsensitive(term) },
+                  ],
+                })),
+              },
+            },
+          },
+        },
+      });
+
+      searchConditions.push({
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                AND: searchTerms.map((term) => {
+                  const termAsYear = parseVehicleYear(term);
+                  return {
+                    OR: [
+                      { make: containsInsensitive(term) },
+                      { model: containsInsensitive(term) },
+                      { other: containsInsensitive(term) },
+                      ...(termAsYear !== null ? [{ year: termAsYear }] : []),
+                    ],
+                  };
+                }),
               },
             },
           },
@@ -346,7 +366,7 @@ function getPaymentMethod(payment: PaymentListRecord) {
     return "Cash";
   }
   if (payment.type === PaymentType.CHECK) {
-    return "Cheque";
+    return "Check";
   }
   if (payment.type === PaymentType.OTHER) {
     return payment.other?.paymentMethod?.name || "Other";

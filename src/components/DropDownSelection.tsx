@@ -93,7 +93,7 @@ export function DropdownSelection({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className={cn(
-          "w-56 max-h-80 overflow-y-auto thin-scrollbar",
+          "w-56 max-h-80 overflow-y-auto",
           "rounded-2xl p-2 m-2 backdrop-blur-md bg-white dark:bg-slate-900/50",
           "ring-1 ring-slate-900/5 dark:ring-slate-700/20 shadow-lg border-transparent",
           "transition-all duration-200",

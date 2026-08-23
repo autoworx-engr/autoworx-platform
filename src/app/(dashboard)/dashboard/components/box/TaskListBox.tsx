@@ -5,20 +5,18 @@ import BoxTitle from "./BoxTitle";
 import TaskListItem from "@/components/task/TaskListItem";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePermissionStore } from "@/stores/permissionStore";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
-import { Plus, Loader2, ListEnd, ShieldOff } from "lucide-react"; // Added ShieldOff and ListEnd for states
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
+import { Plus, Loader2, ListEnd } from "lucide-react";
 import { cn } from "@/lib/cn"; // Ensure cn is available
+import { BoxRestrictedNotice } from "./BoxRestricted";
 
 export default function TaskListBox() {
   const { data: tasks, isLoading, isError } = useTasksQueryForDashboard();
-  const { permissions } = usePermissionStore();
-  const user = useGetCurrentUser();
-  const companyId = user?.companyId;
-  const companyEmployeePermissions = permissions?.companyPermissions;
-  const userPermissions = permissions?.userPermissions;
-  const { data } = useGetCompanyPermissions(companyId!);
+
+  // Calendar & Task. `useCanAccessRoute` runs the same company-feature +
+  // role-permission + per-user-override chain the route guard uses, so this
+  // widget can't disagree with /dashboard/task/day.
+  const hasTaskPermission = useCanAccessRoute("/dashboard/task/day");
 
   const queryClient = useQueryClient();
 
@@ -38,39 +36,9 @@ export default function TaskListBox() {
 
   let content = null;
 
-  // Check if calendarAndTask feature permission is enabled at company
-  const calendarAndTaskFeatureEnabled =
-    data?.data?.find(
-      (permission: any) => permission.permission_name === "calendar",
-    )?.enabled !== false;
-
-  // Company role permission is a ceiling — if the role blocks it, individual override cannot grant access
-  const companyRoleAllowsTask =
-    companyEmployeePermissions?.calendarTask !== false;
-  const individualAllowsTask =
-    userPermissions?.calendarTask !== undefined
-      ? Boolean(userPermissions.calendarTask)
-      : true;
-
-  const hasTaskPermission =
-    calendarAndTaskFeatureEnabled &&
-    companyRoleAllowsTask &&
-    individualAllowsTask;
-
   // --- Content Loading/State Logic (Enhanced for premium look) ---
   if (!hasTaskPermission) {
-    // Redesigned Permission Denied State
-    content = (
-      <div className="flex flex-1 flex-col items-center justify-center self-center p-8 text-center my-auto">
-        <ShieldOff className="w-8 h-8 text-rose-500 mb-3" />
-        <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-          Permission Required
-        </span>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Contact administrator to view task access.
-        </p>
-      </div>
-    );
+    content = <BoxRestrictedNotice what="calendar & task" />;
   } else if (isLoading) {
     // Enhanced loading state with pulse and improved visual
     content = (
@@ -131,7 +99,7 @@ export default function TaskListBox() {
         />
 
         {/* Task List Content Area - Uses min-h-0 to allow scrolling  */}
-        <div className="thin-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto overflow-x-hidden min-h-0 max-h-[40vh] md:max-h-none">
+        <div className="flex flex-1 flex-col space-y-3 overflow-y-auto overflow-x-hidden min-h-0 max-h-[40vh] md:max-h-none">
           {content}
         </div>
 

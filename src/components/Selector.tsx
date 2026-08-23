@@ -4,6 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
@@ -11,7 +12,8 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Popconfirm } from "antd";
 import type { JSX } from "react";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
@@ -23,6 +25,8 @@ interface SelectorProps<T> {
   newButton?: React.ReactNode;
   displayList: (item: T) => JSX.Element;
   onSearch?: (search: string) => T[];
+  /** Every search-box change, including clearing it. */
+  onSearchChange?: (search: string) => void;
   onSelect?: (item: T) => void;
   openState?: [boolean, React.Dispatch<React.SetStateAction<boolean>>];
   selectedItem?: T | null | undefined;
@@ -37,6 +41,9 @@ interface SelectorProps<T> {
   showSearch?: boolean;
   usePortal?: boolean;
   isLoading?: boolean;
+  /** Empty-state text. Override when "No results found" is too vague to explain why the list is empty. */
+  emptyMessage?: string;
+  onRemoveItem?: (item: T, e: React.MouseEvent) => void;
 }
 
 export default function Selector<T>({
@@ -46,6 +53,7 @@ export default function Selector<T>({
   newButton,
   displayList,
   onSearch,
+  onSearchChange,
   onSelect,
   openState,
   footer,
@@ -61,6 +69,8 @@ export default function Selector<T>({
   showSearch = true,
   usePortal = false,
   isLoading = false,
+  emptyMessage = "No results found",
+  onRemoveItem,
 }: SelectorProps<T>): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [localOpen, setLocalOpen] = useState(false);
@@ -72,8 +82,20 @@ export default function Selector<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  function applySearch(query: string) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return items;
+    if (onSearch) return onSearch(trimmedQuery);
+
+    return items.filter(
+      (item: any) =>
+        item.clientName?.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+        item.id?.toString().toLowerCase().includes(trimmedQuery.toLowerCase()),
+    );
+  }
+
   useEffect(() => {
-    setFilteredItems(items);
+    setFilteredItems(applySearch(searchTerm));
   }, [items]);
   // useEffect(() => {
   //   setSelected(selectedItem);
@@ -112,25 +134,9 @@ export default function Selector<T>({
 
   function handleSearchChange(e: ChangeEvent<HTMLInputElement>) {
     const searchQuery = e.target.value;
-    const trimmedQuery = searchQuery.trim();
     setSearchTerm(searchQuery);
-    if (onSearch) {
-      setFilteredItems(onSearch(trimmedQuery));
-    } else {
-      const searchedItems = trimmedQuery
-        ? items.filter(
-            (item: any) =>
-              item.clientName
-                ?.toLowerCase()
-                .includes(trimmedQuery.toLowerCase()) ||
-              item.id
-                ?.toString()
-                .toLowerCase()
-                .includes(trimmedQuery.toLowerCase()),
-          )
-        : items;
-      setFilteredItems(searchedItems);
-    }
+    setFilteredItems(applySearch(searchQuery));
+    if (onSearchChange) onSearchChange(searchQuery);
   }
 
   function handleSelectItem(item: T) {
@@ -166,16 +172,17 @@ export default function Selector<T>({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
+        className="flex max-h-48 flex-col overflow-y-auto py-1"
       >
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-6 px-4">
+          <div className="flex items-center justify-center gap-2 py-6 px-4">
+            <Spinner className="size-4 text-primary" />
             <p className="text-sm text-slate-400">Loading...</p>
           </div>
         ) : filteredItems?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 px-4">
             <Search size={18} className="text-slate-300 mb-1.5" />
-            <p className="text-sm text-slate-400">No results found</p>
+            <p className="text-center text-sm text-slate-400">{emptyMessage}</p>
           </div>
         ) : (
           filteredItems?.map((item, index) => {
@@ -191,9 +198,16 @@ export default function Selector<T>({
 
             if (clickabled) {
               return (
-                <button
+                <div
                   onClick={() => handleSelectItem(item)}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelectItem(item);
+                    }
+                  }}
                   key={key}
                   className={cn(
                     "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm transition-colors duration-100",
@@ -204,16 +218,45 @@ export default function Selector<T>({
                   )}
                 >
                   <div className="flex-1 min-w-0">{displayList(item)}</div>
-                  <span className="flex w-4 shrink-0 items-center justify-center">
-                    {isSelected && (
-                      <Check
-                        size={14}
-                        strokeWidth={3}
-                        className="text-primary"
-                      />
-                    )}
-                  </span>
-                </button>
+                  {/* Only reserve the trailing column when it actually has
+                      something in it — an always-on check placeholder left a
+                      dead gap on the right of every row. */}
+                  {(onRemoveItem || isSelected) && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      {onRemoveItem && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Popconfirm
+                            title="Are you sure to delete this item?"
+                            onConfirm={(e) => {
+                              e?.stopPropagation();
+                              onRemoveItem(
+                                item,
+                                e as unknown as React.MouseEvent,
+                              );
+                            }}
+                            onCancel={(e) => {
+                              e?.stopPropagation();
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="topRight"
+                          >
+                            <X cursor={"pointer"} color="#f87171" size={20} />
+                          </Popconfirm>
+                        </div>
+                      )}
+                      {isSelected && (
+                        <span className="flex w-4 shrink-0 items-center justify-center">
+                          <Check
+                            size={14}
+                            strokeWidth={3}
+                            className="text-primary"
+                          />
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
             } else {
               return (
@@ -304,7 +347,11 @@ export default function Selector<T>({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate pr-2">
-                  {selected ? label(selected) : label(null)}
+                  {isLoading && !selected
+                    ? "Loading..."
+                    : selected
+                      ? label(selected)
+                      : label(null)}
                 </span>
               </TooltipTrigger>
               {selected && label(selected).length > 25 && (
@@ -315,14 +362,18 @@ export default function Selector<T>({
             </Tooltip>
           </TooltipProvider>
 
-          {!disabledDropdown && (
-            <ChevronDown
-              size={16}
-              className={cn(
-                "text-muted-foreground transition-transform duration-200",
-                isOpen && "rotate-180 text-ring",
-              )}
-            />
+          {isLoading ? (
+            <Spinner className="size-4 shrink-0 text-primary" />
+          ) : (
+            !disabledDropdown && (
+              <ChevronDown
+                size={16}
+                className={cn(
+                  "text-muted-foreground transition-transform duration-200",
+                  isOpen && "rotate-180 text-ring",
+                )}
+              />
+            )
           )}
         </DropdownMenuTrigger>
 

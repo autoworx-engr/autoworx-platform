@@ -6,6 +6,10 @@ import SmsContainer from "./SmsContainer";
 
 export default async function SMS({ clientId }: { clientId: number }) {
   const companyId = await getCompanyId();
+  const client = await db.client.findFirst({
+    where: { id: clientId },
+    select: { photo: true },
+  });
   const twilio = await db.twilioCredentials.findFirst({
     where: { companyId },
   });
@@ -27,7 +31,11 @@ export default async function SMS({ clientId }: { clientId: number }) {
   return (
     <div className="relative  h-full">
       {/* className="relative mb-2 h-[80%] 2xl:h-[85%]" */}
-      <SmsContainer clientId={clientId} canUseSms={canUseSms} />
+      <SmsContainer
+        clientId={clientId}
+        canUseSms={canUseSms}
+        clientPhoto={client?.photo}
+      />
     </div>
   );
 }

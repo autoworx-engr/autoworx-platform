@@ -61,7 +61,12 @@ export const getClientsWithPagination = cache(
             where: {
               ...queryObj.where,
               conversationsTrack: {
-                OR: [{ emailIsRead: false }, { smsIsRead: false }],
+                OR: [
+                  { emailIsRead: false },
+                  { smsIsRead: false },
+                  { messengerIsRead: false },
+                  { instagramIsRead: false },
+                ],
               },
             },
           });

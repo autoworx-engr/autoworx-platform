@@ -85,7 +85,7 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const shopIdStr = searchParams.get("shopId");
-    const search = searchParams.get("search") || "";
+    const search = searchParams.get("search")?.trim() || "";
     const statusParam = searchParams.get("status") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";

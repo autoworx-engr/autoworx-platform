@@ -130,3 +130,22 @@ export function mapInvoiceItemsForCreate(allInvoiceItems: any[]) {
     tags: item.tags.map((it: any) => it.tag),
   }));
 }
+
+/**
+ * Material-only total (sell × quantity) across invoice items. Tax is charged
+ * on materials only — labor is excluded — matching the estimate/invoice and
+ * template bill summaries.
+ */
+export function calcMaterialSubtotal(invoiceItems: any[]) {
+  return (invoiceItems || []).reduce((total: number, item: any) => {
+    const materials = item?.materials || [];
+    return (
+      total +
+      materials.reduce(
+        (sum: number, material: any) =>
+          sum + Number(material?.sell || 0) * Number(material?.quantity || 0),
+        0,
+      )
+    );
+  }, 0);
+}

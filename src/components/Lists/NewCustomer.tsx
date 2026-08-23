@@ -16,13 +16,15 @@ import { ClientTagSelector } from "@/components/Lists/ClientTagSelector";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SlimInput } from "@/components/SlimInput";
 import { Label } from "@/components/ui/label";
+import { isDefaultClientSourceName } from "@/lib/consts";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
+import { isValidEmail, normalizeEmail } from "@/utils/email";
 import { stateStore } from "@/stores/stateStore";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
+import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { JSX } from "react";
@@ -33,6 +35,7 @@ import { getSources } from "../../actions/source/getSources";
 import PhoneInput from "../PhoneInput";
 import NewClientSource from "./NewClientSource";
 import NewVehicle from "./NewVehicle";
+import { useClientSourcePicker } from "./useClientSourcePicker";
 
 export default function NewCustomer({
   buttonElement,
@@ -106,6 +109,17 @@ export default function NewCustomer({
     }
   }
 
+  const {
+    displaySources,
+    isCreatingSource,
+    selectClientSource,
+    resetCreatingSource,
+  } = useClientSourcePicker({
+    sources: clientSources,
+    setSources: setClientSources,
+    setClientSource,
+  });
+
   function resetForm() {
     setClientInfo({
       firstName: "",
@@ -121,6 +135,7 @@ export default function NewCustomer({
     setMobile("+1");
     setClientSources([]);
     setClientSource(null);
+    resetCreatingSource();
     setProfilePic(null);
     setTagOpenDropdown(false);
     setTag(undefined);
@@ -136,6 +151,14 @@ export default function NewCustomer({
       showError({
         field: "firstName",
         message: "First name is required.",
+      });
+      return;
+    }
+
+    if (clientInfo.email && !isValidEmail(clientInfo.email)) {
+      showError({
+        field: "email",
+        message: "Please enter a valid email address.",
       });
       return;
     }
@@ -182,7 +205,7 @@ export default function NewCustomer({
       {
         firstName: firstName.trim(),
         lastName,
-        email,
+        email: normalizeEmail(email),
         mobile: fullPhone,
         countryCode: countryIsoCode,
         customerCompany,
@@ -265,7 +288,7 @@ export default function NewCustomer({
           ) : (
             <button
               className="
-                  flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
+                  flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white w-full text-center
                   bg-gradient-to-r from-primary to-[#5a66ee]
                   shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
                   hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
@@ -308,7 +331,7 @@ export default function NewCustomer({
                   htmlFor="profilePicture"
                   className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
                 >
-                  <SquarePen className="w-3 h-3 text-white" />
+                  <PencilLineIcon className="w-3 h-3 text-white" />
                 </label>
                 <input
                   type="file"
@@ -390,23 +413,23 @@ export default function NewCustomer({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <SlimInput
                 name="email"
+                type="email"
                 label="Email"
                 placeholder="Enter email address"
                 value={clientInfo.email}
                 // required
                 onChange={(e) => {
-                  const value = e.target.value;
+                  const value = normalizeEmail(e.target.value);
                   setClientInfo((prev) => ({ ...prev, email: value }));
 
-                  // Validate on input change
-                  // if (!value.trim()) {
-                  //   showError({
-                  //     field: "email",
-                  //     message: "Email is required.",
-                  //   });
-                  // } else {
-                  //   clearError();
-                  // }
+                  if (value && !isValidEmail(value)) {
+                    showError({
+                      field: "email",
+                      message: "Please enter a valid email address.",
+                    });
+                  } else {
+                    clearError();
+                  }
                 }}
               />
 
@@ -503,35 +526,38 @@ export default function NewCustomer({
                       setOpenClientSource={setOpenClientSource}
                     />
                   }
-                  items={clientSources}
+                  items={displaySources}
                   displayList={(clientSource: Source) => (
                     <div className="flex">
                       <button
                         className="w-full text-left text-sm font-bold"
                         onClick={() => {
-                          setClientSource(clientSource);
+                          selectClientSource(clientSource);
                           setOpenClientSource(false);
                         }}
                         type="button"
                       >
                         {clientSource.name}
                       </button>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            deleteClientSource(clientSource.id);
-                          }}
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
+                      {clientSource.id >= 0 &&
+                        !isDefaultClientSourceName(clientSource.name) && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                deleteClientSource(clientSource.id);
+                              }}
+                            >
+                              <X size={20} />
+                            </button>
+                          </div>
+                        )}
                     </div>
                   )}
                   selectedItem={clientSource}
                   setSelectedItem={setClientSource}
                   onSearch={(search: string) => {
-                    return clientSources.filter((clientSource: Source) =>
+                    return displaySources.filter((clientSource: Source) =>
                       clientSource.name
                         .toLowerCase()
                         .includes(search.toLowerCase()),
@@ -595,7 +621,7 @@ export default function NewCustomer({
               Cancel
             </DialogClose>
             <button
-              disabled={pending}
+              disabled={pending || isCreatingSource}
               type="button"
               onClick={() => startTransition(handleSubmit)}
               className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"

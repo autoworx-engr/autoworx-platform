@@ -4,7 +4,7 @@ import Search from "@/app/(dashboard)/dashboard/employee/components/Search";
 import { errorToast } from "@/lib/toast";
 import { useEmployeeWorkFilterStore } from "@/stores/employeeWorkFilter";
 import { EmployeeType, Role } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import CustomizeUserRole from "./CustomizeUserRole";
@@ -23,7 +23,7 @@ const UserList: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [openEdit, setOpenEdit] = useState<boolean>(true);
-  const { search } = useEmployeeWorkFilterStore();
+  const { search, setFilter } = useEmployeeWorkFilterStore();
 
   useEffect(() => {
     const usersFetchFunction = async () => {
@@ -60,11 +60,12 @@ const UserList: React.FC = () => {
   const handleBackClick = () => {
     setSelectedUser(null);
     setOpenEdit(true);
+    setFilter({ search: "" });
   };
 
   return (
-    <div className="w-full p-6">
-      <div className="mb-6 flex items-start justify-between gap-3">
+    <div className="w-full p-4 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-600 sm:text-2xl">
             User Roles (Custom)
@@ -75,16 +76,16 @@ const UserList: React.FC = () => {
         </div>
       </div>
 
-      <div className="h-full">
+      <>
         {selectedUser ? (
           <CustomizeUserRole user={selectedUser} onBack={handleBackClick} />
         ) : (
           <>
-            <div className="mb-4">
+            <div className="my-3">
               <Search />
             </div>
 
-            <div className="thin-scrollbar max-h-[72vh] overflow-y-auto pr-1">
+            <div className="max-h-[100vh] overflow-y-auto pr-1 2xl:max-h-[calc(100vh-450px)]">
               {isLoading && (
                 <ul className="space-y-3">
                   {Array.from({ length: 6 }).map((_, index) => (
@@ -147,7 +148,7 @@ const UserList: React.FC = () => {
                             title={`Edit ${user.firstName}'s permissions`}
                             aria-label={`Edit ${name} permissions`}
                           >
-                            <SquarePen className="h-4 w-4" />
+                            <PencilLineIcon className="h-4 w-4" />
                             Edit
                           </button>
                         </div>
@@ -159,7 +160,7 @@ const UserList: React.FC = () => {
             </div>
           </>
         )}
-      </div>
+      </>
     </div>
   );
 };

@@ -1,5 +1,4 @@
 "use server";
-import { getStatusPriority } from "@/utils/getStatusPriority";
 import { db } from "./db";
 import { InvoiceType, Prisma } from "@prisma/client";
 import moment from "moment-timezone";
@@ -53,13 +52,31 @@ export async function fetchAndTransformData(
       ? Prisma.sql`AND i."column_id" IN (${Prisma.join(statusIds)})`
       : Prisma.empty;
 
-  const searchPattern = decodedSearchTerm ? `%${decodedSearchTerm}%` : null;
+  const searchPattern = decodedSearchTerm
+    ? `%${decodedSearchTerm.replace(/\s+/g, " ")}%`
+    : null;
+
+  // Match each typed word against first/last name independently (in either
+  // field, any order) so "ade ekram", "ekram", or extra whitespace in the
+  // stored name all still match "Ekram Ade" - not just an exact,
+  // contiguous "first_name last_name" substring.
+  const nameWords = decodedSearchTerm.split(/\s+/).filter(Boolean);
+  const nameCondition =
+    nameWords.length > 0
+      ? Prisma.sql`(${Prisma.join(
+          nameWords.map(
+            (word) =>
+              Prisma.sql`(c."first_name" ILIKE ${`%${word}%`} OR c."last_name" ILIKE ${`%${word}%`})`,
+          ),
+          " AND ",
+        )})`
+      : Prisma.sql`FALSE`;
 
   const searchFilter = searchPattern
     ? Prisma.sql`
       AND (
         i.id::text ILIKE ${searchPattern}
-        OR LOWER(CONCAT(c."first_name", ' ', c."last_name")) ILIKE LOWER(${searchPattern})
+        OR ${nameCondition}
         OR c.email ILIKE ${searchPattern}
         OR c.mobile ILIKE ${searchPattern}
         OR v.make ILIKE ${searchPattern}
@@ -125,14 +142,11 @@ export async function fetchAndTransformData(
   const totalResult = await db.$queryRaw<{ total: number }[]>(countQuery);
   const totalEstimate = Number(totalResult[0]?.total || 0);
 
-  const sortedData = data.sort(
-    (a: { status: string }, b: { status: string }) =>
-      getStatusPriority(a?.status) - getStatusPriority(b?.status),
-  );
   return {
     totalEstimate,
-    data: sortedData?.map((item: any) => ({
+    data: data?.map((item: any) => ({
       id: item.id,
+      clientId: item.clientId ?? null,
       clientName: item.clientName?.trim() || "",
       vehicle: [item.year, item.make, item.model].filter(Boolean).join(" "),
       email: item.email || "",

@@ -105,6 +105,7 @@ export const useAddLeadTagMutation = () => {
     },
     onSuccess: () => invalidatePipelineQueries(queryClient),
     onError: (error: Error) => {
+      errorToast("Failed to add tag.");
       console.error("Failed to add lead tag:", error);
     },
   });
@@ -132,6 +133,7 @@ export const useRemoveLeadTagMutation = () => {
     },
     onSuccess: () => invalidatePipelineQueries(queryClient),
     onError: (error: Error) => {
+      errorToast("Failed to remove tag.");
       console.error("Failed to remove lead tag:", error);
     },
   });

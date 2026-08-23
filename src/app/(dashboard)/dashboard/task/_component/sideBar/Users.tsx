@@ -4,8 +4,6 @@ import NewEmployee from "@/components/Lists/NewEmployee";
 import UserListSkeleton from "@/components/ui/UserListSkeleton";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
-import { cn } from "@/lib/cn";
-import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
 import { User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
@@ -34,11 +32,10 @@ export default function Users() {
   } = useInfinityUsersQuery(searchTerm);
 
   const users = data?.pages?.flatMap((page) => page.data) || [];
+  const totalUsers = data?.pages?.[0]?.total ?? 0;
 
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const minimized = useCalendarSidebarStore((x) => x.minimized);
-  const setMinimized = useCalendarSidebarStore((x) => x.setMinimized);
 
   const searchUser = useDebounce(function searchUser(value: string) {
     setSearchTerm(value);
@@ -82,12 +79,7 @@ export default function Users() {
       const isSelected = selectedUser === user.id;
 
       function handleClick() {
-        if (isSelected) {
-          setSelectedUser(null);
-        } else {
-          setSelectedUser(user.id);
-        }
-        setMinimized(false);
+        setSelectedUser(isSelected ? null : user.id);
       }
 
       return (
@@ -138,87 +130,66 @@ export default function Users() {
   };
 
   return (
-    <div
-      className={cn(
-        "md:app-shadow relative flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
-        minimized || "p-3",
-      )}
-    >
+    <div className="md:app-shadow relative flex h-full min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden rounded-lg py-2 md:max-w-80 md:bg-background md:p-3">
       <div>
-        <h2 className="flex items-center justify-between ">
-          {!minimized && (
-            <div className="mb-4 text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
-              User List
-            </div>
-          )}
+        {/* The mobile sheet already titles itself — desktop only. */}
+        <h2 className="hidden items-center justify-between md:flex">
+          <div className="text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
+            User List
+          </div>
           <div className="hidden md:block">
             <MinimizeButton />
           </div>
         </h2>
 
-        {!minimized && (
-          <form
-            className="mt-4 flex items-center justify-center gap-2"
-            // Using onSubmit for better client-side handling, preventing full page reload
-            onSubmit={(e) => {
-              e.preventDefault();
-              // Extracting value from the form input explicitly
-              const form = e.currentTarget;
-              const input = form.elements.namedItem(
-                "search",
-              ) as HTMLInputElement;
-              searchUser(input.value);
-            }}
-          >
-            {/* Search Input Container for Icon and Input */}
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors duration-300" />
-              <input
-                type="search"
-                className="
-            w-full rounded-xl border-none p-2 pl-9 text-sm 
-            bg-slate-100 dark:bg-slate-700 
-            text-slate-700 dark:text-slate-50 
-            outline-none transition-all duration-300 ease-in-out 
-            focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-800
-            placeholder:text-slate-500 dark:placeholder:text-slate-500
-          "
-                placeholder="Search Users..."
-                name="search"
-                // Continuous search as the user types (if desired by the original logic)
-                onChange={(e) => searchUser(e.target.value)}
-              />
-            </div>
-          </form>
-        )}
+        <form
+          className="mt-4 flex items-center justify-center gap-2"
+          // Using onSubmit for better client-side handling, preventing full page reload
+          onSubmit={(e) => {
+            e.preventDefault();
+            // Extracting value from the form input explicitly
+            const form = e.currentTarget;
+            const input = form.elements.namedItem("search") as HTMLInputElement;
+            searchUser(input.value);
+          }}
+        >
+          {/* Search Input Container for Icon and Input */}
+          <div className="relative flex-grow">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-300 dark:text-slate-500" />
+            <input
+              type="search"
+              className="w-full rounded-xl border-none bg-slate-100 p-2 pl-9 text-sm text-slate-700 outline-none transition-all duration-300 ease-in-out placeholder:text-slate-500 focus:bg-white focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-slate-50 dark:placeholder:text-slate-500 dark:focus:bg-slate-800"
+              placeholder="Search Users..."
+              name="search"
+              // Continuous search as the user types (if desired by the original logic)
+              onChange={(e) => searchUser(e.target.value)}
+            />
+          </div>
+        </form>
       </div>
 
-      {!minimized && (
-        <div className="thin-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto">
-          {content}
-          <div ref={ref} className="text-center text-sm text-gray-500">
-            {isFetchingNextPage ? (
-              <TaskSpinner />
-            ) : hasNextPage ? (
-              "Scroll to load more"
-            ) : (
-              users.length !== 0 && "No more Users"
-            )}
-          </div>
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+        {content}
+        <div ref={ref} className="text-center text-sm text-gray-500">
+          {isFetchingNextPage ? (
+            <TaskSpinner />
+          ) : hasNextPage ? (
+            "Scroll to load more"
+          ) : (
+            users.length !== 0 && totalUsers >= 20 && "No more Users"
+          )}
         </div>
-      )}
+      </div>
 
-      {!minimized && (
-        <NewEmployee
-          button={<Button className="w-full rounded-lg">+ Add User</Button>}
-          onSuccess={(newUser) => {
-            if (newUser) {
-              handleCreateUsers(newUser);
-              setSelectedUser(null); // Reset selection after adding a new user
-            }
-          }}
-        />
-      )}
+      <NewEmployee
+        button={<Button className="w-full rounded-lg">+ Add User</Button>}
+        onSuccess={(newUser) => {
+          if (newUser) {
+            handleCreateUsers(newUser);
+            setSelectedUser(null); // Reset selection after adding a new user
+          }
+        }}
+      />
     </div>
   );
 }

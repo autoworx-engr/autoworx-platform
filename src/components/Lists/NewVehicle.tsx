@@ -5,7 +5,10 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
@@ -22,6 +25,7 @@ import { Spin } from "antd";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { addVehicle } from "../../actions/vehicle/addVehicle";
+import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
 import SelectorWithSearch from "./SelectorWithSearch";
 
@@ -56,6 +60,20 @@ export default function NewVehicle({
     other: "",
   });
   const [isOtherPopulated, setIsOtherPopulated] = useState(false);
+  const { decodeVin } = useVinDecode();
+
+  const handleVinBlur = async (vin: string) => {
+    const result = await decodeVin(vin);
+    if (!result) return;
+    const { year, make, model, displacement_cc } = extractVinFields(result);
+    setFormData((prev) => ({
+      ...prev,
+      vehicleYear: year ?? prev.vehicleYear,
+      vehicleMake: make ?? prev.vehicleMake,
+      vehicleModel: model ?? prev.vehicleModel,
+    }));
+    if (displacement_cc) setEngineSize(displacement_cc);
+  };
 
   // Use external open state if provided, otherwise use internal
   const isControlled =
@@ -100,10 +118,17 @@ export default function NewVehicle({
       : [];
 
   const handleInputChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      if (name === "vehicleMake") {
+        if (prev[name as keyof typeof prev] !== value) {
+          newData.vehicleModel = null;
+        }
+      }
+
+      return newData;
+    });
   };
 
   async function handleSubmit(data: FormData) {
@@ -198,21 +223,17 @@ export default function NewVehicle({
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         form
       >
-        <div className="mt-8 flex items-center justify-between px-2 md:px-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Add Vehicle
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Enter vehicle details for the client
-            </p>
-          </div>
-        </div>
+        <DialogHeader>
+          <DialogTitle>Add Vehicle</DialogTitle>
+          <DialogDescription>
+            Enter vehicle details for the client
+          </DialogDescription>
+        </DialogHeader>
 
         <FormError />
 
         <div className="thin-scrollbar scrollbar-track-transparent scrollbar-thumb-muted space-y-4 overflow-y-auto px-2 py-2 md:px-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid content-start items-start gap-x-4 gap-y-4 sm:grid-cols-2">
             {/* Year */}
             <SelectorWithSearch
               name="year"
@@ -294,32 +315,45 @@ export default function NewVehicle({
               label="License Plate"
               placeholder="Enter license plate"
             />
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-end gap-2">
                 <SlimInput
                   name="vin"
                   label="Vin"
                   required={false}
                   placeholder="Enter VIN"
+                  rootClassName="flex-1"
                   value={vinCode}
                   onChange={(e) => setVinCOde(e.target.value)}
+                  onBlur={(e) => handleVinBlur(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleVinBlur(vinCode);
+                    }
+                  }}
+                />
+
+                <VINInputCamera
+                  onVehicleInfo={(value) => {
+                    const { make, model, year, specs } =
+                      value?.data?.data || {};
+                    const { displacement_cc } = specs || {};
+                    setFormData({
+                      vehicleYear: year,
+                      vehicleMake: make,
+                      vehicleModel: model,
+                      other: "",
+                    });
+                    setEngineSize(displacement_cc || "");
+                    setVinCOde(value?.vin || "");
+                  }}
                 />
               </div>
-
-              <VINInputCamera
-                onVehicleInfo={(value) => {
-                  const { make, model, year, specs } = value?.data?.data || {};
-                  const { displacement_cc } = specs || {};
-                  setFormData({
-                    vehicleYear: year,
-                    vehicleMake: make,
-                    vehicleModel: model,
-                    other: "",
-                  });
-                  setEngineSize(displacement_cc || "");
-                  setVinCOde(value?.vin || "");
-                }}
-              />
+              <p className="text-xs text-muted-foreground">
+                Press Enter or click away after typing to auto-fill vehicle
+                details
+              </p>
             </div>
             <SlimInput
               name="other"

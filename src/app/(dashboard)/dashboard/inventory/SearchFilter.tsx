@@ -6,7 +6,7 @@ import { useInventoryFilterStore } from "@/stores/inventoryFilter";
 import { useListsStore } from "@/stores/lists";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type TSearchFilterProps = {
   searchParams: {
@@ -16,22 +16,29 @@ type TSearchFilterProps = {
 };
 
 export default function SearchFilter({ searchParams }: TSearchFilterProps) {
-  const { search, category, setFilter } = useInventoryFilterStore();
+  const { category, setFilter } = useInventoryFilterStore();
   const { categories } = useListsStore();
   const params = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
 
-  // reset the filter when the search changes
+  // Local state so a late-resolving (out-of-order) navigation from an
+  // earlier keystroke can't overwrite text the user has since typed/deleted.
+  const [search, setSearch] = useState(searchParams.search ?? "");
+
+  // reset the category filter when the url category changes
   useEffect(() => {
-    setFilter({
-      search: searchParams.search ?? "",
-      category: searchParams.category ?? "",
-    });
-  }, [searchParams.search, searchParams.category]);
+    setFilter({ category: searchParams.category ?? "" });
+  }, [searchParams.category]);
+
+  const buildParams = () => {
+    const searchParam = new URLSearchParams(params);
+    searchParam.delete("page");
+    return searchParam;
+  };
 
   const handleSearchChange = useDebounce((value: string) => {
-    const searchParam = new URLSearchParams(params);
+    const searchParam = buildParams();
     // console.log({ value });
     searchParam.set("search", value);
     if (value === "" && searchParam.has("search")) {
@@ -42,8 +49,8 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
 
   const handleCategoryChange = (value: string) => {
     setFilter({ category: value === "All Categories" ? "" : value });
-    const searchParam = new URLSearchParams(params);
-    if (value === "All Categories" && searchParam.has("category")) {
+    const searchParam = buildParams();
+    if (value === "All Categories") {
       searchParam.delete("category");
     } else {
       searchParam.set("category", value);
@@ -53,7 +60,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
 
   const handleClearCategory = () => {
     setFilter({ category: "" });
-    const searchParam = new URLSearchParams(params);
+    const searchParam = buildParams();
     if (searchParam.has("category")) {
       searchParam.delete("category");
     }
@@ -62,7 +69,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
 
   return (
     <div className="my-3 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-x-3">
-      <div className="flex flex-col items-end gap-2 md:flex-row md:items-center md:space-x-4 w-full">
+      <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:space-x-4">
         <div className="group relative flex w-full items-center gap-x-3 rounded-xl bg-white dark:bg-slate-900 px-4 py-2.5 lg:w-[400px] ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 focus-within:shadow-md focus-within:shadow-indigo-500/5 hover:ring-slate-300 dark:hover:ring-slate-600">
           <span className="text-slate-400 group-focus-within:text-primary transition-colors duration-300">
             <Search className="w-5 h-5" />
@@ -74,9 +81,12 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const value = e.target.value;
-              setFilter({ search: value });
+              setSearch(value);
               handleSearchChange(value);
             }}
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
         </div>
         <div className="w-fit md:w-auto">
@@ -87,7 +97,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
             ]}
             onValueChange={handleCategoryChange}
             changesValue={category || "All Categories"}
-            buttonClassName="md:w-60 shadow-md"
+            buttonClassName="md:w-60 shadow-md py-2.5 px-4 text-sm"
             showClearButton
             clearLabel="Clear filter"
             onClear={handleClearCategory}

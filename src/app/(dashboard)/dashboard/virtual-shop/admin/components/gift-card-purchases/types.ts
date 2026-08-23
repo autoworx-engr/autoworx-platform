@@ -57,7 +57,6 @@ export const STATUS_FILTERS: GiftCardStatusFilter[] = [
   "ALL",
   "ACTIVE",
   "DEPLETED",
-  "EXPIRED",
   "FROZEN",
 ];
 

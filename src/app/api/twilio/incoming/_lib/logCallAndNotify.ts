@@ -1,3 +1,4 @@
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { db } from "@/lib/db";
 import "server-only";
 
@@ -31,6 +32,14 @@ export async function logCallAndNotify({
     },
   });
 
+  // Bump the client to the top of the communication hub the moment the phone
+  // rings, the same way an inbound SMS does.
+  await updateCallChatTrack({
+    clientId,
+    status: "ringing",
+    direction: "inbound",
+  });
+
   // Re-fetch one extra row so we can detect — and log — when the company has
   // more notify-eligible users than the cap covers.
   const companyUsers = await db.user.findMany({
@@ -57,6 +66,7 @@ export async function logCallAndNotify({
     userIds: companyUsers.map((u) => u.id),
     callerName,
     clientId,
+    callId,
   });
 }
 
@@ -64,10 +74,12 @@ async function sendIncomingCallPush({
   userIds,
   callerName,
   clientId,
+  callId,
 }: {
   userIds: number[];
   callerName: string;
   clientId: number;
+  callId: string;
 }) {
   const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
   const apiKey = process.env.ONESIGNAL_AUTHORIZATION_KEY;
@@ -94,6 +106,7 @@ async function sendIncomingCallPush({
         contents: { en: `Call from ${callerName}` },
         headings: { en: "📞 Incoming Call" },
         target_channel: "push",
+
         include_aliases: {
           external_id: userIds.map((id) => `user-${id}`),
         },

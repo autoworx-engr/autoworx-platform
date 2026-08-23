@@ -23,10 +23,10 @@ export default function CompanyArea({
 
   return (
     <div
-      className={` w-full ${!setSelectedCompany ? "grid md:h-[83vh] md:grid-cols-[1fr_350px] gap-4" : "h-full"}`}
+      className={` w-full ${!setSelectedCompany ? "grid md:h-[83vh] md:grid-cols-[1fr_350px] gap-4" : "h-[calc(100dvh-56px)] sm:h-[calc(100dvh-106px)]"}`}
     >
       {selectedCompany ? (
-        <div>
+        <div className="h-full">
           <CompanyMessageBox
             company={selectedCompany}
             currentUser={currentUser}

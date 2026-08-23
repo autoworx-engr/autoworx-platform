@@ -89,7 +89,7 @@ export function ContactPicker({
               </div>
               <div
                 id="contact-picker-scroll"
-                className="max-h-60 flex flex-col items-start space-y-2 overflow-y-auto thin-scrollbar p-1"
+                className="max-h-60 flex flex-col items-center space-y-2 overflow-y-auto p-1"
               >
                 <InfiniteScroll
                   dataLength={groupUsers.length}

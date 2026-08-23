@@ -13,9 +13,16 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
 import { useTwilioStore } from "@/stores/useTwilioStore";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { pdf } from "@react-pdf/renderer";
 import { Popconfirm } from "antd";
-import { Mail, SquarePen, FileDown, MessageCircle, Copy } from "lucide-react";
+import {
+  Mail,
+  PencilLineIcon,
+  FileDown,
+  MessageCircle,
+  Copy,
+} from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import EditFleetStatementModal from "./EditFleetStatementModal"; // Add this import
@@ -42,6 +49,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
   const [editLoading, setEditLoading] = useState(false);
   const { credentials, fetchCredentials } = useTwilioStore();
   const { setAllInvoices } = useFleetInvoiceStore();
+  const currentUser = useGetCurrentUser();
 
   const componentRef = useRef(null);
 
@@ -164,7 +172,15 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           other: invoice.vehicle?.other || "N/A",
           vin: invoice.vehicle?.vin || "N/A",
           price: `$${invoice.grandTotal || 0}`,
+          paidAmount: Number(invoice.totalPayment || 0),
+          dueAmount: Number(invoice.due || 0),
           status: invoice.column?.title || "N/A",
+          paymentStatus:
+            Number(invoice.due || 0) <= 0
+              ? "Paid"
+              : Number(invoice.totalPayment || 0) > 0
+                ? "Partially Paid"
+                : "Unpaid",
         }))}
         companyDetails={{
           name: company?.name || "Your Company",
@@ -185,13 +201,12 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           mobile: client?.mobile || "0000000000",
         }}
         user={{
-          firstName: "Admin",
-          lastName: "User",
+          name: currentUser?.name || "Admin",
         }}
         fleetName={fleet?.fleetName || "Fleet"}
         contactName={fleet?.contactName || "Contact"}
         totalAmount={`$${totals.totalAmount.toFixed(2)}`}
-        date={new Date().toLocaleDateString()}
+        date={new Date().toLocaleDateString("en-US")}
         authorizedName="Manager"
         paymentLink="https://yourcompany.com/pay"
         terms="Please pay within 7 days."
@@ -291,7 +306,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                     : "Edit statement"
                 }
               >
-                <SquarePen className="h-4 w-4" />
+                <PencilLineIcon className="h-4 w-4" />
                 <span className="hidden md:inline">
                   {editLoading ? "Loading..." : "Edit"}
                 </span>
@@ -415,7 +430,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               </h1>
               <p className="font-semibold">
                 {statement?.createdAt
-                  ? new Date(statement.createdAt).toLocaleDateString()
+                  ? new Date(statement.createdAt).toLocaleDateString("en-US")
                   : ""}
               </p>
             </div>
@@ -431,134 +446,172 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           </div>
 
           {/* Fleet Table */}
-          <div className="thin-scrollbar max-h-[40vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-gray-500">Loading statement...</div>
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 z-10 bg-slate-50">
-                  <tr className="border-b border-slate-200">
-                    <th className={`${tHeadingCommonClasses}`}>Invoice#</th>
-                    <th className={`${tHeadingCommonClasses}`}>Year</th>
-                    <th className={`${tHeadingCommonClasses}`}>Make</th>
-                    <th className={`${tHeadingCommonClasses}`}>Model</th>
-                    <th className={`${tHeadingCommonClasses}`}>VIN</th>
-                    <th className={`${tHeadingCommonClasses}`}>Amount</th>
-                    <th className={`${tHeadingCommonClasses}`}>Paid</th>
-                    <th className={`${tHeadingCommonClasses}`}>Due</th>
-                    <th className={`${tHeadingCommonClasses}`}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoices.map((invoice: any, index: number) => (
-                    <tr
-                      key={invoice.id}
-                      className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}
-                    >
-                      <td className="border-b px-4 py-2 text-left">
-                        <InvoiceModal
-                          invoiceId={invoice?.id}
-                          buttonChild={<button>{invoice?.id}</button>}
-                          buttonChildClassName="block w-full text-primary hover:underline"
-                        />
-                      </td>
-
-                      <td className={`${tDataCommonClasses}`}>
-                        {invoice.vehicle?.year || "N/A"}
-                      </td>
-                      <td className={`${tDataCommonClasses}`}>
-                        {invoice.vehicle?.make || "N/A"}
-                      </td>
-                      <td className={`${tDataCommonClasses}`}>
-                        {invoice.vehicle?.model || "N/A"}
-                      </td>
-                      {invoice.vehicle?.other && (
-                        <td className={`${tDataCommonClasses}`}>
-                          {invoice.vehicle?.other || "N/A"}
+          <div className="max-h-[40vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-slate-50">
+                <tr className="border-b border-slate-200">
+                  <th className={`${tHeadingCommonClasses}`}>Invoice#</th>
+                  <th className={`${tHeadingCommonClasses}`}>Year</th>
+                  <th className={`${tHeadingCommonClasses}`}>Make</th>
+                  <th className={`${tHeadingCommonClasses}`}>Model</th>
+                  <th className={`${tHeadingCommonClasses}`}>VIN</th>
+                  <th className={`${tHeadingCommonClasses}`}>Amount</th>
+                  <th className={`${tHeadingCommonClasses}`}>Paid</th>
+                  <th className={`${tHeadingCommonClasses}`}>Due</th>
+                  <th className={`${tHeadingCommonClasses}`}>Invoice Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading
+                  ? Array.from({ length: 5 }).map((_, index) => (
+                      <tr
+                        key={`skeleton-row-${index}`}
+                        className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                      >
+                        {Array.from({ length: 9 }).map((__, cellIndex) => (
+                          <td
+                            key={`skeleton-cell-${cellIndex}`}
+                            className="border-b px-4 py-3"
+                          >
+                            <div className="h-4 w-full max-w-[70px] animate-pulse rounded bg-slate-200" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  : invoices.map((invoice: any, index: number) => (
+                      <tr
+                        key={invoice.id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                      >
+                        <td className="border-b px-4 py-2 text-left">
+                          <InvoiceModal
+                            invoiceId={invoice?.id}
+                            buttonChild={<button>{invoice?.id}</button>}
+                            buttonChildClassName="block w-full text-primary hover:underline"
+                          />
                         </td>
-                      )}
-                      <td className={`${tDataCommonClasses}`}>
-                        {invoice.vehicle?.vin || "N/A"}
-                      </td>
-                      <td className={`${tDataCommonClasses}`}>
-                        ${Number(invoice.grandTotal || 0).toFixed(2)}
-                      </td>
-                      <td className={`${tDataCommonClasses}`}>
-                        ${Number(invoice.totalPayment || 0).toFixed(2)}
-                      </td>
-                      <td className={`${tDataCommonClasses}`}>
-                        <span
-                          className={
-                            invoice.due > 0
-                              ? "font-semibold text-red-600"
-                              : "font-semibold text-green-600"
-                          }
-                        >
-                          ${Number(invoice.due || 0).toFixed(2)}
-                        </span>
-                      </td>
-                      <td className={`${tDataCommonClasses}`}>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                          {invoice.column?.title || "N/A"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+
+                        <td className={`${tDataCommonClasses}`}>
+                          {invoice.vehicle?.year || "N/A"}
+                        </td>
+                        <td className={`${tDataCommonClasses}`}>
+                          {invoice.vehicle?.make || "N/A"}
+                        </td>
+                        <td className={`${tDataCommonClasses}`}>
+                          {invoice.vehicle?.model || "N/A"}
+                        </td>
+                        {invoice.vehicle?.other && (
+                          <td className={`${tDataCommonClasses}`}>
+                            {invoice.vehicle?.other || "N/A"}
+                          </td>
+                        )}
+                        <td className={`${tDataCommonClasses}`}>
+                          {invoice.vehicle?.vin || "N/A"}
+                        </td>
+                        <td className={`${tDataCommonClasses}`}>
+                          ${Number(invoice.grandTotal || 0).toFixed(2)}
+                        </td>
+                        <td className={`${tDataCommonClasses}`}>
+                          ${Number(invoice.totalPayment || 0).toFixed(2)}
+                        </td>
+                        <td className={`${tDataCommonClasses}`}>
+                          <span
+                            className={
+                              invoice.due > 0
+                                ? "font-semibold text-red-600"
+                                : "font-semibold text-green-600"
+                            }
+                          >
+                            ${Number(invoice.due || 0).toFixed(2)}
+                          </span>
+                        </td>
+                        <td className={`${tDataCommonClasses}`}>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                            {invoice.column?.title || "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
           </div>
 
           {/* Footer */}
           <div className="sticky bottom-0 border-t border-gray-200 bg-white p-3 sm:p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              {/* Company Summary */}
-              <div className="space-y-1 text-xs text-gray-600 sm:text-sm">
-                <p className="font-semibold text-gray-800">
-                  {company?.name || "Company Name"}
-                </p>
-                <p>{fleet?.fleetName || "Fleet Name"}</p>
-                <div className="mt-2 flex gap-4 text-xs">
-                  <span>
-                    Total: <strong>{formatCurrency(totals.totalAmount)}</strong>
-                  </span>
-                  <span>
-                    Paid: <strong>{formatCurrency(totals.totalPaid)}</strong>
-                  </span>
+            {loading || !statement ? (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                {/* Company Summary skeleton */}
+                <div className="space-y-2">
+                  <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />
+                  <div className="mt-2 flex gap-4">
+                    <div className="h-3 w-16 animate-pulse rounded bg-slate-200" />
+                    <div className="h-3 w-16 animate-pulse rounded bg-slate-200" />
+                  </div>
                 </div>
-              </div>
 
-              {/* Grand Total Section */}
-              <div className="w-full sm:w-auto sm:min-w-[280px] lg:min-w-[320px]">
-                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                        Amount Due
-                      </p>
-                      <p className="text-2xl font-bold text-slate-600">
-                        {formatCurrency(totals.totalDue)}
-                      </p>
-                    </div>
-
-                    {totals.totalDue > 0 ? (
-                      <button
-                        className="w-full rounded-xl border border-primary/40 bg-gradient-to-r from-primary to-[#5a66ee] px-5 py-2 font-semibold text-white shadow-sm transition-all hover:border-primary/70 hover:bg-primary/10 active:scale-95 sm:w-auto"
-                        onClick={() => setPaymentModalOpen(true)}
-                      >
-                        Make Payment
-                      </button>
-                    ) : (
-                      <div className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm font-semibold text-emerald-700 sm:w-auto">
-                        Fully Paid ✓
+                {/* Grand Total Section skeleton */}
+                <div className="w-full sm:w-auto sm:min-w-[280px] lg:min-w-[320px]">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="space-y-2">
+                        <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />
+                        <div className="h-7 w-24 animate-pulse rounded bg-slate-200" />
                       </div>
-                    )}
+                      <div className="h-10 w-full animate-pulse rounded-xl bg-slate-200 sm:w-32" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                {/* Company Summary */}
+                <div className="space-y-1 text-xs text-gray-600 sm:text-sm">
+                  <p className="font-semibold text-gray-800">
+                    {company?.name || "Company Name"}
+                  </p>
+                  <p>{currentUser?.name || "Admin"}</p>
+                  <div className="mt-2 flex gap-4 text-xs">
+                    <span>
+                      Total:{" "}
+                      <strong>{formatCurrency(totals.totalAmount)}</strong>
+                    </span>
+                    <span>
+                      Paid: <strong>{formatCurrency(totals.totalPaid)}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Grand Total Section */}
+                <div className="w-full sm:w-auto sm:min-w-[280px] lg:min-w-[320px]">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                          Amount Due
+                        </p>
+                        <p className="text-2xl font-bold text-slate-600">
+                          {formatCurrency(totals.totalDue)}
+                        </p>
+                      </div>
+
+                      {totals.totalDue > 0 ? (
+                        <button
+                          className="w-full rounded-xl border border-primary/40 bg-gradient-to-r from-primary to-[#5a66ee] px-5 py-2 font-semibold text-white shadow-sm transition-all hover:border-primary/70 hover:bg-primary/10 active:scale-95 sm:w-auto"
+                          onClick={() => setPaymentModalOpen(true)}
+                        >
+                          Make Payment
+                        </button>
+                      ) : (
+                        <div className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm font-semibold text-emerald-700 sm:w-auto">
+                          Fully Paid ✓
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Payment Modal */}

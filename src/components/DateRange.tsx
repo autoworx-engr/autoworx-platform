@@ -58,9 +58,16 @@ const DateRange = ({
     }
   };
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
+    const handleCloseEvent = () => setShowPicker(false);
+    window.addEventListener("close-date-range", handleCloseEvent);
+    window.addEventListener("mousedown", handleClickOutside, true);
+    window.addEventListener("touchstart", handleClickOutside, true);
+    window.addEventListener("pointerdown", handleClickOutside, true);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("close-date-range", handleCloseEvent);
+      window.removeEventListener("mousedown", handleClickOutside, true);
+      window.removeEventListener("touchstart", handleClickOutside, true);
+      window.removeEventListener("pointerdown", handleClickOutside, true);
     };
   }, []);
 

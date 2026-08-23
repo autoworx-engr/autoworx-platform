@@ -2,6 +2,7 @@
 
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/utils";
+import { Popconfirm } from "antd";
 import { X } from "lucide-react";
 import { KeyboardEvent, useState } from "react";
 
@@ -60,14 +61,32 @@ export default function CategoryInput({ value, onChange }: CategoryInputProps) {
             className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
           >
             {category}
-            <button
-              type="button"
-              onClick={() => removeAt(index)}
-              className="rounded-full p-0.5 text-primary/70 transition-colors hover:bg-primary/15 hover:text-primary"
-              aria-label={`Remove ${category}`}
+            <Popconfirm
+              title="Remove Category"
+              description={`Are you sure you want to remove "${category}"?`}
+              okText="Remove"
+              cancelText="Cancel"
+              placement="top"
+              onConfirm={() => removeAt(index)}
+              onPopupClick={(e) => e.stopPropagation()}
+              overlayClassName="[&_.ant-popover-inner]:max-w-[280px] [&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800 [&_.ant-popover-message-description]:break-words"
+              okButtonProps={{
+                className:
+                  "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+              }}
+              cancelButtonProps={{
+                className:
+                  "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+              }}
             >
-              <X size={12} />
-            </button>
+              <button
+                type="button"
+                className="rounded-full p-0.5 text-primary/70 transition-colors hover:bg-primary/15 hover:text-primary"
+                aria-label={`Remove ${category}`}
+              >
+                <X size={12} />
+              </button>
+            </Popconfirm>
           </span>
         ))}
 

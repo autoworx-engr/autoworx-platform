@@ -3,6 +3,10 @@
 import { useEffect, useMemo } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DatePickerField } from "@/components/ui/DatePickerField";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
+import { cn } from "@/lib/cn";
+import PhoneInput from "@/components/PhoneInput";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import { CheckoutVehicleSection } from "./CheckoutVehicleSection";
 import { useEmergencyRequest } from "./emergency/useEmergencyRequest";
@@ -70,7 +74,7 @@ export const EmergencyRequestModal = ({
         onClick={handleClose}
       />
 
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-none bg-background rounded-2xl shadow-2xl border border-border">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto no-visible-scrollbar bg-background rounded-2xl shadow-2xl border border-border">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-primary text-primary-foreground px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
@@ -102,19 +106,21 @@ export const EmergencyRequestModal = ({
               <SectionLabel>Contact Information</SectionLabel>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium">Phone Number *</label>
+                <label className="text-sm font-medium">
+                  Phone Number <span className="text-destructive">*</span>
+                </label>
                 <div className="relative">
-                  <input
-                    type="tel"
-                    value={form.contactPhone}
-                    onChange={(e) => set("contactPhone", e.target.value)}
-                    onBlur={handlePhoneLookup}
-                    placeholder="(555) 000-0000"
+                  <PhoneInput
+                    label=""
+                    placeholder="1234567890"
                     required
-                    className={INPUT_CLASS + " pr-10"}
+                    onChange={(num, code) =>
+                      set("contactPhone", num ? `${code}${num}` : "")
+                    }
+                    onBlur={handlePhoneLookup}
                   />
                   {isLookingUp && (
-                    <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-muted-foreground" />
+                    <Loader2 className="absolute right-10 top-2.5 w-4 h-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -124,7 +130,9 @@ export const EmergencyRequestModal = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Full Name *</label>
+                  <label className="text-sm font-medium">
+                    Full Name <span className="text-destructive">*</span>
+                  </label>
                   <input
                     type="text"
                     value={form.contactName}
@@ -135,7 +143,9 @@ export const EmergencyRequestModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Email *</label>
+                  <label className="text-sm font-medium">
+                    Email <span className="text-destructive">*</span>
+                  </label>
                   <input
                     type="email"
                     value={form.contactEmail}
@@ -150,7 +160,9 @@ export const EmergencyRequestModal = ({
 
             {/* Description */}
             <section className="space-y-2">
-              <SectionLabel>Notes *</SectionLabel>
+              <SectionLabel>
+                Notes <span className="text-destructive">*</span>
+              </SectionLabel>
               <textarea
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
@@ -211,21 +223,28 @@ export const EmergencyRequestModal = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Date</label>
-                  <input
-                    type="date"
+                  <DatePickerField
                     value={form.requestedDate}
-                    onChange={(e) => set("requestedDate", e.target.value)}
-                    min={new Date().toISOString().split("T")[0]}
-                    className={INPUT_CLASS}
+                    onChange={(value) => {
+                      set("requestedDate", value);
+                      if (!value) set("requestedTime", "");
+                    }}
+                    minDate={new Date()}
+                    clearable
+                    placeholder="Select date"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Time</label>
-                  <input
-                    type="time"
+                <div
+                  className={cn(
+                    !form.requestedDate && "pointer-events-none opacity-50",
+                  )}
+                >
+                  <TimeScrollPicker
+                    id="requestedTime"
+                    label="Time"
+                    labelClassName="text-sm font-medium"
                     value={form.requestedTime}
-                    onChange={(e) => set("requestedTime", e.target.value)}
-                    className={INPUT_CLASS}
+                    onChange={(value) => set("requestedTime", value)}
                   />
                 </div>
               </div>

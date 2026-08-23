@@ -41,6 +41,12 @@ interface PaymentData {
   notes: string;
   amount: number;
   companyId?: number;
+  /**
+   * Recording a payment normally converts the estimate into an invoice. Pass
+   * false to leave the record as an estimate — used when the inventory is too
+   * low to fulfil it, where only the payment itself should go through.
+   */
+  convertToInvoice?: boolean;
   additionalData:
     | CardPaymentData
     | CheckPaymentData
@@ -57,6 +63,7 @@ export async function newPayment({
   amount,
   additionalData,
   companyId,
+  convertToInvoice = true,
 }: PaymentData): Promise<ServerAction | TErrorHandler> {
   try {
     let cId = companyId;
@@ -240,7 +247,9 @@ export async function newPayment({
             id: invoiceId,
           },
           data: {
-            type: InvoiceType.Invoice,
+            // `undefined` leaves the column alone, so an estimate the
+            // inventory can't cover stays an estimate.
+            type: convertToInvoice ? InvoiceType.Invoice : undefined,
             due: {
               decrement: amount,
             },

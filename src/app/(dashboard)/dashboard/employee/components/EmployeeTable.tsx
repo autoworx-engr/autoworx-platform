@@ -6,7 +6,7 @@ import { padId } from "@/lib/padId";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { SalaryHistory, User } from "@prisma/client";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { Search, UserIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import moment from "moment";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -16,6 +16,7 @@ import EditEmployee from "../EditEmployee";
 import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
 import { useSession } from "next-auth/react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import Avatar from "@/components/Avatar";
 
 const defaultPageSize = 20;
 const evenColor = "bg-background";
@@ -92,7 +93,7 @@ const EmployeeTable = ({
         <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
           <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {/* Mobile View */}
-            <div className="lg:hidden p-4 space-y-4">
+            <div className="lg:hidden space-y-4">
               {isLoading ? (
                 <EmployeeTableSkeleton />
               ) : isError ? (
@@ -100,13 +101,35 @@ const EmployeeTable = ({
               ) : employees.length === 0 ? (
                 <EmptyState />
               ) : (
-                employees.map((employee: any, index: number) => (
-                  <ResponsiveEmployeeCard
-                    key={index}
-                    data={employee}
-                    index={index}
-                  />
-                ))
+                employees.map((employee: any, index: number) => {
+                  const isAdmin = currentUser?.employeeType === "Admin";
+                  const isManager = currentUser?.employeeType === "Manager";
+                  const isSelf =
+                    currentUser?.id && Number(currentUser.id) === employee.id;
+                  const isTargetAdmin = employee.employeeType === "Admin";
+                  const canEdit =
+                    isAdmin || (isManager && !isTargetAdmin) || isSelf;
+                  const canDelete =
+                    isAdmin || (isManager && !isTargetAdmin && !isSelf);
+
+                  return (
+                    <ResponsiveEmployeeCard
+                      key={index}
+                      data={employee}
+                      index={index}
+                      actions={
+                        (canEdit || canDelete) && (
+                          <>
+                            {canEdit && <EditEmployee employee={employee} />}
+                            {canDelete && (
+                              <DeleteEmployee employee={employee} />
+                            )}
+                          </>
+                        )
+                      }
+                    />
+                  );
+                })
               )}
             </div>
 
@@ -224,8 +247,8 @@ function DesktopTable({
                   className="h-full w-full flex items-center gap-3 group "
                   href={`/dashboard/employee/${employee.id}?view=details`}
                 >
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-primary/80 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
-                    <UserIcon size={16} />
+                  <div className="rounded-full  bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700">
+                    <Avatar photo={employee.image} width={44} height={44} />
                   </div>
                   <div>
                     <div className="font-medium text-slate-500 dark:text-slate-200 transition-colors">
@@ -278,7 +301,7 @@ function DesktopTable({
                   {employee.employeeType}
                 </Link>
               </td>
-              <td className="px-4 py-2 text-center">
+              <td className="px-4 py-2 flex items-center justify-center">
                 <div className="flex items-center justify-start gap-2 flex-shrink-0">
                   {canEdit && <EditEmployee employee={employee} />}
                   {canDelete && <DeleteEmployee employee={employee} />}

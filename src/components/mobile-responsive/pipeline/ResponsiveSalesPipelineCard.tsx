@@ -1,4 +1,5 @@
 "use client";
+import PipelineInvoiceModal from "@/app/(dashboard)/dashboard/pipeline/components/PipelineInvoiceModal";
 import TaskForm from "@/app/(dashboard)/dashboard/pipeline/components/TaskForm";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import {
@@ -68,6 +69,11 @@ const ResponsiveSalesPipelineCard = ({
       ? lead?.client?.appointments?.[0]
       : undefined;
 
+  const clientId = lead?.client?.id ?? undefined;
+  const vehicleId = lead?.client?.vehicle?.id ?? lead?.vehicleId ?? undefined;
+  const hasClient = !!clientId;
+  const disabledActionClass = "cursor-not-allowed opacity-40";
+
   return (
     <Card
       key={index}
@@ -78,13 +84,18 @@ const ResponsiveSalesPipelineCard = ({
     >
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <CardTitle>
-          <Link
-            href={`/dashboard/client/${lead.clientId}`}
-            passHref
-            className="block w-full text-blue-600"
-          >
-            {id}
-          </Link>
+          {hasClient ? (
+            <Link
+              href={`/dashboard/client/${clientId}`}
+              passHref
+              className="block w-full text-blue-600"
+            >
+              {id}
+            </Link>
+          ) : (
+            // No client page to open, so it isn't styled as a link.
+            <span className="block w-full">{id}</span>
+          )}
         </CardTitle>
         <CardDescription className="font-bold">{timeCreated}</CardDescription>
       </CardHeader>
@@ -147,39 +158,40 @@ const ResponsiveSalesPipelineCard = ({
 
         {/* Actions */}
         <div className="mt-3 flex items-center gap-4 border-t pt-3">
-          <Link
-            href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
-            className="group relative"
-          >
-            <MessageCircleMore
-              size={20}
-              className="duration-300 hover:text-primary"
-            />
-          </Link>
-
-          {onCreateDraftEstimate && (
-            <button
-              onClick={() =>
-                onCreateDraftEstimate({
-                  leadId: lead.id,
-                  clientId: Number(lead?.clientId),
-                  vehicleId: lead?.client?.vehicle?.id,
-                })
-              }
+          {hasClient ? (
+            <Link
+              href={`/dashboard/communication/client/${clientId}?source=lead`}
               className="group relative"
             >
-              {lead.isEstimateCreated ? (
-                <div className="relative h-6 w-4">
-                  <Image
-                    alt="draftEstimateDone"
-                    src="/icons/estimateDone.png"
-                    fill
-                    className="object-contain"
-                    loading="lazy"
-                    sizes="24px"
-                  />
-                </div>
-              ) : (
+              <MessageCircleMore
+                size={20}
+                className="duration-300 hover:text-primary"
+              />
+            </Link>
+          ) : (
+            <span className={disabledActionClass}>
+              <MessageCircleMore size={20} />
+            </span>
+          )}
+
+          {onCreateDraftEstimate &&
+            (lead.isEstimateCreated && lead.invoiceId ? (
+              <PipelineInvoiceModal invoiceId={lead.invoiceId} />
+            ) : (
+              <button
+                onClick={() =>
+                  onCreateDraftEstimate({
+                    leadId: lead.id,
+                    clientId,
+                    vehicleId,
+                  })
+                }
+                disabled={!hasClient}
+                className={cn(
+                  "group relative",
+                  !hasClient && disabledActionClass,
+                )}
+              >
                 <div className="relative h-4 w-4">
                   <Image
                     src="/icons/draftEstimate.png"
@@ -190,11 +202,16 @@ const ResponsiveSalesPipelineCard = ({
                     loading="lazy"
                   />
                 </div>
-              )}
-            </button>
+              </button>
+            ))}
+
+          {onUpdateAppointment && !hasClient && (
+            <span className={disabledActionClass}>
+              <Calendar size={18} color="#66738C" />
+            </span>
           )}
 
-          {onUpdateAppointment && (
+          {onUpdateAppointment && hasClient && (
             <AppointmentCreateOrEdit
               fromEdit={!!appointment}
               fromLead
@@ -208,8 +225,8 @@ const ResponsiveSalesPipelineCard = ({
                   )}
                 </button>
               }
-              vehicleId={lead?.client?.vehicle?.id}
-              clientId={lead?.client?.id}
+              vehicleId={vehicleId}
+              clientId={clientId}
               onAppointmentCreated={(appointment: Appointment) =>
                 onUpdateAppointment(appointment, {
                   leadId: lead.id,
@@ -225,13 +242,30 @@ const ResponsiveSalesPipelineCard = ({
             />
           )}
 
-          {companyUsers && (
-            <TaskForm
-              companyUsers={companyUsers}
-              leadId={lead.id}
-              previousTasks={lead.tasks || []}
-            />
-          )}
+          {companyUsers &&
+            (hasClient ? (
+              <TaskForm
+                companyUsers={companyUsers}
+                leadId={lead.id}
+                previousTasks={lead.tasks || []}
+              />
+            ) : (
+              <span
+                className={cn(
+                  "relative inline-block h-4 w-4",
+                  disabledActionClass,
+                )}
+              >
+                <Image
+                  src="/icons/addtask.png"
+                  alt="Add Task"
+                  fill
+                  sizes="16px"
+                  className="object-contain"
+                  loading="lazy"
+                />
+              </span>
+            ))}
         </div>
       </CardContent>
     </Card>

@@ -1,7 +1,7 @@
+import ClearSelectionButton from "@/components/Lists/ClearSelectionButton";
 import NewVendor from "@/components/Lists/NewVendor";
 // import SelectCategory from "@/components/Lists/SelectCategory";
 import SelectCategory from "@/components/Lists/CreateEstimateCategory";
-import { SelectTags } from "@/components/Lists/SelectTags";
 import Selector from "@/components/Selector";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
@@ -9,13 +9,23 @@ import { useListsStore } from "@/stores/lists";
 import { Category, Tag, Vendor } from "@prisma/client";
 import React, { useEffect, useState } from "react";
 import { newMaterial } from "@/actions/estimate/material/newMaterial";
+import { deleteVendor } from "@/actions/vendor/deleteVendor";
 import Close from "./CloseEstimate";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
+import { toast } from "react-hot-toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import Decimal from "decimal.js";
-import { Plus } from "lucide-react";
+import { Popconfirm } from "antd";
+import { Plus, X } from "lucide-react";
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
+import {
+  validateMaterial,
+  type MaterialField,
+  type MaterialFieldErrors,
+} from "./materialValidation";
+
+const MAX_MONEY_VALUE = 99999999;
 
 export type EstimateMaterial = {
   id: number;
@@ -62,15 +72,64 @@ export default function MaterialCreate() {
   const [discount, setDiscount] = useState<number>();
   const [addToInventory, setAddToInventory] = useState<boolean>(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<MaterialFieldErrors>({});
+  const [vendorOpen, setVendorOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+
+  const clearFieldError = (field: MaterialField) =>
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
 
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
   const materialIndex = data?.materialIndex;
 
-  // const [vendorSearch, setVendorSearch] = useState("");
-  const [vendorOpen, setVendorOpen] = useState(false);
-  const [tagsOpen, setTagsOpen] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
+  const validateForm = () => {
+    const nextErrors = validateMaterial(
+      { name, quantity, cost, sell },
+      { maxMoneyValue: MAX_MONEY_VALUE, isEdit: !!data.edit },
+    );
+    setErrors(nextErrors);
+
+    const [firstError] = Object.values(nextErrors);
+    if (firstError) {
+      errorToast(firstError, { id: "material-validation" });
+      return null;
+    }
+
+    // `inventoryError` stays advisory (shown inline only) — it doesn't block
+    // submit, same as before this change.
+    return { quantity: quantity as number };
+  };
+
+  async function handleDeleteVendor(vendorId: number) {
+    try {
+      const res = await deleteVendor(vendorId);
+
+      if (res.type === "success") {
+        if (vendor?.id === vendorId) {
+          setVendor(null);
+        }
+        useListsStore.setState((state) => ({
+          vendors: state.vendors.filter((ven) => ven.id !== vendorId),
+        }));
+        successToast("Vendor deleted successfully");
+      } else {
+        errorToast(res.message || "Failed to delete vendor");
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
+    }
+  }
 
   // const { actionType } = useActionStoreCreateEdit();
 
@@ -96,6 +155,10 @@ export default function MaterialCreate() {
   }, [quantity, selectedInventoryMaterial]);
 
   useEffect(() => {
+    // Opening the popup for a different material must not inherit the previous
+    // one's validation errors.
+    setErrors({});
+
     if (data.material && data.edit) {
       setName(data.material.name);
       const category = data.material.categoryId
@@ -112,13 +175,20 @@ export default function MaterialCreate() {
       const quantityValue =
         data.material.quantity === 0 ? undefined : data.material.quantity;
       setQuantity(quantityValue);
-      const costValue = parseFloat(data.material.cost);
-      setCost(costValue === 0 ? undefined : costValue);
-      const sellValue = parseFloat(
-        data.material.sell === 0 ? undefined : data.material.sell,
+      const costValue = Math.min(
+        parseFloat(data.material.cost),
+        MAX_MONEY_VALUE,
       );
-      setSell(sellValue);
-      const discountValue = parseFloat(data.material.discount);
+      setCost(costValue === 0 ? undefined : costValue);
+      const sellValue = Math.min(
+        parseFloat(data.material.sell),
+        MAX_MONEY_VALUE,
+      );
+      setSell(sellValue === 0 ? undefined : sellValue);
+      const discountValue = Math.min(
+        parseFloat(data.material.discount),
+        MAX_MONEY_VALUE,
+      );
       setDiscount(discountValue === 0 ? undefined : discountValue);
       setAddToInventory(data.material.addToInventory || false);
       // @ts-ignore
@@ -130,20 +200,14 @@ export default function MaterialCreate() {
                 return {
                   ...material,
                   name: data.material.name,
-                  categoryId: category?.id,
-                  vendorId: vendor?.id,
+                  categoryId: category?.id ?? null,
+                  vendorId: vendor?.id ?? null,
                   tags: data.material.tags,
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
-                  cost: Number(
-                    costValue === 0 ? undefined : costValue || 0,
-                  ) as any,
-                  sell: Number(
-                    sellValue === 0 ? undefined : sellValue || 0,
-                  ) as any,
-                  discount: Number(
-                    discountValue === 0 ? undefined : discountValue || 0,
-                  ) as any,
+                  cost: Number(costValue || 0) as any,
+                  sell: Number(sellValue || 0) as any,
+                  discount: Number(discountValue || 0) as any,
                   addToInventory: data.material.addToInventory,
                 };
               }
@@ -182,30 +246,17 @@ export default function MaterialCreate() {
   }, [currentSelectedCategoryId]);
 
   async function handleSubmit() {
-    // if (!name) {
-    //   alert("Material name is required");
-    //   return;
-    // }
-
-    if (!name) {
-      errorToast("Material name is required");
-      return;
-    }
-
-    if (!quantity || quantity <= 0) {
-      errorToast("Material Quantity must be at least 1", {
-        id: "material-quantity-min-1",
-      });
-      return;
-    }
+    const valid = validateForm();
+    if (!valid) return;
+    const { quantity: validQuantity } = valid;
 
     // If addToInventory is true, add to database, otherwise just add to state
     if (addToInventory) {
       try {
         const res = await newMaterial({
           name,
-          categoryId: category?.id,
-          vendorId: vendor?.id,
+          categoryId: category?.id ?? undefined,
+          vendorId: vendor?.id ?? undefined,
           tags,
           notes,
           quantity: quantity || 0,
@@ -242,7 +293,7 @@ export default function MaterialCreate() {
                       // @ts-ignore: ignore for now
                       tags,
                       notes,
-                      quantity: Decimal(quantity) || 0,
+                      quantity: Decimal(validQuantity) || 0,
                       cost: Number(cost || 0) as any,
                       sell: Number(sell || 0) as any,
                       discount: Number(discount || 0) as any,
@@ -266,7 +317,7 @@ export default function MaterialCreate() {
                         vendorId: vendor?.id || null,
                         tags,
                         notes,
-                        quantity: Decimal(quantity) || 0,
+                        quantity: Decimal(validQuantity) || 0,
                         cost: Number(cost || 0) as any,
                         sell: Number(sell || 0) as any,
                         discount: Number(discount || 0) as any,
@@ -335,7 +386,7 @@ export default function MaterialCreate() {
                   // @ts-ignore: ignore for now
                   tags,
                   notes,
-                  quantity: Decimal(quantity) || 0,
+                  quantity: Decimal(validQuantity) || 0,
                   cost: Number(cost || 0) as any,
                   sell: Number(sell || 0) as any,
                   discount: Number(discount || 0) as any,
@@ -358,7 +409,7 @@ export default function MaterialCreate() {
                     vendorId: vendor?.id || null,
                     tags,
                     notes,
-                    quantity: Decimal(quantity) || 0,
+                    quantity: Decimal(validQuantity) || 0,
                     cost: Number(cost || 0) as any,
                     sell: Number(sell || 0) as any,
                     discount: Number(discount || 0) as any,
@@ -392,17 +443,7 @@ export default function MaterialCreate() {
   }
 
   function handleEdit() {
-    if (!name) {
-      errorToast("Material name is required");
-      return;
-    }
-
-    if (!quantity || quantity <= 0) {
-      errorToast("Material Quantity must be at least 1", {
-        id: "material-quantity-min-1",
-      });
-      return;
-    }
+    if (!validateForm()) return;
 
     // Update the material in the items
     // @ts-ignore
@@ -414,8 +455,8 @@ export default function MaterialCreate() {
               return {
                 ...material,
                 name,
-                categoryId: category?.id,
-                vendorId: vendor?.id,
+                categoryId: category?.id ?? null,
+                vendorId: vendor?.id ?? null,
                 tags,
                 notes,
                 quantity: quantity || 0,
@@ -441,18 +482,10 @@ export default function MaterialCreate() {
     close();
   }
 
+  // Only one dropdown open at a time.
   useEffect(() => {
-    if (categoryOpen && (vendorOpen || tagsOpen)) {
-      setVendorOpen(false);
-      setTagsOpen(false);
-    } else if (vendorOpen && (categoryOpen || tagsOpen)) {
-      setCategoryOpen(false);
-      setTagsOpen(false);
-    } else if (tagsOpen && (categoryOpen || vendorOpen)) {
-      setCategoryOpen(false);
-      setVendorOpen(false);
-    }
-  }, [categoryOpen, vendorOpen, tagsOpen]);
+    if (categoryOpen && vendorOpen) setVendorOpen(false);
+  }, [categoryOpen, vendorOpen]);
 
   return (
     <div className="flex flex-col gap-1 p-1.5 sm:p-5 bg-white rounded-sm">
@@ -461,21 +494,32 @@ export default function MaterialCreate() {
       </h3>
 
       {/* Name Input */}
-      <div className="flex items-center gap-3">
-        <label
-          htmlFor="name"
-          className="min-w-20 max-w-24 sm:min-w-0 sm:max-w-24 text-sm font-semibold tracking-wider text-slate-500"
-        >
-          Material / Parts Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="h-10 w-full sm:flex-1 rounded-[10px] bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30"
-          placeholder="e.g. Brake Pads"
-        />
+      <div>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="name"
+            className="min-w-20 max-w-24 sm:min-w-0 sm:max-w-24 text-sm font-semibold tracking-wider text-slate-500"
+          >
+            Name/Title <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              clearFieldError("name");
+            }}
+            aria-invalid={!!errors.name}
+            className={cn(
+              "h-10 w-full sm:flex-1 rounded-[10px] bg-white px-4 text-sm font-medium ring-1 ring-inset transition-all focus:outline-none focus:ring-2",
+              errors.name
+                ? "ring-red-500 focus:ring-red-500/40"
+                : "ring-slate-200 focus:ring-primary/30",
+            )}
+            placeholder="Material Name"
+          />
+        </div>
       </div>
 
       {/* Category Selector */}
@@ -491,6 +535,7 @@ export default function MaterialCreate() {
             categoryOpen={categoryOpen}
             setCategoryOpen={setCategoryOpen}
             className="max-w-full"
+            isClear
           />
         </div>
       </div>
@@ -531,28 +576,54 @@ export default function MaterialCreate() {
               )
             }
             displayList={(vendor: Vendor) => (
-              <p className="text-sm font-medium">
-                {vendor?.companyName || vendor.name}
-              </p>
+              <div className="flex items-center justify-between group py-0.5">
+                <p className="text-sm font-medium">
+                  {vendor?.companyName || vendor.name}
+                </p>
+
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Popconfirm
+                    title="Delete Vendor"
+                    description="Are you sure you want to remove this?"
+                    okText="Delete"
+                    cancelText="Cancel"
+                    onConfirm={() => handleDeleteVendor(vendor.id)}
+                    onPopupClick={(e) => e.stopPropagation()}
+                    overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                    okButtonProps={{
+                      className:
+                        "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                    }}
+                    cancelButtonProps={{
+                      className:
+                        "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                    }}
+                  >
+                    <div
+                      className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <X size={16} strokeWidth={2.5} />
+                    </div>
+                  </Popconfirm>
+                </div>
+              </div>
             )}
             openState={[vendorOpen, setVendorOpen]}
             selectedItem={vendor}
             setSelectedItem={setVendor}
             className="max-w-full"
-          />
-        </div>
-      </div>
-
-      {/* Tags Selector */}
-      <div className="flex items-center gap-3 py-0.5">
-        <label className="w-24 text-sm font-semibold tracking-wider text-slate-500">
-          Tags
-        </label>
-        <div className="flex-1">
-          <SelectTags
-            value={tags}
-            setValue={setTags}
-            openStates={[tagsOpen, setTagsOpen]}
+            footer={
+              vendor ? (
+                <ClearSelectionButton
+                  label="Clear Vendor"
+                  onClear={() => {
+                    setVendor(null);
+                    setVendorOpen(false);
+                  }}
+                />
+              ) : null
+            }
           />
         </div>
       </div>
@@ -561,28 +632,37 @@ export default function MaterialCreate() {
       {[
         {
           id: "qt",
+          field: "quantity" as MaterialField,
           label: "Quantity",
           val: quantity,
           set: setQuantity,
           placeholder: "0",
           type: "number",
+          required: true,
         },
         {
           id: "price",
+          field: "cost" as MaterialField,
           label: "Cost Price",
           val: cost,
           set: setCost,
           placeholder: "0.00",
           type: "number",
           disabled: data.edit,
+          max: MAX_MONEY_VALUE,
+          // Read-only while editing, so it can't be marked required there.
+          required: !data.edit,
         },
         {
           id: "sell",
+          field: "sell" as MaterialField,
           label: "Sell Price",
           val: sell,
           set: setSell,
           placeholder: "0.00",
           type: "number",
+          max: MAX_MONEY_VALUE,
+          required: true,
         },
         {
           id: "discount",
@@ -591,6 +671,7 @@ export default function MaterialCreate() {
           set: setDiscount,
           placeholder: "0",
           type: "number",
+          max: MAX_MONEY_VALUE,
         },
       ].map((field) => (
         <div key={field.id} className="mb-0.5">
@@ -599,7 +680,8 @@ export default function MaterialCreate() {
               htmlFor={field.id}
               className="w-24 text-sm font-semibold text-slate-500"
             >
-              {field.label}
+              {field.label}{" "}
+              {field.required && <span className="text-red-500">*</span>}
             </label>
             <input
               type={field.type}
@@ -607,12 +689,18 @@ export default function MaterialCreate() {
               value={field.val ?? ""}
               disabled={field.disabled}
               min="0"
+              max={field.max}
+              aria-invalid={!!(field.field && errors[field.field])}
               onChange={(e) => {
+                if (field.field) clearFieldError(field.field);
                 if (e.target.value === "") {
                   field.set(undefined);
                 } else {
                   const parsed = parseFloat(e.target.value);
-                  field.set(parsed < 0 ? 0 : parsed);
+                  const clamped = parsed < 0 ? 0 : parsed;
+                  field.set(
+                    field.max && clamped > field.max ? field.max : clamped,
+                  );
                 }
               }}
               onKeyDown={(e) => {
@@ -620,13 +708,16 @@ export default function MaterialCreate() {
               }}
               className={cn(
                 "w-full flex-1 rounded-[10px] border px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300",
-                field.id === "qt" && inventoryError
+                (field.field && errors[field.field]) ||
+                  (field.id === "qt" && inventoryError)
                   ? "border-red-500 ring-1 ring-red-500/20"
                   : "border-slate-300/80",
               )}
               placeholder={field.placeholder}
             />
           </div>
+          {/* Inventory availability stays inline — it's advisory context about
+              stock levels, not a required-field error. */}
           {field.id === "qt" && inventoryError && (
             <p className="ml-[6.7rem] mt-1 text-xs font-medium text-red-500">
               {inventoryError}

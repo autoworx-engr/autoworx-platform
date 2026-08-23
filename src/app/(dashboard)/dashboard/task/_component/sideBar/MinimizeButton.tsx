@@ -1,24 +1,21 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
-import { ArrowLeftFromLine } from "lucide-react";
+import { PanelLeftClose } from "lucide-react";
 
 export function MinimizeButton() {
-  const minimized = useCalendarSidebarStore((x) => x.minimized);
-  const toggleMinimized = useCalendarSidebarStore((x) => x.toggleMinimized);
+  const setMinimized = useCalendarSidebarStore((x) => x.setMinimized);
   return (
     <button
       type="button"
-      onClick={toggleMinimized}
-      className={cn(
-        "rounded-lg p-2  transition-transform ease-in hover:bg-gray-300",
-        minimized
-          ? "mx-auto rotate-180 border border-slate-200 bg-white/50 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50"
-          : "rotate-0",
-      )}
+      onClick={() => setMinimized(true)}
+      aria-label="Collapse panel"
+      className="group relative rounded-lg p-2 text-slate-500 outline-none transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-primary/60 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
     >
-      <ArrowLeftFromLine size={18} />
+      <PanelLeftClose size={18} />
+      <span className="pointer-events-none absolute right-0 top-full z-30 mt-1.5 hidden whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white shadow-lg group-hover:block dark:bg-slate-100 dark:text-slate-900">
+        Collapse panel
+      </span>
     </button>
   );
 }

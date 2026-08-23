@@ -1,6 +1,11 @@
 "use client";
 
-import { EventClickArg, EventContentArg, EventInput } from "@fullcalendar/core";
+import {
+  EventClickArg,
+  EventContentArg,
+  EventInput,
+  EventMountArg,
+} from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
@@ -32,6 +37,29 @@ interface Props {
   onEventDateTimeUpdate: (info: any) => void;
   onDatesSet: (arg: any) => void;
   onLoading: (loading: boolean) => void;
+}
+
+function markRepeatedListTime(arg: EventMountArg) {
+  if (!arg.view.type.startsWith("list")) return;
+
+  const row = arg.el.closest<HTMLElement>("tr.fc-list-event");
+  const timeCell = row?.querySelector<HTMLElement>(".fc-list-event-time");
+  if (!row || !timeCell) return;
+
+  const currentTime = timeCell.textContent?.trim() ?? "";
+  if (!currentTime) return;
+  row.dataset.slotTime = currentTime;
+
+  const prevRow = row.previousElementSibling as HTMLElement | null;
+  const prevTime = prevRow?.matches("tr.fc-list-event")
+    ? prevRow.dataset.slotTime
+    : undefined;
+
+  if (prevTime && prevTime === currentTime) {
+    row.dataset.repeatedTime = "true";
+  } else {
+    delete row.dataset.repeatedTime;
+  }
 }
 
 export function StandardCalendar({
@@ -82,6 +110,12 @@ export function StandardCalendar({
           minute: "2-digit",
           hour12: true,
         }}
+        eventTimeFormat={{
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }}
+        allDayText="All day"
         businessHours={businessHours}
         slotLaneClassNames={nonBusinessSlotClassNames}
         events={events}
@@ -91,6 +125,7 @@ export function StandardCalendar({
         eventClick={onEventClick}
         eventDrop={onEventDateTimeUpdate}
         eventResize={onEventDateTimeUpdate}
+        eventDidMount={markRepeatedListTime}
         datesSet={onDatesSet}
         loading={onLoading}
         height="100%"

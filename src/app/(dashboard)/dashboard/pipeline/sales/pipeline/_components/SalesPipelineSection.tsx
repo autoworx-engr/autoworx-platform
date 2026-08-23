@@ -164,7 +164,7 @@ export default function SalesPipelineSection() {
     <div className="h-full w-full overflow-hidden px-2">
       <div
         ref={scrollContainerRef}
-        className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
+        className="flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
       >
         {pipelineColumns.map((column, columnIndex) => {
           return (

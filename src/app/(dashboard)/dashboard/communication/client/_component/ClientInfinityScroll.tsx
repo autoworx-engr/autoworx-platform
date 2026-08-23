@@ -4,15 +4,18 @@ import { pusher } from "@/lib/pusher/client";
 import { errorToast } from "@/lib/toast";
 import { useDemoClientFilterStore } from "@/stores/clientFilter";
 import { Client, ClientConversationTrack } from "@prisma/client";
+import { Users } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { getClientByScroll } from "../_actions/getClientByScroll";
 import { getClients } from "../_actions/getClients";
 import { clientSortByUpdatedMessage } from "../_utils";
 import ClientItem from "./ClientItem";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { isIosPwa } from "@/utils/isIosPwa";
+import { useAutoLoadSelectedClient } from "../../_hooks/useAutoLoadSelectedClient";
+import { useScrollSelectedClientIntoView } from "../../_hooks/useScrollSelectedClientIntoView";
+import { useClientPageFetcher } from "../_hooks/useClientPageFetcher";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -37,6 +40,11 @@ export default function ClientInfinityScroll({
     (state) => state.resetClientData,
   );
   const [hasMore, setHasMore] = useState(true);
+  // The very first render already has the correct data from the server
+  // (initialsClients) — skip the redundant refetch that would otherwise
+  // fire on mount for the default "All"/no-search view.
+  const isFirstRun = useRef(true);
+  const listRef = useRef<HTMLDivElement>(null);
   const params = useParams();
 
   const clientIdParams = params?.id;
@@ -87,39 +95,42 @@ export default function ClientInfinityScroll({
   }, [companyId, clientIdParams]);
 
   useEffect(() => {
-    // Only refetch when user is actively filtering/searching
-    // For 'All' filter with no search, rely on initial clients + infinite scroll
-    if (normalizedSearch || (filter && filter !== "All")) {
-      const fetchFilteredClients = async () => {
-        try {
-          const fetchedClients = await getClients({
-            companyId: companyId,
-            // pass trimmed search so server-side doesn't receive whitespace-only strings
-            search: normalizedSearch,
-            filter,
-          });
-
-          setClients(fetchedClients);
-          setHasMore(false); // Disable infinite scroll for search/filter results
-        } catch (err) {
-          console.error(
-            "📋 ClientInfinityScroll: Error fetching clients:",
-            err,
-          );
-          errorToast("Failed to fetch clients");
-        }
-      };
-      fetchFilteredClients();
-    } else if (filter === "All" && !searchTerm) {
-      console.log("📋 ClientInfinityScroll: Resetting to initial clients:", {
-        initialCount: initialsClients.length,
-      });
-
-      // For 'All' filter with no search, use initial clients and enable infinite scroll
-      setClients(initialsClients);
-      setHasMore(initialsClients.length >= defaultTakeData); // Re-enable infinite scroll if we have enough initial data
+    if (isFirstRun.current && filter === "All" && !normalizedSearch) {
+      // Skip the redundant refetch on mount — initialsClients already has
+      // the correct data for the default view.
+      isFirstRun.current = false;
+      return;
     }
-  }, [filter, searchTerm, companyId, initialsClients, defaultTakeData]);
+    isFirstRun.current = false;
+
+    // Always hit the server for the current filter/search state, "All" with
+    // no search included. Restoring from any in-memory snapshot (the initial
+    // SSR prop, or a client-captured one) can drift from what the server
+    // would return right now — e.g. once real-time activity reorders things
+    // — and only a fresh reload was reflecting the correct order. Refetching
+    // here makes "clear search" match a reload exactly, every time.
+    const fetchCurrentView = async () => {
+      try {
+        const fetchedClients = await getClients({
+          companyId,
+          // pass trimmed search so server-side doesn't receive whitespace-only strings
+          search: normalizedSearch,
+          filter,
+          take: defaultTakeData,
+        });
+
+        setClients(fetchedClients);
+        // Infinite scroll only applies to the plain "All" view with no
+        // search — filtered/searched result sets are already complete.
+        const isDefaultView = filter === "All" && !normalizedSearch;
+        setHasMore(isDefaultView && fetchedClients.length >= defaultTakeData);
+      } catch (err) {
+        console.error("📋 ClientInfinityScroll: Error fetching clients:", err);
+        errorToast("Failed to fetch clients");
+      }
+    };
+    fetchCurrentView();
+  }, [filter, searchTerm, normalizedSearch, companyId, defaultTakeData]);
 
   // const [page, setPage] = useState(1);
   useEffect(() => {
@@ -150,38 +161,36 @@ export default function ClientInfinityScroll({
     };
   }, [resetClientData]);
 
-  const fetchData = async () => {
-    try {
-      const fetchClients = await getClientByScroll({
-        skip: clients.length,
-        take: defaultTakeData,
-      });
+  const fetchData = useClientPageFetcher({
+    clients,
+    setClients,
+    setHasMore,
+    defaultTakeData,
+  });
 
-      if (fetchClients.length < defaultTakeData) {
-        setHasMore(false);
-      }
-
-      // Prevent duplicate clients when fetching more data
-      // Note: getClientByScroll already returns sorted data
-      setClients((prev) => {
-        const existingIds = new Set(prev.map((client) => client.id));
-        const newClients = fetchClients.filter(
-          (client) => !existingIds.has(client.id),
-        );
-        return [...prev, ...newClients];
-      });
-    } catch (err) {
-      console.error("📋 ClientInfinityScroll fetchData: Error:", err);
-      setHasMore(false);
-      errorToast("Failed to fetch clients");
-    }
-  };
+  const isDefaultView = filter === "All" && !normalizedSearch;
+  const selectedClientId = clientIdParams
+    ? parseInt(clientIdParams as string)
+    : null;
+  useAutoLoadSelectedClient({
+    selectedId: selectedClientId,
+    clients,
+    hasMore,
+    isDefaultView,
+    fetchNextPage: fetchData,
+  });
+  useScrollSelectedClientIntoView({
+    selectedId: selectedClientId,
+    clients,
+    containerRef: listRef,
+  });
 
   return (
     <div
       id="scrollableDiv"
-      // className="thin-scrollbar mt-2 flex h-[84%] flex-col gap-2 p-2 max-[1835px]:h-[82%] lg:overflow-y-auto"
-      className="thin-scrollbar mt-2 h-[82%] overflow-y-auto p-2"
+      ref={listRef}
+      // className="mt-2 flex h-[84%] flex-col gap-2 p-2 max-[1835px]:h-[82%] lg:overflow-y-auto"
+      className="mt-2 h-[82%] overflow-y-auto p-2"
     >
       <InfiniteScroll
         dataLength={dataLength} //This is important field to render the next data
@@ -195,13 +204,31 @@ export default function ClientInfinityScroll({
         }
         scrollableTarget="scrollableDiv"
         endMessage={
-          <p className="mb-5 text-center">
-            {clients.length === 0 ? (
-              <b>Client Not Found</b>
-            ) : (
+          clients.length === 0 ? (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-6 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                <Users className="h-8 w-8 text-emerald-600" strokeWidth={1.5} />
+              </div>
+              <div>
+                <p className="font-bold text-slate-700">No Clients Found</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {searchTerm
+                    ? `No clients match "${searchTerm}".`
+                    : filter === "All"
+                      ? "You don't have any clients yet."
+                      : `You don't have any ${
+                          filter === "Assigned"
+                            ? "clients assigned to you"
+                            : `${filter.toLowerCase()} clients`
+                        }.`}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="mb-5 text-center">
               <b>Yay! You have seen it all</b>
-            )}
-          </p>
+            </p>
+          )
         }
       >
         {clients?.map((client: Client) => {

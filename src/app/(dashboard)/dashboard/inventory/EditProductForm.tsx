@@ -16,7 +16,7 @@ import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { InventoryProductHistory, InventoryProductType } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function EditProductForm({
@@ -73,7 +73,7 @@ export default function EditProductForm({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-end text-primary md:justify-center">
-          <SquarePen size={20} />
+          <PencilLineIcon size={20} />
         </button>
       </DialogTrigger>
 

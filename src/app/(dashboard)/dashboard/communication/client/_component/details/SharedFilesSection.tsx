@@ -15,7 +15,7 @@ type TabId = "email" | "sms" | "messenger" | "instagram" | "docs" | "audio";
 const TABS: { id: TabId; label: string }[] = [
   { id: "email", label: "Email" },
   { id: "sms", label: "SMS" },
-  { id: "messenger", label: "Msngr" },
+  { id: "messenger", label: "FB" },
   { id: "instagram", label: "IG" },
   { id: "docs", label: "Docs" },
   { id: "audio", label: "Audio" },
@@ -105,7 +105,7 @@ function ImageGrid({
   }
 
   return (
-    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
+    <div ref={scrollRef} className="h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -154,7 +154,7 @@ function ChipList({
   }
 
   return (
-    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
+    <div ref={scrollRef} className="h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -248,12 +248,12 @@ export default function SharedFilesSection({
         </span>
       </header>
 
-      <div className="mb-4 flex shrink-0 gap-0.5 border-b border-zinc-100 dark:border-white/10">
+      <div className="mb-4 flex shrink-0 gap-0.5 overflow-x-auto overflow-y-hidden border-b border-zinc-100 dark:border-white/10">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
               activeTab === tab.id
                 ? "border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"

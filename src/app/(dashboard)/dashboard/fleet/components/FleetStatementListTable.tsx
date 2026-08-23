@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Popconfirm } from "antd";
-import { SquarePen, Trash2 } from "lucide-react";
+import { PencilLineIcon, Trash2 } from "lucide-react";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
 import EditFleetStatementModal from "./EditFleetStatementModal"; // Add this import
@@ -31,6 +31,8 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
 
   // Local state to manage statements for immediate UI updates
   const [localStatements, setLocalStatements] = useState(initialStatementData);
+
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   // Update local state when prop changes
   useEffect(() => {
@@ -58,17 +60,17 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
     setEditStatementId(null);
   };
 
-  // Handle delete statement with optimistic update
+  // Handle delete statement. The row stays in the list (marked as
+  // "deleting") until the server confirms success — only then is it
+  // actually removed, so the empty state can't show prematurely.
   const handleDeleteStatement = async (statementId: string) => {
-    // Optimistically remove from local state immediately
-    const previousStatements = localStatements;
-    setLocalStatements((prev) => prev.filter((s) => s.id !== statementId));
+    setDeletingIds((prev) => new Set(prev).add(statementId));
 
     try {
       const result = await deleteFleetStatement({ statementId });
 
-      // Handle response
       if (result.type === "success") {
+        setLocalStatements((prev) => prev.filter((s) => s.id !== statementId));
         successToast(result.message || "Statement deleted successfully");
 
         // Trigger parent refresh to sync data from server
@@ -76,15 +78,17 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
           onRefresh();
         }
       } else {
-        // If deletion failed, restore the item
-        setLocalStatements(previousStatements);
         errorToast(result.message || "Failed to delete statement");
       }
     } catch (error: any) {
-      // If error occurred, restore the item
-      setLocalStatements(previousStatements);
       errorToast(error.message || "An error occurred while deleting");
       console.error("Delete statement error:", error);
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(statementId);
+        return next;
+      });
     }
   };
 
@@ -128,92 +132,99 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {localStatements.map((statement, index) => (
-              <tr
-                key={statement.id}
-                className={cn(
-                  "cursor-pointer rounded-md border py-3 hover:bg-gray-50 transition-colors",
-                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
-                )}
-                onClick={() => handleViewStatement(statement.id)}
-              >
-                <td className={`${tDataCommonClasses}`}>
-                  <span className="font-medium text-blue-600">
-                    {statement.id.slice(-8)}
-                  </span>
-                </td>
-                <td className={`${tDataCommonClasses}`}>
-                  {moment(statement.createdAt).format("DD MMMM YYYY hh:mmA")}
-                </td>
-                <td className={`${tDataCommonClasses}`}>
-                  {statement.invoice?.length || 0}
-                </td>
-                <td className={`${tDataCommonClasses}`}>
-                  {formatCurrency(
-                    statement.totals?.totalAmount?.toFixed(2) || "0.00",
+            {localStatements.map((statement, index) => {
+              const isDeleting = deletingIds.has(statement.id);
+              return (
+                <tr
+                  key={statement.id}
+                  className={cn(
+                    "cursor-pointer rounded-md border py-3 hover:bg-gray-50 transition-colors",
+                    index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                   )}
-                </td>
-                <td className={`${tDataCommonClasses}`}>
-                  {formatCurrency(
-                    statement.totals?.totalPaid?.toFixed(2) || "0.00",
-                  )}
-                </td>
-                <td className={`${tDataCommonClasses}`}>
-                  <span
-                    className={
-                      statement.totals?.totalDue > 0
-                        ? "font-medium text-red-600"
-                        : "text-green-600"
-                    }
-                  >
+                  onClick={() => handleViewStatement(statement.id)}
+                >
+                  <td className={`${tDataCommonClasses}`}>
+                    <span className="font-medium text-blue-600">
+                      {statement.id.slice(-8)}
+                    </span>
+                  </td>
+                  <td className={`${tDataCommonClasses}`}>
+                    {moment(statement.createdAt).format("MMMM DD, YYYY hh:mmA")}
+                  </td>
+                  <td className={`${tDataCommonClasses}`}>
+                    {statement.invoice?.length || 0}
+                  </td>
+                  <td className={`${tDataCommonClasses}`}>
                     {formatCurrency(
-                      statement.totals?.totalDue?.toFixed(2) || "0.00",
+                      statement.totals?.totalAmount?.toFixed(2) || "0.00",
                     )}
-                  </span>
-                </td>
-                <td className={`${tDataCommonClasses} `}>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium text-white ${
-                      statement.totals?.totalDue > 0
-                        ? "bg-[#dc4757]/90"
-                        : "bg-[#27837c]/90"
-                    }`}
-                  >
-                    {statement.totals?.totalDue > 0 ? "Pending" : "Paid"}
-                  </span>
-                </td>
-                <td className={`${tDataCommonClasses}`}>
-                  <div className="flex items-center justify-center gap-4">
-                    <Popconfirm
-                      title="Are you sure you want to delete this statement?"
-                      onConfirm={(e) => {
-                        e?.stopPropagation();
-                        handleDeleteStatement(statement.id);
-                      }}
-                      onCancel={(e) => e?.stopPropagation()}
-                      okText="Yes"
-                      cancelText="No"
+                  </td>
+                  <td className={`${tDataCommonClasses}`}>
+                    {formatCurrency(
+                      statement.totals?.totalPaid?.toFixed(2) || "0.00",
+                    )}
+                  </td>
+                  <td className={`${tDataCommonClasses}`}>
+                    <span
+                      className={
+                        statement.totals?.totalDue > 0
+                          ? "font-medium text-red-600"
+                          : "text-green-600"
+                      }
                     >
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-red-600 hover:text-red-800 transition-colors"
+                      {formatCurrency(
+                        statement.totals?.totalDue?.toFixed(2) || "0.00",
+                      )}
+                    </span>
+                  </td>
+                  <td className={`${tDataCommonClasses} `}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium text-white ${
+                        statement.totals?.totalDue > 0
+                          ? "bg-[#dc4757]/90"
+                          : "bg-[#27837c]/90"
+                      }`}
+                    >
+                      {statement.totals?.totalDue > 0 ? "Pending" : "Paid"}
+                    </span>
+                  </td>
+                  <td className={`${tDataCommonClasses}`}>
+                    <div className="flex items-center justify-center gap-4">
+                      <Popconfirm
+                        title="Delete this statement?"
+                        description="Are you sure you want to delete this statement?"
+                        onConfirm={(e) => {
+                          e?.stopPropagation();
+                          handleDeleteStatement(statement.id);
+                        }}
+                        onCancel={(e) => e?.stopPropagation()}
+                        placement="topLeft"
+                        okText="Yes"
+                        cancelText="No"
                       >
-                        <Trash2 size={20} />
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={isDeleting}
+                          className="text-red-600 hover:text-red-800 transition-colors disabled:cursor-not-allowed"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </Popconfirm>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditStatement(statement.id); // Updated handler
+                        }}
+                        disabled={isDeleting}
+                        className="text-blue-600 hover:text-blue-800 transition-colors disabled:cursor-not-allowed"
+                      >
+                        <PencilLineIcon size={20} />
                       </button>
-                    </Popconfirm>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditStatement(statement.id); // Updated handler
-                      }}
-                      className="text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      <SquarePen size={20} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -221,80 +232,124 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
       {/* Mobile Card Layout */}
       <div className="block md:hidden">
         <div className="space-y-3">
-          {localStatements.map((statement, index) => (
-            <Card
-              key={statement.id}
-              className={cn(
-                "cursor-pointer border hover:shadow-md transition-shadow",
-                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
-              )}
-              onClick={() => handleViewStatement(statement.id)}
-            >
-              <CardContent className="p-4">
-                {/* Header with Statement ID and Status */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-medium text-blue-600 text-lg">
-                    #{statement.id.slice(-8)}
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      statement.totals?.totalDue > 0
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {statement.totals?.totalDue > 0 ? "Pending" : "Paid"}
-                  </span>
-                </div>
-
-                {/* Date and Invoice Count */}
-                <div className="space-y-2 mb-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Date Created:</span>
-                    <span className="text-sm font-medium">
-                      {moment(statement.createdAt).format("DD MMM YYYY")}
+          {localStatements.map((statement, index) => {
+            const isDeleting = deletingIds.has(statement.id);
+            return (
+              <Card
+                key={statement.id}
+                className={cn(
+                  "cursor-pointer border hover:shadow-md transition-shadow",
+                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
+                )}
+                onClick={() => handleViewStatement(statement.id)}
+              >
+                <CardContent className="p-4">
+                  {/* Header with Statement ID and Status */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium text-blue-600 text-lg">
+                      #{statement.id.slice(-8)}
                     </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Invoices:</span>
-                    <span className="text-sm font-medium">
-                      {statement.invoice?.length || 0} invoices
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Buttons for Mobile */}
-                <div className="flex items-center justify-end gap-3 pt-2 border-t">
-                  <Popconfirm
-                    title="Are you sure you want to delete this statement?"
-                    onConfirm={(e) => {
-                      e?.stopPropagation();
-                      handleDeleteStatement(statement.id);
-                    }}
-                    onCancel={(e) => e?.stopPropagation()}
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <button
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-red-600 hover:text-red-800 transition-colors"
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        statement.totals?.totalDue > 0
+                          ? "bg-red-100 text-red-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
                     >
-                      <Trash2 size={18} />
+                      {statement.totals?.totalDue > 0 ? "Pending" : "Paid"}
+                    </span>
+                  </div>
+
+                  {/* Date, Invoice Count, and Amounts */}
+                  <div className="space-y-2 mb-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">
+                        Date Created:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {moment(statement.createdAt).format("MMM DD, YYYY")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Invoices:</span>
+                      <span className="text-sm font-medium">
+                        {statement.invoice?.length || 0} invoices
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">
+                        Total Amount:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {formatCurrency(
+                          statement.totals?.totalAmount?.toFixed(2) || "0.00",
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">
+                        Paid Amount:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {formatCurrency(
+                          statement.totals?.totalPaid?.toFixed(2) || "0.00",
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Due Amount:</span>
+                      <span
+                        className={cn(
+                          "text-sm font-medium",
+                          statement.totals?.totalDue > 0
+                            ? "text-red-600"
+                            : "text-green-600",
+                        )}
+                      >
+                        {formatCurrency(
+                          statement.totals?.totalDue?.toFixed(2) || "0.00",
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons for Mobile */}
+                  <div className="flex items-center justify-end gap-3 pt-2 border-t">
+                    <Popconfirm
+                      title="Delete this statement?"
+                      description="Are you sure you want to delete this statement?"
+                      onConfirm={(e) => {
+                        e?.stopPropagation();
+                        handleDeleteStatement(statement.id);
+                      }}
+                      onCancel={(e) => e?.stopPropagation()}
+                      placement="topLeft"
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isDeleting}
+                        className="text-red-600 hover:text-red-800 transition-colors disabled:cursor-not-allowed"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </Popconfirm>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditStatement(statement.id); // Updated handler
+                      }}
+                      disabled={isDeleting}
+                      className="text-blue-600 hover:text-blue-800 transition-colors disabled:cursor-not-allowed"
+                    >
+                      <PencilLineIcon size={18} />
                     </button>
-                  </Popconfirm>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditStatement(statement.id); // Updated handler
-                    }}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    <SquarePen size={18} />
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

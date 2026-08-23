@@ -9,6 +9,10 @@ import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMess
 import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
 import { db } from "@/lib/db";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 
 function parseClientName(name: string) {
   const parts = name.trim().split(" ");
@@ -34,19 +38,25 @@ async function upsertClient(
     mobile?: string;
   },
 ) {
-  const existing = data.mobile
-    ? await db.client.findFirst({ where: { mobile: data.mobile, companyId } })
+  const phoneLookup = phoneLookupWhereClause(data.mobile);
+  const existing = phoneLookup
+    ? await db.client.findFirst({ where: { OR: phoneLookup, companyId } })
     : null;
+
+  const normalizedData = {
+    ...data,
+    mobile: data.mobile ? normalizePhoneForStorage(data.mobile) : data.mobile,
+  };
 
   if (!existing) {
     return db.client.create({
-      data: { ...data, companyId, leadId, isSalesAgent: true },
+      data: { ...normalizedData, companyId, leadId, isSalesAgent: true },
     });
   }
 
   return db.client.update({
     where: { id: existing.id, companyId },
-    data: { ...data, companyId, leadId },
+    data: { ...normalizedData, companyId, leadId },
   });
 }
 

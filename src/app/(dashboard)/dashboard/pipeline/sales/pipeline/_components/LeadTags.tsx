@@ -8,6 +8,8 @@ import { cn } from "@/lib/cn";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Tag } from "@prisma/client";
+import { Popconfirm } from "antd";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SalesTagSelector } from "../../../components/SalesTagSelector";
 
@@ -37,6 +39,7 @@ type TRemoveTag = {
 export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const dispatch = useColumnDispatch();
+  const router = useRouter();
   const { mutateAsync: addTag } = useAddLeadTagMutation();
   const { mutateAsync: removeTag } = useRemoveLeadTagMutation();
 
@@ -49,14 +52,17 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
       const result = await addTag({ leadId, tagId: selectedTag.id });
 
       if (result?.success) {
+        // `result.data.id` is the real LeadTags join-row id (not the Tag id) —
+        // removal later depends on this being the actual persisted row id.
         dispatch({
           type: actionTypes.ADD_TAG,
           payload: {
             columnId,
             leadId,
-            tag: selectedTag,
+            tag: { ...selectedTag, id: result.data.id },
           },
         });
+        router.refresh();
 
         const response = await updateTagAutomationTrigger({
           columnId: columnId,
@@ -89,6 +95,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
         type: actionTypes.REMOVE_TAG,
         payload: { columnId, leadId, tagId },
       });
+      router.refresh();
     } catch (error) {
       console.error("Error removing tag:", error);
     }
@@ -106,21 +113,41 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
             }}
           >
             {leadTag.tag.name}
-            <button
-              type="button"
-              className={cn(
-                "ml-1 cursor-pointer text-xs text-black disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-              onClick={() => {
-                handleRemoveTag({
-                  leadId: lead.id,
-                  columnId: lead.columnId!,
-                  tagId: leadTag.id,
-                });
-              }}
-            >
-              ✕
-            </button>
+            <span onClick={(e) => e.stopPropagation()}>
+              <Popconfirm
+                title="Delete Tag"
+                description="Are you sure you want to remove this tag?"
+                okText="Delete"
+                cancelText="Cancel"
+                onConfirm={() =>
+                  handleRemoveTag({
+                    leadId: lead.id,
+                    columnId: lead.columnId!,
+                    tagId: leadTag.id,
+                  })
+                }
+                onPopupClick={(e) => e.stopPropagation()}
+                overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                okButtonProps={{
+                  className:
+                    "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                }}
+                cancelButtonProps={{
+                  className:
+                    "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "ml-1 cursor-pointer text-xs text-black disabled:cursor-not-allowed disabled:opacity-50",
+                  )}
+                >
+                  ✕
+                </button>
+              </Popconfirm>
+            </span>
           </span>
         );
       })}

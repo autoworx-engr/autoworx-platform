@@ -1,11 +1,12 @@
 "use client";
+import { cn } from "@/lib/cn";
 import { format, isValid, parse } from "date-fns";
 import { Calendar } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
-import "react-date-range/dist/styles.css"; // main style file
-import "react-date-range/dist/theme/default.css"; // theme css file
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 type TProps = {
   startDate?: string;
   endDate?: string;
@@ -46,7 +47,6 @@ export default function FilterDateRange({
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
-  // const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
   const [isRangeSelected, setIsRangeSelected] = useState(
     Boolean(parsedStart && parsedEnd),
@@ -92,6 +92,7 @@ export default function FilterDateRange({
       searchParams.delete("startDate");
       searchParams.delete("endDate");
     }
+    searchParams.delete("page");
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.push(newPath);
     setState({ selection: tempRange });
@@ -110,10 +111,10 @@ export default function FilterDateRange({
     const searchParams = new URLSearchParams(params!);
     searchParams.delete("startDate");
     searchParams.delete("endDate");
+    searchParams.delete("page");
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
 
-    // Reset both state and temporary range
     const resetSelection = {
       startDate: new Date(),
       endDate: new Date(),
@@ -122,29 +123,42 @@ export default function FilterDateRange({
 
     setState({ selection: resetSelection });
     setTempRange(resetSelection);
-    closeModal(modalName);
     setIsRangeSelected(false);
   };
   return (
-    <div className="relative w-full md:w-auto">
+    <div className="relative w-full lg:w-fit">
       <button
         ref={buttonRef}
         onClick={togglePicker}
-        className={`
-          flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
-          ${
-            activeModal[modalName]
-              ? "bg-white ring-2 ring-primary shadow-md shadow-indigo-500/10 dark:bg-slate-900"
-              : "bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700"
-          }
-        `}
+        className={cn(
+          "w-full flex items-center justify-center gap-x-2 text-base lg:gap-x-2",
+          "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
+          "bg-white dark:bg-slate-900",
+          "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
+          activeModal[modalName]
+            ? "ring-2 ring-[#6470fd] shadow-[0_20px_40px_-12px_rgba(100,112,253,0.10)]"
+            : "",
+          "md:w-44",
+          activeModal[modalName] ? "rounded-md" : "rounded-xl",
+          isRangeSelected ? "border-2 border-[#6470fd]" : "border",
+        )}
       >
         <span
-          className={`font-medium truncate ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
+          className={cn(
+            "truncate max-w-[10rem]",
+            isRangeSelected
+              ? "text-slate-600 dark:text-slate-200"
+              : "text-slate-400",
+          )}
         >
           {formatRange(state.selection.startDate, state.selection.endDate)}
         </span>
-        <Calendar className={`w-4 h-4`} />
+        <Calendar
+          className={cn(
+            "w-4 h-4 text-slate-500 dark:text-slate-300",
+            activeModal[modalName] ? "text-[#6470fd]" : "",
+          )}
+        />
       </button>
 
       {activeModal[modalName] && (

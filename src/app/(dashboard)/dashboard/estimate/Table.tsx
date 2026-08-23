@@ -1,9 +1,12 @@
 "use client";
 
+import { checkInventoryForConversion } from "@/actions/estimate/invoice/checkInventory";
 import { convertInvoice } from "@/actions/estimate/invoice/convert";
+import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import ResponsiveEstimateCard from "@/components/mobile-responsive/estimate/ResponsiveEstimateCard";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
@@ -11,7 +14,7 @@ import { useActionStoreCreateEdit } from "@/stores/createEditStore";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { Search, SquarePen } from "lucide-react";
+import { Search, PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -39,7 +42,9 @@ export interface InvoiceData {
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
 
-const defaultTake = 10;
+const defaultTake = 50;
+
+const pageSizeOptions = [10, 20, 50, 100];
 
 type TTableProps = {
   estimateData: {
@@ -83,32 +88,39 @@ export default function Table({
     }
   }, [autoOpenId, pathname]);
 
+  // Keep the control in sync with the URL, which filters/search also rewrite
+  useEffect(() => {
+    setCurrentPage(parseInt(page ?? "", 10) || 1);
+    setPageSize(parseInt(take ?? "", 10) || defaultTake);
+  }, [page, take]);
+
   // optimize calculation with useMemo
   const showPagination = useMemo(() => {
-    return estimateData.totalEstimate > defaultTake;
-  }, [estimateData.totalEstimate]);
+    return estimateData.totalEstimate > pageSize;
+  }, [estimateData.totalEstimate, pageSize]);
 
   // for preventing unnecessary re-renders
   const handlePageChange = useCallback(
-    (page: number, pageSize?: number) => {
+    (page: number, nextPageSize?: number) => {
       const searchParams = new URLSearchParams(params.toString());
       searchParams.set("page", page.toString());
-      if (pageSize) {
-        setPageSize(pageSize);
-        searchParams.set("take", pageSize.toString());
-      } else {
-        searchParams.delete("take");
-      }
+      // Carry the active page size across page changes — dropping it here made
+      // every navigation fall back to the default size.
+      const effectivePageSize = nextPageSize ?? pageSize;
+      setPageSize(effectivePageSize);
+      searchParams.set("take", effectivePageSize.toString());
       setCurrentPage(page);
       const newPath = `${pathname}?${searchParams.toString()}`;
       router.push(newPath);
     },
-    [params, pathname, router],
+    [pageSize, params, pathname, router],
   );
 
+  const { runWithInventoryCheck, dialogProps } = useInventoryConfirm();
+
   // Handler for converting an invoice to an estimate or invoice
-  const handleConvertedInvoice = async (id: string) => {
-    const res = await convertInvoice(id);
+  const convert = async (id: string, allowInsufficientInventory: boolean) => {
+    const res = await convertInvoice(id, undefined, allowInsufficientInventory);
     if (res.type === "success") {
       const checkEstimateOrInvoice =
         res.data.type === "Estimate" ? "Invoice" : "Estimate";
@@ -126,6 +138,13 @@ export default function Table({
     } else if (res.type === "globalError") {
       errorToast(res.message);
     }
+  };
+
+  const handleConvertedInvoice = async (id: string) => {
+    await runWithInventoryCheck(
+      () => checkInventoryForConversion(id),
+      (allowInsufficientInventory) => convert(id, allowInsufficientInventory),
+    );
   };
 
   return (
@@ -269,11 +288,15 @@ export default function Table({
                           onConvert={() => handleConvertedInvoice(data.id)}
                         />
                         <Link
-                          href={`/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`}
+                          href={
+                            data.clientId != null
+                              ? `/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`
+                              : `/dashboard/estimate/edit/${data.id}`
+                          }
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
-                          <SquarePen size={18} className="text-primary" />
+                          <PencilLineIcon size={18} className="text-primary" />
                         </Link>
                       </td>
                     </tr>
@@ -295,12 +318,15 @@ export default function Table({
             total={estimateData.totalEstimate}
             onChange={handlePageChange}
             showSizeChanger={true}
+            pageSizeOptions={pageSizeOptions}
             onShowSizeChange={handlePageChange}
             size={isMax640 ? "small" : "default"} // Use smaller size on mobile
             responsive={true}
           />
         </div>
       )}
+
+      <InventoryShortageDialog {...dialogProps} />
     </div>
   );
 }

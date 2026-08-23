@@ -1555,6 +1555,60 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
+"@ffmpeg-installer/darwin-arm64@4.1.5":
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/darwin-arm64/-/darwin-arm64-4.1.5.tgz#b7b5c262dd96d1aea4807514e1cdcf6e11f82743"
+  integrity sha512-hYqTiP63mXz7wSQfuqfFwfLOfwwFChUedeCVKkBtl/cliaTM7/ePI9bVzfZ2c+dWu3TqCwLDRWNSJ5pqZl8otA==
+
+"@ffmpeg-installer/darwin-x64@4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/darwin-x64/-/darwin-x64-4.1.0.tgz#48e1706c690e628148482bfb64acb67472089aaa"
+  integrity sha512-Z4EyG3cIFjdhlY8wI9aLUXuH8nVt7E9SlMVZtWvSPnm2sm37/yC2CwjUzyCQbJbySnef1tQwGG2Sx+uWhd9IAw==
+
+"@ffmpeg-installer/ffmpeg@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/ffmpeg/-/ffmpeg-1.1.0.tgz#87fdb9e7d180e8d78f7903f9441e36f978938a90"
+  integrity sha512-Uq4rmwkdGxIa9A6Bd/VqqYbT7zqh1GrT5/rFwCwKM70b42W5gIjWeVETq6SdcL0zXqDtY081Ws/iJWhr1+xvQg==
+  optionalDependencies:
+    "@ffmpeg-installer/darwin-arm64" "4.1.5"
+    "@ffmpeg-installer/darwin-x64" "4.1.0"
+    "@ffmpeg-installer/linux-arm" "4.1.3"
+    "@ffmpeg-installer/linux-arm64" "4.1.4"
+    "@ffmpeg-installer/linux-ia32" "4.1.0"
+    "@ffmpeg-installer/linux-x64" "4.1.0"
+    "@ffmpeg-installer/win32-ia32" "4.1.0"
+    "@ffmpeg-installer/win32-x64" "4.1.0"
+
+"@ffmpeg-installer/linux-arm64@4.1.4":
+  version "4.1.4"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/linux-arm64/-/linux-arm64-4.1.4.tgz#7219f3f901bb67f7926cb060b56b6974a6cad29f"
+  integrity sha512-dljEqAOD0oIM6O6DxBW9US/FkvqvQwgJ2lGHOwHDDwu/pX8+V0YsDL1xqHbj1DMX/+nP9rxw7G7gcUvGspSoKg==
+
+"@ffmpeg-installer/linux-arm@4.1.3":
+  version "4.1.3"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/linux-arm/-/linux-arm-4.1.3.tgz#c554f105ed5f10475ec25d7bec94926ce18db4c1"
+  integrity sha512-NDf5V6l8AfzZ8WzUGZ5mV8O/xMzRag2ETR6+TlGIsMHp81agx51cqpPItXPib/nAZYmo55Bl2L6/WOMI3A5YRg==
+
+"@ffmpeg-installer/linux-ia32@4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/linux-ia32/-/linux-ia32-4.1.0.tgz#adad70b0d0d9d8d813983d6e683c5a338a75e442"
+  integrity sha512-0LWyFQnPf+Ij9GQGD034hS6A90URNu9HCtQ5cTqo5MxOEc7Rd8gLXrJvn++UmxhU0J5RyRE9KRYstdCVUjkNOQ==
+
+"@ffmpeg-installer/linux-x64@4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/linux-x64/-/linux-x64-4.1.0.tgz#b4a5d89c4e12e6d9306dbcdc573df716ec1c4323"
+  integrity sha512-Y5BWhGLU/WpQjOArNIgXD3z5mxxdV8c41C+U15nsE5yF8tVcdCGet5zPs5Zy3Ta6bU7haGpIzryutqCGQA/W8A==
+
+"@ffmpeg-installer/win32-ia32@4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/win32-ia32/-/win32-ia32-4.1.0.tgz#6eac4fb691b64c02e7a116c1e2d167f3e9b40638"
+  integrity sha512-FV2D7RlaZv/lrtdhaQ4oETwoFUsUjlUiasiZLDxhEUPdNDWcH1OU9K1xTvqz+OXLdsmYelUDuBS/zkMOTtlUAw==
+
+"@ffmpeg-installer/win32-x64@4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@ffmpeg-installer/win32-x64/-/win32-x64-4.1.0.tgz#17e8699b5798d4c60e36e2d6326a8ebe5e95a2c5"
+  integrity sha512-Drt5u2vzDnIONf4ZEkKtFlbvwj6rI3kxw1Ck9fpudmtgaZIHD4ucsWB2lCZBXRxJgXR+2IMSti+4rtM4C4rXgg==
+
 "@floating-ui/core@^1.7.5":
   version "1.7.5"
   resolved "https://registry.npmjs.org/@floating-ui/core/-/core-1.7.5.tgz"
@@ -4669,6 +4723,13 @@
   resolved "https://registry.npmjs.org/@types/events/-/events-3.0.3.tgz"
   integrity sha512-trOc4AAUThEz9hapPtSd7wf5tiQKvTtu5b371UxXdTuqzIh0ArcRspRP0i0Viu+LXstIQ1z96t1nsPxT9ol01g==
 
+"@types/fluent-ffmpeg@^2.1.28":
+  version "2.1.28"
+  resolved "https://registry.yarnpkg.com/@types/fluent-ffmpeg/-/fluent-ffmpeg-2.1.28.tgz#d8039bafc06aa8770c75aeb818d8248c39b977c1"
+  integrity sha512-5ovxsDwBcPfJ+eYs1I/ZpcYCnkce7pvH9AHSvrZllAp1ZPpTRDZAFjF3TRFbukxSgIYTTNYePbS0rKUmaxVbXw==
+  dependencies:
+    "@types/node" "*"
+
 "@types/graceful-fs@^4.1.3":
   version "4.1.9"
   resolved "https://registry.npmjs.org/@types/graceful-fs/-/graceful-fs-4.1.9.tgz"
@@ -5270,6 +5331,11 @@ add@^2.0.6:
   resolved "https://registry.npmjs.org/add/-/add-2.0.6.tgz"
   integrity sha512-j5QzrmsokwWWp6kUcJQySpbG+xfOBqqKnup3OIk1pz+kB/80SLorZ9V8zHFLO92Lcd+hbvq8bT+zOGoPkmBV0Q==
 
+adler-32@~1.3.0:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/adler-32/-/adler-32-1.3.1.tgz#1dbf0b36dda0012189a32b3679061932df1821e2"
+  integrity sha512-ynZ4w/nUUv5rrsR8UUGoe1VC9hZj6V5hU9Qw1HlMDJGEJw5S7TfTErWTjMys6M7vr0YWcPqs3qAr4ss0nDfP+A==
+
 agent-base@6:
   version "6.0.2"
   resolved "https://registry.npmjs.org/agent-base/-/agent-base-6.0.2.tgz"
@@ -5576,6 +5642,11 @@ async-function@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/async-function/-/async-function-1.0.0.tgz"
   integrity sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==
+
+async@^0.2.9:
+  version "0.2.10"
+  resolved "https://registry.yarnpkg.com/async/-/async-0.2.10.tgz#b6bbe0b0674b9d719708ca38de8c237cb526c3d1"
+  integrity sha512-eAkdoKxU6/LkKDBzLpT+t6Ff5EtfSF4wx1WfJiPEEV7WNLnDaRXk0oVysiEPm262roaachGexwUv94WhSgN5TQ==
 
 async@^3.2.3:
   version "3.2.6"
@@ -6035,6 +6106,14 @@ canvg@^3.0.11:
     stackblur-canvas "^2.0.0"
     svg-pathdata "^6.0.3"
 
+cfb@~1.2.1:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/cfb/-/cfb-1.2.2.tgz#94e687628c700e5155436dac05f74e08df23bc44"
+  integrity sha512-KfdUZsSOw19/ObEWasvBP/Ac4reZvAGauZhs6S/gqNhXhI7cKwvlH7ulj+dOEYnca4bm4SGo8C1bTAQvnTjgQA==
+  dependencies:
+    adler-32 "~1.3.0"
+    crc-32 "~1.2.0"
+
 chalk@^4.0.0:
   version "4.1.2"
   resolved "https://registry.npmjs.org/chalk/-/chalk-4.1.2.tgz"
@@ -6191,6 +6270,11 @@ code-block-writer@^13.0.3:
   version "13.0.3"
   resolved "https://registry.npmjs.org/code-block-writer/-/code-block-writer-13.0.3.tgz"
   integrity sha512-Oofo0pq3IKnsFtuHqSF7TqBfr71aeyZDVJ0HpmqB7FBM2qEigL0iPONSCZSO9pE9dZTAxANe5XHG9Uy0YMv8cg==
+
+codepage@~1.15.0:
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/codepage/-/codepage-1.15.0.tgz#2e00519024b39424ec66eeb3ec07227e692618ab"
+  integrity sha512-3g6NUTPd/YtuuGrhMnOMRjFc+LJw/bnMp3+0r/Wcz3IXUuCosKRJvMphm5+Q+bvTVGcJJuRvVLuYba+WojaFaA==
 
 collect-v8-coverage@^1.0.0:
   version "1.0.3"
@@ -6373,6 +6457,11 @@ cosmiconfig@^9.0.0:
     import-fresh "^3.3.0"
     js-yaml "^4.1.0"
     parse-json "^5.2.0"
+
+crc-32@~1.2.0, crc-32@~1.2.1:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/crc-32/-/crc-32-1.2.2.tgz#3cad35a934b8bf71f25ca524b6da51fb7eace2ff"
+  integrity sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ==
 
 create-jest@^29.7.0:
   version "29.7.0"
@@ -7829,6 +7918,14 @@ flatted@^3.2.9:
   resolved "https://registry.npmjs.org/flatted/-/flatted-3.4.2.tgz"
   integrity sha512-PjDse7RzhcPkIJwy5t7KPWQSZ9cAbzQXcafsetQoD7sOJRQlGikNbx7yZp2OotDnJyrDcbyRq3Ttb18iYOqkxA==
 
+fluent-ffmpeg@^2.1.3:
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/fluent-ffmpeg/-/fluent-ffmpeg-2.1.3.tgz#d6846be257777844249a4adeb320f25326d239f3"
+  integrity sha512-Be3narBNt2s6bsaqP6Jzq91heDgOEaDCJAXcE3qcma/EJBSy5FB4cvO31XBInuAuKBx8Kptf8dkhjK0IOru39Q==
+  dependencies:
+    async "^0.2.9"
+    which "^1.1.1"
+
 fn.name@1.x.x:
   version "1.1.0"
   resolved "https://registry.npmjs.org/fn.name/-/fn.name-1.1.0.tgz"
@@ -7909,6 +8006,11 @@ forwarded@0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/forwarded/-/forwarded-0.2.0.tgz"
   integrity sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==
+
+frac@~1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/frac/-/frac-1.1.2.tgz#3d74f7f6478c88a1b5020306d747dc6313c74d0b"
+  integrity sha512-w/XBfkibaTl3YDqASwfDUqkna4Z2p9cFSr1aHDt0WoMTECnRfBOv2WArlZILlqgWlmdIlALXGpM2AOhEk5W3IA==
 
 fraction.js@^5.3.4:
   version "5.3.4"
@@ -10511,6 +10613,11 @@ open@^11.0.0:
     powershell-utils "^0.1.0"
     wsl-utils "^0.3.0"
 
+openai@^7.5.0:
+  version "7.5.0"
+  resolved "https://registry.yarnpkg.com/openai/-/openai-7.5.0.tgz#adacc4ba3e325ffa9f71e0aeec834058e3d2e98b"
+  integrity sha512-ZbDBz8FSB8Mv8fFYIUvzTFMdV5vl93/octp1MdtK2lfYepSpfv/ewmeugpKz/cwGtFSx+YuUM4NwpZ2P55YiPA==
+
 openapi-path-templating@^2.2.1:
   version "2.2.1"
   resolved "https://registry.npmjs.org/openapi-path-templating/-/openapi-path-templating-2.2.1.tgz"
@@ -12828,6 +12935,13 @@ sqlstring@^2.3.2:
   resolved "https://registry.npmjs.org/sqlstring/-/sqlstring-2.3.3.tgz"
   integrity sha512-qC9iz2FlN7DQl3+wjwn3802RTyjCx7sDvfQEXchwa6CWOx07/WVfh91gBmQ9fahw8snwGEWU3xGzOt4tFyHLxg==
 
+ssf@~0.11.2:
+  version "0.11.2"
+  resolved "https://registry.yarnpkg.com/ssf/-/ssf-0.11.2.tgz#0b99698b237548d088fc43cdf2b70c1a7512c06c"
+  integrity sha512-+idbmIXoYET47hH+d7dfm2epdOMUDjqcB4648sTZ+t2JwoyBFL/insLfB/racrDmsKB3diwsDA696pZMieAC5g==
+  dependencies:
+    frac "~1.1.2"
+
 stable-hash@^0.0.5:
   version "0.0.5"
   resolved "https://registry.npmjs.org/stable-hash/-/stable-hash-0.0.5.tgz"
@@ -14107,6 +14221,13 @@ which-typed-array@^1.1.16, which-typed-array@^1.1.19, which-typed-array@^1.1.2:
     gopd "^1.2.0"
     has-tostringtag "^1.0.2"
 
+which@^1.1.1:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/which/-/which-1.3.1.tgz#a45043d54f5805316da8d62f9f50918d3da70b0a"
+  integrity sha512-HxJdYWq1MTIQbJ3nw0cqssHoTNU267KlrDuGZ1WYlxDStUtKUhOaJmh112/TZmHxxUfuJqPXSOm7tDyas0OSIQ==
+  dependencies:
+    isexe "^2.0.0"
+
 which@^2.0.1:
   version "2.0.2"
   resolved "https://registry.npmjs.org/which/-/which-2.0.2.tgz"
@@ -14157,10 +14278,20 @@ winston@^3.11.0:
     triple-beam "^1.3.0"
     winston-transport "^4.9.0"
 
+wmf@~1.0.1:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/wmf/-/wmf-1.0.2.tgz#7d19d621071a08c2bdc6b7e688a9c435298cc2da"
+  integrity sha512-/p9K7bEh0Dj6WbXg4JG0xvLQmIadrner1bi45VMJTfnbVHsc7yIajZyoSoK60/dtVBs12Fm6WkUI5/3WAVsNMw==
+
 word-wrap@^1.2.5:
   version "1.2.5"
   resolved "https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.5.tgz"
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
+
+word@~0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/word/-/word-0.3.0.tgz#8542157e4f8e849f4a363a288992d47612db9961"
+  integrity sha512-OELeY0Q61OXpdUfTp+oweA/vtLVg5VDOXh+3he3PNzLGG/y0oylSOC1xRVj0+l4vQ3tj/bB1HVHv1ocXkQceFA==
 
 wrap-ansi@^6.2.0:
   version "6.2.0"
@@ -14214,6 +14345,19 @@ wsl-utils@^0.3.0:
   dependencies:
     is-wsl "^3.1.0"
     powershell-utils "^0.1.0"
+
+xlsx@^0.18.5:
+  version "0.18.5"
+  resolved "https://registry.yarnpkg.com/xlsx/-/xlsx-0.18.5.tgz#16711b9113c848076b8a177022799ad356eba7d0"
+  integrity sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==
+  dependencies:
+    adler-32 "~1.3.0"
+    cfb "~1.2.1"
+    codepage "~1.15.0"
+    crc-32 "~1.2.1"
+    ssf "~0.11.2"
+    wmf "~1.0.1"
+    word "~0.3.0"
 
 xml-but-prettier@^1.0.1:
   version "1.0.1"

@@ -3,7 +3,8 @@
 import NewFleet from "@/app/(dashboard)/dashboard/fleet/components/NewFleet";
 import { cn } from "@/lib/cn";
 import { padId } from "@/lib/padId";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
+import moment from "moment";
 import Link from "next/link";
 import DeleteFleet from "./DeleteFleet";
 
@@ -26,6 +27,7 @@ const FleetListTable = ({ fleets }: TFleetListTableProps) => {
           <th className="px-4 py-2 text-left">Contact Name</th>
           <th className="px-4 py-2 text-left">Email</th>
           <th className="px-4 py-2 text-left">Phone</th>
+          <th className="px-4 py-2 text-left"> Joined</th>
           <th className="px-4 py-2 text-center">Edit</th>
         </tr>
       </thead>
@@ -76,13 +78,23 @@ const FleetListTable = ({ fleets }: TFleetListTableProps) => {
                 {client.mobile}
               </Link>
             </td>
+            <td className="px-4 py-2 text-left">
+              <Link
+                className="block h-full w-full text-slate-500 font-normal"
+                href={`/dashboard/fleet/${client.id}`}
+              >
+                {moment(
+                  client?.joinDate ? client.joinDate : client.createdAt,
+                ).format("MM/DD/YYYY")}
+              </Link>
+            </td>
             <td className="px-4 py-2 text-center">
               <div className="flex items-center justify-center gap-2">
                 <NewFleet
                   fleet={client}
                   isEdit={true}
                   buttonElement={
-                    <SquarePen className="w-5 h-5 cursor-pointer text-primary" />
+                    <PencilLineIcon className="w-5 h-5 cursor-pointer text-primary" />
                   }
                 />
                 <DeleteFleet id={client.fleet?.clientId} />

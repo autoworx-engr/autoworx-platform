@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,8 +22,9 @@ import {
 } from "@/hooks/useCarData";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
-import { SquarePen } from "lucide-react";
-import { useState } from "react";
+import { PencilLineIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
 import SelectorWithSearch from "./SelectorWithSearch";
 
@@ -41,12 +43,41 @@ export default function EditVehicle({
     vehicleYear: vehicle.year ? String(vehicle.year) : "",
     vehicleMake: vehicle.make || "",
     vehicleModel: vehicle.model || "",
-    other: "",
+    other: vehicle.other || "",
   });
   const [engineSize, setEngineSize] = useState<string>(
     vehicle?.engineSize || "",
   );
   const [vinValue, setVinValue] = useState<string>(vehicle?.vin || "");
+
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        vehicleYear: vehicle.year ? String(vehicle.year) : "",
+        vehicleMake: vehicle.make || "",
+        vehicleModel: vehicle.model || "",
+        other: vehicle.other || "",
+      });
+      setSelectedColor(vehicle?.color ? vehicle.color : null);
+      setEngineSize(vehicle?.engineSize || "");
+      setVinValue(vehicle?.vin || "");
+      clearError();
+    }
+  }, [open, vehicle]);
+  const { decodeVin } = useVinDecode();
+
+  const handleVinBlur = async (vin: string) => {
+    const result = await decodeVin(vin);
+    if (!result) return;
+    const { year, make, model, displacement_cc } = extractVinFields(result);
+    setFormData((prev) => ({
+      ...prev,
+      vehicleYear: year ? String(year) : prev.vehicleYear,
+      vehicleMake: make || prev.vehicleMake,
+      vehicleModel: model || prev.vehicleModel,
+    }));
+    if (displacement_cc) setEngineSize(displacement_cc);
+  };
 
   const { data: years, isError: isYearFetchError }: any = useGetAllYears();
   const { data: makes, isError: isMakeFetchError }: any = useGetMake();
@@ -70,17 +101,25 @@ export default function EditVehicle({
       : [];
 
   const handleInputChange = (name: string, value: string | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value || "",
-    }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value || "" };
+
+      if (name === "vehicleMake") {
+        if (prev[name as keyof typeof prev] !== (value || "")) {
+          newData.vehicleModel = "";
+        }
+      }
+
+      return newData;
+    });
   };
 
   async function handleSubmit(data: FormData) {
+    const other = data.get("other") as string;
+
     if (
-      !formData.vehicleYear ||
-      !formData.vehicleMake ||
-      !formData.vehicleModel
+      !other &&
+      (!formData.vehicleYear || !formData.vehicleMake || !formData.vehicleModel)
     ) {
       showError({
         field: !formData.vehicleYear
@@ -108,11 +147,9 @@ export default function EditVehicle({
     const license = data.get("license") as string;
     const vin = data.get("vin") as string;
     const notes = data.get("notes") as string;
-    const other = data.get("other") as string;
 
     if (!vehicle?.clientId) return;
 
-    console.log("other", other);
     const res = await editVehicle({
       year,
       make,
@@ -125,12 +162,11 @@ export default function EditVehicle({
       license,
       vin,
       notes,
-      other: vehicle?.other || "",
+      other: other || "",
       clientId: vehicle.clientId,
       vehicleId: vehicle.id,
     });
 
-    console.log("response", res);
     if (res.type === "globalError") {
       showError({
         field: res.field,
@@ -149,7 +185,7 @@ export default function EditVehicle({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button type="button" className="text-xs text-primary">
-          <SquarePen className="w-4 h-4 cursor-pointer" />
+          <PencilLineIcon className="w-4 h-4 cursor-pointer" />
         </button>
       </DialogTrigger>
 
@@ -159,11 +195,14 @@ export default function EditVehicle({
       >
         <DialogHeader>
           <DialogTitle>Edit Vehicle</DialogTitle>
+          <DialogDescription>
+            Update vehicle details for the client
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
-          <FormError />
+        <FormError />
 
+        <div className="thin-scrollbar scrollbar-track-transparent scrollbar-thumb-muted grid content-start items-start gap-x-4 gap-y-4 overflow-y-auto px-2 py-2 sm:grid-cols-2 md:px-4">
           {/* Year */}
           <SelectorWithSearch
             name="year"
@@ -216,11 +255,13 @@ export default function EditVehicle({
             defaultValue={vehicle?.submodel || ""}
             required={false}
             label="Sub Model"
+            placeholder="Enter sub model"
           />
           <SlimInput
             name="type"
             defaultValue={vehicle?.type || ""}
             required={false}
+            placeholder="Enter type"
           />
 
           {/* ColorSelector component */}
@@ -233,52 +274,75 @@ export default function EditVehicle({
             name="transmission"
             defaultValue={vehicle?.transmission || ""}
             required={false}
+            placeholder="Enter transmission"
           />
           <SlimInput
             name="engineSize"
             value={engineSize}
             onChange={(e) => setEngineSize(e.target.value)}
             required={false}
+            placeholder="Enter engine size"
           />
           <SlimInput
             name="license"
             defaultValue={vehicle?.license || ""}
             required={false}
             label="License Plate"
+            placeholder="Enter license plate"
           />
-          <div className="flex items-end gap-2">
-            <SlimInput
-              name="vin"
-              value={vinValue}
-              onChange={(e) => setVinValue(e.target.value)}
-              required={false}
-            />
-            <VINInputCamera
-              onVehicleInfo={(value) => {
-                const { make, model, year, specs, vin } =
-                  value?.data?.data || {};
-                const { displacement_cc } = specs || {};
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-end gap-2">
+              <SlimInput
+                name="vin"
+                label="Vin"
+                placeholder="Enter VIN"
+                rootClassName="flex-1"
+                value={vinValue}
+                onChange={(e) => setVinValue(e.target.value)}
+                onBlur={(e) => handleVinBlur(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleVinBlur(vinValue);
+                  }
+                }}
+                required={false}
+              />
+              <VINInputCamera
+                onVehicleInfo={(value) => {
+                  const { make, model, year, specs, vin } =
+                    value?.data?.data || {};
+                  const { displacement_cc } = specs || {};
 
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicleYear: year ? String(year) : prev.vehicleYear,
-                  vehicleMake: make || prev.vehicleMake,
-                  vehicleModel: model || prev.vehicleModel,
-                }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicleYear: year ? String(year) : prev.vehicleYear,
+                    vehicleMake: make || prev.vehicleMake,
+                    vehicleModel: model || prev.vehicleModel,
+                  }));
 
-                if (displacement_cc) setEngineSize(displacement_cc);
-                if (vin) setVinValue(vin);
-              }}
-            />
+                  if (displacement_cc) setEngineSize(displacement_cc);
+                  if (vin) setVinValue(vin);
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Press Enter or click away after typing to auto-fill vehicle
+              details
+            </p>
           </div>
           <SlimInput
             name="other"
             required={false}
+            label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
+            placeholder="Enter vehicle details"
+            value={formData.other}
+            onChange={(e) => handleInputChange("other", e.target.value)}
             rootClassName={`col-span-full ${
               !!formData.vehicleYear &&
               !!formData.vehicleMake &&
               !!formData.vehicleModel &&
-              "cursor-not-allowed bg-gray-100 opacity-50"
+              "cursor-not-allowed bg-muted opacity-50"
             }`}
             disabled={
               !!formData.vehicleYear &&
@@ -290,6 +354,7 @@ export default function EditVehicle({
             name="notes"
             defaultValue={vehicle?.notes || ""}
             required={false}
+            placeholder="Enter notes"
             rootClassName="col-span-full"
           />
         </div>

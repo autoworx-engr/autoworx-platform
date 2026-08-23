@@ -204,9 +204,20 @@ export function NotificationsPopover() {
   );
 }
 
+// A completed task is filtered out of the calendar, so linking to it would land
+// the user on a day with nothing to see. These stay read-only.
+const COMPLETED_TASK_TITLES = new Set([
+  "Task Completed",
+  "Assigned Task Completed",
+]);
+
 function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
   const [isPending, startTransition] = useTransition();
   const { avatarUrl, title } = renderContent(notification);
+  const isNavigable =
+    !!notification.redirectUrl &&
+    notification.redirectUrl !== "/" &&
+    !COMPLETED_TASK_TITLES.has(notification.title);
 
   const handleAction = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -233,17 +244,23 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
         {avatarUrl}
       </div>
 
-      <div className="flex flex-1 min-w-0 flex-col gap-1">
-        <Link
-          href={notification.redirectUrl || "#"}
-          onClick={() => {
-            setIsOpen(false);
-            if (notification.isUnRead) onMarkRead(notification.id);
-          }}
-          className="text-sm font-semibold leading-tight text-slate-700"
-        >
-          {title}
-        </Link>
+      <div className="flex flex-1 min-w-0 flex-col gap-1 break-words">
+        {isNavigable ? (
+          <Link
+            href={notification.redirectUrl}
+            onClick={() => {
+              setIsOpen(false);
+              if (notification.isUnRead) onMarkRead(notification.id);
+            }}
+            className="text-sm font-semibold leading-tight text-slate-700"
+          >
+            {title}
+          </Link>
+        ) : (
+          <span className="text-sm font-semibold leading-tight text-slate-700">
+            {title}
+          </span>
+        )}
         <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
           <Clock size={12} />
           {fToNow(notification.createdAt)}

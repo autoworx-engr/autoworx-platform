@@ -10,8 +10,8 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
-import { useFormErrorStore } from "@/stores/form-error";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour } from "@/utils/time";
@@ -75,7 +75,28 @@ export function useAppointmentFormState({
   const { data: settings, isFetched: settingsIsFetched } = useSettingsQuery();
 
   const queryClient = useQueryClient();
-  const { showError, clearError } = useFormErrorStore();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const showError = useCallback(
+    ({ field, message }: { field: string; message: string }) => {
+      if (field === "title") {
+        setFieldErrors((prev) => ({ ...prev, title: message }));
+      } else {
+        errorToast(message);
+      }
+    },
+    [],
+  );
+  const clearError = useCallback(() => setFieldErrors({}), []);
+  const clearFieldError = useCallback(
+    (field: string) =>
+      setFieldErrors((prev) => {
+        if (!(field in prev)) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      }),
+    [],
+  );
   const { setUpdateVariable } = useCalendarStore();
 
   const [client, setClient] = useState<Partial<
@@ -84,14 +105,17 @@ export function useAppointmentFormState({
     }
   > | null>(null);
 
-  const { data: estimates = [], isFetched: estimateIsFetched } =
-    useEstimatesQueryByClient(
-      client?.id!,
-      { id: true, clientId: true, grandTotal: true, vehicle: true },
-      { enabled: !!client?.id },
-    );
+  const {
+    data: estimates = [],
+    isFetched: estimateIsFetched,
+    isLoading: estimatesLoading,
+  } = useEstimatesQueryByClient(
+    client?.id!,
+    { id: true, clientId: true, grandTotal: true, vehicle: true },
+    { enabled: !!client?.id },
+  );
 
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: queryKeys.invoicesByClientId(client?.id!),
     queryFn: () =>
       getClientEstimate(client?.id!, {
@@ -100,6 +124,12 @@ export function useAppointmentFormState({
       }),
     enabled: !!client?.id,
   });
+
+  // A prefilled draft id renders immediately, but its vehicle label and total
+  // only arrive with these queries — surface that wait instead of showing a
+  // placeholder "$0.00" that silently corrects itself.
+  const draftOptionsLoading =
+    !!client?.id && (estimatesLoading || invoicesLoading);
 
   const timezone = useCompanyTimezone();
   const today = moment().format("YYYY-MM-DD");
@@ -120,7 +150,7 @@ export function useAppointmentFormState({
   // Clear the "title required" error as soon as the user picks a title
   useEffect(() => {
     if (title && title.trim()) {
-      clearError();
+      clearFieldError("title");
     }
   }, [title]);
   const [notes, setNotes] = useState("");
@@ -146,6 +176,7 @@ export function useAppointmentFormState({
   const [draftOpen, setDraftOpen] = useState(false);
   const [clientOpenDropdown, setClientOpenDropdown] = useState(false);
   const [vehicleOpenDropdown, setVehicleOpenDropdown] = useState(false);
+  const [serviceCategoryOpen, setServiceCategoryOpen] = useState(false);
   const [openConfirmation, setOpenConfirmation] = useState(false);
   const [openReminder, setOpenReminder] = useState(false);
   const [formChanged, setFormChanged] = useState(false);
@@ -229,11 +260,12 @@ export function useAppointmentFormState({
   }, [estimates, invoices]);
 
   const filteredDraftEstimateOptions = useMemo(() => {
-    const term = draftSearch.toLowerCase();
+    const term = normalizeSearch(draftSearch);
+    if (!term) return draftEstimateOptions;
     return draftEstimateOptions.filter(
       (item) =>
-        item.id.includes(draftSearch) ||
-        item.vehicle.toLowerCase().includes(term),
+        normalizeSearch(item.id).includes(term) ||
+        normalizeSearch(item.vehicle).includes(term),
     );
   }, [draftSearch, draftEstimateOptions]);
 
@@ -276,9 +308,7 @@ export function useAppointmentFormState({
       setTimes((appointment?.times as any) ?? []);
       setConfirmationTemplate(appointment?.confirmationEmailTemplate ?? null);
       setReminderTemplate(appointment?.reminderEmailTemplate ?? null);
-      setConfirmationTemplateStatus(
-        appointment?.confirmationEmailTemplateStatus ?? false,
-      );
+      setConfirmationTemplateStatus(false);
       setReminderTemplateStatus(
         appointment?.reminderEmailTemplateStatus ?? false,
       );
@@ -304,8 +334,7 @@ export function useAppointmentFormState({
         notes: appointment?.notes ?? "",
         confirmationTemplate: appointment?.confirmationEmailTemplate ?? null,
         reminderTemplate: appointment?.reminderEmailTemplate ?? null,
-        confirmationTemplateStatus:
-          appointment?.confirmationEmailTemplateStatus ?? false,
+        confirmationTemplateStatus: false,
         reminderTemplateStatus:
           appointment?.reminderEmailTemplateStatus ?? false,
         times: (appointment?.times as any) ?? [],
@@ -378,11 +407,19 @@ export function useAppointmentFormState({
     }
   }, [today, fromEdit, selectedDate]);
 
+  // Reset only on real unmount. Keying this on `resetAll` re-ran the cleanup
+  // whenever that callback's identity changed, which wiped already-hydrated
+  // state — most visibly the saved confirmation/reminder templates, which then
+  // had to be picked again.
+  const resetAllRef = useRef(resetAll);
+  useEffect(() => {
+    resetAllRef.current = resetAll;
+  }, [resetAll]);
   useEffect(() => {
     return () => {
-      resetAll();
+      resetAllRef.current();
     };
-  }, [resetAll]);
+  }, []);
 
   useEffect(() => {
     const calendarSettings = (settings as any)?.data ?? settings;
@@ -461,65 +498,74 @@ export function useAppointmentFormState({
     originalValues,
   ]);
 
+  // Only one picker may be open at a time. Tracking which flag turned on last
+  // and closing the rest scales to new pickers, unlike an if/else chain that
+  // needed a branch per pair.
+  const openFlags = useMemo(
+    () => ({
+      client: clientOpenDropdown,
+      vehicle: vehicleOpenDropdown,
+      draft: draftOpen,
+      confirmation: openConfirmation,
+      reminder: openReminder,
+      serviceCategory: serviceCategoryOpen,
+    }),
+    [
+      clientOpenDropdown,
+      vehicleOpenDropdown,
+      draftOpen,
+      openConfirmation,
+      openReminder,
+      serviceCategoryOpen,
+    ],
+  );
+
+  const closers = useRef({
+    client: setClientOpenDropdown,
+    vehicle: setVehicleOpenDropdown,
+    draft: setDraftOpen,
+    confirmation: setOpenConfirmation,
+    reminder: setOpenReminder,
+    serviceCategory: setServiceCategoryOpen,
+  });
+  const prevOpenFlags = useRef(openFlags);
+
   useEffect(() => {
-    if (
-      clientOpenDropdown &&
-      (vehicleOpenDropdown || draftOpen || openConfirmation || openReminder)
-    ) {
-      setVehicleOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenConfirmation(false);
-      setOpenReminder(false);
-    } else if (
-      vehicleOpenDropdown &&
-      (clientOpenDropdown || draftOpen || openConfirmation || openReminder)
-    ) {
-      setClientOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenConfirmation(false);
-      setOpenReminder(false);
-    } else if (
-      draftOpen &&
-      (clientOpenDropdown ||
-        vehicleOpenDropdown ||
-        openConfirmation ||
-        openReminder)
-    ) {
-      setClientOpenDropdown(false);
-      setVehicleOpenDropdown(false);
-      setOpenConfirmation(false);
-      setOpenReminder(false);
-    } else if (
-      openConfirmation &&
-      (clientOpenDropdown || vehicleOpenDropdown || draftOpen || openReminder)
-    ) {
-      setClientOpenDropdown(false);
-      setVehicleOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenReminder(false);
-    } else if (
-      openReminder &&
-      (clientOpenDropdown ||
-        vehicleOpenDropdown ||
-        draftOpen ||
-        openConfirmation)
-    ) {
-      setClientOpenDropdown(false);
-      setVehicleOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenConfirmation(false);
-    }
-  }, [
-    draftOpen,
-    clientOpenDropdown,
-    vehicleOpenDropdown,
-    openConfirmation,
-    openReminder,
-  ]);
+    const keys = Object.keys(openFlags) as (keyof typeof openFlags)[];
+    const justOpened = keys.find(
+      (key) => openFlags[key] && !prevOpenFlags.current[key],
+    );
+    prevOpenFlags.current = openFlags;
+    if (!justOpened) return;
+
+    keys.forEach((key) => {
+      if (key !== justOpened && openFlags[key]) closers.current[key](false);
+    });
+  }, [openFlags]);
 
   useEffect(() => {
     if (!draftOpen) setDraftSearch("");
   }, [draftOpen]);
+
+  useEffect(() => {
+    if (fromEdit || !draftEstimateId) return;
+    setDraft(draftEstimateId);
+  }, [draftEstimateId, fromEdit]);
+
+  const prevDraftClientId = useRef<number | null | undefined>(undefined);
+  useEffect(() => {
+    if (fromEdit && !appointment) return;
+    const currentClientId = client?.id ?? null;
+    if (prevDraftClientId.current === undefined) {
+      prevDraftClientId.current = fromEdit
+        ? (appointment?.client?.id ?? currentClientId)
+        : (clientId ?? currentClientId);
+      return;
+    }
+    if (prevDraftClientId.current === currentClientId) return;
+    prevDraftClientId.current = currentClientId;
+    setDraft(null);
+  }, [client?.id, clientId, fromEdit, appointment]);
 
   const handleDate = (operator: "+" | "-") => {
     const delta = operator === "+" ? 1 : -1;
@@ -550,8 +596,8 @@ export function useAppointmentFormState({
       // be numerically earlier than the start time. Only enforce ordering
       // when start and end fall on the same calendar day.
       const isMultiDay = !!(endDate && date && endDate > date);
-      if (!isMultiDay && startTime && timeValue < startTime) {
-        errorToast("End time cannot be before start time!");
+      if (!isMultiDay && startTime && timeValue <= startTime) {
+        errorToast("End time must be after start time!");
         return;
       }
       setEndTime(timeValue);
@@ -599,7 +645,10 @@ export function useAppointmentFormState({
           message: "No confirmation template is selected",
         });
         return;
-      } else if (client && reminderTemplateStatus && !reminderTemplate) {
+        // Reminders also go to assigned teammates, so this is validated even
+        // when no client is attached — unlike the confirmation above, which is
+        // a client-only email.
+      } else if (reminderTemplateStatus && !reminderTemplate) {
         setIsSubmitting(false);
         showError({
           field: "all",
@@ -608,15 +657,29 @@ export function useAppointmentFormState({
         return;
       }
 
-      if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
-        setIsSubmitting(false);
-        showError({
-          field: "all",
-          message:
-            "Set company timezone in Settings > Business Profile to send client reminders.",
-        });
-        return;
-      }
+      // Custom/ad-hoc reminder scheduling (the times[] UI) is disabled for
+      // now — see src/components/appointment/Reminder.tsx. That means
+      // `times` is always empty, so this check would permanently block
+      // submission. Disabled alongside it; re-enable together.
+      // if (
+      //   client &&
+      //   reminderTemplateStatus &&
+      //   reminderTemplate &&
+      //   times.length === 0
+      // ) {
+      //   setIsSubmitting(false);
+      //   showError({
+      //     field: "all",
+      //     message:
+      //       "Add at least one reminder time and date, or turn the reminder off.",
+      //   });
+      //   return;
+      // }
+
+      // No timezone guard here: `useCompanyTimezone` falls back to
+      // `moment.tz.guess()`, so `timezone` is never empty and the old check
+      // could never fire. The scheduler resolves its own fallback chain
+      // (company timezone -> appointment timezone -> Etc/UTC).
 
       let res;
       const selectedClientId = client?.id ?? undefined;
@@ -781,6 +844,8 @@ export function useAppointmentFormState({
     // form fields
     title,
     setTitle,
+    fieldErrors,
+    clearFieldError,
     date,
     setDate,
     endDate,
@@ -822,6 +887,8 @@ export function useAppointmentFormState({
     setClientOpenDropdown,
     vehicleOpenDropdown,
     setVehicleOpenDropdown,
+    serviceCategoryOpen,
+    setServiceCategoryOpen,
     openConfirmation,
     setOpenConfirmation,
     openReminder,
@@ -829,6 +896,7 @@ export function useAppointmentFormState({
     // computed
     filteredDraftEstimateOptions,
     selectedDraftOption,
+    draftOptionsLoading,
     timeOptions,
     rows,
     // refs

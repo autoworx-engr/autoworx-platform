@@ -52,6 +52,7 @@ type ShopBookingRow = {
   subtotal?: unknown;
   tax?: unknown;
   serviceFee?: unknown;
+  tip?: unknown;
   total?: unknown;
   services: Array<{
     title: string;
@@ -190,13 +191,15 @@ function toEstimate(item: ShopBookingRow): Estimate {
     item.subtotal ?? item.invoice?.subtotal ?? fallbackSubtotal,
   );
   const taxRate = Number(item.invoice?.tax ?? 0);
-  const vehicleExtraCost = Number(item.invoice?.vehicleExtraCost ?? 0);
-  const serviceFee = Number(item.serviceFee ?? item.invoice?.serviceFee ?? 0);
-  const total = Number(
-    item.total ?? item.invoice?.grandTotal ?? subtotal + serviceFee,
+  const serviceFeeRate = Number(item.invoice?.serviceFee ?? 0);
+  const serviceFee = Number(
+    item.serviceFee ?? (subtotal * serviceFeeRate) / 100,
   );
-  const totalServiceCost = subtotal - vehicleExtraCost;
-  const taxAmount = Number(item.tax ?? (totalServiceCost * taxRate) / 100);
+  const tip = Number(item.tip ?? 0);
+  const total = Number(
+    item.total ?? item.invoice?.grandTotal ?? subtotal + serviceFee + tip,
+  );
+  const taxAmount = Number(item.tax ?? (subtotal * taxRate) / 100);
 
   const fullName =
     `${item.client?.firstName || ""} ${item.client?.lastName || ""}`.trim();
@@ -228,7 +231,10 @@ function toEstimate(item: ShopBookingRow): Estimate {
     services,
     subtotal,
     taxAmount,
+    taxRate,
+    serviceFeeRate,
     serviceFee,
+    tip,
     total,
   };
 }

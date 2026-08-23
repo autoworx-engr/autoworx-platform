@@ -14,6 +14,7 @@ import FormError from "@/components/FormError";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
+import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { EmailTemplate, EmailTemplateType } from "@prisma/client";
@@ -45,11 +46,14 @@ export default function NewTemplate({
   const { data: templates = [] } = useTemplatesQuery();
   const queryClient = useQueryClient();
 
-  const [subject, setSubject] = useState(
+  // Hint text only — the field starts empty so the user isn't misled into
+  // thinking a subject has already been entered.
+  const subjectPlaceholder =
     type === "Confirmation"
       ? "Appointment Confirmation"
-      : "Appointment Reminder",
-  );
+      : "Appointment Reminder";
+
+  const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -105,6 +109,7 @@ export default function NewTemplate({
           <SlimInput
             name="subject"
             value={subject}
+            placeholder={subjectPlaceholder}
             onChange={(e) => setSubject(e.target.value)}
             required
           />
@@ -123,9 +128,11 @@ export default function NewTemplate({
               name="message"
               rows={5}
               maxLength={160} // ✅ Enforce SMS strictness
-              className={`${slimInputClassName} ${
-                message.length > 160 ? "border-red-500" : ""
-              }`}
+              className={cn(
+                slimInputClassName,
+                "h-auto min-h-[100px]",
+                message.length > 160 && "border-red-500",
+              )}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />

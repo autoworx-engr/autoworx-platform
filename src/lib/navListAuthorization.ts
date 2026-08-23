@@ -1,283 +1,88 @@
-import { ReactNode } from "react";
 import { PermissionsResult } from "@/lib/getPermissions";
+import type { CompanyFeaturePermission } from "@/stores/companyFeaturePermissionStore";
+import type { NavItem } from "./navItem";
+import { canAccessRoute, canAccessWithFeatureKey } from "./routeAccess";
+import { resolveRouteFeatureKey } from "./routeFeatureKeys";
 
-type BasePermission = {
-  id: number;
-  companyId: number;
-  communicationHubInternal?: boolean;
-  communicationHubClients?: boolean;
-  communicationHubCollaboration?: boolean;
-  calendarTask?: boolean;
-  shopPipeline?: boolean;
-  salesPipeline?: boolean;
-  reporting?: boolean;
-  reportingViewOnly?: boolean;
-  estimatesInvoices?: boolean;
-  payments?: boolean;
-  inventory?: boolean;
-  inventoryAll?: boolean; // Added for Manager permissions
-  inventoryAllViewOnly?: boolean;
-  workforceManagement?: boolean;
-  workforceManagementViewOnly?: boolean;
-  businessSettings?: boolean;
-  // Add any other keys as needed
+/**
+ * Role-specific landing pages. These are routing conveniences, not permissions:
+ * the rewritten link is what then gets permission-checked, so e.g. a Technician
+ * keeps the Pipelines item via `shopPipeline` instead of losing it to
+ * `salesPipeline`.
+ */
+const ROLE_LINK_OVERRIDES: Record<string, Record<string, string>> = {
+  Technician: {
+    "Analytics and Reporting": "/dashboard/reporting/technicianreporting",
+  },
+  Sales: {
+    "Analytics and Reporting": "/dashboard/reporting/salesreporting",
+  },
 };
 
-type NavItem = {
-  title: string;
-  icon: string | ReactNode;
-  link?: string | null;
-  path: string;
-  subnav?:
-    | {
-        title: string;
-        link: string;
-      }[]
-    | null;
-};
+function applyRoleLinkOverride(
+  item: NavItem,
+  permissions: PermissionsResult | null,
+): NavItem {
+  const override =
+    permissions?.role && ROLE_LINK_OVERRIDES[permissions.role]?.[item.title];
+  return override ? { ...item, link: override } : item;
+}
 
+/**
+ * Filter a nav list by user permissions and, when provided, by company feature
+ * entitlements.
+ *
+ * Visibility is derived from the same route → key maps the route guard uses
+ * (ROUTE_PERMISSIONS_MAP / FEATURE_PERMISSIONS_MAP), so a nav item can never be
+ * visible-but-404 or hidden-but-reachable. Adding a nav entry needs no change
+ * here — only a mapping entry.
+ */
 export function filterNavList(
   navList: NavItem[],
   permissions: PermissionsResult | null,
+  companyFeaturePermission?: CompanyFeaturePermission[] | null,
 ): NavItem[] {
-  return navList
-    .filter((item) => {
-      // Role-based filtering
-      if (permissions?.role === "Technician") {
-        if (
-          [
-            "Invoices",
-            "Payments",
-            "Directory",
-            "Inventory",
-            "Visualization",
-          ].includes(item.title)
-        ) {
-          return false;
-        }
-      }
-      if (permissions?.role === "Sales") {
-        if (["Visualization"].includes(item.title)) {
-          return false;
-        }
-      }
-      // Permission-based checks
-      if (permissions?.companyPermissions) {
-        const cp = permissions.companyPermissions as BasePermission;
-        const up = permissions.userPermissions as BasePermission | undefined;
+  const canAccess = (link?: string | null) => {
+    if (!link) return true;
+    // `canAccessRoute` rather than the key check alone, so nav also honours the
+    // role-gated subtrees (super-admin area, Virtual Shop).
+    if (!canAccessRoute(link, permissions)) return false;
+    if (companyFeaturePermission === undefined) return true;
+    return canAccessWithFeatureKey(
+      resolveRouteFeatureKey(link),
+      companyFeaturePermission,
+    );
+  };
 
-        const check = <K extends keyof BasePermission>(
-          companyKey: K,
-          userKey?: K,
-        ) => {
-          if (!cp[companyKey]) return false;
-          if (!up || userKey === undefined) return true;
-          return !!up[userKey];
-        };
+  return navList.reduce<NavItem[]>((visible, source) => {
+    const item = applyRoleLinkOverride(source, permissions);
 
-        switch (item.title) {
-          case "Communication Hub":
-            return (
-              check("communicationHubClients", "communicationHubClients") ||
-              check("communicationHubInternal", "communicationHubInternal") ||
-              check(
-                "communicationHubCollaboration",
-                "communicationHubCollaboration",
-              )
-            );
+    if (source.subnav) {
+      // A dropdown parent with every child filtered out has nothing to show.
+      const subnav = source.subnav.filter((sub) => canAccess(sub.link));
+      if (subnav.length === 0) return visible;
 
-          case "Task and Activity Management":
-            return check("calendarTask", "calendarTask");
+      // Keep the parent's own link usable when it points at a filtered child.
+      const link = canAccess(item.link) ? item.link : subnav[0].link;
+      visible.push({ ...item, link, subnav });
+      return visible;
+    }
 
-          case "Pipelines":
-            return (
-              check("shopPipeline", "shopPipeline") ||
-              check("salesPipeline", "salesPipeline")
-            );
+    // Nothing to gate on — a decorative entry stays visible.
+    if (!item.link && !item.altLinks?.length) {
+      visible.push(item);
+      return visible;
+    }
 
-          case "Analytics and Reporting":
-            return (
-              check("reporting", "reporting") ||
-              check("reportingViewOnly", "reportingViewOnly")
-            );
+    // Fall back through altLinks so a one-link item fronting several gated
+    // routes (Pipelines) survives on whichever of them the user can open.
+    const link = [item.link, ...(item.altLinks ?? [])].find(canAccessStrict);
+    if (link) visible.push({ ...item, link });
+    return visible;
+  }, []);
 
-          case "Invoices":
-            return check("estimatesInvoices", "estimatesInvoices");
-
-          case "Payments":
-            return check("payments", "payments");
-
-          case "Inventory":
-            return (
-              check("inventory", "inventory") ||
-              check("inventoryAll", "inventoryAll") ||
-              check("inventoryAllViewOnly", "inventoryAllViewOnly")
-            );
-
-          case "Directory":
-            return (
-              check("workforceManagement", "workforceManagement") ||
-              check(
-                "workforceManagementViewOnly",
-                "workforceManagementViewOnly",
-              )
-            );
-
-          default:
-            return true;
-        }
-      }
-
-      return true;
-    })
-    .map((item) => {
-      if (permissions?.role === "Technician") {
-        if (item.title === "Communication Hub") {
-          return {
-            ...item,
-            subnav:
-              item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Internal",
-              ) || null,
-          };
-        }
-        if (item.title === "Pipelines") {
-          return {
-            ...item,
-            link: "/dashboard/pipeline/shop/pipeline",
-          };
-        }
-        if (item.title === "Analytics and Reporting") {
-          return {
-            ...item,
-            link: "/dashboard/reporting/technicianreporting",
-          };
-        }
-      }
-      if (permissions?.role === "Sales") {
-        if (item.title === "Pipelines") {
-          return item;
-        }
-        if (item.title === "Inventory") {
-          return {
-            ...item,
-            subnav:
-              item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Inventory List",
-              ) || null,
-          };
-        }
-        if (item.title === "Directory") {
-          return {
-            ...item,
-            subnav:
-              item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Client",
-              ) || null,
-          };
-        }
-        if (item.title === "Analytics and Reporting") {
-          return {
-            ...item,
-            link: "/dashboard/reporting/salesreporting",
-          };
-        }
-      }
-      if (permissions?.role === "Other") {
-        if (item.title === "Directory") {
-          return {
-            ...item,
-            subnav:
-              item.subnav?.filter(
-                (subnavItem) => subnavItem.title !== "Employee",
-              ) || null,
-          };
-        }
-        if (item.title === "Inventory") {
-          return {
-            ...item,
-            subnav:
-              item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Vendor List",
-              ) || null,
-          };
-        }
-      }
-      // Permission-based checks for subnav items
-      if (item.subnav) {
-        return {
-          ...item,
-          subnav: item.subnav.filter((subnavItem) => {
-            if (permissions?.companyPermissions) {
-              const cp = permissions.companyPermissions as BasePermission;
-              const up = permissions.userPermissions as
-                | BasePermission
-                | undefined;
-
-              const check = <K extends keyof BasePermission>(
-                companyKey: K,
-                userKey?: K,
-              ) => {
-                if (!cp[companyKey]) return false;
-                if (!up || userKey === undefined) return true;
-                return !!up[userKey];
-              };
-
-              switch (subnavItem.title) {
-                case "Client":
-                  return check(
-                    "communicationHubClients",
-                    "communicationHubClients",
-                  );
-
-                case "Internal":
-                  return check(
-                    "communicationHubInternal",
-                    "communicationHubInternal",
-                  );
-
-                case "Collaboration":
-                  return check(
-                    "communicationHubCollaboration",
-                    "communicationHubCollaboration",
-                  );
-
-                case "Shop Pipeline":
-                  return check("shopPipeline", "shopPipeline");
-
-                case "Sales Pipeline":
-                  return check("salesPipeline", "salesPipeline");
-
-                case "Inventory List":
-                  return (
-                    check("inventory", "inventory") ||
-                    check("inventoryAll", "inventoryAll") ||
-                    check("inventoryAllViewOnly", "inventoryAllViewOnly")
-                  );
-
-                case "Vendor List":
-                  return (
-                    check("inventory", "inventory") ||
-                    check("inventoryAll", "inventoryAll") ||
-                    check("inventoryAllViewOnly", "inventoryAllViewOnly")
-                  );
-
-                case "Camera":
-                  return (
-                    check("inventory", "inventory") ||
-                    check("inventoryAll", "inventoryAll") ||
-                    check("inventoryAllViewOnly", "inventoryAllViewOnly")
-                  );
-
-                default:
-                  return true;
-              }
-            }
-
-            return true;
-          }),
-        };
-      }
-      return item;
-    });
+  /** `canAccess` treats a missing link as "no gate"; here it must be a real link. */
+  function canAccessStrict(link?: string | null): link is string {
+    return Boolean(link) && canAccess(link);
+  }
 }

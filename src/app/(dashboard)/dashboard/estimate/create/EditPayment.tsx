@@ -2,6 +2,7 @@
 
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
 import { updatePayment } from "@/actions/payment/updatePayment";
+import { deletePaymentMethod } from "@/actions/payment/deletePaymentMethod";
 import {
   Dialog,
   DialogClose,
@@ -19,7 +20,7 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { PaymentMethod } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -145,6 +146,35 @@ export default function EditPaymentModal({
         useListsStore.setState({
           paymentMethods: [...paymentMethods, res.data],
         });
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
+    }
+  }
+
+  async function handleRemovePaymentMethod(
+    item: PaymentMethod,
+    e: React.MouseEvent,
+  ) {
+    try {
+      const res = await deletePaymentMethod(item.id);
+      if (res.type === "success") {
+        useListsStore.setState((state) => ({
+          paymentMethods: state.paymentMethods.filter((m) => m.id !== item.id),
+        }));
+        if (paymentMethod?.id === item.id) {
+          setPaymentMethod(null);
+        }
+        successToast("Payment method deleted");
       } else if (res.type === "globalError") {
         errorToast(
           res?.errorSource?.length ? res.errorSource[0].message : res.message,
@@ -303,7 +333,7 @@ export default function EditPaymentModal({
         onClick={() => setOpen(true)}
         className="flex items-center gap-1 text-primary underline"
       >
-        <SquarePen className="h-5 w-5" />
+        <PencilLineIcon className="h-5 w-5" />
       </button>
 
       <DialogContent className="max-w-xl">
@@ -392,6 +422,7 @@ export default function EditPaymentModal({
             <SlimInput
               label="Cash Received"
               name="cash"
+              placeholder="Enter received by"
               value={cash}
               onChange={(e) => setCash(e.target.value)}
             />
@@ -413,7 +444,7 @@ export default function EditPaymentModal({
                     onClick={handleNewPaymentMethod}
                     className={cn(
                       "text-nowrap rounded-md px-2 text-white",
-                      paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
+                      paymentMethodInput ? "bg-primary" : "bg-slate-400",
                     )}
                     type="button"
                     disabled={!paymentMethodInput}
@@ -432,6 +463,7 @@ export default function EditPaymentModal({
               setSelectedItem={setPaymentMethod}
               displayList={(pm) => <p>{pm.name}</p>}
               openState={[openPaymentMethod, setOpenPaymentMethod]}
+              onRemoveItem={handleRemovePaymentMethod}
             />
           )}
 

@@ -15,6 +15,14 @@
 
 import fs from "fs";
 import path from "path";
+import {
+  resolveRoutePermissionKey,
+  type RoutePermissionKey,
+} from "../src/lib/routePermissionKeys";
+import {
+  resolveRouteFeatureKey,
+  type RouteFeatureKey,
+} from "../src/lib/routeFeatureKeys";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -64,6 +72,7 @@ const EXCLUDED_HREF_PREFIXES = [
   "/dashboard/communication/photo",
   "/dashboard/estimate/photo",
   "/dashboard/settings/my-account/leave-requests",
+  "/clickup/reporting",
 ];
 
 // Keyword stopwords — short/common words that add noise to search
@@ -115,6 +124,8 @@ interface SearchItem {
   href: string;
   type: ItemType;
   keywords: string[];
+  permissionKey?: RoutePermissionKey;
+  featureKey?: RouteFeatureKey;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -346,6 +357,15 @@ function generate(): void {
 
     if (description) item.description = description;
 
+    // Precompute the permission + company feature keys so the client filters on
+    // the keys directly instead of doing a route → key lookup for every item on
+    // every render.
+    const permissionKey = resolveRoutePermissionKey(href);
+    if (permissionKey) item.permissionKey = permissionKey;
+
+    const featureKey = resolveRouteFeatureKey(href);
+    if (featureKey) item.featureKey = featureKey;
+
     items.push(item);
   }
 
@@ -386,7 +406,9 @@ function generate(): void {
  */
 `;
 
-  const typeDefinition = `
+  const typeDefinition = `import type { RoutePermissionKey } from "./routePermissionKeys";
+import type { RouteFeatureKey } from "./routeFeatureKeys";
+
 export type SearchItemType = "page" | "form" | "settings" | "section";
 
 export interface SearchItem {
@@ -396,6 +418,10 @@ export interface SearchItem {
   href: string;
   type: SearchItemType;
   keywords: string[];
+  /** User-permission key(s) guarding this route, resolved from ROUTE_PERMISSIONS_MAP at generation time. */
+  permissionKey?: RoutePermissionKey;
+  /** Company feature key(s) guarding this route, resolved from FEATURE_PERMISSIONS_MAP at generation time. */
+  featureKey?: RouteFeatureKey;
 }
 `;
 
@@ -415,7 +441,10 @@ export const generatedRegistry: SearchItem[] = ${JSON.stringify(items, null, 2)}
     `\n✅ Registry written to: ${path.relative(process.cwd(), OUTPUT_FILE)}`,
   );
   console.log(
-    `   ${items.length} items: ${items.filter((i) => i.type === "page").length} pages, ${items.filter((i) => i.type === "form").length} forms, ${items.filter((i) => i.type === "settings").length} settings\n`,
+    `   ${items.length} items: ${items.filter((i) => i.type === "page").length} pages, ${items.filter((i) => i.type === "form").length} forms, ${items.filter((i) => i.type === "settings").length} settings`,
+  );
+  console.log(
+    `   ${items.filter((i) => i.permissionKey).length} permission-guarded, ${items.filter((i) => i.featureKey).length} feature-guarded, ${items.filter((i) => !i.permissionKey && !i.featureKey).length} ungated\n`,
   );
 }
 

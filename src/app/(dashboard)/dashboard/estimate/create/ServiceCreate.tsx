@@ -16,8 +16,6 @@ export default function ServiceCreate() {
   const itemId = data?.itemId;
   const edit = data?.edit as boolean | undefined;
 
-  const { categories } = useListsStore();
-
   const [name, setName] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
   const [description, setDescription] = useState("");
@@ -28,7 +26,9 @@ export default function ServiceCreate() {
       setName(data.service.name);
 
       setCategory(
-        categories.find((cat) => cat.id === data.service.categoryId) || null,
+        useListsStore
+          .getState()
+          .categories.find((cat) => cat.id === data.service.categoryId) || null,
       );
 
       setDescription(data?.serviceDesc || data?.service?.description);
@@ -37,12 +37,9 @@ export default function ServiceCreate() {
       setCategory(null);
       setDescription("");
     }
-  }, [data, categories]);
+  }, [data]);
 
   async function handleSubmit() {
-    if (!category?.id) {
-      return errorToast("Service Category is required!");
-    }
     const res = await newService({
       name,
       categoryId: category?.id!,
@@ -139,7 +136,7 @@ export default function ServiceCreate() {
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-          Category <span className="text-red-500">*</span>
+          Category
         </label>
         <SelectCategory
           onCategoryChange={setCategory}
@@ -148,6 +145,8 @@ export default function ServiceCreate() {
           categoryOpen={categoryOpen}
           setCategoryOpen={setCategoryOpen}
           className="max-w-full"
+          allowEdit={true}
+          isClear
         />
       </div>
 

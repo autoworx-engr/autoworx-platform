@@ -2,6 +2,8 @@
 import { getInspections } from "@/actions/estimate/invoice/getInspections";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
+import { stripHtml } from "@/utils/stripHtml";
 import {
   Client,
   Column,
@@ -356,6 +358,23 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: colors.text,
   },
+  discountSubText: {
+    fontSize: 8,
+    color: colors.textLight,
+  },
+  noteBox: {
+    marginTop: 2,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgSection,
+    borderRadius: 6,
+    padding: 6,
+  },
+  noteText: {
+    fontSize: 8,
+    color: colors.textMuted,
+  },
   // Payments
   paymentTable: {
     borderWidth: 1,
@@ -418,6 +437,20 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: "#DC2626",
     marginTop: 1,
+  },
+  // Attachments
+  attachmentsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  attachmentImage: {
+    width: 110,
+    height: 90,
+    objectFit: "cover",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   // Inspections
   inspectionCard: {
@@ -513,7 +546,7 @@ const styles = StyleSheet.create({
   },
 });
 
-type PDFComponentProps = {
+export type PDFComponentProps = {
   id: string;
   client: Client;
   invoice: Invoice & {
@@ -527,6 +560,7 @@ type PDFComponentProps = {
     })[];
     photos: InvoicePhoto[];
     user: User;
+    Refund: Refund[];
     payments: (Payment & {
       card: CardPayment | null;
       check: CheckPayment | null;
@@ -557,6 +591,10 @@ const PDFComponent = function PDF({
     "There is no damage notes",
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
+  const [photoDataUrls, setPhotoDataUrls] = useState<Record<number, string>>(
+    {},
+  );
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch inspection data and damage notes from the backend
@@ -571,6 +609,86 @@ const PDFComponent = function PDF({
 
     fetchInspectionData();
   }, [id]);
+
+  useEffect(() => {
+    // react-pdf fetches <Image> sources itself, and remote S3 images without
+    // CORS headers are unreliable there when multiple are rendered at once
+    // (only the first tends to resolve). Route each through the same-origin
+    // proxy and inline it as a data URI before handing it to <Image>.
+    if (invoice.photos.length === 0) return;
+    let cancelled = false;
+
+    const loadPhotos = async () => {
+      const entries = await Promise.all(
+        invoice.photos.map(async (photo) => {
+          try {
+            const res = await fetch(
+              `/api/proxy-image?url=${encodeURIComponent(photo.photo)}`,
+            );
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(blob);
+            });
+            return [photo.id, dataUrl] as const;
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+      setPhotoDataUrls(
+        Object.fromEntries(
+          entries.filter((entry): entry is [number, string] => entry !== null),
+        ),
+      );
+    };
+
+    loadPhotos();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    // Same react-pdf remote-fetch unreliability as the photos above applies
+    // to the company logo, so route it through the same proxy + data URI.
+    if (!companyDetails?.image) {
+      setLogoDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+
+    const loadLogo = async () => {
+      try {
+        const res = await fetch(
+          `/api/proxy-image?url=${encodeURIComponent(companyDetails.image!)}`,
+        );
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+        if (!cancelled) setLogoDataUrl(dataUrl);
+      } catch {
+        // Keep the placeholder if the logo fails to load.
+      }
+    };
+
+    loadLogo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [companyDetails?.image]);
 
   useEffect(() => {
     if (invoice.damageNotes) {
@@ -598,15 +716,14 @@ const PDFComponent = function PDF({
     0,
   );
 
-  const refundAmount =
-    (invoice as any).Refund?.reduce(
-      (acc: number, r: { amount: number }) => acc + (Number(r?.amount) || 0),
-      0,
-    ) || 0;
+  const refundAmount = (invoice.Refund ?? []).reduce(
+    (acc, r) => acc + (Number(r?.amount) || 0),
+    0,
+  );
 
   const totals = [
     ["subtotal", invoice.subtotal],
-    ["discount", invoice.discount],
+    ["total discount", invoice.discount],
     ["tax", invoice.tax],
     // ["vehicle extra cost", invoice.vehicleExtraCost],
     ["shop supplies", invoice?.serviceFee],
@@ -630,7 +747,7 @@ const PDFComponent = function PDF({
 
   const leftFields = [
     "subtotal",
-    "discount",
+    "total discount",
     "tax",
     "vehicle extra cost",
     "shop supplies",
@@ -671,10 +788,10 @@ const PDFComponent = function PDF({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            {companyDetails?.image ? (
+            {logoDataUrl ? (
               /* eslint-disable-next-line jsx-a11y/alt-text */
               <Image
-                src={companyDetails?.image}
+                src={logoDataUrl}
                 style={{ width: 100, height: 80, objectFit: "contain" }}
               />
             ) : (
@@ -693,7 +810,7 @@ const PDFComponent = function PDF({
               {companyDetails?.city && `${companyDetails.city}`}
               {companyDetails?.city && companyDetails?.state && ", "}
               {companyDetails?.state && `${companyDetails.state}`}
-              {companyDetails?.state && companyDetails?.zip && " "}
+              {companyDetails?.state && companyDetails?.zip && " - "}
               {companyDetails?.zip && `${companyDetails.zip}`}
             </Text>
             <Text style={styles.companySubtext}>{companyDetails?.phone}</Text>
@@ -832,9 +949,7 @@ const PDFComponent = function PDF({
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>
-          Services & Line Items
-        </Text>
+        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>Services</Text>
         <PDFInvoiceItems items={invoice.invoiceItems} />
 
         {/* payment info  */}
@@ -897,6 +1012,22 @@ const PDFComponent = function PDF({
           </View>
         )}
 
+        {invoice.photos.length > 0 && (
+          <View style={[styles.termsSection, { marginTop: 20 }]}>
+            <Text style={styles.sectionTitle}>Attachments</Text>
+            <View style={styles.attachmentsGrid}>
+              {invoice.photos.map((photo) => (
+                /* eslint-disable-next-line jsx-a11y/alt-text */
+                <Image
+                  key={photo.id}
+                  src={photoDataUrls[photo.id] ?? photo.photo}
+                  style={styles.attachmentImage}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
         {(inspectionData.length > 0 || damageNotes) && (
           <View style={[styles.termsSection, { marginTop: 20 }]}>
             <Text style={styles.sectionTitle}>Inspections</Text>
@@ -909,6 +1040,13 @@ const PDFComponent = function PDF({
                 <Text style={styles.inspectionNote}>{damageNotes}</Text>
               </View>
             )}
+          </View>
+        )}
+
+        {invoice.customerNotes && (
+          <View style={styles.termsSection}>
+            <Text style={styles.termsTitle}>Customer Notes</Text>
+            <Text style={styles.termsText}>{invoice.customerNotes}</Text>
           </View>
         )}
 
@@ -926,7 +1064,7 @@ const PDFComponent = function PDF({
           </Text>
         </View>
 
-        <View style={styles.footer}>
+        <View style={styles.footer} wrap={false}>
           <View style={styles.footerBlock}>
             <Text style={styles.footerLabel}>Prepared by</Text>
             <Text style={styles.footerValue}>{invoice.company.name}</Text>
@@ -980,7 +1118,7 @@ const PDFInvoiceItems = ({
   })[];
 }) => {
   return items.map((item) => {
-    if (!item.service && !item.labor) return null;
+    if (!item.service && !item.labor && !item.materials?.length) return null;
 
     const materialCost = item.materials.reduce((acc, material) => {
       return (
@@ -995,16 +1133,18 @@ const PDFInvoiceItems = ({
     const laborCost = item.labor?.charge
       ? parseFloat(item.labor?.charge.toString()) * Number(item.labor?.hours)
       : 0;
-    const totalDiscount =
-      item.materials.reduce((acc, material) => {
-        return (
-          acc +
-          (material && material.discount
-            ? parseFloat(material.discount.toString())
-            : 0)
-        );
-      }, 0) +
-      (item.labor?.discount ? parseFloat(item.labor?.discount.toString()) : 0);
+    const materialDiscount = item.materials.reduce((acc, material) => {
+      return (
+        acc +
+        (material && material.discount
+          ? parseFloat(material.discount.toString())
+          : 0)
+      );
+    }, 0);
+    const laborDiscount = item.labor?.discount
+      ? parseFloat(item.labor?.discount.toString())
+      : 0;
+    const totalDiscount = materialDiscount + laborDiscount;
     const serviceTotal = materialCost + laborCost - totalDiscount;
     const isLaborOnly = !item.service;
 
@@ -1012,12 +1152,9 @@ const PDFInvoiceItems = ({
       return (
         <View key={item.id} style={styles.itemCard}>
           <View style={styles.itemHeader}>
-            <Text style={styles.itemName}>{item.labor?.name ?? "Labor"}</Text>
+            <Text style={styles.itemName}>{getInvoiceItemTitle(item)}</Text>
             <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
           </View>
-          {item.labor?.notes && (
-            <Text style={styles.itemDesc}>{item.labor.notes}</Text>
-          )}
           {item.materials.filter(Boolean).length > 0 && (
             <View style={{ marginBottom: 6 }}>
               {item.materials.map((material, index) => {
@@ -1026,29 +1163,66 @@ const PDFInvoiceItems = ({
                   ? parseFloat(material.sell.toString()) *
                     Number(material.quantity ?? 0)
                   : 0;
+                const lineDiscount = material.discount
+                  ? parseFloat(material.discount.toString())
+                  : 0;
                 return (
-                  <View key={index} style={styles.lineItem}>
-                    <Text style={styles.lineItemText}>
-                      Material - {material.name}
-                    </Text>
-                    <Text style={styles.lineItemText}>
-                      {formatCurrency(lineTotal)}
-                    </Text>
+                  <View key={index} style={{ marginTop: index > 0 ? 4 : 0 }}>
+                    <View style={styles.lineItem}>
+                      <Text style={styles.lineItemText}>
+                        Material - {material.name}
+                      </Text>
+                      <Text style={styles.lineItemText}>
+                        {formatCurrency(lineTotal)}
+                      </Text>
+                    </View>
+                    {material.notes && (
+                      <View style={styles.noteBox}>
+                        <Text style={styles.noteText}>{material.notes}</Text>
+                      </View>
+                    )}
+                    {lineDiscount > 0 && (
+                      <View style={styles.lineItem}>
+                        <Text
+                          style={[styles.lineItemText, styles.discountSubText]}
+                        >
+                          Discount
+                        </Text>
+                        <Text
+                          style={[styles.lineItemText, styles.discountSubText]}
+                        >
+                          -{formatCurrency(lineDiscount)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 );
               })}
             </View>
           )}
-          <View style={styles.lineItem}>
-            <Text style={styles.lineItemText}>Labor Cost</Text>
-            <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
-          </View>
-          {totalDiscount > 0 && (
-            <View style={[styles.lineItem, { marginTop: 4 }]}>
-              <Text style={styles.lineItemText}>Discount</Text>
-              <Text style={styles.lineItemText}>
-                -{formatCurrency(totalDiscount)}
-              </Text>
+          {item.labor && (
+            <View>
+              <View style={styles.lineItem}>
+                <Text style={styles.lineItemText}>Labor Cost</Text>
+                <Text style={styles.lineItemText}>
+                  {formatCurrency(laborCost)}
+                </Text>
+              </View>
+              {item.labor.notes && (
+                <View style={styles.noteBox}>
+                  <Text style={styles.noteText}>{item.labor.notes}</Text>
+                </View>
+              )}
+              {laborDiscount > 0 && (
+                <View style={styles.lineItem}>
+                  <Text style={[styles.lineItemText, styles.discountSubText]}>
+                    Discount
+                  </Text>
+                  <Text style={[styles.lineItemText, styles.discountSubText]}>
+                    -{formatCurrency(laborDiscount)}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -1064,7 +1238,8 @@ const PDFInvoiceItems = ({
 
         {(item.service?.description || item.serviceDesc) && (
           <Text style={styles.itemDesc}>
-            Description - {item.service?.description || item.serviceDesc}
+            Description -{" "}
+            {stripHtml(item.service?.description || item.serviceDesc)}
           </Text>
         )}
 
@@ -1076,39 +1251,67 @@ const PDFInvoiceItems = ({
                 ? parseFloat(material.sell.toString()) *
                   Number(material.quantity ?? 0)
                 : 0;
+              const lineDiscount = material.discount
+                ? parseFloat(material.discount.toString())
+                : 0;
               return (
-                <View key={index} style={styles.lineItem}>
-                  <Text style={styles.lineItemText}>
-                    Material - {material.name}
-                  </Text>
-                  <Text style={styles.lineItemText}>
-                    {formatCurrency(lineTotal)}
-                  </Text>
+                <View key={index} style={{ marginTop: index > 0 ? 4 : 0 }}>
+                  <View style={styles.lineItem}>
+                    <Text style={styles.lineItemText}>
+                      Material - {material.name}
+                    </Text>
+                    <Text style={styles.lineItemText}>
+                      {formatCurrency(lineTotal)}
+                    </Text>
+                  </View>
+                  {material.notes && (
+                    <View style={styles.noteBox}>
+                      <Text style={styles.noteText}>{material.notes}</Text>
+                    </View>
+                  )}
+                  {lineDiscount > 0 && (
+                    <View style={styles.lineItem}>
+                      <Text
+                        style={[styles.lineItemText, styles.discountSubText]}
+                      >
+                        Discount
+                      </Text>
+                      <Text
+                        style={[styles.lineItemText, styles.discountSubText]}
+                      >
+                        -{formatCurrency(lineDiscount)}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               );
             })}
           </View>
         )}
 
-        <View style={styles.lineItem}>
-          <Text style={styles.lineItemText}>
-            Labor {item.labor ? `-` + item.labor.name : ""}
-          </Text>
-          <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
-        </View>
-        {item.labor?.notes && (
-          <Text style={[styles.inspectionNote, { marginTop: 2 }]}>
-            Description - {item.labor.notes}
-          </Text>
-        )}
-        {totalDiscount > 0 && (
-          <View style={[styles.lineItem, { marginTop: 4 }]}>
-            <Text style={styles.lineItemText}>Discount</Text>
+        <View>
+          <View style={styles.lineItem}>
             <Text style={styles.lineItemText}>
-              -{formatCurrency(totalDiscount)}
+              Labor {item.labor ? `-` + item.labor.name : ""}
             </Text>
+            <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
           </View>
-        )}
+          {item.labor?.notes && (
+            <View style={styles.noteBox}>
+              <Text style={styles.noteText}>{item.labor.notes}</Text>
+            </View>
+          )}
+          {laborDiscount > 0 && (
+            <View style={styles.lineItem}>
+              <Text style={[styles.lineItemText, styles.discountSubText]}>
+                Discount
+              </Text>
+              <Text style={[styles.lineItemText, styles.discountSubText]}>
+                -{formatCurrency(laborDiscount)}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
     );
   });

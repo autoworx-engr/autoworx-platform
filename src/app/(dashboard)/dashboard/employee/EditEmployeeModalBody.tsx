@@ -1,25 +1,27 @@
-import { DialogClose, DialogContent, DialogFooter } from "@/components/Dialog";
-import FormError from "@/components/FormError";
-import { SlimInput } from "@/components/SlimInput";
-import Submit from "@/components/Submit";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import { updateEmployee } from "@/actions/employee/update";
-import { getCompany } from "@/actions/settings/getCompany";
+import Avatar from "@/components/Avatar";
+import { DialogClose, DialogContent, DialogFooter } from "@/components/Dialog";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
+import FormError from "@/components/FormError";
 import Password from "@/components/Password";
 import PhoneInput from "@/components/PhoneInput";
-import { useServerGet } from "@/hooks/useServerGet";
+import { SlimInput } from "@/components/SlimInput";
+import Submit from "@/components/Submit";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { useFormErrorStore } from "@/stores/form-error";
+import {
+  isValidEmail,
+  lowercaseEmailInput,
+  normalizeEmail,
+} from "@/utils/email";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
+import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
 import SelectEmployeeType from "./SelectEmployeeType";
 
@@ -28,7 +30,6 @@ type TEditClientModalBodyProps = {
   onClose: () => void;
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DIGITS_RE = /^\d+$/;
 const NUMBER_RE = /^(\d*\.?\d+|\d+\.?\d*)$/;
 export default function EditClientModalBody({
@@ -42,7 +43,6 @@ export default function EditClientModalBody({
     employee.image !== DEFAULT_IMAGE_URL ? employee.image : null,
   );
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
-  const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
   // Controlled zip state — blocks non-digit input
@@ -96,7 +96,7 @@ export default function EditClientModalBody({
       let photo;
       const firstName = data.get("firstName") as string;
       const lastName = data.get("lastName") as string;
-      const email = data.get("email") as string;
+      const email = normalizeEmail((data.get("email") as string) ?? "");
       const mobileNumber = data.get("mobileNumber") as string;
       const address = data.get("address") as string;
       const city = data.get("city") as string;
@@ -129,7 +129,7 @@ export default function EditClientModalBody({
       }
 
       // Validate email format
-      if (!EMAIL_RE.test(email)) {
+      if (!isValidEmail(email)) {
         showError({
           field: "email",
           message: "Please enter a valid email address.",
@@ -189,7 +189,7 @@ export default function EditClientModalBody({
       }
 
       const res = await updateEmployee({
-        id: employee?.id,
+        id: employee.id,
         firstName,
         lastName,
         email,
@@ -200,7 +200,6 @@ export default function EditClientModalBody({
         city,
         state,
         zip,
-        companyName: companyName?.name,
         commission: Number(commission),
         date: new Date(date),
         type: type as EmployeeType,
@@ -237,11 +236,9 @@ export default function EditClientModalBody({
       }
     },
     [
-      companyName?.name,
       currentPage,
       dateRange,
-      employee?.id,
-      employee.image,
+      employee,
       employeeType,
       newProfilePic,
       onClose,
@@ -278,21 +275,21 @@ export default function EditClientModalBody({
         {profilePic ? (
           <div className="relative group">
             <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
-              <Image
-                src={profilePic}
+              <Avatar
+                photo={profilePic}
                 width={64}
                 height={64}
                 alt="profile"
                 className="h-full w-full object-cover"
-                unoptimized={newProfilePic !== null}
-                crossOrigin="anonymous"
+                // unoptimized={newProfilePic !== null}
+                // crossOrigin="anonymous"
               />
             </div>
             <label
               htmlFor="profilePicture"
               className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
             >
-              <SquarePen className="w-3 h-3 text-white" />
+              <PencilLineIcon className="w-3 h-3 text-white" />
             </label>
             <input
               type="file"
@@ -337,7 +334,7 @@ export default function EditClientModalBody({
 
       <FormError />
 
-      <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SlimInput
             name="firstName"
@@ -360,16 +357,17 @@ export default function EditClientModalBody({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SlimInput
             name="email"
-            defaultValue={employee.email}
+            type="email"
+            defaultValue={normalizeEmail(employee.email ?? "")}
             required
             onChange={(e) => {
-              const value = e.target.value;
-              if (!value.trim()) {
+              const value = lowercaseEmailInput(e.target);
+              if (!value) {
                 showError({
                   field: "email",
                   message: "Email is required.",
                 });
-              } else if (!EMAIL_RE.test(value)) {
+              } else if (!isValidEmail(value)) {
                 showError({
                   field: "email",
                   message: "Please enter a valid email address.",
@@ -429,6 +427,7 @@ export default function EditClientModalBody({
             <Password
               name="changePassword"
               required
+              autoComplete="new-password"
               className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
             />
           </div>
@@ -471,13 +470,9 @@ export default function EditClientModalBody({
             }}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center justify-between">
           <SlimInput
-            name="companyName"
-            defaultValue={employee.companyName!}
-            required={false}
-          />
-          <SlimInput
+            rootClassName="flex-1"
             name="commission"
             defaultValue={Number(employee.commission!)}
             required={false}

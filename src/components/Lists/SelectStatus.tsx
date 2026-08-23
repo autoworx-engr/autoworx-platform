@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
-import useOutsideClick from "@/hooks/useOutsideClick";
 import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { errorToast } from "@/lib/toast";
@@ -50,6 +49,11 @@ export function SelectStatus({
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [statusToDelete, setStatusToDelete] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (!open) setSearchTerm("");
+  }, [open]);
 
   useEffect(() => {
     if (value) {
@@ -71,7 +75,9 @@ export function SelectStatus({
     }
   }, [statusList]);
   const filteredShopStatus = statusList.filter(
-    (status) => status.type === "shop",
+    (status) =>
+      status.type === "shop" &&
+      status.title.toLowerCase().includes(searchTerm.trim().toLowerCase()),
   );
   async function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -88,35 +94,32 @@ export function SelectStatus({
       setDeleteConfirmOpen(false);
     }
   }
-  useOutsideClick(() => {
-    // alert("outside click");
-    setOpen && setOpen(false);
-  });
   const restrictedColumns = [
     "Pending",
     "In Progress",
     "Completed",
     "Delivered",
   ];
-  const { due } = useEstimateCreateStore();
+  const { due, setPaymentModalOpen } = useEstimateCreateStore();
 
   return (
     <div className="relative">
       <input type="hidden" name={name} value={status?.title ?? ""} />
       <DropdownMenu
         open={open}
-        onOpenChange={(open) => {
-          /* Logic remains untouched */
-        }}
+        onOpenChange={(next) => setOpen && setOpen(next)}
       >
         <DropdownMenuTrigger
-          className="flex h-9 items-center gap-2 rounded-lg px-4 py-1 text-sm font-semibold transition-all hover:brightness-95 disabled:opacity-50 ring-1 ring-inset ring-black/5 shadow-sm"
+          className={cn(
+            "flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition-all duration-300 disabled:opacity-50 shadow-sm hover:shadow-md outline-none",
+            "ring-1 ring-slate-200 dark:ring-slate-800",
+            open
+              ? "ring-2 ring-primary/60 border-transparent"
+              : "hover:ring-slate-300",
+          )}
           style={{
             backgroundColor: status?.bgColor || "#FFF",
             color: status?.textColor || "#64748B",
-          }}
-          onClick={() => {
-            setOpen && setOpen(!open);
           }}
           disabled={isDelivered}
         >
@@ -137,11 +140,13 @@ export function SelectStatus({
               <input
                 type="text"
                 placeholder="Search statuses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 w-full rounded-xl border-none bg-white pl-9 pr-8 text-xs font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none"
               />
               <button
                 className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
-                onClick={() => setOpen && setOpen(!open)}
+                onClick={() => setOpen && setOpen(false)}
               >
                 <ChevronUp size={14} />
               </button>
@@ -149,51 +154,71 @@ export function SelectStatus({
           </div>
 
           {/* List Area */}
-          <div className="max-h-[250px] overflow-y-auto thin-scrollbar p-2 space-y-1">
-            {filteredShopStatus.map((statusItem) => (
+          <div className="max-h-[250px] overflow-y-auto p-2 space-y-1">
+            {filteredShopStatus.length === 0 ? (
               <div
-                key={statusItem.id}
-                onClick={() => {
-                  /* Logic remains untouched */
-                  if (statusItem.title === "Delivered" && due > 0)
-                    return errorToast(
-                      "You cannot update this order to Delivered until all dues are cleared.",
-                    );
-                  if (
-                    statusItem.title === "Delivered" &&
-                    !isAllServicesCompleted
-                  )
-                    return errorToast(
-                      "All services must be completed by Technicians before moving to delivered.",
-                    );
-                  setStatus(statusItem);
-                  setOpen && setOpen(false);
-                }}
-                className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition-all hover:scale-[1.02] active:scale-95"
-                style={{
-                  backgroundColor: statusItem?.bgColor ?? undefined,
-                  color: statusItem?.textColor ?? undefined,
-                  boxShadow:
-                    statusItem?.id === status?.id
-                      ? `inset 0 0 0 2px ${status.textColor}40`
-                      : "none",
-                }}
+                role="status"
+                className="flex flex-col items-center justify-center py-6 px-4"
               >
-                {statusItem.title}
-                {!restrictedColumns.includes(statusItem.title) && (
-                  <button
-                    className="rounded-md p-1 opacity-0 transition-opacity hover:bg-black/10 group-hover:opacity-100"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setStatusToDelete(statusItem.id);
-                      setDeleteConfirmOpen(true);
-                    }}
-                  >
-                    <X size={14} />
-                  </button>
-                )}
+                <Search size={18} className="text-slate-300 mb-1.5" />
+                <p className="text-center text-sm text-slate-400">
+                  No results found
+                </p>
               </div>
-            ))}
+            ) : (
+              filteredShopStatus.map((statusItem) => (
+                <div
+                  key={statusItem.id}
+                  onClick={() => {
+                    /* Logic remains untouched */
+                    if (statusItem.title === "Delivered" && due > 0) {
+                      errorToast(
+                        "Outstanding balance detected. Please clear all dues before changing the invoice status to Delivered.",
+                      );
+                      setOpen && setOpen(false);
+                      // Let the dropdown finish closing before the payment dialog
+                      // takes over the focus trap, otherwise Radix leaves the
+                      // page with pointer-events disabled.
+                      setTimeout(() => setPaymentModalOpen(true), 150);
+                      return;
+                    }
+
+                    if (
+                      statusItem.title === "Delivered" &&
+                      !isAllServicesCompleted
+                    )
+                      return errorToast(
+                        "All services must be completed by Technicians before moving to delivered.",
+                      );
+                    setStatus(statusItem);
+                    setOpen && setOpen(false);
+                  }}
+                  className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition-all hover:scale-[1.02] active:scale-95"
+                  style={{
+                    backgroundColor: statusItem?.bgColor ?? undefined,
+                    color: statusItem?.textColor ?? undefined,
+                    boxShadow:
+                      statusItem?.id === status?.id
+                        ? `inset 0 0 0 2px ${status.textColor}40`
+                        : "none",
+                  }}
+                >
+                  {statusItem.title}
+                  {!restrictedColumns.includes(statusItem.title) && (
+                    <button
+                      className="rounded-md p-1 opacity-0 transition-opacity hover:bg-black/10 group-hover:opacity-100"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setStatusToDelete(statusItem.id);
+                        setDeleteConfirmOpen(true);
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
           <div className="border-t border-slate-100 p-2">

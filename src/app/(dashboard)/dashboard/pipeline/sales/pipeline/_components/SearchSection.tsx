@@ -54,7 +54,7 @@ export default function SearchSection({
     router.push(`${pathname}?${searchParams.toString()}`);
   };
   return (
-    <div className="relative group flex flex-1 h-10 max-w-lg items-center rounded-md sm:w-auto ml-2">
+    <div className="relative flex-1 group">
       <Search
         size={18}
         className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary"
@@ -75,6 +75,9 @@ export default function SearchSection({
           "hover:border-slate-200 hover:bg-slate-50/30",
           "focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
         )}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
       />
       {searchTerm && (
         <button

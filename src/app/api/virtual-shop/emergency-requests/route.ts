@@ -409,8 +409,6 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
 
-    let leadId = null;
-
     if (!client) {
       const nameParts = data.contactName.trim().split(/\s+/);
       const firstName = nameParts[0];
@@ -428,28 +426,6 @@ export async function POST(request: NextRequest) {
         },
         select: { id: true },
       });
-
-      const column = await db.column.findFirst({
-        where: { title: "New Leads", companyId: shop.companyId, type: "sales" },
-      });
-
-      if (column) {
-        const lead = await db.lead.create({
-          data: {
-            clientName: `${firstName ?? ""} ${lastName ?? ""}`,
-            clientEmail: data.contactEmail,
-            clientPhone: normalizedPhone,
-            vehicleInfo: data.vehicleDetails
-              ? `${data.vehicleDetails.year} ${data.vehicleDetails.make} ${data.vehicleDetails.model}`
-              : "N/A",
-            services: JSON.stringify(data.requestedServices),
-            companyId: shop.companyId,
-            columnId: column?.id,
-            source: "virtual-shop",
-          },
-        });
-        leadId = lead.id;
-      }
     }
 
     let vehicleId = data.vehicleId;
@@ -494,16 +470,6 @@ export async function POST(request: NextRequest) {
           select: { id: true },
         });
         vehicleId = newVehicle.id;
-      }
-      if (leadId) {
-        await db.lead.update({
-          where: {
-            id: leadId,
-          },
-          data: {
-            vehicleId: vehicleId,
-          },
-        });
       }
     }
 

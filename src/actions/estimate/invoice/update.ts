@@ -71,16 +71,11 @@ interface UpdateEstimateInput {
 //     return new Promise(resolve => setTimeout(resolve, ms));
 // }
 
-const hasInvoiceChanged = (
+const hasPricingChanged = (
   invoice: Invoice | null,
   data: UpdateEstimateInput,
 ): boolean => {
   if (!invoice) return false;
-
-  const nullishEqual = <T>(a: T | null | undefined, b: T | null | undefined) =>
-    (a ?? null) === (b ?? null);
-
-  const normalizedText = (value: string | null | undefined) => value ?? "";
 
   const decimalChanged = (
     dbValue: Prisma.Decimal | null | undefined,
@@ -93,30 +88,18 @@ const hasInvoiceChanged = (
   };
 
   return (
-    !nullishEqual(invoice.clientId, data.clientId) ||
-    !nullishEqual(invoice.vehicleId, data.vehicleId) ||
-    !nullishEqual(invoice.columnId, data.columnId) ||
-    normalizedText(invoice.internalNotes) !==
-      normalizedText(data.internalNotes) ||
-    normalizedText(invoice.terms) !== normalizedText(data.terms) ||
-    normalizedText(invoice.policy) !== normalizedText(data.policy) ||
-    normalizedText(invoice.customerNotes) !==
-      normalizedText(data.customerNotes) ||
-    normalizedText(invoice.customerComments) !==
-      normalizedText(data.customerComments) ||
-    normalizedText(invoice.damageNotes) !== normalizedText(data.damageNotes) ||
     decimalChanged(invoice.subtotal, data.subtotal) ||
     decimalChanged(invoice.discount, data.discount) ||
     decimalChanged(invoice.tax, data.tax) ||
     decimalChanged(invoice.serviceFee, data.serviceFee) ||
-    decimalChanged(invoice.grandTotal, data.grandTotal) ||
-    decimalChanged(invoice.due, data.due)
+    decimalChanged(invoice.grandTotal, data.grandTotal)
   );
 };
 export async function updateInvoice(
   data: UpdateEstimateInput,
   fromPayment: boolean = false,
   retryCount: number = 0,
+  allowInsufficientInventory: boolean = false,
 ): Promise<ServerAction | TErrorHandler> {
   const MAX_RETRIES = 2;
   try {
@@ -133,7 +116,7 @@ export async function updateInvoice(
       db.column.findUnique({ where: { id: data.columnId } }),
     ]);
 
-    const isChanged = hasInvoiceChanged(invoice, data);
+    const isChanged = hasPricingChanged(invoice, data);
 
     // use prisma transaction for better performance or safely save data in db
     const updatedInvoice = await db.$transaction(
@@ -152,6 +135,7 @@ export async function updateInvoice(
             materials,
             companyId,
             invoiceId: invoice.id,
+            allowInsufficientInventory,
           });
         } else if (
           invoice?.type === "Estimate" &&
@@ -162,6 +146,7 @@ export async function updateInvoice(
             productsWithQuantity,
             companyId,
             invoiceId: invoice.id,
+            allowInsufficientInventory,
           });
         }
 
@@ -751,7 +736,12 @@ export async function updateInvoice(
             setTimeout(resolve, Math.pow(2, retryCount) * 1000),
           );
 
-          return updateInvoice(data, fromPayment, retryCount + 1);
+          return updateInvoice(
+            data,
+            fromPayment,
+            retryCount + 1,
+            allowInsufficientInventory,
+          );
         }
 
         console.log({

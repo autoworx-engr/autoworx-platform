@@ -17,8 +17,10 @@ import {
 } from "@/utils/normalizePhone";
 import {
   buildInvoiceItemsWithDefaults,
+  calcMaterialSubtotal,
   mapInvoiceItemsForCreate,
 } from "@/services/shopServiceInvoiceItems";
+import { clientNameFilter } from "@/app/(dashboard)/dashboard/task/_utils/clientNameSearch";
 
 import z from "zod";
 
@@ -479,7 +481,7 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") ?? undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
     const date = searchParams.get("date") ?? undefined;
     const month = searchParams.get("month") ?? undefined;
     const year = searchParams.get("year") ?? undefined;
@@ -519,15 +521,9 @@ export async function GET(req: Request) {
 
     if (search) {
       const searchNum = parseInt(search, 10);
+      const nameFilter = clientNameFilter(search);
       baseWhereClause.OR = [
-        {
-          client: {
-            OR: [
-              { firstName: { contains: search, mode: "insensitive" } },
-              { lastName: { contains: search, mode: "insensitive" } },
-            ],
-          },
-        },
+        ...(nameFilter ? [{ client: nameFilter }] : []),
         {
           vehicle: {
             OR: [
@@ -666,6 +662,18 @@ export async function GET(req: Request) {
               vehicleExtraCost: true,
               deposit: true,
               due: true,
+              invoiceItems: {
+                select: {
+                  materials: {
+                    select: { sell: true, quantity: true },
+                  },
+                },
+              },
+              payments: {
+                select: {
+                  tip: true,
+                },
+              },
               status: {
                 select: {
                   name: true,
@@ -708,12 +716,19 @@ export async function GET(req: Request) {
         data: shopBookings.map((sb) => {
           const subtotal = Number(sb.invoice?.subtotal || 0);
           const taxRate = Number(sb.invoice?.tax || 0);
-          const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
-          const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
+          const serviceFeeRate = Number(sb.invoice?.serviceFee || 0);
           const grandTotal = Number(sb.invoice?.grandTotal || 0);
+          const tipAmount = (sb.invoice?.payments || []).reduce(
+            (sum, p) => sum + Number(p.tip || 0),
+            0,
+          );
 
-          const totalServiceCost = subtotal - vehicleExtraCost;
-          const taxAmount = (totalServiceCost * taxRate) / 100;
+          // Tax applies to material price only (labor is excluded)
+          const materialSubtotal = calcMaterialSubtotal(
+            sb.invoice?.invoiceItems || [],
+          );
+          const taxAmount = (materialSubtotal * taxRate) / 100;
+          const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
           const { shop, ...rest } = sb;
           const isDepositEnabled = Boolean(
@@ -732,7 +747,8 @@ export async function GET(req: Request) {
             subtotal: subtotal,
             tax: taxAmount,
             serviceFee: serviceFeeAmount,
-            total: grandTotal,
+            tip: tipAmount,
+            total: grandTotal + tipAmount,
             depositRequired,
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),
@@ -1074,38 +1090,6 @@ export async function POST(req: Request) {
           }
           client = clientResult.data;
           createdClientId = client?.id ?? null;
-
-          if (client) {
-            const column = await tx.column.findFirst({
-              where: {
-                title: "New Leads",
-                companyId: shop.companyId,
-                type: "sales",
-              },
-            });
-
-            const servicesForLead = await tx.shopService.findMany({
-              where: { id: { in: shopServiceIds } },
-              select: { title: true },
-            });
-            const serviceTitles = servicesForLead
-              .map((s) => s.title)
-              .join(", ");
-
-            await tx.lead.create({
-              data: {
-                clientName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
-                clientEmail: email,
-                clientPhone: phone,
-                companyId: shop.companyId,
-                source: "Virtual Shop",
-                vehicleInfo: `${year} ${make} ${model}`,
-                services: serviceTitles,
-                clientId: client.id,
-                columnId: column?.id,
-              },
-            });
-          }
         }
 
         // 4. Find or Create Vehicle
@@ -1383,8 +1367,9 @@ export async function POST(req: Request) {
           ? Number(shop.company.serviceFee)
           : 0;
 
-        // Tax and fee computed on subtotal
-        const taxAmount = (subtotal * taxRate) / 100;
+        // Tax applies to material price only; service fee to the full subtotal
+        const materialSubtotal = calcMaterialSubtotal(allInvoiceItems);
+        const taxAmount = (materialSubtotal * taxRate) / 100;
         const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
         const adjustedGrandTotal = roundMoney(
@@ -1526,7 +1511,9 @@ export async function POST(req: Request) {
                 totals: {
                   subtotal,
                   tax: taxAmount,
+                  taxRate,
                   serviceFee: serviceFeeAmount,
+                  serviceFeeRate,
                   grandTotal: adjustedGrandTotal,
                   giftCardRedeemed: 0,
                   depositRequired: requiredDepositAmount,
@@ -1746,7 +1733,9 @@ export async function POST(req: Request) {
               totals: {
                 subtotal: Number(estimate.subtotal),
                 tax: taxAmount,
+                taxRate,
                 serviceFee: serviceFeeAmount,
+                serviceFeeRate,
                 grandTotal: Number(estimate.grandTotal),
                 giftCardRedeemed: giftCardRedeemedAmount,
                 depositRequired: 0,
@@ -1789,7 +1778,6 @@ export async function POST(req: Request) {
         );
     }
     if (createdClientId) {
-      // The shared addCustomer action also creates a Lead, let's delete the client (which cascades or we can rely on lead being created in tx normally, but if addCustomer does it, it's global)
       await db.client
         .delete({ where: { id: createdClientId } })
         .catch((e) => console.error("Fallback deletion failed for Client:", e));

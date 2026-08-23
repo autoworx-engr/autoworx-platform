@@ -28,7 +28,6 @@ export default function NewService({
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
   const edit = data?.edit as boolean | undefined;
-  const { categories } = useListsStore();
 
   const { showError, clearError } = useFormErrorStore();
 
@@ -36,26 +35,12 @@ export default function NewService({
   const [nameError, setNameError] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
   const [category, setCategory] = useState<Category | null>(null);
-  const [categoryError, setCategoryError] = useState("");
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const descriptionLength = description.length;
   const maxDescriptionLength = 1500;
   // Reset form when dialog opens or closes
-  useEffect(() => {
-    if (open) {
-      if (data?.service && data.edit) {
-        setName(data.service.name);
-        setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId) || null,
-        );
-        setDescription(data.service.description);
-      } else {
-        resetForm();
-      }
-    }
-  }, [open, data]);
 
   // Reset form function
   const resetForm = () => {
@@ -63,9 +48,25 @@ export default function NewService({
     setCategory(null);
     setDescription("");
     setNameError("");
-    setCategoryError("");
     clearError();
   };
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (data?.service && data.edit) {
+      setName(data.service.name);
+      setCategory(
+        useListsStore
+          .getState()
+          .categories.find((cat) => cat.id === data.service.categoryId) || null,
+      );
+      setDescription(data.service.description);
+    } else {
+      resetForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, data]);
 
   // Validation function
   const validateName = (value: string) => {
@@ -83,39 +84,20 @@ export default function NewService({
     }
   };
 
-  const validateCategory = (category: Category | null | undefined) => {
-    if (!category) {
-      setCategoryError("Category is required");
-      showError({
-        field: "category",
-        message: "Category is required",
-      });
-      return false;
-    } else {
-      setCategoryError("");
-      clearError();
-      return true;
-    }
-  };
-
   async function handleSubmit() {
     try {
       setIsLoading(true);
 
       setNameTouched(true);
 
-      // Validate both service name and category
-      const isNameValid = validateName(name);
-      const isCategoryValid = validateCategory(category);
-
-      if (!isNameValid || !isCategoryValid) {
+      if (!validateName(name)) {
         setIsLoading(false);
         return;
       }
 
       const res = await newService({
         name,
-        categoryId: category?.id, // Will be defined since we validated it
+        categoryId: category?.id ?? null,
         description,
         canned: true,
       });
@@ -168,11 +150,7 @@ export default function NewService({
 
       setNameTouched(true);
 
-      // Validate both service name and category
-      const isNameValid = validateName(name);
-      const isCategoryValid = validateCategory(category);
-
-      if (!isNameValid || !isCategoryValid) {
+      if (!validateName(name)) {
         setIsLoading(false);
         return;
       }
@@ -185,7 +163,7 @@ export default function NewService({
               service: {
                 ...item.service,
                 name,
-                categoryId: category?.id, // Will be defined since we validated it
+                categoryId: category?.id ?? null,
                 description,
               },
             };
@@ -317,41 +295,18 @@ export default function NewService({
             {/* Category */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">
-                Category <span className="text-red-500">*</span>
+                Category
               </label>
               <SelectCategory
-                onCategoryChange={(selectedCategory) => {
-                  setCategory(selectedCategory);
-                  // Clear error when category is selected
-                  if (selectedCategory) {
-                    setCategoryError("");
-                    clearError();
-                  }
-                }}
+                onCategoryChange={setCategory}
                 labelPosition="none"
                 categoryData={category}
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
-                required={true}
-                onBlur={() => validateCategory(category)}
+                required={false}
                 allowEdit={true}
+                isClear
               />
-              {categoryError && (
-                <p className="flex items-center gap-1 text-xs text-red-600">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {categoryError}
-                </p>
-              )}
             </div>
 
             {/* Description */}
@@ -379,7 +334,7 @@ export default function NewService({
                   setDescription(value);
                 }}
                 rows={5}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 min-h-[100px] max-h-[200px]"
               />
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">

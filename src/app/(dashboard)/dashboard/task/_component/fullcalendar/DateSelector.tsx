@@ -6,6 +6,7 @@ import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  getWeekInfoFromDate,
   getWeekInfoFromWeekStr,
   getWeekStartNumber,
 } from "../../_utils/utils.DateSelector";
@@ -59,13 +60,19 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
     });
   }, [weekStart]);
 
+  useEffect(() => {
+    if (type !== "week" || !date) return;
+    const { weekStr } = getWeekInfoFromDate(date, weekStart);
+    if (weekStr !== week) setWeek(weekStr);
+  }, [type, date, weekStart, week, setWeek]);
+
   // Close dropdown when clicking outside
   useOnClickOutside(dropdownRef, () => setIsOpen(false));
 
   // Get display value based on type
   const getDisplayValue = () => {
-    if (type === "week" && week) {
-      const { displayRange } = getWeekInfoFromWeekStr(week, weekStart);
+    if (type === "week") {
+      const { displayRange } = getWeekInfoFromDate(date, weekStart);
       return displayRange;
     }
     if (type === "month" && month) {
@@ -180,15 +187,12 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         className="flex-1 lg:flex-none w-full lg:w-auto"
       >
         <span className="flex flex-1 lg:flex-none items-center gap-2">
-          {/* Calendar Icon: Subtle coloring */}
           <CalendarDays size={18} className={iconStyle} />
-          {/* Display Value: Core data using specified text color */}
           <span className={`${textStyle} font-medium`}>
             {getDisplayValue()}
           </span>
         </span>
 
-        {/* Chevron Icon: Rotates on open, smooth transition */}
         <ChevronDown
           size={16}
           className={`${iconStyle} ${TRANSITION_UTILITY} ${

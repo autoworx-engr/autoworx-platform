@@ -4,8 +4,7 @@ import EmployeeInformation from "../components/EmployeeInformation";
 import EmployeeWorkInformation from "../components/EmployeeWorkInformation";
 import Header from "../components/Header";
 import { getCompanyId } from "@/lib/companyId";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import BackButton from "@/components/BackButton";
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -83,10 +82,8 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   }
   return (
     <div className="p-2">
-      <div className="w-fit rounded border p-1.5 md:hidden">
-        <Link href="/dashboard/employee">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+      <div className="w-fit">
+        <BackButton href="/dashboard/employee" />
       </div>
       <Header />
       <EmployeeInformation employee={employee} info={technicians} />

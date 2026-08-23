@@ -1,6 +1,12 @@
+import {
+  checkInventoryForPayment,
+  type InventoryCheckResult,
+} from "@/actions/estimate/invoice/checkInventoryForPayment";
+import { notifyInventoryShortage } from "@/actions/estimate/invoice/notifyInventoryShortage";
 import { paymentLeadsConvertion } from "@/actions/estimate/invoice/paymentLeadsConvertion";
 import { newPayment } from "@/actions/payment/newPayment";
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
+import { deletePaymentMethod } from "@/actions/payment/deletePaymentMethod";
 import {
   Dialog,
   DialogClose,
@@ -13,6 +19,8 @@ import {
 import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { formatAmount, useAmountField } from "@/hooks/useAmountField";
+import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
 import { cn } from "@/lib/cn";
@@ -26,7 +34,7 @@ import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 
 function TabTrigger({
   value,
@@ -69,6 +77,9 @@ export default function MakePayment() {
     setDeposit: setDEPOSIT,
     setTotalPayment,
     totalPayment: currentTotalPayment,
+    items,
+    paymentModalOpen,
+    setPaymentModalOpen,
   } = useEstimateCreateStore();
   const createInvoice = useInvoiceCreate("Invoice");
   const router = useRouter();
@@ -86,49 +97,40 @@ export default function MakePayment() {
   const [cardType, setCardType] = useState("MASTERCARD");
   const [check, setCheck] = useState("");
   const [cash, setCash] = useState<string>("");
-  const [amount, setAmount] = useState<number | string>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     null,
   );
 
+  const { data: company } = useCompanyQuery();
+  const companyName = company?.name ?? "";
+
+  // Cash is received by the shop, so a new payment defaults to the company
+  // name. An existing payment keeps whatever was saved, blank included.
+  useEffect(() => {
+    if (!companyName || payment) return;
+    setCash((prev) => prev || companyName);
+  }, [companyName, payment]);
+
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
 
-  const [deposit, setDeposit] = useState<number | string>(0);
   const [depositMethod, setDepositMethod] = useState<string>("");
   const [depositNotes, setDepositNotes] = useState<string>("");
 
   const isDueZero = due === 0 ? true : false;
 
-  // useEffect(() => {
-  //   if (payment) {
-  //     setTab(payment.type);
-  //     setDate(payment.date || new Date());
-  //     setNotes(payment.notes || "");
+  const {
+    value: amount,
+    setValue: setAmount,
+    error: amountError,
+    inputProps: amountInputProps,
+  } = useAmountField(0, "Amount");
 
-  //     switch (payment.type) {
-  //       case "CARD":
-  //         setCard(payment.card?.creditCard || "");
-  //         setCardType(payment.card?.cardType || "MASTERCARD");
-  //         break;
-  //       case "CHECK":
-  //         setCheck(payment.check?.checkNumber || "");
-  //         break;
-  //       case "CASH":
-  //         setCash(payment.cash?.receivedCash || "");
-  //         break;
-  //       case "OTHER":
-  //         setPaymentMethod(payment.other?.paymentMethod || null);
-  //         break;
-  //     }
-  //   }
-  // }, [payment]);
-
-  // useEffect(() => setAmount(due), [due]);
-
-  const formatAmount = (value: number | string): number => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    return Math.round(num * 100) / 100;
-  };
+  const {
+    value: deposit,
+    setValue: setDeposit,
+    error: depositError,
+    inputProps: depositInputProps,
+  } = useAmountField(0, "Deposit amount");
 
   function reset() {
     setTab("CARD");
@@ -137,29 +139,43 @@ export default function MakePayment() {
     setCard("");
     setCardType("MASTERCARD");
     setCheck("");
-    setCash("");
+    setCash(companyName);
     setAmount(0);
+    setDeposit(0);
     setDepositNotes("");
   }
 
   async function handleSubmit() {
-    const roundedAmount = formatAmount(amount);
     const roundedDue = formatAmount(due);
 
-    if (!roundedAmount || roundedAmount <= 0) {
-      errorToast("Payment amount must be greater than 0");
-      return;
+    if (tab === "DEPOSIT") {
+      if (depositError) {
+        errorToast(depositError);
+        return;
+      }
+
+      if (formatAmount(deposit) > roundedDue) {
+        errorToast("Deposit amount cannot be greater than due amount");
+        return;
+      }
+
+      if (depositMethod === "") {
+        errorToast("Deposit method is required");
+        return;
+      }
+    } else {
+      if (amountError) {
+        errorToast(amountError);
+        return;
+      }
+
+      if (formatAmount(amount) > roundedDue) {
+        errorToast(`amount exceeds the due of $${roundedDue}`);
+        return;
+      }
     }
 
-    if (Number(roundedAmount) > roundedDue) {
-      errorToast(`amount exceeds the due of $${roundedDue}  `);
-      return;
-    }
-
-    if (tab === "DEPOSIT" && formatAmount(deposit) > due) {
-      errorToast("Deposit amount cannot be greater than due amount");
-      return;
-    }
+    const roundedAmount = formatAmount(amount);
 
     try {
       await additionalDataValidation.parseAsync({
@@ -169,16 +185,32 @@ export default function MakePayment() {
         receivedCash: cash,
         paymentMethodId: paymentMethod?.id,
       });
-      const fromPayment = true;
-      const res1: any = await createInvoice(fromPayment);
+      // Taking a payment normally converts the estimate to an invoice, saves
+      // the invoice and draws its materials out of the inventory. When there
+      // isn't enough stock the server rejects that whole save, which used to
+      // block the payment too — so check first and, if stock is short, record
+      // the payment alone and leave the estimate untouched.
+      const inventory: InventoryCheckResult = isEditPage
+        ? await checkInventoryForPayment({
+            invoiceId,
+            materials: items.flatMap((item) => item.materials ?? []),
+          })
+        : { sufficient: true, shortages: [] };
 
-      if (res1 && res1.type === "globalError") {
-        errorToast(
-          res1?.errorSource?.length
-            ? res1.errorSource[0].message
-            : res1.message,
-        );
-        return;
+      const fromPayment = true;
+      let res1: any = { type: "success" };
+
+      if (inventory.sufficient) {
+        res1 = await createInvoice(fromPayment);
+
+        if (res1 && res1.type === "globalError") {
+          errorToast(
+            res1?.errorSource?.length
+              ? res1.errorSource[0].message
+              : res1.message,
+          );
+          return;
+        }
       }
       let res2;
       let res3;
@@ -198,6 +230,7 @@ export default function MakePayment() {
               receivedCash: cash,
               paymentMethodId: paymentMethod?.id,
             },
+            convertToInvoice: inventory.sufficient,
           });
           if (res2?.type === "success") {
             setDue(due - roundedAmount);
@@ -212,16 +245,6 @@ export default function MakePayment() {
         }
         // Add deposit
         if (tab === "DEPOSIT") {
-          console.log(
-            "🚀 ~ handleSubmit ~ formatAmount(deposit) :",
-            formatAmount(deposit),
-          );
-          console.log("🚀 ~ handleSubmit ~ due:", due);
-
-          if (depositMethod === "") {
-            errorToast("Deposit method is required");
-            return;
-          }
           res3 = await newPayment({
             invoiceId: invoiceId,
             type: "DEPOSIT" as PaymentType,
@@ -232,6 +255,7 @@ export default function MakePayment() {
               depositMethod: depositMethod,
               depositNotes: depositNotes,
             },
+            convertToInvoice: inventory.sufficient,
           });
           if (res3?.type === "success") {
             setDue(due - Number(deposit));
@@ -242,12 +266,33 @@ export default function MakePayment() {
 
       if (res2?.type === "success" || res3?.type === "success") {
         await paymentLeadsConvertion(invoiceId);
-        setOpen(false);
+        handleOpenChange(false);
         successToast("Payment recorded successfully");
-        reset();
+        if (!inventory.sufficient) {
+          errorToast(
+            `Payment only — not enough inventory for ${inventory.shortages
+              .map(
+                (item) =>
+                  `${item.name} (need ${item.required}, ${item.available} in stock)`,
+              )
+              .join(
+                ", ",
+              )}. The estimate was not converted and the inventory was not updated.`,
+            { id: "inventory-shortage" },
+          );
 
-        // Redirect to the estimate/invoice list page after first payment
-        router.push("/dashboard/estimate/invoices");
+          // The conversion was skipped, so the server never ran its own
+          // lowInventoryNotification — tell the admins/managers here instead,
+          // otherwise nobody learns these products need restocking.
+          // Fire-and-forget: the server action completes even without awaiting.
+          notifyInventoryShortage({
+            invoiceId,
+            shortages: inventory.shortages,
+          }).catch((err) =>
+            console.error("notifyInventoryShortage failed", err),
+          );
+        }
+        reset();
       } else if (res2?.type === "globalError") {
         errorToast(
           res2?.errorSource?.length
@@ -292,6 +337,35 @@ export default function MakePayment() {
     }
   }
 
+  async function handleRemovePaymentMethod(
+    item: PaymentMethod,
+    e: React.MouseEvent,
+  ) {
+    try {
+      const res = await deletePaymentMethod(item.id);
+      if (res.type === "success") {
+        useListsStore.setState((state) => ({
+          paymentMethods: state.paymentMethods.filter((m) => m.id !== item.id),
+        }));
+        if (paymentMethod?.id === item.id) {
+          setPaymentMethod(null);
+        }
+        successToast("Payment method deleted");
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
+    }
+  }
+
   const openMakePaymentDialog = () => {
     reset();
     if (payment) {
@@ -315,11 +389,27 @@ export default function MakePayment() {
           break;
       }
     }
-    setAmount(formatAmount(due));
+    const dueAmount = formatAmount(due);
+    setAmount(isNaN(dueAmount) ? "" : dueAmount);
+    setDeposit(isNaN(dueAmount) ? "" : dueAmount);
   };
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setPaymentModalOpen(false);
+  }
+
+  // Other parts of the page (e.g. blocking a "Delivered" status change while
+  // there is an outstanding balance) ask for this dialog through the store.
+  useEffect(() => {
+    if (!paymentModalOpen) return;
+    openMakePaymentDialog();
+    setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentModalOpen]);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button
           onClick={openMakePaymentDialog}
@@ -337,7 +427,7 @@ export default function MakePayment() {
       </DialogTrigger>
 
       <DialogContent className="w-full max-w-xl">
-        <form>
+        <form noValidate>
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />
@@ -431,10 +521,7 @@ export default function MakePayment() {
                     <SlimInput
                       labelClassName="text-sm md:text-base"
                       name="amount"
-                      type="text"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                      {...amountInputProps}
                     />
                   </div>
 
@@ -515,7 +602,7 @@ export default function MakePayment() {
                     name="notes"
                     id="notes"
                     className={cn(
-                      "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                      "h-20 max-h-28 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
                       slimInputClassName,
                     )}
                     value={notes}
@@ -560,10 +647,7 @@ export default function MakePayment() {
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -612,6 +696,7 @@ export default function MakePayment() {
                     name="cash"
                     type="text"
                     label="Cash Received"
+                    placeholder="Enter received by"
                     value={cash}
                     onChange={(e) => setCash(e.target.value)}
                   />
@@ -622,9 +707,7 @@ export default function MakePayment() {
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -674,7 +757,7 @@ export default function MakePayment() {
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
+                          paymentMethodInput ? "bg-primary" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -695,6 +778,7 @@ export default function MakePayment() {
                   openState={[openPaymentMethod, setOpenPaymentMethod]}
                   selectedItem={paymentMethod}
                   setSelectedItem={setPaymentMethod}
+                  onRemoveItem={handleRemovePaymentMethod}
                 />
               </div>
 
@@ -720,9 +804,7 @@ export default function MakePayment() {
                   <SlimInput
                     labelClassName="text-sm md:text-base"
                     name="amount"
-                    type="text"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    {...amountInputProps}
                   />
                 </div>
               </div>
@@ -769,10 +851,8 @@ export default function MakePayment() {
                   <SlimInput
                     labelClassName="text-sm md:text-base"
                     name="deposit"
-                    type="text"
                     label="Deposit Amount"
-                    value={deposit}
-                    onChange={(e) => setDeposit(e.target.value)}
+                    {...depositInputProps}
                   />
                 </div>
               </div>
@@ -813,10 +893,10 @@ export default function MakePayment() {
             <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-3">
               <button
                 type="button"
-                className="rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
               >
                 Cancel
               </button>

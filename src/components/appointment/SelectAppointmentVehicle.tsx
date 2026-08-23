@@ -8,9 +8,24 @@ import { Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
+import { TruncatedText } from "@/components/ui/TruncatedText";
+import { normalizeSearch } from "@/utils/normalizeSearch";
+
+const vehicleLabel = (vehicle: Partial<Vehicle>) =>
+  [vehicle.year, vehicle.make, vehicle.model, vehicle.other]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
 export function SelectAppointmentVehicle({
   name = "vehicleId",
@@ -34,12 +49,10 @@ export function SelectAppointmentVehicle({
 
   const isClientIdNumber = !isNaN(Number(clientId)) && clientId !== null;
 
-  const { data: clientVehicles = [] } = useVehicleByClientIdQuery(
-    Number(clientId),
-    {
+  const { data: clientVehicles = [], isLoading: isLoadingVehicles } =
+    useVehicleByClientIdQuery(Number(clientId), {
       enabled: isClientIdNumber,
-    },
-  );
+    });
 
   useEffect(() => {
     if (vehicleId && clientVehicles.length > 0) {
@@ -66,14 +79,21 @@ export function SelectAppointmentVehicle({
 
     const clientChanged = prevClientId.current !== numericClientId;
 
+    const requestedVehicle = vehicleId
+      ? clientVehicles?.find((v) => v.id === vehicleId)
+      : undefined;
+
     if (clientChanged && !isEdit) {
       prevClientId.current = numericClientId;
-      setVehicle(newAddedVehicle ?? clientVehicles?.[0] ?? null);
+      setVehicle(
+        requestedVehicle ?? newAddedVehicle ?? clientVehicles?.[0] ?? null,
+      );
       return;
     }
     prevClientId.current = numericClientId;
 
-    const selectedVehicle = newAddedVehicle ?? clientVehicles?.[0];
+    const selectedVehicle =
+      requestedVehicle ?? newAddedVehicle ?? clientVehicles?.[0];
     if (clientVehicles?.length > 0 && !value) {
       if (isEdit == false) {
         setVehicle(selectedVehicle);
@@ -88,7 +108,7 @@ export function SelectAppointmentVehicle({
     } else {
       setVehicle(null);
     }
-  }, [newAddedVehicle, clientId, clientVehicles]);
+  }, [newAddedVehicle, clientId, clientVehicles, vehicleId]);
 
   useEffect(() => {
     return () => {
@@ -97,6 +117,13 @@ export function SelectAppointmentVehicle({
       }
     };
   }, []);
+
+  const vehicleOptions = useMemo(() => {
+    if (!vehicle?.id) return clientVehicles;
+    return clientVehicles.some((option) => option.id === vehicle.id)
+      ? clientVehicles
+      : [vehicle as Vehicle, ...clientVehicles];
+  }, [clientVehicles, vehicle]);
 
   const handleClear = () => {
     setVehicle(null);
@@ -112,9 +139,7 @@ export function SelectAppointmentVehicle({
           className="min-w-full"
           disabledDropdown={clientId && !vehicle?.fromRequest ? false : true}
           label={(vehicle: Partial<Vehicle> | null) =>
-            vehicle
-              ? `${vehicle.year || ""} ${vehicle.make ?? ""} ${vehicle.model ?? ""} ${vehicle.other ?? ""}`
-              : "Vehicle"
+            vehicle ? vehicleLabel(vehicle) : "Vehicle"
           }
           newButton={
             <NewVehicle
@@ -149,14 +174,18 @@ export function SelectAppointmentVehicle({
               setIsAppointmentModalOpen={setIsAppointmentModalOpen}
             />
           }
-          items={clientVehicles}
-          onSearch={(search: string) =>
-            clientVehicles.filter(
-              (vehicle) =>
-                vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-                vehicle.other?.toLowerCase().includes(search.toLowerCase()),
-            )
-          }
+          items={vehicleOptions}
+          isLoading={isLoadingVehicles}
+          onSearch={(search: string) => {
+            const query = normalizeSearch(search);
+            return vehicleOptions.filter((option) =>
+              [
+                vehicleLabel(option),
+                option.vin ?? "",
+                option.license ?? "",
+              ].some((field) => normalizeSearch(field).includes(query)),
+            );
+          }}
           openState={[
             openDropdown as boolean,
             setOpenDropdown as Dispatch<SetStateAction<boolean>>,
@@ -165,9 +194,7 @@ export function SelectAppointmentVehicle({
           onSelect={(vehicle) => {
             setVehicle(vehicle);
           }}
-          displayList={(item) => (
-            <p>{`${item.year || ""} ${item.make ?? ""} ${item.model ?? ""} ${item.other ?? ""}`}</p>
-          )}
+          displayList={(item) => <TruncatedText text={vehicleLabel(item)} />}
           footer={
             isClear && vehicle ? (
               <button

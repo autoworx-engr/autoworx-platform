@@ -13,7 +13,11 @@ export default function CalendarListView({
     if (!grouped[a.date]) grouped[a.date] = [];
     grouped[a.date].push(a);
   });
-  const sortedDates = Object.keys(grouped).sort();
+  const sortedDates = Object.keys(grouped).sort((a, b) => {
+    if (!a) return 1;
+    if (!b) return -1;
+    return a.localeCompare(b);
+  });
 
   if (sortedDates.length === 0) {
     return (
@@ -28,14 +32,16 @@ export default function CalendarListView({
   return (
     <div className="space-y-6">
       {sortedDates.map((dateKey) => {
-        const [y, m, d] = dateKey.split("-").map(Number);
-        const dateObj = new Date(y, m - 1, d);
-        const label = dateObj.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
+        let label = "Date Not Scheduled";
+        if (dateKey) {
+          const [y, m, d] = dateKey.split("-").map(Number);
+          label = new Date(y, m - 1, d).toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          });
+        }
         return (
           <div key={dateKey}>
             <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 sm:mb-3">

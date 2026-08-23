@@ -26,7 +26,7 @@ import {
   InventoryProductType,
   Vendor,
 } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { editProduct } from "../../../../actions/inventory/edit";
 import { ProductFormFields } from "./ProductFormFields";
@@ -118,7 +118,7 @@ export default function EditProduct({ productData }: TProps) {
     const name = product.productName as string;
     const description = product.description as string;
     const price = Number(product.price) as number;
-    const categoryId = category?.id as number;
+    const categoryId = category?.id ?? null;
     const unit = product.unit as string;
     const lot = product.lot as string;
     const type = product.type as InventoryProductType;
@@ -132,15 +132,6 @@ export default function EditProduct({ productData }: TProps) {
       showError({
         field: "productName",
         message: "Product Name is required.",
-      });
-      hasError = true;
-    }
-
-    // Category validation
-    if (!category) {
-      showError({
-        field: "category",
-        message: "Category is required.",
       });
       hasError = true;
     }
@@ -255,14 +246,14 @@ export default function EditProduct({ productData }: TProps) {
       >
         <div>
           <DialogTrigger asChild>
-            <SquarePen className="w-5 h-5" />
+            <PencilLineIcon className="w-5 h-5" />
           </DialogTrigger>
         </div>
         {/* <div className="block md:hidden">
           <DialogTrigger>Edit Profile</DialogTrigger>
         </div>   */}
         <DialogContent
-          className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+          className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto]"
           form
         >
           <DialogHeader>
@@ -281,7 +272,7 @@ export default function EditProduct({ productData }: TProps) {
                 }}
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
-                required={true}
+                required={false}
               />
 
               {/* radio buttons for product type */}
@@ -395,7 +386,7 @@ export default function EditProduct({ productData }: TProps) {
                 name="description"
                 required={false}
                 className={cn(
-                  "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
+                  "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 mt-1",
                   "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
                   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                   "focus:border-primary/60 focus:ring-2 focus:ring-primary/40", // Brand focus state

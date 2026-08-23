@@ -12,9 +12,10 @@ import FormError from "@/components/FormError";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useState } from "react";
 
 export default function UpdateTemplate({
@@ -68,7 +69,7 @@ export default function UpdateTemplate({
           type="button"
           className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-white text-primary active:scale-90"
         >
-          <SquarePen size={16} strokeWidth={2} />
+          <PencilLineIcon size={16} strokeWidth={2} />
         </button>
       </DialogTrigger>
 
@@ -94,7 +95,7 @@ export default function UpdateTemplate({
             <textarea
               name="message"
               rows={10}
-              className={slimInputClassName}
+              className={cn(slimInputClassName, "min-h-16 resize-y")}
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
             />

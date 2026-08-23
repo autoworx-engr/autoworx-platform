@@ -1,6 +1,8 @@
 "use client";
 
 import { makeFleetStatementPayment } from "@/actions/fleet/statement";
+import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
+import { deletePaymentMethod } from "@/actions/payment/deletePaymentMethod";
 import {
   Dialog,
   DialogClose,
@@ -11,6 +13,8 @@ import {
 } from "@/components/Dialog";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
+import { formatAmount, useAmountField } from "@/hooks/useAmountField";
+import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
@@ -77,17 +81,35 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [cardType, setCardType] = useState("MASTERCARD");
   const [check, setCheck] = useState("");
   const [cash, setCash] = useState<string>("");
-  const [amount, setAmount] = useState<number | string>(totalDue);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     null,
   );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
 
-  const formatAmount = (value: number | string): number => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    return Math.round(num * 100) / 100;
-  };
+  const { data: company } = useCompanyQuery();
+  const companyName = company?.name ?? "";
+
+  // Cash is received by the shop, so the field defaults to the company name
+  useEffect(() => {
+    if (companyName) setCash((prev) => prev || companyName);
+  }, [companyName]);
+  const [depositMethod, setDepositMethod] = useState("");
+  const [depositNotes, setDepositNotes] = useState("");
+
+  const {
+    value: amount,
+    setValue: setAmount,
+    error: amountError,
+    inputProps: amountInputProps,
+  } = useAmountField(totalDue, "Amount");
+
+  const {
+    value: deposit,
+    setValue: setDeposit,
+    error: depositError,
+    inputProps: depositInputProps,
+  } = useAmountField(totalDue, "Deposit amount");
 
   function reset() {
     setTab("CARD");
@@ -96,9 +118,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setCard("");
     setCardType("MASTERCARD");
     setCheck("");
-    setCash("");
+    setCash(companyName);
     setAmount(totalDue);
+    setDeposit(totalDue);
     setPaymentMethod(null);
+    setDepositMethod("");
+    setDepositNotes("");
   }
 
   // Reset form when modal opens
@@ -110,18 +135,39 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleSubmit = async () => {
     try {
-      const roundedAmount = formatAmount(amount);
       const roundedTotalDue = formatAmount(totalDue);
+      const isDeposit = tab === "DEPOSIT";
 
-      if (Number(roundedAmount) > Number(roundedTotalDue)) {
-        errorToast("Payment amount exceeds the due amount");
-        return;
+      if (isDeposit) {
+        if (depositError) {
+          errorToast(depositError);
+          return;
+        }
+
+        if (formatAmount(deposit) > roundedTotalDue) {
+          errorToast("Deposit amount cannot be greater than due amount");
+          return;
+        }
+
+        if (!depositMethod) {
+          errorToast("Deposit method is required");
+          return;
+        }
+      } else {
+        if (amountError) {
+          errorToast(amountError);
+          return;
+        }
+
+        if (formatAmount(amount) > roundedTotalDue) {
+          errorToast("Payment amount exceeds the due amount");
+          return;
+        }
       }
 
-      if (Number(roundedAmount) <= 0) {
-        errorToast("Payment amount must be greater than 0");
-        return;
-      }
+      const roundedAmount = isDeposit
+        ? formatAmount(deposit)
+        : formatAmount(amount);
 
       setLoading(true);
 
@@ -143,6 +189,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         }),
         ...(tab === "CASH" && {
           receivedCash: cash,
+        }),
+        ...(tab === "DEPOSIT" && {
+          depositMethod,
+          depositNotes,
         }),
       };
 
@@ -173,25 +223,61 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   async function handleNewPaymentMethod() {
     try {
-      // For now, we'll skip the new payment method creation
-      // since it's not implemented in the fleet context
-      errorToast("New payment method creation not available in fleet payments");
+      const res = await newPaymentMethod(paymentMethodInput);
+
+      if (res.type === "success") {
+        setPaymentMethodInput("");
+        setPaymentMethod(res.data);
+        setOpenPaymentMethod(false);
+
+        useListsStore.setState({
+          paymentMethods: [...paymentMethods, res.data],
+        });
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
     } catch (error) {
       errorToast("Failed to create payment method");
+    }
+  }
+
+  async function handleRemovePaymentMethod(
+    item: PaymentMethod,
+    e: React.MouseEvent,
+  ) {
+    try {
+      const res = await deletePaymentMethod(item.id);
+      if (res.type === "success") {
+        useListsStore.setState((state) => ({
+          paymentMethods: state.paymentMethods.filter((m) => m.id !== item.id),
+        }));
+        if (paymentMethod?.id === item.id) {
+          setPaymentMethod(null);
+        }
+        successToast("Payment method deleted");
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
+    } catch (err) {
+      errorToast("Failed to delete payment method");
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-xl">
-        <form>
+        <form noValidate>
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />
           </DialogHeader>
 
           <Tabs.Root className="mt-5" value={tab} onValueChange={setTab as any}>
-            <Tabs.List className="grid grid-cols-4 gap-1.5 rounded-2xl border border-slate-200 bg-white/50 p-1.5 shadow-sm md:flex">
+            <Tabs.List className="grid grid-cols-5 gap-1.5 rounded-2xl border border-slate-200 bg-white/50 p-1.5 shadow-sm md:flex">
               <TabTrigger value="CARD" tab={tab}>
                 <svg
                   viewBox="0 0 24 24"
@@ -247,6 +333,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <TabTrigger value="OTHER" tab={tab}>
                 Other
               </TabTrigger>
+
+              <TabTrigger value="DEPOSIT" tab={tab}>
+                Deposit
+              </TabTrigger>
             </Tabs.List>
 
             <Tabs.Content value="CARD">
@@ -285,10 +375,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <SlimInput
                       labelClassName="text-sm md:text-base"
                       name="amount"
-                      type="text"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                      {...amountInputProps}
                     />
                   </div>
 
@@ -368,7 +455,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <textarea
                     name="notes"
                     id="notes"
-                    className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                    className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                   />
@@ -411,10 +498,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -428,7 +512,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -460,6 +544,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     name="cash"
                     type="text"
                     label="Cash Received"
+                    placeholder="Enter received by"
                     value={cash}
                     onChange={(e) => setCash(e.target.value)}
                   />
@@ -470,10 +555,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -487,7 +569,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -520,7 +602,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
+                          paymentMethodInput ? "bg-primary" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -541,6 +623,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   openState={[openPaymentMethod, setOpenPaymentMethod]}
                   selectedItem={paymentMethod}
                   setSelectedItem={setPaymentMethod}
+                  onRemoveItem={handleRemovePaymentMethod}
                 />
               </div>
 
@@ -566,10 +649,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <SlimInput
                     labelClassName="text-sm md:text-base"
                     name="amount"
-                    type="text"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                    {...amountInputProps}
                   />
                 </div>
               </div>
@@ -584,9 +664,69 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            </Tabs.Content>
+
+            <Tabs.Content value="DEPOSIT">
+              <div className="mt-5 flex justify-between gap-3">
+                <div className="w-40 md:w-[40%]">
+                  <SlimInput
+                    labelClassName="text-sm md:text-base"
+                    name="date"
+                    type="date"
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone,
+                      );
+                      setDate(localDate.toDate());
+                    }}
+                  />
+                </div>
+
+                <div className="w-[60%]">
+                  <SlimInput
+                    labelClassName="text-sm md:text-base"
+                    name="deposit"
+                    label="Deposit Amount"
+                    {...depositInputProps}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <SlimInput
+                  labelClassName="text-sm md:text-base"
+                  name="depositMethod"
+                  type="text"
+                  label="Deposit Method"
+                  value={depositMethod}
+                  onChange={(e) =>
+                    setDepositMethod(e.target.value.replace(/[^a-zA-Z ]/g, ""))
+                  }
+                  required={true}
+                />
+              </div>
+
+              <div className="mt-5">
+                <label
+                  className="mb-1 px-2 text-sm font-medium md:text-base"
+                  htmlFor="depositNotes"
+                >
+                  Deposit Notes
+                </label>
+                <textarea
+                  name="depositNotes"
+                  id="depositNotes"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  value={depositNotes}
+                  onChange={(e) => setDepositNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>

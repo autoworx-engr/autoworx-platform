@@ -32,57 +32,71 @@ export default function InventoryMobileCard({ history, index }: TProps) {
   }
 
   return (
-    <div
-      className={`rounded-lg border p-4 shadow-md ${index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"}`}
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <Link href={redirectUrl} className="font-semibold text-primary">
-          {index + 1}
-        </Link>
-
-        <span className="font-semibold">{type}</span>
-      </div>
-
-      <div className="mb-2">
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900 dark:ring-slate-700/50 sm:p-5">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <Link
           href={redirectUrl}
-          className="text-lg font-semibold text-[#66738C]"
+          className="shrink-0 font-semibold text-primary"
+        >
+          #{index + 1}
+        </Link>
+
+        <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-white/10 dark:text-slate-400">
+          {type}
+        </span>
+      </div>
+
+      <div className="mb-3 min-w-0">
+        <Link
+          href={redirectUrl}
+          className="block truncate text-base font-semibold text-slate-700 hover:text-primary dark:text-white sm:text-lg"
         >
           {name}
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 border-t pt-2">
+      <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
         <div>
-          <div className="text-sm text-[#66738C]">Average Cost</div>
-          <div className="font-semibold text-[#66738C]">
+          <div className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            Average Cost
+          </div>
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
             {formatCurrency(averageCost ?? 0)}
           </div>
         </div>
         <div>
-          <div className="text-sm text-[#66738C]">Average Sales</div>
-          <div className="font-semibold text-[#66738C]">
+          <div className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            Average Sales
+          </div>
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
             {formatCurrency(averageSales ?? 0)}
           </div>
         </div>
         <div>
-          <div className="text-sm text-[#66738C]">Quantity</div>
-          <div className="font-semibold text-[#66738C]">
+          <div className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            Quantity
+          </div>
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
             {Number(quantity) ?? 0}
           </div>
         </div>
         <div>
-          <div className="text-sm text-[#66738C]">Quantity Sold</div>
-          <div className="font-semibold text-[#66738C]">
+          <div className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            Quantity Sold
+          </div>
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
             {quantitySold ?? 0}
           </div>
         </div>
-        <div className="col-span-2">
-          <div className="text-sm text-[#66738C]">ROI</div>
-          <div className="font-semibold text-[#66738C]">
-            {ReturnAndInvestment ?? 0}%
-          </div>
-        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between rounded-xl bg-primary/5 px-3 py-2 dark:bg-primary/10">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          ROI
+        </span>
+        <span className="font-semibold text-primary">
+          {ReturnAndInvestment ?? 0}%
+        </span>
       </div>
     </div>
   );

@@ -1,7 +1,21 @@
+import { staticPermissions } from "@/constants/static-permissions";
 import {
   PermissionItem,
   StaticPermissionItem,
 } from "@/types/feature-permission";
+
+/**
+ * `staticPermissions` is the source of truth for labels. Rows already stored in
+ * CompanyPermissionModule keep whatever title they were created with, so
+ * renaming a module here would otherwise only affect companies created after
+ * the rename.
+ */
+function resolveTitle(permission_name: string, fallback: string) {
+  return (
+    staticPermissions.find((sp) => sp.permission_name === permission_name)
+      ?.title ?? fallback
+  );
+}
 
 export function formatPermissions(permissions: any[]) {
   const result: any[] = [];
@@ -25,6 +39,7 @@ export function formatPermissions(permissions: any[]) {
 
     "invoiceAutomation",
     "tagAutomation",
+    "reportingAutomation",
   ];
 
   const communicationHubChildren = [
@@ -74,8 +89,8 @@ export function formatPermissions(permissions: any[]) {
     children: [],
   };
 
-  permissions?.forEach((permission: any) => {
-    const { permission_name } = permission;
+  permissions?.forEach((raw: any) => {
+    const { permission_name } = raw;
 
     if (
       permission_name === "directory" ||
@@ -87,6 +102,11 @@ export function formatPermissions(permissions: any[]) {
       return;
     }
 
+    const permission = {
+      ...raw,
+      title: resolveTitle(permission_name, raw.title),
+    };
+
     if (directoryChildren.includes(permission_name)) {
       directoryGroup.children.push(permission);
     } else if (automationChildren.includes(permission_name)) {
@@ -96,7 +116,7 @@ export function formatPermissions(permissions: any[]) {
     } else {
       // All other permissions as top-level
 
-      result.push({ ...permission });
+      result.push(permission);
     }
   });
 

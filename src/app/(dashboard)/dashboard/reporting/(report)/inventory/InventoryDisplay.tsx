@@ -94,9 +94,7 @@ export default function InventoryDisplay({
       },
     );
 
-    const averageSales = Math.round(
-      totalSalesPrice / (quantitySold || 1),
-    ) as number;
+    const averageSales = quantitySold > 0 ? totalSalesPrice / quantitySold : 0;
 
     const totalPurchaseQuantity = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.quantity),
@@ -114,7 +112,7 @@ export default function InventoryDisplay({
         : 0;
 
     const ReturnAndInvestment =
-      averageSales > averageCost
+      averageCost > 0 && averageSales > averageCost
         ? (((averageSales - averageCost) / averageCost) * 100).toFixed(2)
         : "0.00";
     const { InventoryProductHistory, ...productInfo } = product;
@@ -163,7 +161,7 @@ export default function InventoryDisplay({
     : sortedInventoryHistory.slice(startIndex, endIndex);
   if (isDesktop) {
     return (
-      <div className="thin-scrollbar hidden scroll-smooth md:block pt-2">
+      <div className="hidden scroll-smooth md:block pt-2">
         <div className="relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
           <div className="max-h-[60vh] overflow-auto custom-scrollbar">
             {inventoryToRender.length === 0 ? (

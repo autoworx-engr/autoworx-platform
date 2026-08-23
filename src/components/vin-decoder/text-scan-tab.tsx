@@ -20,23 +20,35 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
   const [isFlashing, setIsFlashing] = useState(false);
 
   const onStartCamera = async () => {
-    setIsCameraActive(true);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-    });
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
       streamRef.current = stream;
+      stream.getVideoTracks().forEach((track) => {
+        track.addEventListener("ended", stopCamera);
+      });
+      setIsCameraActive(true);
+    } catch (err) {
+      errorToast("Unable to access camera");
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
-      setIsCameraActive(false);
     }
+    setIsCameraActive(false);
   };
+
+  // Assign the stream once the <video> element has actually mounted
+  // (it only renders after isCameraActive flips to true).
+  useEffect(() => {
+    if (isCameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraActive]);
 
   useEffect(() => {
     return () => {
@@ -46,6 +58,11 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
 
   const onCaptureFrame = async () => {
     if (!videoRef.current || !canvasRef.current) return;
+
+    if (!videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+      errorToast("Camera preview isn't ready yet. Please try again.");
+      return;
+    }
 
     // NEW: Trigger the visual flash effect instantly
     setIsFlashing(true);
@@ -64,7 +81,7 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     canvas.toBlob(
-      async blob => {
+      async (blob) => {
         if (blob) {
           const file = new File([blob], "captured-vin.jpg", {
             type: "image/jpeg",
@@ -150,7 +167,8 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
             <video
               ref={videoRef}
               autoPlay
-              // playsInline
+              playsInline
+              muted
               className="h-64 w-full object-cover"
             />
 

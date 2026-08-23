@@ -5,6 +5,10 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
+import {
+  normalizePhoneForStorage,
+  phoneNumberLookupValues,
+} from "@/utils/normalizePhone";
 import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
@@ -74,8 +78,14 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const normalizedFrom = normalizePhoneNumber(from);
-      const normalizedTo = normalizePhoneNumber(to);
+      const normalizedFrom = {
+        lookupValues: phoneNumberLookupValues(from),
+        storeValue: normalizePhoneForStorage(from),
+      };
+      const normalizedTo = {
+        lookupValues: phoneNumberLookupValues(to),
+        storeValue: normalizePhoneForStorage(to),
+      };
 
       const messageText = message || cleanText || "";
 
@@ -298,23 +308,4 @@ function infobipMimeToExt(mime: string): string {
     "application/pdf": "pdf",
   };
   return map[mime.split(";")[0].trim()] || "bin";
-}
-
-function normalizePhoneNumber(phone: string) {
-  const digits = (phone || "").replace(/\D/g, "");
-  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
-
-  const lookupValues = Array.from(
-    new Set([digits, last10Digits].filter((value) => value.length > 0)),
-  );
-
-  const storeValue =
-    digits.length === 11 && digits.startsWith("1")
-      ? last10Digits
-      : digits || phone;
-
-  return {
-    lookupValues,
-    storeValue,
-  };
 }

@@ -6,6 +6,7 @@ import moment from "moment";
 import { useCalendarStore } from "@/stores/calendarStore";
 import useTaskSearchQuery from "./task/query/useTaskSearchQuery";
 import useAppointmentSearchQuery from "./appointment/query/useAppointmentSearchQuery";
+import { searchWords } from "../_utils/clientNameSearch";
 
 export type SearchResult = {
   id: number;
@@ -90,6 +91,8 @@ export function useCalendarSearch(type: string) {
       })),
     ];
 
+    const words = searchWords(trimmed);
+
     return allItems
       .filter((item) => {
         const title = (item.title || "").toLowerCase();
@@ -97,10 +100,14 @@ export function useCalendarSearch(type: string) {
         const lastName = (item.lastName || "").toLowerCase();
         const fullName = `${firstName} ${lastName}`.trim();
         const vehicle = (item.vehicle || "").toLowerCase();
-        return [title, firstName, lastName, fullName, vehicle].some(
-          (field) =>
-            field.includes(trimmed) ||
-            field.split(" ").some((word) => word.startsWith(trimmed)),
+        const fields = [title, firstName, lastName, fullName, vehicle];
+
+        return words.every((word) =>
+          fields.some(
+            (field) =>
+              field.includes(word) ||
+              field.split(" ").some((part) => part.startsWith(word)),
+          ),
         );
       })
       .sort(
@@ -109,8 +116,6 @@ export function useCalendarSearch(type: string) {
       );
   }, [searchTerm, tasks, appointments]);
 
-  // Infinite scroll is server-side: pull the next page from whichever list
-  // still has one. Results re-merge/sort as pages arrive.
   const hasMore = !!taskHasNext || !!apptHasNext;
   const isFetchingMore = taskFetchingNext || apptFetchingNext;
   const loadMore = useCallback(() => {

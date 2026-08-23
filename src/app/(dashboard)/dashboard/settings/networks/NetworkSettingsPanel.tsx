@@ -242,9 +242,12 @@ export function NetworkSettingsPanel({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-sm text-gray-600 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden max-h-96 overflow-y-auto thin-scrollbar">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden max-h-96 overflow-y-auto">
           {!locationAllow ? (
             <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
               <MapPin size={28} className="text-gray-300 mb-2" />

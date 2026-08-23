@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { errorToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +11,8 @@ import {
   UrgentRequestsListResponse,
   getUrgentRequests,
 } from "@/service/virtual-shop/api";
-import { fToNow } from "@/utils/formatDate";
+import { formatTime } from "@/app/(dashboard)/dashboard/virtual-shop/admin/components/CalendarTab.utils";
+import { fToNow, fUsDate } from "@/utils/formatDate";
 import {
   AlertTriangle,
   Calendar,
@@ -152,7 +153,7 @@ export default function UrgentRequestsClient({
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -198,6 +199,7 @@ export default function UrgentRequestsClient({
             </button>
           ))}
         </div>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
       {/* List */}
@@ -332,8 +334,10 @@ function UrgentRequestCard({
             {request.requestedDate && (
               <span className="flex items-center gap-1">
                 <Calendar size={12} />
-                {request.requestedDate}
-                {request.requestedTime ? ` at ${request.requestedTime}` : ""}
+                {fUsDate(request.requestedDate)}
+                {request.requestedTime
+                  ? ` at ${formatTime(request.requestedTime)}`
+                  : ""}
                 {request.flexibleTiming && " (flexible)"}
               </span>
             )}
@@ -355,7 +359,7 @@ function UrgentRequestCard({
           </Link>
           {request.client?.id && (
             <Link
-              href={`/dashboard/communication/client/${request.client.id}`}
+              href={`/dashboard/communication/client/${request.client.id}?chat=true`}
               className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
             >
               <MessageCircle size={15} />

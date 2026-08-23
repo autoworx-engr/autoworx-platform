@@ -7,6 +7,7 @@ import {
   TabsTrigger,
 } from "@/app/(dashboard)/dashboard/estimate/TabsNav";
 import { authOptions } from "@/authOptions";
+import BackButton from "@/components/BackButton";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
@@ -173,9 +174,12 @@ export default async function Page(props: {
   const photos = await db.invoicePhoto.findMany({ where: { invoiceId: id } });
   const tasks = await db.task.findMany({ where: { invoiceId: id } });
 
-  const clientId = searchParams.clientId
+  const clientIdFromParams = searchParams.clientId
     ? parseInt(searchParams.clientId)
-    : invoice.clientId;
+    : NaN;
+  const clientId = Number.isNaN(clientIdFromParams)
+    ? invoice.clientId
+    : clientIdFromParams;
 
   const customers = await db.client.findMany({ where: { companyId } });
   const vehicles = await db.vehicle.findMany({
@@ -253,9 +257,18 @@ export default async function Page(props: {
   const pageType = invoice?.type === "Invoice" ? "Invoice" : "Estimate";
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0 px-1">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
-        <Title>{pageType}</Title>
+        <div className="flex items-center gap-3">
+          <BackButton
+            href={
+              pageType === "Invoice"
+                ? "/dashboard/estimate/invoices"
+                : "/dashboard/estimate"
+            }
+          />
+          <Title>{pageType}</Title>
+        </div>
 
         <SyncLists
           customers={customers}
@@ -320,40 +333,34 @@ export default async function Page(props: {
 
           <TabsContent
             value="create"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
             <CreateTab />
           </TabsContent>
 
           <TabsContent
             value="attachment"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
             <AttachmentTab />
           </TabsContent>
 
           <TabsContent
             value="inspections"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
             <EstimateInspectionsTab />
           </TabsContent>
           <TabsContent
             value="payments"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto p-2"
           >
-            <PaymentTab
-              clientId={
-                searchParams.clientId
-                  ? parseInt(searchParams.clientId)
-                  : (invoice?.clientId ?? undefined)
-              }
-            />
+            <PaymentTab clientId={clientId ?? undefined} />
           </TabsContent>
         </Tabs>
       </div>
 
-      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
+      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto">
         <div>
           <ConvertButton
             type={invoice.type}

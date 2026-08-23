@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import type { db } from "@/lib/db";
+import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
 import {
   InvoiceRedo,
   Technician,
@@ -41,6 +42,18 @@ type TProps = {
     })[]
   >;
   redoPerService: Record<number, InvoiceRedo[]>;
+  onAddTechnician?: (
+    invoiceItemId: number,
+    serviceId: number | null,
+    payload: any,
+    employeeName: string,
+  ) => void;
+  onUpdateTechnician?: (
+    invoiceItemId: number,
+    techId: number | string,
+    payload: any,
+  ) => void;
+  onDeleteTechnician?: (invoiceItemId: number, techId: number | string) => void;
 };
 
 export function InvoiceItems({
@@ -53,10 +66,23 @@ export function InvoiceItems({
   redoPerService,
   openService,
   setOpenService,
+  onAddTechnician,
+  onUpdateTechnician,
+  onDeleteTechnician,
 }: TProps) {
   // const [openService, setOpenService] = useState<number | null>(null);
   return items?.map((item) => {
-    if (!item.service) return null;
+    // Skip only genuinely empty rows. An item without a service is still a
+    // valid work order line (labor-only or material-only) — it just borrows its
+    // title from the labor, or failing that from its first material.
+    if (!item.service && !item.labor && !item.materials?.length) return null;
+
+    const title = getInvoiceItemTitle(item);
+
+    // InvoiceRedo.serviceId is still required, so Re-Do only applies to rows
+    // that actually have a service.
+    const canRedo = invoiceTechnicians?.length > 0 && !!item.serviceId;
+
     return (
       <div
         key={item.id}
@@ -71,9 +97,9 @@ export function InvoiceItems({
             setOpenService(openService === item.id ? null : item.id)
           }
         >
-          <p className="px-5">{item.service.name}</p>
+          <p className="px-5 capitalize">{title}</p>
           <div className="mr-5 flex items-center space-x-3">
-            {invoiceTechnicians?.length > 0 && (
+            {canRedo && (
               <ReDoModal
                 invoiceId={item?.invoiceId as string}
                 serviceId={item?.serviceId as number}
@@ -109,16 +135,23 @@ export function InvoiceItems({
               </div>
             ))}
 
-            <div className="ml-10">
-              <p className="font-bold capitalize">{item.labor?.name}</p>
-            </div>
+            {/* When the row has no service the labor name is already the
+                title, so don't repeat it here. */}
+            {item.service && item.labor?.name && (
+              <div className="ml-10">
+                <p className="font-bold capitalize">{item.labor.name}</p>
+              </div>
+            )}
 
             <LaborItems
               invoiceItemId={item?.id}
               invoiceId={item?.invoiceId as string}
-              serviceId={item?.serviceId as number}
+              serviceId={item?.serviceId ?? null}
               writePermission={writePermission}
               technicianList={(techniciansPerItem[item.id] || []) as any}
+              onAddTechnician={onAddTechnician}
+              onUpdateTechnician={onUpdateTechnician}
+              onDeleteTechnician={onDeleteTechnician}
             />
           </div>
         )}

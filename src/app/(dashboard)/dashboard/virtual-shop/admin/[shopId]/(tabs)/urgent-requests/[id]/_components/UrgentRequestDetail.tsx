@@ -3,7 +3,9 @@
 import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Separator } from "@/components/ui/separator";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { errorToast, successToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -12,7 +14,8 @@ import {
   UpdateUrgentRequestPayload,
   UrgentRequest,
 } from "@/service/virtual-shop/api";
-import { fToNow } from "@/utils/formatDate";
+import { formatTime } from "@/app/(dashboard)/dashboard/virtual-shop/admin/components/CalendarTab.utils";
+import { fToNow, fUsDate } from "@/utils/formatDate";
 import {
   AlertTriangle,
   Calendar,
@@ -27,7 +30,6 @@ import {
   Receipt,
   Store,
   User,
-  X,
 } from "lucide-react";
 import { customAlphabet } from "nanoid";
 import Link from "next/link";
@@ -86,22 +88,25 @@ const STATUS_ACTIONS: {
   {
     value: "UNDER_REVIEW",
     label: "Mark Under Review",
-    className: "bg-primary hover:bg-[#5a66ee] text-white",
+    className:
+      "border border-primary bg-primary/10 text-primary hover:bg-primary/20",
   },
   {
     value: "APPROVED",
     label: "Approve",
-    className: "bg-green-600 hover:bg-green-700 text-white",
+    className:
+      "border border-green-600 bg-green-50 text-green-700 hover:bg-green-100",
   },
   {
     value: "ALTERNATIVE_PROPOSED",
     label: "Propose Alternative",
-    className: "bg-primary/80 hover:bg-primary text-white",
+    className:
+      "border border-purple-600 bg-purple-50 text-purple-700 hover:bg-purple-100",
   },
   {
     value: "REJECTED",
     label: "Reject",
-    className: "bg-red-600 hover:bg-red-700 text-white",
+    className: "border border-red-600 bg-red-50 text-red-700 hover:bg-red-100",
   },
 ];
 
@@ -112,7 +117,10 @@ export default function UrgentRequestDetail({
 }: Props) {
   const router = useRouter();
   const [request, setRequest] = useState(initialRequest);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [activeAction, setActiveAction] = useState<
+    EmergencyRequestStatus | "SAVE_NOTES" | null
+  >(null);
+  const isBusy = activeAction !== null;
   const [pendingEstimate, startTransition] = useTransition();
   const [adminNotes, setAdminNotes] = useState(request.adminNotes ?? "");
   const [rejectionReason, setRejectionReason] = useState(
@@ -145,7 +153,7 @@ export default function UrgentRequestDetail({
     : [];
 
   const handleStatusUpdate = async (status: EmergencyRequestStatus) => {
-    setIsUpdating(true);
+    setActiveAction(status);
     try {
       const payload: UpdateUrgentRequestPayload = {
         status,
@@ -165,7 +173,7 @@ export default function UrgentRequestDetail({
     } catch {
       errorToast("Failed to update request");
     } finally {
-      setIsUpdating(false);
+      setActiveAction(null);
     }
   };
 
@@ -206,7 +214,7 @@ export default function UrgentRequestDetail({
   };
 
   const handleSaveNotes = async () => {
-    setIsUpdating(true);
+    setActiveAction("SAVE_NOTES");
     try {
       const payload: UpdateUrgentRequestPayload = {
         ...(adminNotes !== (request.adminNotes ?? "") ? { adminNotes } : {}),
@@ -233,12 +241,12 @@ export default function UrgentRequestDetail({
     } catch {
       errorToast("Failed to save notes");
     } finally {
-      setIsUpdating(false);
+      setActiveAction(null);
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Back */}
       <Link
         href={`/dashboard/virtual-shop/admin/${shopId}/urgent-requests`}
@@ -271,13 +279,14 @@ export default function UrgentRequestDetail({
             <p className="text-sm text-slate-500">
               {request.shop?.storeName} &bull; Submitted{" "}
               {fToNow(request.createdAt)}
+              {" ago"}
             </p>
           </div>
         </div>
 
         {request.client?.id && (
           <Link
-            href={`/dashboard/communication/client/${request.client.id}`}
+            href={`/dashboard/communication/client/${request.client.id}?chat=true`}
             className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary/25 transition-opacity hover:opacity-90"
           >
             <MessageCircle size={16} />
@@ -398,12 +407,16 @@ export default function UrgentRequestDetail({
               <InfoRow
                 icon={<Calendar size={15} />}
                 label="Requested Date"
-                value={request.requestedDate ?? "Not specified"}
+                value={fUsDate(request.requestedDate) ?? "Not specified"}
               />
               <InfoRow
                 icon={<Clock size={15} />}
                 label="Requested Time"
-                value={request.requestedTime ?? "Not specified"}
+                value={
+                  request.requestedTime
+                    ? formatTime(request.requestedTime)
+                    : "Not specified"
+                }
               />
               <InfoRow
                 icon={<CheckCircle size={15} />}
@@ -449,14 +462,14 @@ export default function UrgentRequestDetail({
                   <InfoRow
                     icon={<Calendar size={15} />}
                     label="Proposed Date"
-                    value={request.proposedDate}
+                    value={fUsDate(request.proposedDate) ?? "—"}
                   />
                 )}
                 {request.proposedTime && (
                   <InfoRow
                     icon={<Clock size={15} />}
                     label="Proposed Time"
-                    value={request.proposedTime}
+                    value={formatTime(request.proposedTime)}
                   />
                 )}
               </div>
@@ -481,15 +494,15 @@ export default function UrgentRequestDetail({
                 <button
                   key={action.value}
                   onClick={() => handleStatusUpdate(action.value)}
-                  disabled={isUpdating || request.status === action.value}
+                  disabled={isBusy || request.status === action.value}
                   className={cn(
-                    "rounded-xl px-4 py-2 text-sm font-semibold transition-opacity disabled:opacity-50",
+                    "rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0",
                     action.className,
                     request.status === action.value &&
                       "ring-2 ring-offset-1 ring-current",
                   )}
                 >
-                  {isUpdating ? (
+                  {activeAction === action.value ? (
                     <Loader2 size={14} className="animate-spin inline mr-1" />
                   ) : null}
                   {action.label}
@@ -542,52 +555,30 @@ export default function UrgentRequestDetail({
                   <label className="mb-1 block text-xs font-medium text-slate-500">
                     Date
                   </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={proposedDate}
-                      onChange={(e) => {
-                        setProposedDate(e.target.value);
-                        if (!e.target.value) setProposedTime("");
-                      }}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                    {proposedDate && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProposedDate("");
-                          setProposedTime("");
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </div>
+                  <DatePickerField
+                    value={proposedDate}
+                    onChange={(value) => {
+                      setProposedDate(value);
+                      if (!value) setProposedTime("");
+                    }}
+                    clearable
+                    placeholder="Select date"
+                    triggerClassName="rounded-xl border-slate-200 bg-slate-50 text-slate-700"
+                  />
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-500">
-                    Time
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="time"
-                      value={proposedTime}
-                      onChange={(e) => setProposedTime(e.target.value)}
-                      disabled={!proposedDate}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                    {proposedTime && (
-                      <button
-                        type="button"
-                        onClick={() => setProposedTime("")}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </div>
+                <div
+                  className={cn(
+                    !proposedDate && "pointer-events-none opacity-50",
+                  )}
+                >
+                  <TimeScrollPicker
+                    id="proposedTime"
+                    label="Time"
+                    labelClassName="text-xs font-medium text-slate-500"
+                    value={proposedTime}
+                    onChange={setProposedTime}
+                    className="gap-1"
+                  />
                 </div>
               </div>
 
@@ -606,10 +597,10 @@ export default function UrgentRequestDetail({
 
               <Button
                 onClick={handleSaveNotes}
-                disabled={isUpdating}
-                className="w-full rounded-xl bg-primary text-white hover:bg-[#5a66ee]"
+                disabled={isBusy}
+                className="w-full rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] text-white shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30"
               >
-                {isUpdating ? (
+                {activeAction === "SAVE_NOTES" ? (
                   <Loader2 size={14} className="animate-spin mr-1" />
                 ) : null}
                 Save Notes

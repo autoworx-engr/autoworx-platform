@@ -3,6 +3,10 @@
 import { db } from "@/lib/db";
 import { Client, Appointment } from "@prisma/client";
 import moment from "moment-timezone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { sendNewAppointmentNotification } from "@/lib/notification/task-and-appointment-notify";
 import { scheduleRemindersInNest } from "../appointment/appointmentReminderScheduler";
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
@@ -15,9 +19,12 @@ export async function findClientByPhone(
   companyId: string,
 ): Promise<Client | null> {
   try {
+    const phoneLookup = phoneLookupWhereClause(phone);
+    if (!phoneLookup) return null;
+
     const client = await db.client.findFirst({
       where: {
-        mobile: phone,
+        OR: phoneLookup,
         companyId: parseInt(companyId),
       },
     });
@@ -46,7 +53,7 @@ export async function createClient(data: {
         firstName: data.firstName,
         lastName: data.lastName || "",
         email: data.email || "",
-        mobile: data.mobile,
+        mobile: normalizePhoneForStorage(data.mobile),
         address: data.address || "",
         city: data.city || "",
         state: data.state || "",

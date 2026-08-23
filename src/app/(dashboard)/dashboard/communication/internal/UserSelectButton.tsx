@@ -5,6 +5,7 @@ import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Message, User } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
+import { useDraftPreview } from "../_hooks/useDraftPreview";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
 type TTraceMessage = ChatTrack & { message?: Message | null };
@@ -111,6 +112,10 @@ export default function UserSelectButton({
     lastMessageHistory?.lastMessage || user.latestMessage?.message;
   const previewPrefix = participants === "sender" ? "You" : user.firstName;
   const isUnreadPreview = unreadCount > 0 && !isSelectedUser;
+  // Suppressed while this row is open — you're already looking at that text
+  // in the compose box, so re-showing it here on every keystroke is noise.
+  const draftTextLive = useDraftPreview("internal", "dm", user.id);
+  const draftText = isSelectedUser ? "" : draftTextLive;
 
   return (
     <button
@@ -156,7 +161,7 @@ export default function UserSelectButton({
         >
           {user.firstName} {user.lastName}
         </p>
-        {messageText && (
+        {(draftText || messageText) && (
           <p
             className={cn(
               "mt-0.5 line-clamp-1 text-xs",
@@ -167,7 +172,16 @@ export default function UserSelectButton({
                   : "text-zinc-500 dark:text-zinc-400",
             )}
           >
-            {previewPrefix}: {messageText}
+            {draftText ? (
+              <>
+                <span className="font-semibold text-black dark:text-white">
+                  Draft:
+                </span>{" "}
+                {draftText}
+              </>
+            ) : (
+              `${previewPrefix}: ${messageText}`
+            )}
           </p>
         )}
       </div>

@@ -14,7 +14,7 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -29,6 +29,7 @@ import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import { useInfinityCollaborationMessages } from "./collaboration/hooks/useInfinityCollaborationMessages";
 import JumpToLatestButton from "@/components/JumpToLatestButton";
 import MessageListSkeleton from "./MessageListSkeleton";
+import { useMessageDraft } from "./_hooks/useMessageDraft";
 
 type TMessage = {
   id?: number;
@@ -63,20 +64,34 @@ export default function CompanyMessageBox({
   const toggleRef = useRef<HTMLImageElement>(null);
   const pathname = usePathname();
   const [liveMessages, setLiveMessages] = useState<any[]>([]);
-  const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef(0);
   const isLoadingOlderRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [showJump, setShowJump] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
     null,
   );
-  const searchParams = useSearchParams();
-  const companyId = searchParams.get("companyId");
+  // Source this from the company prop (parent-managed selection state), not
+  // the URL — the ?companyId= search param can get dropped by navigation
+  // (e.g. leaving via the nav bar and returning via the sidebar) while this
+  // component's `company` prop still correctly reflects the selected
+  // conversation. Reading it from the URL caused messages to fetch for
+  // `undefined` while the header still showed the right company name.
+  const companyId = company.id;
+  const {
+    draftText: message,
+    setDraftText: setMessage,
+    clearDraft,
+  } = useMessageDraft({
+    section: "collaboration",
+    channel: "",
+    targetId: companyId,
+  });
   const [showAttachment, setShowAttachment] = useState(false);
   const currentCompanyId = session?.user?.companyId;
   const isEstimateAttachmentShow = pathname?.includes(
@@ -90,10 +105,7 @@ export default function CompanyMessageBox({
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfinityCollaborationMessages(
-    currentCompanyId,
-    companyId ? Number(companyId) : undefined,
-  );
+  } = useInfinityCollaborationMessages(currentCompanyId, companyId);
 
   // Each page is newest-first; flatten then reverse so display is oldest -> newest.
   const fetchedMessages = useMemo(() => {
@@ -132,13 +144,16 @@ export default function CompanyMessageBox({
 
   // Initial scroll to bottom
   useEffect(() => {
-    if (messages.length > 0 && !isReady) {
+    if (messages.length > 0 && (!isReady || isImageLoaded)) {
       requestAnimationFrame(() => {
         bottomAnchorRef.current?.scrollIntoView({ block: "end" });
-        setTimeout(() => setIsReady(true), 200);
+        setIsImageLoaded(false);
+        if (!isReady) {
+          setTimeout(() => setIsReady(true), 200);
+        }
       });
     }
-  }, [messages.length, isReady]);
+  }, [messages.length, isReady, isImageLoaded]);
 
   // Auto-scroll when a new live message arrives (only if user is near bottom)
   useEffect(() => {
@@ -254,7 +269,7 @@ export default function CompanyMessageBox({
 
     const trimmedMessage = message.trim();
     if (!trimmedMessage && !multiAttachmentFile) return;
-    setMessage("");
+    clearDraft();
 
     try {
       let uploadedFiles = null;
@@ -307,7 +322,6 @@ export default function CompanyMessageBox({
         // console.error("Failed to send", data);
       }
       if (data.success) {
-        setMessage("");
         setMultiAttachmentFile(null);
       }
     } catch (err) {
@@ -347,7 +361,7 @@ export default function CompanyMessageBox({
     >
       {/* 🔹 Header */}
       <div
-        className={`flex items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0"}`}
+        className={`flex shrink-0 items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0 z-30"}`}
       >
         {/* Left Side */}
         <div className="flex items-center gap-2">
@@ -372,7 +386,7 @@ export default function CompanyMessageBox({
       <div className="relative flex-1 min-h-0">
         <div
           ref={messageBoxRef}
-          className="h-full overflow-y-auto p-4 space-y-3"
+          className="h-full overflow-y-auto p-2 space-y-3"
         >
           {/* Top loader for older messages */}
           {!messagesLoading && messages.length > 0 && (
@@ -403,6 +417,10 @@ export default function CompanyMessageBox({
             messages.map((msg: any, index: number) => {
               const messageDate = format(new Date(msg.createdAt), "PPP");
 
+              const allImageUrls = msg?.attachments
+                ?.filter((att: any) => att.fileType?.includes("image"))
+                .map((att: any) => att.fileUrl);
+
               const previousMessage = messages[index - 1];
               const previousDate = previousMessage
                 ? format(new Date(previousMessage.createdAt), "PPP")
@@ -427,55 +445,103 @@ export default function CompanyMessageBox({
                     )}
                   >
                     {/* Attachments */}
-                    {msg?.attachments &&
-                      msg?.attachments.length > 0 &&
-                      msg?.attachments.map((attachment: any) => {
-                        return (
-                          <div
-                            key={attachment.fileUrl}
-                            className={cn(
-                              "flex items-center gap-2",
-                              isOwn ? "flex-row-reverse" : "flex-row",
-                            )}
-                          >
-                            {attachment.fileType?.includes("image") ? (
-                              <Image
-                                src={attachment.fileUrl}
-                                alt=""
-                                width={200}
-                                height={200}
-                                className="rounded-md border cursor-pointer"
-                              />
-                            ) : attachment.fileType?.includes("video") ? (
-                              <video
-                                src={attachment.fileUrl}
-                                className="h-40 w-60 rounded-md border cursor-pointer"
-                                controls
-                              />
-                            ) : (
-                              <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
-                                <p className="text-sm">
-                                  {attachment?.fileName}
-                                </p>
-                                <p className="text-xs">
-                                  {attachment?.fileSize && attachment?.fileSize}
-                                </p>
-                              </div>
-                            )}
-
-                            <button
-                              onClick={() =>
-                                handleDownload(attachment?.fileUrl)
-                              }
+                    {msg?.attachments && msg?.attachments.length > 0 && (
+                      <>
+                        {/* Image attachments — compact wrapping grid, matching the client inbox */}
+                        {(() => {
+                          const images = msg.attachments.filter((a: any) =>
+                            a.fileType?.includes("image"),
+                          );
+                          if (images.length === 0) return null;
+                          return (
+                            <div
+                              className="grid w-fit gap-1.5"
+                              style={{
+                                gridTemplateColumns: `repeat(${Math.min(images.length, 3)}, 6rem)`,
+                              }}
                             >
-                              <CloudDownload
-                                size={22}
-                                className="cursor-pointer text-gray-400"
-                              />
-                            </button>
-                          </div>
-                        );
-                      })}
+                              {images.map((attachment: any) => {
+                                const currentImageIndex = allImageUrls?.indexOf(
+                                  attachment.fileUrl,
+                                );
+                                return (
+                                  <div
+                                    key={attachment.fileUrl}
+                                    className="relative"
+                                  >
+                                    <Link
+                                      href={`/dashboard/communication/photo?urls=${encodeURIComponent(
+                                        JSON.stringify(allImageUrls),
+                                      )}&index=${currentImageIndex}`}
+                                      className="block overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-black/20 dark:ring-white/15 dark:hover:ring-white/30"
+                                    >
+                                      <Image
+                                        src={attachment.fileUrl}
+                                        alt=""
+                                        width={96}
+                                        height={96}
+                                        className="h-24 w-24 object-cover"
+                                      />
+                                    </Link>
+                                    <button
+                                      onClick={() =>
+                                        handleDownload(attachment?.fileUrl)
+                                      }
+                                      aria-label="Download attachment"
+                                      className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white"
+                                    >
+                                      <CloudDownload size={14} />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Video and file attachments — one per row */}
+                        {msg.attachments
+                          .filter((a: any) => !a.fileType?.includes("image"))
+                          .map((attachment: any) => (
+                            <div
+                              key={attachment.fileUrl}
+                              className={cn(
+                                "flex items-center gap-2",
+                                isOwn ? "flex-row-reverse" : "flex-row",
+                              )}
+                            >
+                              {attachment.fileType?.includes("video") ? (
+                                <video
+                                  src={attachment.fileUrl}
+                                  className="h-40 w-60 rounded-md border cursor-pointer"
+                                  controls
+                                />
+                              ) : (
+                                <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
+                                  <p className="text-sm">
+                                    {attachment?.fileName}
+                                  </p>
+                                  <p className="text-xs">
+                                    {attachment?.fileSize &&
+                                      attachment?.fileSize}
+                                  </p>
+                                </div>
+                              )}
+
+                              <button
+                                onClick={() =>
+                                  handleDownload(attachment?.fileUrl)
+                                }
+                              >
+                                <CloudDownload
+                                  size={22}
+                                  className="cursor-pointer text-gray-400"
+                                />
+                              </button>
+                            </div>
+                          ))}
+                      </>
+                    )}
 
                     {/* Request Estimate */}
                     {msg?.requestEstimate && (
@@ -499,6 +565,7 @@ export default function CompanyMessageBox({
                               </button>
                             }
                             isShowEdit={false}
+                            fromCollaboration={true}
                           />
                         ) : (
                           <Link
@@ -603,7 +670,7 @@ export default function CompanyMessageBox({
           </div>
 
           {/* Scrollable attachments */}
-          <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
+          <div className="max-h-64 overflow-y-auto px-4 pb-4">
             {/* Fixed responsive grid with minimum item width */}
             <div
               className="gap-3 pt-3"
@@ -674,7 +741,7 @@ export default function CompanyMessageBox({
       )}
       <form
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
-        className={`flex relative items-center gap-2 border-t bg-gray-100 p-3 ${onBack && "sticky bottom-0 right-0 left-0"}`}
+        className={`flex relative shrink-0 items-center gap-2 border-t bg-gray-100 p-3 ${onBack && "sticky bottom-0 right-0 left-0"}`}
       >
         {/* attachment or estimate dropdown */}
         {showAttachment && (
@@ -726,7 +793,7 @@ export default function CompanyMessageBox({
           placeholder="Type message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006D77]"
+          className="h-10 flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
         />
         <button disabled={pending} type="submit">
           <SendHorizontal className="text-[#006D77]" />

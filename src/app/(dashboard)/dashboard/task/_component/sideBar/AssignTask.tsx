@@ -1,22 +1,28 @@
 import { assignTask } from "@/actions/task/assignTask";
-import { errorToast, successToast } from "@/lib/toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import Popup from "@/components/Popup";
+import { errorToast, successToast } from "@/lib/toast";
 import { usePopupStore } from "@/stores/popup";
 import { Task, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
-import { ListChecks, Loader2, UserCog, X } from "lucide-react";
+import { ListCheck, Loader2, UserCog } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
+import EmptyMsg from "../../../../../../components/common/EmptyMsg";
 import { taskQueryKey } from "../../_constant";
+import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
 import TaskError from "../ui/TaskError";
-import TaskNotFound from "../ui/TaskNotFound";
 import TaskSpinner from "../ui/TaskSpinner";
 
 export default function AssignTask() {
@@ -40,16 +46,15 @@ export default function AssignTask() {
   const tasks = data?.pages?.flatMap((page) => page.data) ?? [];
 
   const queryClient = useQueryClient();
-  const { data: popupData, close } = usePopupStore();
-  const user = popupData.user as User;
-  const assignedUserTasks = popupData.userTasks as Task[];
+  const { popup, data: popupData, close } = usePopupStore();
+  const user = popupData?.user as User | undefined;
+  const assignedUserTasks = (popupData?.userTasks as Task[]) ?? [];
 
   const [taskDataInput, setTaskDataInput] = useState<
     { taskId: number; assigned: boolean }[]
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Add only newly loaded tasks to the input state without resetting existing ones
   useEffect(() => {
     setTaskDataInput((prev) => {
       const existingIds = new Set(prev.map((t) => t.taskId));
@@ -70,6 +75,7 @@ export default function AssignTask() {
   }, [inView, hasNextPage, isFetchingNextPage]);
 
   async function handleSubmit() {
+    if (!user) return;
     setIsSubmitting(true);
     try {
       const result = await assignTask({
@@ -82,16 +88,11 @@ export default function AssignTask() {
         return;
       }
 
-      queryClient.setQueryData(
-        taskQueryKey.taskByUserId(user.id.toString()),
-        () => {
-          return tasks.filter((task) =>
-            taskDataInput.some(
-              (inputTask) => inputTask.taskId === task.id && inputTask.assigned,
-            ),
-          );
-        },
-      );
+      queryClient.invalidateQueries({
+        queryKey: taskQueryKey.taskByUserId(user.id.toString()),
+      });
+      queryClient.invalidateQueries({ queryKey: [taskQueryKey.allTasks] });
+      queryClient.invalidateQueries({ queryKey: taskQueryKey.allTaskByScroll });
 
       successToast("Tasks assigned successfully.");
       close();
@@ -114,7 +115,7 @@ export default function AssignTask() {
   } else if (!isLoading && isError) {
     content = <TaskError message="Fail to load tasks" />;
   } else if (!isLoading && !isError && tasks.length === 0) {
-    content = <TaskNotFound message="No Tasks found" />;
+    content = <EmptyMsg message="No Tasks found" />;
   } else if (!isLoading && !isError && tasks.length > 0) {
     const taskMap = new Map(tasks.map((t) => [t.id, t]));
     content = taskDataInput.map((task) => {
@@ -142,48 +143,50 @@ export default function AssignTask() {
   }
 
   return (
-    <Popup>
-      <div className="w-[36rem] max-w-[92vw] rounded-2xl bg-background p-6 shadow-2xl">
+    <Dialog open={popup === "ASSIGN_TASK"} onOpenChange={close}>
+      <DialogContent className="w-[36rem] max-w-[92vw] rounded-2xl p-6 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <UserCog className="h-5 w-5 text-primary" />
-          </span>
-          <h2 className="text-lg font-bold text-foreground">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+              <UserCog className="h-5 w-5 text-primary" />
+            </span>
             Assign Tasks to User
-          </h2>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
-        <Separator className="my-4" />
+        <Separator className="my-2" />
 
         <FormError />
 
         {/* User card */}
-        <div className="flex items-center gap-3 rounded-xl border bg-muted/40 p-3">
-          <Avatar className="h-12 w-12">
-            <AvatarImage
-              src={user.image ?? undefined}
-              alt={`${user.firstName} ${user.lastName}`}
-            />
-            <AvatarFallback>
-              {(user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex min-w-0 flex-col">
-            <p className="truncate text-base font-bold text-foreground">
-              {user.firstName} {user.lastName}
-            </p>
-            {user.email && (
-              <p className="truncate text-sm text-muted-foreground">
-                {user.email}
+        {user && (
+          <div className="flex items-center gap-3 rounded-full border bg-muted/40 p-3 w-fit">
+            <Avatar className="h-12 w-12">
+              <AvatarImage
+                src={user.image ?? undefined}
+                alt={`${user.firstName} ${user.lastName}`}
+              />
+              <AvatarFallback>
+                {(user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex min-w-0 flex-col">
+              <p className="truncate text-base font-bold text-foreground">
+                {user.firstName} {user.lastName}
               </p>
-            )}
+              {user.email && (
+                <p className="truncate text-sm text-muted-foreground">
+                  {user.email}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Task selection */}
         <div className="mb-2 mt-6 flex items-center gap-2">
-          <ListChecks className="h-5 w-5 text-primary" />
+          <ListCheck className="h-5 w-5 text-primary" />
           <h3 className="text-base font-semibold text-foreground">
             Select Tasks
           </h3>
@@ -191,7 +194,7 @@ export default function AssignTask() {
 
         <div
           ref={scrollContainerRef}
-          className="thin-scrollbar flex max-h-[15rem] flex-col gap-1 overflow-y-auto rounded-xl border bg-muted/20 p-2"
+          className="flex max-h-[15rem] flex-col gap-1 overflow-y-auto rounded-xl border bg-muted/20 p-2"
         >
           {content}
           <div
@@ -208,17 +211,16 @@ export default function AssignTask() {
         </div>
 
         {/* Actions */}
-        <div className="mt-6 flex justify-end gap-3">
+        <DialogFooter className="mt-6 gap-3">
           <Button variant="outline" onClick={close} disabled={isSubmitting}>
-            <X className="h-4 w-4" />
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Assign
+            Save
           </Button>
-        </div>
-      </div>
-    </Popup>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

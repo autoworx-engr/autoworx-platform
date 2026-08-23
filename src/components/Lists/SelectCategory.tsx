@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import ClearSelectionButton from "./ClearSelectionButton";
 
 export default function SelectCategory({
   categoryData = null,
@@ -20,6 +21,7 @@ export default function SelectCategory({
   onBlur,
   className,
   allowEdit = false,
+  isClear = false,
 }: {
   categoryData?: Category | null;
   onCategoryChange: (category: Category | null) => void;
@@ -30,6 +32,8 @@ export default function SelectCategory({
   onBlur?: () => void;
   className?: string;
   allowEdit?: boolean;
+  /** Show a "Clear Category" action so the selection can be removed. */
+  isClear?: boolean;
 }) {
   const { categories } = useListsStore();
   const [error, setError] = useState<string | null>();
@@ -166,12 +170,12 @@ export default function SelectCategory({
         }
         items={categories}
         displayList={(category: Category) => (
-          <div className="flex items-center justify-between group py-0.5">
-            <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
+          <div className="flex items-center justify-between group py-0.5 gap-2 overflow-hidden">
+            <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors truncate flex-1">
               {category.name}
             </p>
 
-            <div onClick={(e) => e.stopPropagation()}>
+            <div onClick={(e) => e.stopPropagation()} className="shrink-0">
               <Popconfirm
                 title="Delete Category"
                 description="Are you sure you want to remove this?"
@@ -179,6 +183,15 @@ export default function SelectCategory({
                 cancelText="Cancel"
                 onConfirm={() => handleDeleteCategory(category?.id)}
                 onPopupClick={(e) => e.stopPropagation()}
+                overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                okButtonProps={{
+                  className:
+                    "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                }}
+                cancelButtonProps={{
+                  className:
+                    "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                }}
               >
                 <div
                   className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"
@@ -207,6 +220,17 @@ export default function SelectCategory({
         selectedItem={category}
         setSelectedItem={setCategory}
         className={className}
+        footer={
+          isClear && category ? (
+            <ClearSelectionButton
+              label="Clear Category"
+              onClear={() => {
+                setCategory(null);
+                setCategoryOpen && setCategoryOpen(false);
+              }}
+            />
+          ) : null
+        }
         disabledDropdown={
           !allowEdit && !!category && pathname.includes("/estimate/")
         }

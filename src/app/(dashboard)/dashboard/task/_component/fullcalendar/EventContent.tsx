@@ -11,7 +11,8 @@ export const EventContent = ({
   eventInfo: EventContentArg;
   session: any;
 }) => {
-  const { event, view } = eventInfo;
+  const { event, view, isStart, isEnd } = eventInfo;
+  const isMultiDayContinuation = !isStart && !isEnd;
   const props = event.extendedProps as CustomEventProps;
   const serviceType = props.serviceType || "Appointment";
   const originalData = props.originalData;
@@ -21,19 +22,15 @@ export const EventContent = ({
     serviceType,
     serviceType === "Appointment" ? categoryColor : undefined,
   );
-  const isAdmin = session?.user.employeeType === EmployeeType.Admin;
-  // console.log("Rendering event:", {
-  //   event: event.extendedProps.originalData,
-  // });
+  const isAdmin = session?.user?.employeeType === EmployeeType.Admin;
 
-  // Styles for the container
   const containerStyle: React.CSSProperties = {
     background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
     border: `1px solid ${colors.borderColor}`,
     color: "#1f2937", // gray-800
     overflow: "hidden",
     borderRadius: "8px",
-    padding: "4px 8px", // Increased padding from 2px 4px
+    padding: "4px 8px",
     width: "100%",
     height: "100%",
     display: "flex",
@@ -41,7 +38,6 @@ export const EventContent = ({
     justifyContent: "space-between",
   };
 
-  // Month view rendering (Horizontal single line style)
   if (view.type === "dayGridMonth") {
     if (serviceType === "Weekend")
       return (
@@ -67,7 +63,6 @@ export const EventContent = ({
           className="flex items-center justify-between text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
           style={{
             background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
-            // border: `1px solid ${colors.borderColor}`,
             borderRadius: "4px",
             color: "#1f2937",
           }}
@@ -91,7 +86,6 @@ export const EventContent = ({
         className="flex items-center gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
         style={{
           background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
-          // border: `1px solid ${colors.borderColor}`,
           borderRadius: "4px",
           color: "#1f2937",
         }}
@@ -115,7 +109,6 @@ export const EventContent = ({
         className="flex items-center justify-between gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
         style={{
           background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
-          // border: `1px solid ${colors.borderColor}`,
           borderRadius: "4px",
           color: "#1f2937",
         }}
@@ -206,6 +199,11 @@ export const EventContent = ({
         }}
         className="cursor-pointer hover:opacity-90 transition-opacity text-xs leading-snug"
       >
+        {isMultiDayContinuation && (
+          <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">
+            All day
+          </p>
+        )}
         {eventBody}
       </div>
     );

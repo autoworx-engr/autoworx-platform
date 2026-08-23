@@ -137,7 +137,7 @@ export default function ScheduleTab({
       </div>
 
       <div
-        className={`flex-1 min-h-0 overflow-y-auto thin-scrollbar bg-white ${styles.calendarScope}`}
+        className={`flex-1 min-h-0 overflow-y-auto bg-white ${styles.calendarScope}`}
       >
         <FullCalendar
           ref={calendarRef}

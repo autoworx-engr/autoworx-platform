@@ -21,21 +21,22 @@ export default async function getClients({
       companyId,
     };
 
-    if (search) {
-      const trimmed = search.trim();
-      const [first, last] = trimmed.split(" ");
+    const trimmed = search.trim();
+
+    if (trimmed) {
+      const [first, last] = trimmed.split(/\s+/);
       const idCondition = getPaddedIdSearchCondition(trimmed);
 
       whereConditions.OR = [
         {
           firstName: {
-            contains: search,
+            contains: trimmed,
             mode: "insensitive",
           },
         },
         {
           lastName: {
-            contains: search,
+            contains: trimmed,
             mode: "insensitive",
           },
         },
@@ -61,13 +62,13 @@ export default async function getClients({
         },
         {
           mobile: {
-            contains: search,
+            contains: trimmed,
             mode: "insensitive",
           },
         },
         {
           email: {
-            contains: search,
+            contains: trimmed,
             mode: "insensitive",
           },
         },
@@ -90,6 +91,7 @@ export default async function getClients({
             type: "CLIENT",
           },
         },
+        source: true,
       },
       orderBy: {
         createdAt: "desc",
