@@ -66,8 +66,6 @@ const template_variable_options = [
   { name: "<BUSINESS_NAME>", description: "Your business name" },
   { name: "<PHONE>", description: "Your business phone number" },
   { name: "<ADDRESS>", description: "Your business address" },
-  { name: "<VIDEO_DIRECTION>", description: "Video direction" },
-  { name: "<GOOGLE_MAP_LINK>", description: "Google map link" },
   { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" },
 ];
 
