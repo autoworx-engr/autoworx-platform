@@ -21,6 +21,7 @@ export default function Input({
   autoComplete,
   invalid,
   describedBy,
+  disabled,
 }: {
   name: string;
   type?: string;
@@ -39,6 +40,7 @@ export default function Input({
   autoComplete?: string;
   invalid?: boolean;
   describedBy?: string;
+  disabled?: boolean;
 }) {
   const [inputValue, setInputValue] = useState(defaultValue || "");
   const { error } = useFormErrorStore();
@@ -58,6 +60,7 @@ export default function Input({
         }}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
+        disabled={disabled}
         autoComplete={autoComplete}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}

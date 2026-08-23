@@ -407,10 +407,11 @@ export const PlanEditorDialog = ({
                 </label>
                 <select
                   value={interval}
+                  disabled={isEdit}
                   onChange={(e) =>
                     setInterval(e.target.value as PlatformPlanInterval)
                   }
-                  className={`${controlClassName} appearance-none pr-8`}
+                  className={`${controlClassName} appearance-none pr-8 ${isEdit ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
                 >
                   {Object.values(PlatformPlanInterval).map((option) => (
                     <option key={option} value={option}>
@@ -418,6 +419,11 @@ export const PlanEditorDialog = ({
                     </option>
                   ))}
                 </select>
+                {isEdit && (
+                  <p className="text-[11px] text-slate-400">
+                    Can't be changed after the plan is created.
+                  </p>
+                )}
               </div>
 
               <div className="min-w-0 space-y-2">
@@ -453,6 +459,7 @@ export const PlanEditorDialog = ({
                   step="1"
                   min="0"
                   onKeyDown={blockNonIntegerKeys}
+                  disabled={isEdit}
                   placeholder="0"
                   value={trialLengthDays}
                   onChange={(e: any) => {
@@ -462,11 +469,16 @@ export const PlanEditorDialog = ({
                       trialLengthDays: undefined,
                     }));
                   }}
-                  className={`${controlClassName} ${fieldErrors.trialLengthDays ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                  className={`${controlClassName} ${fieldErrors.trialLengthDays ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""} ${isEdit ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
                 />
                 {fieldErrors.trialLengthDays && (
                   <p className="text-xs text-red-600">
                     {fieldErrors.trialLengthDays}
+                  </p>
+                )}
+                {isEdit && (
+                  <p className="text-[11px] text-slate-400">
+                    Can't be changed after the plan is created.
                   </p>
                 )}
               </div>
@@ -529,9 +541,6 @@ export const PlanEditorDialog = ({
               </h3>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Description
-              </label>
               <textarea
                 value={description}
                 onChange={(e) => {
@@ -541,7 +550,7 @@ export const PlanEditorDialog = ({
                     description: undefined,
                   }));
                 }}
-                className={`w-full rounded-lg border bg-white p-3 text-sm text-slate-700 shadow-sm outline-none transition focus:ring-2 ${
+                className={`w-full resize-none rounded-lg border bg-white p-3 text-sm text-slate-700 shadow-sm outline-none transition focus:ring-2 ${
                   fieldErrors.description
                     ? "border-red-400 focus:border-red-400 focus:ring-red-200"
                     : "border-slate-300 focus:border-primary focus:ring-primary/20"

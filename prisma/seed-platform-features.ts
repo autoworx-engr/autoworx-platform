@@ -22,11 +22,6 @@ const catalogFeatures = [
     value: "false",
   },
   {
-    key: "website_included",
-    type: PlatformFeatureType.BOOLEAN,
-    value: "false",
-  },
-  {
     key: "car_wrap_visualizer",
     type: PlatformFeatureType.BOOLEAN,
     value: "false",

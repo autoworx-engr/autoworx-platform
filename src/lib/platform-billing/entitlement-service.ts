@@ -29,7 +29,6 @@ export type Entitlements = {
   automationLimitService: number;
   automationLimitMarketing: number;
   automationLimitReporting: number;
-  websiteIncluded: boolean;
   carWrapVisualizer: boolean;
   aiSmartReplies: boolean;
   awxSalesAgent: boolean;
@@ -73,7 +72,6 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
   automationLimitService: 0,
   automationLimitMarketing: 0,
   automationLimitReporting: 0,
-  websiteIncluded: false,
   carWrapVisualizer: false,
   aiSmartReplies: false,
   awxSalesAgent: false,
