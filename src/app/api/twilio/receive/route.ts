@@ -95,8 +95,9 @@ export async function POST(request: Request) {
     const dial = voiceResponse.dial({
       callerId: twilioCredentials.phoneNumber,
       ...recordingOptions,
-      answerOnBridge: true,
+      answerOnBridge: false,
       ringTone: "us",
+      action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status?callId=${callId}`,
     });
     dial.number(
       {
