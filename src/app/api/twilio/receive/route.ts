@@ -4,10 +4,8 @@ import {
   findTwilioCredentialsByNumber,
   resolveOrCreateClientByPhone,
 } from "@/lib/twilio/callHelpers";
-import {
-  formDataToParams,
-  // verifyTwilioSignature, // TEMP: signature verification disabled for debugging
-} from "@/lib/twilio/verifyTwilioSignature";
+import { stripIdentitySuffix } from "@/lib/twilio/identity";
+import { formDataToParams } from "@/lib/twilio/verifyTwilioSignature";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
@@ -28,7 +26,9 @@ export async function POST(request: Request) {
 
     const to = params.To;
     const fromRaw = params.From;
-    const from = fromRaw ? (fromRaw.split(":")[1] ?? "") : "";
+    const from = fromRaw
+      ? stripIdentitySuffix(fromRaw.split(":")[1] ?? "")
+      : "";
 
     if (!to || !from) {
       return NextResponse.json(
@@ -51,16 +51,6 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-
-    // TEMP: signature verification disabled for debugging
-    // const verification = await verifyTwilioSignature(
-    //   request,
-    //   params,
-    //   twilioCredentials.authToken,
-    // );
-    // if (!verification.ok) {
-    //   return new Response("Forbidden", { status: 403 });
-    // }
 
     const entitlements = await getCompanyEntitlements(
       twilioCredentials.companyId,
@@ -105,12 +95,7 @@ export async function POST(request: Request) {
     const dial = voiceResponse.dial({
       callerId: twilioCredentials.phoneNumber,
       ...recordingOptions,
-      // Required for whisper: caller keeps hearing ringing while the whisper
-      // message plays to the callee; call is only bridged after whisper finishes.
       answerOnBridge: true,
-      // Force Twilio to play a ringback tone to the caller while the dialed
-      // PSTN number rings. Without this, the WebRTC/mobile caller leg often
-      // gets no early media on outbound calls to regular numbers → silence.
       ringTone: "us",
     });
     dial.number(
