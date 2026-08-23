@@ -79,6 +79,13 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     }
   };
 
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      const newErrors = { ...fieldErrors };
+      delete newErrors[field];
+      setFieldErrors(newErrors);
+    }
+  };
   useEffect(() => {
     const fullPhone = `${countryCode}${phoneNumber}`;
     setFormData((prev) => ({
@@ -134,14 +141,6 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       } else {
         clearFieldError(name);
       }
-    }
-  };
-
-  const clearFieldError = (field: string) => {
-    if (fieldErrors[field]) {
-      const newErrors = { ...fieldErrors };
-      delete newErrors[field];
-      setFieldErrors(newErrors);
     }
   };
 
