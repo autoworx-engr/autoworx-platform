@@ -146,18 +146,20 @@ export async function checkInventoryForConversion(
 
 /**
  * Shortages for saving from the create/edit screen, where the materials live in
- * the browser store. The rule follows what create.ts / update.ts will actually
- * do: a saved invoice re-saves against the "update" rule, while anything else
- * only moves stock once it lands as an invoice.
+ * the browser store. A saved invoice re-saves against the "update" rule;
+ * everything else — an estimate save included, even though it only reserves the
+ * stock on paper — is measured against what the inventory holds right now, so
+ * the shortage can be warned about before the estimate is written.
  */
 export async function checkInventoryForInvoiceSave({
   invoiceId,
   materials,
-  targetType,
 }: {
   invoiceId?: string;
   materials: (MaterialLike | null)[];
-  targetType: InvoiceType;
+  // Callers still pass what they are saving as; the check no longer depends on
+  // it now that estimate saves are warned about too.
+  targetType?: InvoiceType;
 }): Promise<InventoryCheckResult> {
   const enough: InventoryCheckResult = { sufficient: true, shortages: [] };
 
@@ -172,8 +174,6 @@ export async function checkInventoryForInvoiceSave({
     if (invoice?.type === InvoiceType.Invoice) {
       return checkInventoryShortages({ invoiceId, materials, rule: "update" });
     }
-
-    if (targetType !== InvoiceType.Invoice) return enough;
 
     return checkInventoryShortages({ materials, rule: "conversion" });
   } catch {

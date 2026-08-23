@@ -1,6 +1,8 @@
 "use client";
 
+import type { InventoryShortage } from "@/actions/estimate/invoice/checkInventory";
 import { checkInventoryForInvoiceSave } from "@/actions/estimate/invoice/checkInventory";
+import { notifyInventoryShortage } from "@/actions/estimate/invoice/notifyInventoryShortage";
 import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
 import Submit from "@/components/Submit";
 import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
@@ -37,11 +39,24 @@ export default function ConvertButton({
   const targetType =
     status?.title === "In Progress" ? InvoiceType.Invoice : type;
 
-  async function save(allowInsufficientInventory: boolean) {
+  async function save(
+    allowInsufficientInventory: boolean,
+    shortages: InventoryShortage[],
+  ) {
     const res = await createInvoice(false, allowInsufficientInventory);
     if (res.type === "success") {
       // Carry the just-saved id so the table view auto-opens its modal.
       const savedId = res.data?.id ?? invoiceId;
+
+      if (shortages.length) {
+        notifyInventoryShortage({
+          invoiceId: savedId,
+          shortages,
+          companyId: res.data?.companyId,
+          reason: "saved-anyway",
+        }).catch((err) => console.error("notifyInventoryShortage failed", err));
+      }
+
       const openParam = savedId ? `?openEstimateId=${savedId}` : "";
       if (type === "Estimate") {
         router.replace(`/dashboard/estimate${openParam}`);

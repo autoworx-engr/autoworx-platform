@@ -1,8 +1,12 @@
+import { checkInventoryForInvoiceSave } from "@/actions/estimate/invoice/checkInventory";
+import type { InventoryShortage } from "@/actions/estimate/invoice/checkInventory";
 import {
   checkInventoryForPayment,
   type InventoryCheckResult,
 } from "@/actions/estimate/invoice/checkInventoryForPayment";
 import { notifyInventoryShortage } from "@/actions/estimate/invoice/notifyInventoryShortage";
+import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
+import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { paymentLeadsConvertion } from "@/actions/estimate/invoice/paymentLeadsConvertion";
 import { newPayment } from "@/actions/payment/newPayment";
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
@@ -28,7 +32,12 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { additionalDataValidation } from "@/validations/schemas/payment/payment.validation";
-import { CardType, PaymentMethod, PaymentType } from "@prisma/client";
+import {
+  CardType,
+  InvoiceType,
+  PaymentMethod,
+  PaymentType,
+} from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
 import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
@@ -86,6 +95,8 @@ export default function MakePayment() {
   const pathaname = usePathname();
   const [pending, startTransition] = useTransition();
   const isEditPage = pathaname?.includes("/dashboard/estimate/edit/");
+  const { runWithInventoryCheck, dialogProps: inventoryDialogProps } =
+    useInventoryConfirm();
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("CARD");
@@ -145,7 +156,10 @@ export default function MakePayment() {
     setDepositNotes("");
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(
+    allowInsufficientInventory: boolean = false,
+    confirmedShortages: InventoryShortage[] = [],
+  ) {
     const roundedDue = formatAmount(due);
 
     if (tab === "DEPOSIT") {
@@ -197,11 +211,33 @@ export default function MakePayment() {
           })
         : { sufficient: true, shortages: [] };
 
+      // On the create page there is no saved estimate to fall back to — the
+      // payment needs an invoice, and create.ts rejects the whole save when the
+      // stock is short. So warn first and let the user go ahead knowingly
+      // instead of handing them "not enough in the inventory".
+      if (!isEditPage && !allowInsufficientInventory) {
+        const newInvoiceInventory = await checkInventoryForInvoiceSave({
+          invoiceId,
+          materials: items.flatMap((item) => item.materials ?? []),
+          targetType: InvoiceType.Invoice,
+        });
+
+        if (!newInvoiceInventory.sufficient) {
+          // Already checked — hand the result straight to the warning dialog,
+          // which re-runs this submit with the shortage allowed on confirm.
+          await runWithInventoryCheck(
+            async () => newInvoiceInventory,
+            () => handleSubmit(true, newInvoiceInventory.shortages),
+          );
+          return;
+        }
+      }
+
       const fromPayment = true;
       let res1: any = { type: "success" };
 
       if (inventory.sufficient) {
-        res1 = await createInvoice(fromPayment);
+        res1 = await createInvoice(fromPayment, allowInsufficientInventory);
 
         if (res1 && res1.type === "globalError") {
           errorToast(
@@ -288,6 +324,18 @@ export default function MakePayment() {
           notifyInventoryShortage({
             invoiceId,
             shortages: inventory.shortages,
+          }).catch((err) =>
+            console.error("notifyInventoryShortage failed", err),
+          );
+        }
+
+        // The user was warned and chose "Proceed anyway", so create.ts let the
+        // shortage through without raising it — report it here instead.
+        if (allowInsufficientInventory && confirmedShortages.length) {
+          notifyInventoryShortage({
+            invoiceId,
+            shortages: confirmedShortages,
+            reason: "saved-anyway",
           }).catch((err) =>
             console.error("notifyInventoryShortage failed", err),
           );
@@ -915,6 +963,8 @@ export default function MakePayment() {
                 Record
               </button>
             </DialogFooter>
+
+            <InventoryShortageDialog {...inventoryDialogProps} />
           </Tabs.Root>
         </form>
       </DialogContent>
