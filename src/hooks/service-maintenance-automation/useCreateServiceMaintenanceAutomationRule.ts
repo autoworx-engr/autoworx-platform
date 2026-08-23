@@ -21,7 +21,7 @@ export const useCreateServiceMaintenanceAutomationRule = () => {
           "You can only create a maximum of 3 service automation rules per company!",
         );
       } else {
-        errorToast("Failed to create service maintenance automation rule!");
+        errorToast("Failed to create service-maintenance automation rule!");
       }
     },
   });
