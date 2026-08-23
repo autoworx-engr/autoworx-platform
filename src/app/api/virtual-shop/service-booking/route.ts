@@ -721,7 +721,7 @@ export async function GET(req: Request) {
         data: shopBookings.map((sb) => {
           const subtotal = Number(sb.invoice?.subtotal || 0);
           const taxRate = Number(sb.invoice?.tax || 0);
-          const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
+          const serviceFeeRate = Number(sb.invoice?.serviceFee || 0);
           const grandTotal = Number(sb.invoice?.grandTotal || 0);
           const tipAmount = (sb.invoice?.payments || []).reduce(
             (sum, p) => sum + Number(p.tip || 0),
@@ -733,6 +733,7 @@ export async function GET(req: Request) {
             sb.invoice?.invoiceItems || [],
           );
           const taxAmount = (materialSubtotal * taxRate) / 100;
+          const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
           const { shop, ...rest } = sb;
           const isDepositEnabled = Boolean(
