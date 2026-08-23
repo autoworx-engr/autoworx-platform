@@ -1,5 +1,5 @@
 "use client";
-
+import moment from "moment-timezone";
 import { addEmployee } from "@/actions/employee/add";
 import SelectEmployeeType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeType";
 import {
@@ -19,9 +19,7 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { isValidEmail, normalizeEmail } from "@/utils/email";
-import { todayInTimezone } from "@/utils/todayInTimezone";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
-import { format } from "date-fns";
 import { PencilLineIcon, CircleUserRound as UserIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
@@ -63,7 +61,11 @@ export default function AddNewEmployee({
       return;
     }
     if (joinDateEdited.current) return;
-    setJoinDate(format(todayInTimezone(companyTimezone), "yyyy-MM-dd"));
+    setJoinDate(
+      companyTimezone
+        ? moment().tz(companyTimezone).format("YYYY-MM-DD")
+        : moment().format("YYYY-MM-DD"),
+    );
   }, [open, companyTimezone]);
 
   const { showError, clearError } = useFormErrorStore();
