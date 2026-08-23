@@ -2,6 +2,7 @@
 
 A web based software for managing car repair shops.
 
+
 ## Technologies
 
 - Next.js (frontend + backend)
