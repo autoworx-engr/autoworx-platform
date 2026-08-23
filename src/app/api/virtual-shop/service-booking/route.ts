@@ -733,6 +733,7 @@ export async function GET(req: Request) {
             sb.invoice?.invoiceItems || [],
           );
           const taxAmount = (materialSubtotal * taxRate) / 100;
+          const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
           const { shop, ...rest } = sb;
           const isDepositEnabled = Boolean(
