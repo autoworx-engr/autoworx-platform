@@ -99,9 +99,9 @@ export default function CannedFilterBySelection({
             ? "rounded-b-none border-b-0 shadow-lg"
             : "shadow-sm hover:shadow-md",
         )}
-        title={`Filter by ${filterText}`}
+        title={selectedItem || `Filter by ${filterText}`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <Filter className="w-4 h-4 shrink-0" />
           <span className="truncate">
             {selectedItem ? selectedItem : filterText}
