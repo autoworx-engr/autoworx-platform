@@ -24,6 +24,7 @@ const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
       barEmpty: "#cbd5e1",
       time: "text-slate-500",
       badge: "text-slate-300",
+      rateChip: "bg-[#067E89]/10 text-[#067E89]",
       menuTone: "dark" as const,
     };
   }
@@ -38,6 +39,9 @@ const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
     barEmpty: isOutgoing ? "rgba(255,255,255,0.28)" : "#d1d5db",
     time: isOutgoing ? "text-white/60" : "text-zinc-400",
     badge: isOutgoing ? "text-white/40" : "text-zinc-300",
+    rateChip: isOutgoing
+      ? "bg-white/25 text-white"
+      : "bg-[#006D77]/10 text-[#006D77]",
     menuTone: (isOutgoing ? "light" : "dark") as "light" | "dark",
   };
 };
@@ -154,6 +158,14 @@ export default function VoiceNotePlayer({
               <span className="mx-0.5 opacity-50">/</span>
               <span>{formatAudioTime(duration)}</span>
             </>
+          )}
+          {rate !== 1 && (
+            <span
+              className={`ml-1.5 rounded-full px-1.5 py-[2px] text-[9px] font-semibold leading-none ${theme.rateChip}`}
+              title={`Playing at ${rate}× speed`}
+            >
+              {rate}×
+            </span>
           )}
         </div>
       </div>
