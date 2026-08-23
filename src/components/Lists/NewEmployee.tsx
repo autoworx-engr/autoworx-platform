@@ -19,9 +19,10 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { isValidEmail, normalizeEmail } from "@/utils/email";
+import { todayInTimezone } from "@/utils/todayInTimezone";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
+import { format } from "date-fns";
 import { PencilLineIcon, CircleUserRound as UserIcon } from "lucide-react";
-import moment from "moment-timezone";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
@@ -62,7 +63,7 @@ export default function AddNewEmployee({
       return;
     }
     if (joinDateEdited.current) return;
-    setJoinDate(moment().tz(companyTimezone).format("YYYY-MM-DD"));
+    setJoinDate(format(todayInTimezone(companyTimezone), "yyyy-MM-dd"));
   }, [open, companyTimezone]);
 
   const { showError, clearError } = useFormErrorStore();
@@ -541,6 +542,7 @@ export default function AddNewEmployee({
             <DatePickerField
               name="date"
               label="Date joined"
+              timezone={companyTimezone}
               value={joinDate}
               onChange={(value) => {
                 joinDateEdited.current = true;
