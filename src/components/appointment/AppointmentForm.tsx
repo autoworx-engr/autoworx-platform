@@ -2,7 +2,6 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePickerField } from "@/components/ui/DatePickerField";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,9 +102,8 @@ export default function AppointmentForm({
   containerRef,
   settings,
   handleDate,
+  timezone,
 }: AppointmentFormProps) {
-  const timezone = useCompanyTimezone();
-
   return (
     <div className="h-full sm:h-full overflow-y-auto max-h-[80vh] lg:max-h-none">
       <div className="space-y-2 p-4 sm:p-6">
