@@ -100,8 +100,10 @@ const PaymentDateRange = ({
     return `${formattedStart} - ${formattedEnd}`;
   };
 
+  // z-30 clears the table's sticky z-10 header but stays under app overlays
+  // (the incoming-call alert is z-50).
   return (
-    <div ref={ref} className="relative z-50">
+    <div ref={ref} className="relative z-30">
       <button
         onClick={togglePicker}
         className={`
