@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ChannelUnreadIndicator from "./ChannelUnreadIndicator";
 
 function MessengerIcon({ className }: { className?: string }) {
   return (
@@ -51,12 +52,9 @@ export default function ChatHead({
   companyId,
 }: TProps) {
   const [selected, setSelected] = useState<string>(selectedConversation);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
-
   useEffect(() => {
     setSelected(selectedConversation);
   }, [selectedConversation]);
-  // const [client, setClient] = useState<TClient | undefined>(initialClient);
   const user = useGetCurrentUser();
   const pathname = usePathname();
   const router = useRouter();
@@ -79,19 +77,14 @@ export default function ChatHead({
   );
 
   const handleTabChange = (tab: string) => {
-    // if (tab === "PHONE" && !isCallingAccess?.enabled) {
-    //   setShowPremiumModal(true);
-    //   return;
-    // }
-
     setSelected(tab);
     if (searchParams) {
       const updatedParams = new URLSearchParams(searchParams);
-      updatedParams.set("open", tab); // Update the tabState query parameter
+      updatedParams.set("open", tab);
       if (tab === "SMS" && updatedParams.has("open")) {
         updatedParams.delete("open");
       }
-      router.replace(`${pathname}?${updatedParams.toString()}`); // Update the URL without affecting other
+      router.replace(`${pathname}?${updatedParams.toString()}`);
     }
   };
 
@@ -99,31 +92,23 @@ export default function ChatHead({
     (state) => state.clientConversationTrack,
   );
 
-  // useEffect(() => {
-  //   useClientCommunicationStore.setState({
-  //     clientConversationTrack: initialClient?.conversationsTrack,
-  //   });
-  // }, []);
-
-  // subscribe to pusher channel for realtime updates
   useEffect(() => {
-    pusher
-      .subscribe(`client-notify-${user?.companyId}-${initialClient?.id}`)
-      .bind("client-notify", (data: ClientConversationTrack) => {
-        if (!data) return;
-        useClientCommunicationStore.setState({
-          clientConversationTrack:
-            data.clientId === initialClient?.id
-              ? { ...data }
-              : clientConversationTrack,
-        });
+    if (!user?.companyId || !initialClient?.id) return;
+    const channelName = `client-notify-${user.companyId}-${initialClient.id}`;
+    const channel = pusher.subscribe(channelName);
+    const handleClientNotify = (data: ClientConversationTrack) => {
+      if (!data || data.clientId !== initialClient.id) return;
+      useClientCommunicationStore.setState({
+        clientConversationTrack: { ...data },
       });
-    return () => {
-      pusher
-        .unbind("client-notify")
-        .unsubscribe(`client-notify-${user?.companyId}-${initialClient?.id}`);
     };
-  }, [user?.companyId, initialClient?.id, clientConversationTrack]);
+
+    channel.bind("client-notify", handleClientNotify);
+    return () => {
+      channel.unbind("client-notify", handleClientNotify);
+      pusher.unsubscribe(channelName);
+    };
+  }, [user?.companyId, initialClient?.id]);
 
   const renderEmailButton = () => (
     <button
@@ -140,14 +125,9 @@ export default function ChatHead({
       )}
     >
       {clientConversationTrack && !clientConversationTrack?.emailIsRead && (
-        <span className="absolute -top-1 -right-1 z-10">
-          <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-            {clientConversationTrack.emailIsUnReadCount > 9
-              ? "9+"
-              : clientConversationTrack.emailIsUnReadCount || 1}
-          </span>
-        </span>
+        <ChannelUnreadIndicator
+          count={clientConversationTrack.emailIsUnReadCount}
+        />
       )}
       <AtSign
         className="w-5 h-5 text-white"
@@ -171,14 +151,9 @@ export default function ChatHead({
       )}
     >
       {clientConversationTrack && !clientConversationTrack?.smsIsRead && (
-        <span className="absolute -top-1 -right-1 z-10">
-          <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-            {clientConversationTrack.smsUnReadCount > 9
-              ? "9+"
-              : clientConversationTrack.smsUnReadCount || 1}
-          </span>
-        </span>
+        <ChannelUnreadIndicator
+          count={clientConversationTrack.smsUnReadCount}
+        />
       )}
       <svg
         fill="#ffffff"
@@ -224,12 +199,9 @@ export default function ChatHead({
       )}
     >
       {clientConversationTrack && !clientConversationTrack?.messengerIsRead && (
-        <span className="absolute -top-1 -right-1 z-10">
-          <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-            {clientConversationTrack.messengerUnReadCount ?? 1}
-          </span>
-        </span>
+        <ChannelUnreadIndicator
+          count={clientConversationTrack.messengerUnReadCount}
+        />
       )}
       <MessengerIcon className="w-5 h-5 text-white" />
     </button>
@@ -251,12 +223,9 @@ export default function ChatHead({
     >
       {clientConversationTrack &&
         !(clientConversationTrack as any)?.instagramIsRead && (
-          <span className="absolute -top-1 -right-1 z-10">
-            <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-              {(clientConversationTrack as any).instagramUnReadCount ?? 1}
-            </span>
-          </span>
+          <ChannelUnreadIndicator
+            count={(clientConversationTrack as any).instagramUnReadCount}
+          />
         )}
       <svg
         viewBox="0 0 24 24"
