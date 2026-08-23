@@ -11,7 +11,10 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { getClients } from "../_actions/getClients";
 import { clientSortByUpdatedMessage } from "../_utils";
 import ClientItem from "./ClientItem";
-import { useClientCommunicationStore } from "@/stores/client-store";
+import {
+  clientListStore,
+  useClientCommunicationStore,
+} from "@/stores/client-store";
 import { isIosPwa } from "@/utils/isIosPwa";
 import { useAutoLoadSelectedClient } from "../../_hooks/useAutoLoadSelectedClient";
 import { useScrollSelectedClientIntoView } from "../../_hooks/useScrollSelectedClientIntoView";
@@ -32,7 +35,6 @@ export default function ClientInfinityScroll({
   defaultTakeData = 20,
   companyId,
 }: TProps) {
-  // Initial clients should already be properly sorted from the server
   const [clients, setClients] = useState<TClient[]>(initialsClients);
   const { filter, searchTerm } = useDemoClientFilterStore();
   const normalizedSearch = searchTerm?.trim();
@@ -40,9 +42,6 @@ export default function ClientInfinityScroll({
     (state) => state.resetClientData,
   );
   const [hasMore, setHasMore] = useState(true);
-  // The very first render already has the correct data from the server
-  // (initialsClients) — skip the redundant refetch that would otherwise
-  // fire on mount for the default "All"/no-search view.
   const isFirstRun = useRef(true);
   const listRef = useRef<HTMLDivElement>(null);
   const params = useParams();
@@ -54,74 +53,73 @@ export default function ClientInfinityScroll({
   const pathname = usePathname();
   let isClientInitialPage = pathname === "/dashboard/communication/client";
 
-  // subscribe to pusher channel for realtime updates
+  const bumpedClient = clientListStore((state) => state.bumpedClient);
   useEffect(() => {
-    pusher
-      .subscribe(`client-notify-${companyId}`)
-      .bind("client-notify", (data: ClientConversationTrack) => {
-        if (!data) return;
+    if (!bumpedClient) return;
+    setClients((prevClients) => {
+      const index = prevClients.findIndex(
+        (client) => client.id === bumpedClient.clientId,
+      );
+      if (index <= 0) return prevClients;
+      const next = [...prevClients];
+      const [moved] = next.splice(index, 1);
+      return [moved, ...next];
+    });
+  }, [bumpedClient]);
 
-        setClients((prevClients) => {
-          // Ensure no duplicates by using a Map with client ID as key
-          const clientMap = new Map();
-          prevClients.forEach((client) => {
-            clientMap.set(client.id, client);
-          });
+  useEffect(() => {
+    const channel = pusher.subscribe(`client-notify-${companyId}`);
+    const handleClientNotify = (data: ClientConversationTrack) => {
+      if (!data) return;
 
-          // Update the specific client's conversation track
-          if (clientMap.has(data.clientId)) {
-            const existingClient = clientMap.get(data.clientId);
-            clientMap.set(data.clientId, {
-              ...existingClient,
-              conversationsTrack: data,
-            });
-          }
-
-          // Convert back to array and sort
-          const updatedClients = Array.from(clientMap.values());
-          const sortedClients = clientSortByUpdatedMessage(updatedClients);
-          return sortedClients;
+      setClients((prevClients) => {
+        const clientMap = new Map();
+        prevClients.forEach((client) => {
+          clientMap.set(client.id, client);
         });
 
-        if (clientIdParams === data.clientId.toString()) {
-          useClientCommunicationStore.setState({
-            clientConversationTrack: data,
+        if (clientMap.has(data.clientId)) {
+          const existingClient = clientMap.get(data.clientId);
+          clientMap.set(data.clientId, {
+            ...existingClient,
+            conversationsTrack: data,
           });
         }
+
+        const updatedClients = Array.from(clientMap.values());
+        return clientSortByUpdatedMessage(updatedClients);
       });
+
+      if (clientIdParams === data.clientId.toString()) {
+        useClientCommunicationStore.setState({
+          clientConversationTrack: data,
+        });
+      }
+    };
+
+    channel.bind("client-notify", handleClientNotify);
     return () => {
-      pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
+      channel.unbind("client-notify", handleClientNotify);
     };
   }, [companyId, clientIdParams]);
 
   useEffect(() => {
     if (isFirstRun.current && filter === "All" && !normalizedSearch) {
-      // Skip the redundant refetch on mount — initialsClients already has
-      // the correct data for the default view.
       isFirstRun.current = false;
       return;
     }
     isFirstRun.current = false;
 
-    // Always hit the server for the current filter/search state, "All" with
-    // no search included. Restoring from any in-memory snapshot (the initial
-    // SSR prop, or a client-captured one) can drift from what the server
-    // would return right now — e.g. once real-time activity reorders things
-    // — and only a fresh reload was reflecting the correct order. Refetching
-    // here makes "clear search" match a reload exactly, every time.
     const fetchCurrentView = async () => {
       try {
         const fetchedClients = await getClients({
           companyId,
-          // pass trimmed search so server-side doesn't receive whitespace-only strings
           search: normalizedSearch,
           filter,
           take: defaultTakeData,
         });
 
         setClients(fetchedClients);
-        // Infinite scroll only applies to the plain "All" view with no
-        // search — filtered/searched result sets are already complete.
         const isDefaultView = filter === "All" && !normalizedSearch;
         setHasMore(isDefaultView && fetchedClients.length >= defaultTakeData);
       } catch (err) {
@@ -132,12 +130,8 @@ export default function ClientInfinityScroll({
     fetchCurrentView();
   }, [filter, searchTerm, normalizedSearch, companyId, defaultTakeData]);
 
-  // const [page, setPage] = useState(1);
   useEffect(() => {
     if (isClientInitialPage) {
-      //192.168.1.5:3000
-
-      // if (clients && clients.length === 0) router.push("/404");
       const isPwa = isIosPwa();
       if (isPwa && clients && clients.length > 0) {
         router.push("/dashboard/communication/client");
@@ -189,11 +183,10 @@ export default function ClientInfinityScroll({
     <div
       id="scrollableDiv"
       ref={listRef}
-      // className="mt-2 flex h-[84%] flex-col gap-2 p-2 max-[1835px]:h-[82%] lg:overflow-y-auto"
       className="mt-2 h-[82%] overflow-y-auto p-2"
     >
       <InfiniteScroll
-        dataLength={dataLength} //This is important field to render the next data
+        dataLength={dataLength}
         next={fetchData}
         hasMore={filter === "All" && !searchTerm && hasMore}
         loader={

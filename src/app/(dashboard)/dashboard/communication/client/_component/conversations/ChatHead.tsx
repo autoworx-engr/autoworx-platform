@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ChannelUnreadIndicator from "./ChannelUnreadIndicator";
 
+const CHANNEL_BUTTON_CLASS =
+  "relative grid h-9 w-9 place-items-center rounded-full transition-all hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70";
+
 function MessengerIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -52,12 +55,9 @@ export default function ChatHead({
   companyId,
 }: TProps) {
   const [selected, setSelected] = useState<string>(selectedConversation);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
-
   useEffect(() => {
     setSelected(selectedConversation);
   }, [selectedConversation]);
-  // const [client, setClient] = useState<TClient | undefined>(initialClient);
   const user = useGetCurrentUser();
   const pathname = usePathname();
   const router = useRouter();
@@ -80,19 +80,14 @@ export default function ChatHead({
   );
 
   const handleTabChange = (tab: string) => {
-    // if (tab === "PHONE" && !isCallingAccess?.enabled) {
-    //   setShowPremiumModal(true);
-    //   return;
-    // }
-
     setSelected(tab);
     if (searchParams) {
       const updatedParams = new URLSearchParams(searchParams);
-      updatedParams.set("open", tab); // Update the tabState query parameter
+      updatedParams.set("open", tab);
       if (tab === "SMS" && updatedParams.has("open")) {
         updatedParams.delete("open");
       }
-      router.replace(`${pathname}?${updatedParams.toString()}`); // Update the URL without affecting other
+      router.replace(`${pathname}?${updatedParams.toString()}`);
     }
   };
 
@@ -100,31 +95,23 @@ export default function ChatHead({
     (state) => state.clientConversationTrack,
   );
 
-  // useEffect(() => {
-  //   useClientCommunicationStore.setState({
-  //     clientConversationTrack: initialClient?.conversationsTrack,
-  //   });
-  // }, []);
-
-  // subscribe to pusher channel for realtime updates
   useEffect(() => {
-    pusher
-      .subscribe(`client-notify-${user?.companyId}-${initialClient?.id}`)
-      .bind("client-notify", (data: ClientConversationTrack) => {
-        if (!data) return;
-        useClientCommunicationStore.setState({
-          clientConversationTrack:
-            data.clientId === initialClient?.id
-              ? { ...data }
-              : clientConversationTrack,
-        });
+    if (!user?.companyId || !initialClient?.id) return;
+    const channelName = `client-notify-${user.companyId}-${initialClient.id}`;
+    const channel = pusher.subscribe(channelName);
+    const handleClientNotify = (data: ClientConversationTrack) => {
+      if (!data || data.clientId !== initialClient.id) return;
+      useClientCommunicationStore.setState({
+        clientConversationTrack: { ...data },
       });
-    return () => {
-      pusher
-        .unbind("client-notify")
-        .unsubscribe(`client-notify-${user?.companyId}-${initialClient?.id}`);
     };
-  }, [user?.companyId, initialClient?.id, clientConversationTrack]);
+
+    channel.bind("client-notify", handleClientNotify);
+    return () => {
+      channel.unbind("client-notify", handleClientNotify);
+      pusher.unsubscribe(channelName);
+    };
+  }, [user?.companyId, initialClient?.id]);
 
   const renderEmailButton = () => (
     <button
@@ -135,8 +122,7 @@ export default function ChatHead({
       aria-controls="panel-email"
       title="Email"
       className={cn(
-        "relative rounded-full p-3 transition-all",
-        "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+        CHANNEL_BUTTON_CLASS,
         selected === "EMAIL" ? "bg-white/30" : "bg-transparent",
       )}
     >
@@ -161,8 +147,7 @@ export default function ChatHead({
       aria-controls="panel-sms"
       title="SMS"
       className={cn(
-        "relative rounded-full transition-all",
-        "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+        CHANNEL_BUTTON_CLASS,
         selected === "SMS" ? "bg-white/30" : "bg-transparent",
       )}
     >
@@ -173,9 +158,9 @@ export default function ChatHead({
       )}
       <svg
         fill="#ffffff"
-        height="35px"
-        width="35px"
-        style={{ width: 35, height: 35 }}
+        height="26px"
+        width="26px"
+        style={{ width: 26, height: 26 }}
         version="1.1"
         id="Icon"
         xmlns="http://www.w3.org/2000/svg"
@@ -209,8 +194,7 @@ export default function ChatHead({
       aria-controls="panel-messenger"
       title="Messenger"
       className={cn(
-        "relative rounded-full p-3 transition-all",
-        "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+        CHANNEL_BUTTON_CLASS,
         selected === "MESSENGER" ? "bg-white/30" : "bg-transparent",
       )}
     >
@@ -232,8 +216,7 @@ export default function ChatHead({
       aria-controls="panel-instagram"
       title="Instagram DM"
       className={cn(
-        "relative rounded-full p-3 transition-all",
-        "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+        CHANNEL_BUTTON_CLASS,
         selected === "INSTAGRAM" ? "bg-white/30" : "bg-transparent",
       )}
     >
@@ -263,8 +246,7 @@ export default function ChatHead({
       aria-controls="panel-phone"
       title="Phone"
       className={cn(
-        "relative rounded-full p-3 transition-all",
-        "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+        CHANNEL_BUTTON_CLASS,
         selected === "PHONE" ? "bg-white/30" : "bg-transparent",
       )}
     >
@@ -290,7 +272,7 @@ export default function ChatHead({
     <>
       {/* Desktop: every channel always visible, exactly as before */}
       <div
-        className="hidden items-center md:flex"
+        className="hidden items-center gap-1 md:flex"
         role="tablist"
         aria-label="Conversation channels"
       >
