@@ -437,6 +437,16 @@ export default function AddNewEmployee({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              name="username"
+              autoComplete="username"
+              value={email}
+              readOnly
+              hidden
+              aria-hidden="true"
+              tabIndex={-1}
+            />
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password" className="text-base">
                 Password <span className="text-destructive">*</span>
@@ -445,6 +455,7 @@ export default function AddNewEmployee({
                 name="password"
                 placeholder="Enter password"
                 required={true}
+                autoComplete="new-password"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -455,6 +466,7 @@ export default function AddNewEmployee({
                 name="confirmPassword"
                 placeholder="Enter confirm password"
                 required={true}
+                autoComplete="new-password"
               />
             </div>
           </div>
