@@ -10,7 +10,7 @@ export const useCreateServiceMaintenanceAutomationRule = () => {
     mutationFn: async (payload: any) =>
       await createServiceMaintenanceAutomationRule(payload),
     onSuccess: () => {
-      successToast("ServiceMaintenance automation rule created successfully!");
+      successToast("Service Maintenance automation rule created successfully!");
       queryClient.invalidateQueries({
         queryKey: ["service-maintenance-automation"],
       });
