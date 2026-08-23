@@ -5,7 +5,6 @@ import { Mic, Pause, Phone, Play } from "lucide-react";
 import React from "react";
 import AudioOptionsMenu from "./AudioOptionsMenu";
 
-// Decorative waveform bar heights (percent of container height)
 const WAVE_HEIGHTS = [
   30, 55, 75, 45, 85, 60, 95, 50, 40, 70, 80, 55, 65, 40, 75, 90, 50, 45, 60,
   80, 95, 60, 50, 38, 70, 88, 55, 42, 58, 78,
@@ -13,8 +12,6 @@ const WAVE_HEIGHTS = [
 
 type PlayerVariant = "voice-note" | "recording";
 
-// "recording" sits inside a container that already has its own background
-// (the call bubble), so it stays transparent and fills the available width.
 const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
   if (variant === "recording") {
     return {
@@ -24,6 +21,7 @@ const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
       barEmpty: "#cbd5e1",
       time: "text-slate-500",
       badge: "text-slate-300",
+      rateChip: "bg-[#067E89]/10 text-[#067E89]",
       menuTone: "dark" as const,
     };
   }
@@ -38,6 +36,9 @@ const getTheme = (variant: PlayerVariant, isOutgoing: boolean) => {
     barEmpty: isOutgoing ? "rgba(255,255,255,0.28)" : "#d1d5db",
     time: isOutgoing ? "text-white/60" : "text-zinc-400",
     badge: isOutgoing ? "text-white/40" : "text-zinc-300",
+    rateChip: isOutgoing
+      ? "bg-white/25 text-white"
+      : "bg-[#006D77]/10 text-[#006D77]",
     menuTone: (isOutgoing ? "light" : "dark") as "light" | "dark",
   };
 };
@@ -154,6 +155,14 @@ export default function VoiceNotePlayer({
               <span className="mx-0.5 opacity-50">/</span>
               <span>{formatAudioTime(duration)}</span>
             </>
+          )}
+          {rate !== 1 && (
+            <span
+              className={`ml-1.5 rounded-full px-1.5 py-[2px] text-[9px] font-semibold leading-none ${theme.rateChip}`}
+              title={`Playing at ${rate}× speed`}
+            >
+              {rate}×
+            </span>
           )}
         </div>
       </div>
