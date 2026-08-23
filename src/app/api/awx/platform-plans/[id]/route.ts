@@ -11,7 +11,10 @@ const allowedIntervals = new Set(Object.values(PlatformPlanInterval));
 
 const normalizeFeatures = (
   features: { key: string; type: PlatformFeatureType; value: string }[],
-) => {
+): {
+  features: { key: string; type: PlatformFeatureType; value: string }[];
+  error?: string;
+} => {
   const normalized = new Map<
     string,
     { key: string; type: PlatformFeatureType; value: string }
@@ -23,14 +26,30 @@ const normalizeFeatures = (
     if (!key) continue;
     if (!Object.values(PlatformFeatureType).includes(feature.type)) continue;
 
-    normalized.set(key, {
-      key,
-      type: feature.type,
-      value: String(feature.value ?? ""),
-    });
+    const value = String(feature.value ?? "");
+
+    // -1 is the established "unlimited" sentinel (see entitlement-service.ts's
+    // `limit === -1` check) — any other negative number silently blocks the
+    // feature for everyone, since a real usage count can never be < -5 etc.
+    if (feature.type === PlatformFeatureType.NUMERIC) {
+      const parsed = Number(value);
+      if (
+        value === "" ||
+        Number.isNaN(parsed) ||
+        !Number.isInteger(parsed) ||
+        parsed < -1
+      ) {
+        return {
+          features: [],
+          error: `Feature "${key}" must be -1 (unlimited) or a whole number 0 or greater.`,
+        };
+      }
+    }
+
+    normalized.set(key, { key, type: feature.type, value });
   }
 
-  return Array.from(normalized.values());
+  return { features: Array.from(normalized.values()) };
 };
 
 type Params = { params: Promise<{ id: string }> };
@@ -96,6 +115,12 @@ export async function PATCH(req: NextRequest, props: Params) {
           { status: 400 },
         );
       }
+      if (!Number.isInteger(priceValue)) {
+        return NextResponse.json(
+          { success: false, message: "Price must be a whole number" },
+          { status: 400 },
+        );
+      }
       updates.price = priceValue;
     }
 
@@ -116,9 +141,16 @@ export async function PATCH(req: NextRequest, props: Params) {
 
     if (trialLengthDays !== undefined) {
       const trialValue = Number(trialLengthDays);
-      if (!Number.isFinite(trialValue) || trialValue < 0) {
+      if (
+        !Number.isFinite(trialValue) ||
+        trialValue < 0 ||
+        !Number.isInteger(trialValue)
+      ) {
         return NextResponse.json(
-          { success: false, message: "Trial length (days) must be 0 or more" },
+          {
+            success: false,
+            message: "Trial length (days) must be a whole number 0 or more",
+          },
           { status: 400 },
         );
       }
@@ -127,9 +159,16 @@ export async function PATCH(req: NextRequest, props: Params) {
 
     if (displayOrder !== undefined) {
       const displayValue = Number(displayOrder);
-      if (!Number.isFinite(displayValue) || displayValue < 0) {
+      if (
+        !Number.isFinite(displayValue) ||
+        displayValue < 0 ||
+        !Number.isInteger(displayValue)
+      ) {
         return NextResponse.json(
-          { success: false, message: "Display order must be 0 or more" },
+          {
+            success: false,
+            message: "Display order must be a whole number 0 or more",
+          },
           { status: 400 },
         );
       }
@@ -138,13 +177,28 @@ export async function PATCH(req: NextRequest, props: Params) {
 
     if (isActive !== undefined) updates.isActive = isActive;
 
+    let normalizedFeatures: {
+      key: string;
+      type: PlatformFeatureType;
+      value: string;
+    }[] = [];
+    if (features) {
+      const result = normalizeFeatures(features);
+      if (result.error) {
+        return NextResponse.json(
+          { success: false, message: result.error },
+          { status: 400 },
+        );
+      }
+      normalizedFeatures = result.features;
+    }
+
     await db.$transaction(async (tx) => {
       if (Object.keys(updates).length > 0) {
         await tx.platformPlan.update({ where: { id: planId }, data: updates });
       }
 
       if (features) {
-        const normalizedFeatures = normalizeFeatures(features);
         await tx.planFeature.deleteMany({ where: { planId } });
         if (normalizedFeatures.length > 0) {
           await tx.planFeature.createMany({

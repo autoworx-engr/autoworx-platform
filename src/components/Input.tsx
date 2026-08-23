@@ -15,7 +15,9 @@ export default function Input({
   onChange,
   min,
   max,
+  step,
   onBlur,
+  onKeyDown,
   autoComplete,
   invalid,
   describedBy,
@@ -31,7 +33,9 @@ export default function Input({
   onChange?: (e: any) => void;
   min?: string;
   max?: string;
+  step?: string;
   onBlur?: (e: any) => void;
+  onKeyDown?: (e: any) => void;
   autoComplete?: string;
   invalid?: boolean;
   describedBy?: string;
@@ -53,12 +57,14 @@ export default function Input({
           onChange ? onChange(e) : setInputValue(e.target.value);
         }}
         onBlur={onBlur}
+        onKeyDown={onKeyDown}
         autoComplete={autoComplete}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         placeholder={placeholder}
         min={min}
         max={max}
+        step={step}
       />
 
       {/* {error && error.field === name && (

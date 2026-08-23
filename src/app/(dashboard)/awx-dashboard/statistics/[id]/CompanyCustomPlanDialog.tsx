@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Input from "@/components/Input";
 import { PlatformFeatureType, PlatformPlan, PlanFeature } from "@prisma/client";
+import { blockNonIntegerKeys } from "@/utils/blockNonIntegerKeys";
 import {
   Settings2,
   Save,
@@ -111,6 +112,39 @@ export function CompanyCustomPlanDialog({
       setSubmitError("Price must be a number greater than zero.");
       return;
     }
+    if (!Number.isInteger(parsedPrice)) {
+      setSubmitError("Price must be a whole number.");
+      return;
+    }
+
+    const parsedTrialDays = Number(trialMonths);
+    if (
+      !Number.isFinite(parsedTrialDays) ||
+      parsedTrialDays < 0 ||
+      !Number.isInteger(parsedTrialDays)
+    ) {
+      setSubmitError("Free trial (days) must be a whole number 0 or more.");
+      return;
+    }
+
+    // -1 is the established "unlimited" sentinel (see entitlement-service.ts's
+    // `limit === -1` check) — any other negative number silently blocks the
+    // feature for everyone, since a real usage count can never be < -5 etc.
+    for (const feature of features) {
+      if (feature.type !== PlatformFeatureType.NUMERIC) continue;
+      const parsedValue = Number(feature.value);
+      if (
+        feature.value === "" ||
+        Number.isNaN(parsedValue) ||
+        !Number.isInteger(parsedValue) ||
+        parsedValue < -1
+      ) {
+        setSubmitError(
+          `"${formatKey(feature.key)}" must be -1 (unlimited) or a whole number 0 or greater.`,
+        );
+        return;
+      }
+    }
 
     if (!selectedPlanId) {
       setSubmitError("Please select a base plan.");
@@ -198,7 +232,7 @@ export function CompanyCustomPlanDialog({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Base Template
+                Base Template <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
@@ -229,7 +263,7 @@ export function CompanyCustomPlanDialog({
 
             <div className="md:col-span-2 space-y-2">
               <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Monthly Rate (USD)
+                Monthly Rate (USD) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute left-4 top-3 text-slate-400">
@@ -238,7 +272,9 @@ export function CompanyCustomPlanDialog({
                 <Input
                   name="price"
                   type="number"
-                  min="0.01"
+                  step="1"
+                  min="1"
+                  onKeyDown={blockNonIntegerKeys}
                   value={price}
                   onChange={(e: any) => {
                     setPrice(e.target.value);
@@ -256,7 +292,9 @@ export function CompanyCustomPlanDialog({
               <Input
                 name="trialMonths"
                 type="number"
+                step="1"
                 min="0"
+                onKeyDown={blockNonIntegerKeys}
                 value={trialMonths}
                 onChange={(e: any) => setTrialMonths(e.target.value)}
                 className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary dark:ring-slate-800 px-4"
@@ -274,6 +312,10 @@ export function CompanyCustomPlanDialog({
                 {features.length} features
               </span>
             </div>
+            <p className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
+              For numeric limits, use <span className="font-semibold">-1</span>{" "}
+              for unlimited.
+            </p>
 
             <div className="max-h-72 overflow-y-auto rounded-[1.5rem] border border-slate-200/60 bg-slate-50/50 p-2 dark:border-slate-800/60 dark:bg-slate-900/40 custom-scrollbar overflow-x-hidden">
               {features.map((feature, index) => (
@@ -313,6 +355,12 @@ export function CompanyCustomPlanDialog({
                         value={feature.value}
                         onChange={(e: any) =>
                           handleFeatureChange(index, e.target.value)
+                        }
+                        onKeyDown={
+                          feature.type === PlatformFeatureType.NUMERIC
+                            ? (e: any) =>
+                                blockNonIntegerKeys(e, { allowNegative: true })
+                            : undefined
                         }
                         className="px-4 w-full h-9 rounded-lg border-none text-right font-mono text-[11px] font-bold text-primary ring-1 ring-slate-200 focus:ring-2 focus:ring-primary dark:ring-slate-700"
                       />

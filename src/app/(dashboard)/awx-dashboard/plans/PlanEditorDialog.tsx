@@ -6,6 +6,7 @@ import Input from "@/components/Input";
 import { PlatformFeatureType, PlatformPlanInterval } from "@prisma/client";
 import { PlatformPlanWithMeta } from "./PlatformPlanManager";
 import { Loader2, Save } from "lucide-react";
+import { blockNonIntegerKeys } from "@/utils/blockNonIntegerKeys";
 
 const formatFeatureName = (key: string) =>
   key
@@ -197,6 +198,8 @@ export const PlanEditorDialog = ({
     const parsedPrice = Number(price);
     if (price === "" || Number.isNaN(parsedPrice) || parsedPrice <= 0) {
       nextFieldErrors.price = "Price must be greater than 0.";
+    } else if (!Number.isInteger(parsedPrice)) {
+      nextFieldErrors.price = "Price must be a whole number.";
     }
 
     if (description.length > 500) {
@@ -262,6 +265,10 @@ export const PlanEditorDialog = ({
         const parsedNumber = Number(value);
         if (value === "" || Number.isNaN(parsedNumber)) {
           nextFeatureErrors[i] = "Numeric feature must contain a valid number.";
+        } else if (!Number.isInteger(parsedNumber)) {
+          nextFeatureErrors[i] = "Numeric feature must be a whole number.";
+        } else if (parsedNumber < -1) {
+          nextFeatureErrors[i] = "Use -1 for unlimited, or 0 or greater.";
         }
         continue;
       }
@@ -379,7 +386,7 @@ export const PlanEditorDialog = ({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="min-w-0 space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Plan Name
+                  Plan Name <span className="text-red-500">*</span>
                 </label>
                 <Input
                   name="plan-name"
@@ -415,11 +422,14 @@ export const PlanEditorDialog = ({
 
               <div className="min-w-0 space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Price (USD)
+                  Price (USD) <span className="text-red-500">*</span>
                 </label>
                 <Input
                   name="plan-price"
                   type="number"
+                  step="1"
+                  min="0"
+                  onKeyDown={blockNonIntegerKeys}
                   placeholder="0"
                   value={price}
                   onChange={(e: any) => {
@@ -440,7 +450,9 @@ export const PlanEditorDialog = ({
                 <Input
                   name="plan-trial"
                   type="number"
+                  step="1"
                   min="0"
+                  onKeyDown={blockNonIntegerKeys}
                   placeholder="0"
                   value={trialLengthDays}
                   onChange={(e: any) => {
@@ -466,6 +478,9 @@ export const PlanEditorDialog = ({
                 <Input
                   name="plan-display-order"
                   type="number"
+                  step="1"
+                  min="0"
+                  onKeyDown={blockNonIntegerKeys}
                   placeholder="0"
                   value={displayOrder}
                   onChange={(e: any) => {
@@ -550,6 +565,10 @@ export const PlanEditorDialog = ({
                 {features.length} features
               </span>
             </div>
+            <p className="text-xs text-slate-500">
+              For numeric limits, use <span className="font-semibold">-1</span>{" "}
+              for unlimited.
+            </p>
 
             <div className="rounded-lg border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-2 overflow-x-hidden">
               {features.length === 0 && (
@@ -636,6 +655,12 @@ export const PlanEditorDialog = ({
                         }
                         onChange={(e: any) =>
                           updateFeature(index, { value: e.target.value })
+                        }
+                        onKeyDown={
+                          feature.type === PlatformFeatureType.NUMERIC
+                            ? (e: any) =>
+                                blockNonIntegerKeys(e, { allowNegative: true })
+                            : undefined
                         }
                         className={`w-full h-9 rounded-md border px-3 text-right text-sm text-primary shadow-sm focus:ring-2 ${
                           featureErrors[index]

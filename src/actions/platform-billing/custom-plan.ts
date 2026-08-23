@@ -29,10 +29,23 @@ function serializeFeatureValue(
       return value === true || value === "true" || value === 1 || value === "1"
         ? "true"
         : "false";
-    case PlatformFeatureType.NUMERIC:
-      return typeof value === "number"
-        ? value.toString()
-        : String(Number(value) || 0);
+    case PlatformFeatureType.NUMERIC: {
+      const parsed = typeof value === "number" ? value : Number(value);
+      // -1 is the established "unlimited" sentinel (see entitlement-service.ts's
+      // `limit === -1` check) — any other negative number silently blocks the
+      // feature for everyone, since a real usage count can never be < -5 etc.
+      if (
+        value === "" ||
+        Number.isNaN(parsed) ||
+        !Number.isInteger(parsed) ||
+        parsed < -1
+      ) {
+        throw new Error(
+          "Numeric feature values must be -1 (unlimited) or a whole number 0 or greater",
+        );
+      }
+      return parsed.toString();
+    }
     case PlatformFeatureType.TEXT:
     default:
       return String(value ?? "");
@@ -64,6 +77,23 @@ export async function createCustomPlatformPlan(
   if (!price || price <= 0) {
     throw new Error("Price must be greater than zero for a custom plan");
   }
+  if (!Number.isInteger(price)) {
+    throw new Error("Price must be a whole number");
+  }
+  if (
+    !Number.isFinite(trialLengthDays) ||
+    trialLengthDays < 0 ||
+    !Number.isInteger(trialLengthDays)
+  ) {
+    throw new Error("Trial length (days) must be a whole number 0 or more");
+  }
+
+  const company = companyId
+    ? await db.company.findUnique({
+        where: { id: companyId },
+        select: { name: true },
+      })
+    : null;
 
   // Choose a human-friendly name. If label is provided, prefer it;
   // otherwise, fall back to a generic custom name with company context.
@@ -119,7 +149,7 @@ export async function createCustomPlatformPlan(
       description:
         description ||
         (companyId
-          ? `Custom plan for company ${companyId}`
+          ? `Custom plan for company ${companyId}${company?.name ? ` (${company.name})` : ""}`
           : "Custom platform plan"),
       price,
       interval,
