@@ -90,7 +90,9 @@ export function SelectorWithAdd({
   const [deleteConfirmOpenId, setDeleteConfirmOpenId] = useState<string | null>(
     null,
   );
+  const [dropUp, setDropUp] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addNewInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,8 +108,6 @@ export function SelectorWithAdd({
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
       const target = event.target as HTMLElement | null;
-      // Ignore clicks inside antd portaled popups (e.g. the delete Popconfirm),
-      // otherwise the dropdown unmounts before the confirm action can run.
       if (target?.closest?.(".ant-popover, .ant-popconfirm")) {
         return;
       }
@@ -153,7 +153,6 @@ export function SelectorWithAdd({
   };
 
   const normalizedOptions = normalizeOptions();
-
   const filteredOptions = searchTerm.trim()
     ? normalizedOptions.filter((opt) =>
         normalizeSearch(opt.title).includes(normalizeSearch(searchTerm)),
@@ -239,6 +238,16 @@ export function SelectorWithAdd({
   const isInteractionBlocked = disabled || isLoading;
   const showClear = Boolean(hasValue && allowClear && !isInteractionBlocked);
 
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setDropUp(spaceBelow < 340 && rect.top > spaceBelow);
+    }
+    setIsOpen((prev) => !prev);
+  };
+
   return (
     <div className={cn("block group", rootClassName)} ref={dropdownRef}>
       {/* Label Styling */}
@@ -254,6 +263,7 @@ export function SelectorWithAdd({
 
       <div className="relative">
         <button
+          ref={buttonRef}
           type="button"
           className={cn(
             "flex w-full touch-manipulation items-center justify-between rounded-lg border-none px-3 py-2 text-left text-sm leading-6 transition-all duration-300 outline-none ring-1",
@@ -265,7 +275,7 @@ export function SelectorWithAdd({
             isInteractionBlocked &&
               "cursor-not-allowed bg-slate-100 opacity-60 ring-slate-200",
           )}
-          onClick={() => !isInteractionBlocked && setIsOpen(!isOpen)}
+          onClick={handleToggle}
           id={name}
           disabled={isInteractionBlocked}
         >
@@ -305,7 +315,14 @@ export function SelectorWithAdd({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border-none bg-white/90 shadow-2xl backdrop-blur-xl ring-1 ring-slate-200/60 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div
+            className={cn(
+              "absolute z-50 w-full overflow-hidden rounded-2xl border-none bg-white/90 shadow-2xl backdrop-blur-xl ring-1 ring-slate-200/60 animate-in fade-in duration-200",
+              dropUp
+                ? "bottom-full mb-2 slide-in-from-bottom-2"
+                : "top-full mt-2 slide-in-from-top-2",
+            )}
+          >
             {/* Search Input Section */}
             {isSearch && !isAddingNew && (
               <div className="sticky top-0 z-20 border-b border-slate-100 bg-white/50 p-2.5">
@@ -434,9 +451,6 @@ export function SelectorWithAdd({
                                     type="button"
                                     title="Remove"
                                     aria-label={`Remove ${opt?.title}`}
-                                    // Always visible: hiding it behind hover
-                                    // made it undiscoverable on touch devices
-                                    // and unreachable by keyboard.
                                     className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />

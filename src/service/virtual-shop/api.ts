@@ -96,6 +96,12 @@ export interface ShopServiceApi {
   modifierSedan?: number | string;
   modifierSUV?: number | string;
   modifierTruck?: number | string;
+  invoiceItems?: Array<{
+    materials?: Array<{
+      sell?: number | string | null;
+      quantity?: number | string | null;
+    }> | null;
+  }> | null;
 }
 
 export interface UpdateShopServiceStatusResponse {
@@ -180,7 +186,9 @@ export interface CreateVirtualShopServiceBookingResponse {
     totals: {
       subtotal: number;
       tax: number;
+      taxRate?: number;
       serviceFee: number;
+      serviceFeeRate?: number;
       grandTotal: number;
       giftCardRedeemed?: number;
       depositRequired?: number;

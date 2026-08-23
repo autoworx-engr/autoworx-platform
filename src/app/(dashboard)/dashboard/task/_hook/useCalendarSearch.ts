@@ -116,8 +116,6 @@ export function useCalendarSearch(type: string) {
       );
   }, [searchTerm, tasks, appointments]);
 
-  // Infinite scroll is server-side: pull the next page from whichever list
-  // still has one. Results re-merge/sort as pages arrive.
   const hasMore = !!taskHasNext || !!apptHasNext;
   const isFetchingMore = taskFetchingNext || apptFetchingNext;
   const loadMore = useCallback(() => {

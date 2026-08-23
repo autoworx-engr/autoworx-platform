@@ -17,6 +17,7 @@ import {
 } from "@/utils/normalizePhone";
 import {
   buildInvoiceItemsWithDefaults,
+  calcMaterialSubtotal,
   mapInvoiceItemsForCreate,
 } from "@/services/shopServiceInvoiceItems";
 
@@ -666,6 +667,13 @@ export async function GET(req: Request) {
               vehicleExtraCost: true,
               deposit: true,
               due: true,
+              invoiceItems: {
+                select: {
+                  materials: {
+                    select: { sell: true, quantity: true },
+                  },
+                },
+              },
               payments: {
                 select: {
                   tip: true,
@@ -713,16 +721,19 @@ export async function GET(req: Request) {
         data: shopBookings.map((sb) => {
           const subtotal = Number(sb.invoice?.subtotal || 0);
           const taxRate = Number(sb.invoice?.tax || 0);
-          const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
-          const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
+          const serviceFeeRate = Number(sb.invoice?.serviceFee || 0);
           const grandTotal = Number(sb.invoice?.grandTotal || 0);
           const tipAmount = (sb.invoice?.payments || []).reduce(
             (sum, p) => sum + Number(p.tip || 0),
             0,
           );
 
-          const totalServiceCost = subtotal - vehicleExtraCost;
-          const taxAmount = (totalServiceCost * taxRate) / 100;
+          // Tax applies to material price only (labor is excluded)
+          const materialSubtotal = calcMaterialSubtotal(
+            sb.invoice?.invoiceItems || [],
+          );
+          const taxAmount = (materialSubtotal * taxRate) / 100;
+          const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
           const { shop, ...rest } = sb;
           const isDepositEnabled = Boolean(
@@ -1361,8 +1372,9 @@ export async function POST(req: Request) {
           ? Number(shop.company.serviceFee)
           : 0;
 
-        // Tax and fee computed on subtotal
-        const taxAmount = (subtotal * taxRate) / 100;
+        // Tax applies to material price only; service fee to the full subtotal
+        const materialSubtotal = calcMaterialSubtotal(allInvoiceItems);
+        const taxAmount = (materialSubtotal * taxRate) / 100;
         const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
         const adjustedGrandTotal = roundMoney(
@@ -1504,7 +1516,9 @@ export async function POST(req: Request) {
                 totals: {
                   subtotal,
                   tax: taxAmount,
+                  taxRate,
                   serviceFee: serviceFeeAmount,
+                  serviceFeeRate,
                   grandTotal: adjustedGrandTotal,
                   giftCardRedeemed: 0,
                   depositRequired: requiredDepositAmount,
@@ -1724,7 +1738,9 @@ export async function POST(req: Request) {
               totals: {
                 subtotal: Number(estimate.subtotal),
                 tax: taxAmount,
+                taxRate,
                 serviceFee: serviceFeeAmount,
+                serviceFeeRate,
                 grandTotal: Number(estimate.grandTotal),
                 giftCardRedeemed: giftCardRedeemedAmount,
                 depositRequired: 0,

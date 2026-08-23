@@ -38,11 +38,12 @@ const InfoDetails = ({
 }) => {
   const unpaidInvoices = client?.Invoice?.filter(
     (invoice: any) =>
-      invoice?.grandTotal == 0 || (invoice?.grandTotal > 0 && invoice?.due > 0),
+      Number(invoice?.grandTotal) > 0 && Number(invoice?.due) > 0,
   );
 
   const paidInvoices = client?.Invoice?.filter(
-    (invoice: any) => invoice?.grandTotal > 0 && invoice?.due == 0,
+    (invoice: any) =>
+      Number(invoice?.grandTotal) > 0 && Number(invoice?.due) == 0,
   );
 
   const totalValue = client.Invoice?.reduce(

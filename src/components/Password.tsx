@@ -14,6 +14,10 @@ export default function Input({
   value,
   onChange,
   required,
+  onBlur,
+  autoComplete,
+  invalid,
+  describedBy,
 }: {
   name: string;
   className?: string;
@@ -21,6 +25,10 @@ export default function Input({
   value?: any;
   onChange?: (e: any) => void;
   required?: boolean;
+  onBlur?: (e: any) => void;
+  autoComplete?: string;
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   const [inputValue, setInputValue] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,14 +45,22 @@ export default function Input({
         id={name}
         className={
           isLoginPage
-            ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
-            : cn(slimInputClassName, "pr-10", className)
+            ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors [&::-ms-reveal]:hidden [&::-ms-clear]:hidden focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
+            : cn(
+                slimInputClassName,
+                "pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden",
+                className,
+              )
         }
         required={required}
-        value={value || inputValue}
+        value={value ?? inputValue}
         onChange={(e) => {
           onChange ? onChange(e) : setInputValue(e.target.value);
         }}
+        onBlur={onBlur}
+        autoComplete={autoComplete}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         placeholder={placeholder}
       />
       <button

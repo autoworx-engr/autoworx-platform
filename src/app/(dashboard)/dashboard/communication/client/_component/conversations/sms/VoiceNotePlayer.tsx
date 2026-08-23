@@ -48,9 +48,7 @@ interface VoiceNotePlayerProps {
   variant?: PlayerVariant;
   registerAudio?: (el: HTMLAudioElement | null) => void;
   onPlay?: () => void;
-  /** Known clip length, used until the media reports a finite duration. */
   fallbackDuration?: number | null;
-  /** Presence of a download URL swaps the badge for the options menu. */
   downloadUrl?: string;
   fileName?: string;
 }

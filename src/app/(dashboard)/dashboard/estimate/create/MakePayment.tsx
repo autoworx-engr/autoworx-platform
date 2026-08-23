@@ -20,6 +20,7 @@ import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { formatAmount, useAmountField } from "@/hooks/useAmountField";
+import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
 import { cn } from "@/lib/cn";
@@ -100,6 +101,16 @@ export default function MakePayment() {
     null,
   );
 
+  const { data: company } = useCompanyQuery();
+  const companyName = company?.name ?? "";
+
+  // Cash is received by the shop, so a new payment defaults to the company
+  // name. An existing payment keeps whatever was saved, blank included.
+  useEffect(() => {
+    if (!companyName || payment) return;
+    setCash((prev) => prev || companyName);
+  }, [companyName, payment]);
+
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
 
   const [depositMethod, setDepositMethod] = useState<string>("");
@@ -128,7 +139,7 @@ export default function MakePayment() {
     setCard("");
     setCardType("MASTERCARD");
     setCheck("");
-    setCash("");
+    setCash(companyName);
     setAmount(0);
     setDeposit(0);
     setDepositNotes("");
@@ -882,7 +893,7 @@ export default function MakePayment() {
             <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-3">
               <button
                 type="button"
-                className="rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border"
                 onClick={() => handleOpenChange(false)}

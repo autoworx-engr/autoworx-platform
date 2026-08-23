@@ -6,21 +6,13 @@ import { useEffect, useRef, useState } from "react";
 const SPEEDS = [0.5, 1, 1.5, 2];
 
 type Props = {
-  /** URL that serves the clip as a download. */
   downloadUrl: string;
   fileName: string;
   rate: number;
   onRateChange: (rate: number) => void;
-  /** Tints the trigger for players sitting on a coloured bubble. */
   tone?: "light" | "dark";
 };
 
-/**
- * Download / playback-speed menu for an audio player. Replaces the browser's
- * own overflow menu, which Chrome hides whenever the native control strip is
- * too short or narrow — that is why the option only showed up on some
- * recordings.
- */
 export default function AudioOptionsMenu({
   downloadUrl,
   fileName,

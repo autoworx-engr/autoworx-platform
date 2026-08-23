@@ -15,16 +15,10 @@ const triggerClassName = cn(
 const contentClassName =
   "mt-2 flex min-h-0 flex-1 flex-grow flex-col data-[state=inactive]:hidden";
 
-/**
- * Tasks / Users tabs — shared by the desktop side panel and the mobile sheet so
- * both stay on the same tab and the markup lives in one place.
- */
 export default function SidePanelTabs() {
   const type = useCalendarSidebarStore((x) => x.type);
   const setType = useCalendarSidebarStore((x) => x.setType);
   const isAdminOrManager = useIsAdminOrManager();
-  // Without the Users tab there is nothing to switch to, so never leave a
-  // non-admin looking at an empty panel.
   const activeType = isAdminOrManager ? type : "TASKS";
 
   return (

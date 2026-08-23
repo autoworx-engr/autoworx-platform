@@ -75,14 +75,6 @@ const AddTaskIcon = () => (
   </div>
 );
 
-/**
- * Actions cell of the sales Leads table.
- *
- * Communications, draft estimate, appointment and task all hang off a client
- * record, so a lead with no client (an unqualified enquiry that was never
- * converted) renders them disabled rather than opening a modal that can't be
- * saved.
- */
 export default function LeadTableActions({
   lead,
   companyUsers,
@@ -90,9 +82,6 @@ export default function LeadTableActions({
   onCreateDraftEstimate,
   onUpdateAppointment,
 }: TLeadTableActionsProps) {
-  // Lead.clientId has no foreign key, so it can still hold the id of a client
-  // that was deleted or belongs to another company. Only the client the server
-  // actually resolved proves there is one to act on.
   const clientId = lead?.client?.id ?? undefined;
   const vehicleId = lead?.client?.vehicle?.id ?? lead?.vehicleId ?? undefined;
   const hasClient = !!clientId;

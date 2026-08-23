@@ -143,6 +143,11 @@ export default function EditSalePurchaseList({
       return;
     }
 
+    if (!unit || !unit.trim()) {
+      showError({ message: "Unit is required." });
+      return;
+    }
+
     if (
       history?.type === "Sale" &&
       product?.quantity &&

@@ -1,28 +1,28 @@
 "use client";
 
+import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
 import { EventClickArg } from "@fullcalendar/core";
 import FullCalendar from "@fullcalendar/react";
 import moment from "moment";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useCalendarStore } from "@/stores/calendarStore";
-import styles from "./fullcalendar.module.css";
-import { CalendarHeader } from "./CalendarHeader";
-import { CalendarEditModals } from "./CalendarEditModals";
-import { CalendarLoadingOverlay } from "./CalendarLoadingOverlay";
-import { EventDetailsSheet } from "./EventDetailsSheet";
-import { StandardCalendar } from "./StandardCalendar";
-import { TransposedWeekView } from "./transposedWeek/TransposedWeekView";
-import { getCalendarType } from "../../_utils/calendarView";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCalendarData } from "../../_hook/calendar/useCalendarData";
 import { useCalendarEventDateTimeUpdate } from "../../_hook/calendar/useCalendarEventDateTimeUpdate";
-import { useCalendarNativeDrop } from "../../_hook/calendar/useCalendarNativeDrop";
 import { useCalendarFilters } from "../../_hook/calendar/useCalendarFilters";
+import { useCalendarNativeDrop } from "../../_hook/calendar/useCalendarNativeDrop";
 import { useCalendarSettings } from "../../_hook/calendar/useCalendarSettings";
 import { useCalendarStoreSync } from "../../_hook/calendar/useCalendarStoreSync";
 import { useScheduleTaskAt } from "../../_hook/calendar/useScheduleTaskAt";
+import { getCalendarType } from "../../_utils/calendarView";
+import { CalendarEditModals } from "./CalendarEditModals";
+import { CalendarHeader } from "./CalendarHeader";
+import { CalendarLoadingOverlay } from "./CalendarLoadingOverlay";
+import { EventDetailsSheet } from "./EventDetailsSheet";
+import styles from "./fullcalendar.module.css";
+import { StandardCalendar } from "./StandardCalendar";
+import { TransposedWeekView } from "./transposedWeek/TransposedWeekView";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
