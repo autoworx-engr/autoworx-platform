@@ -211,10 +211,6 @@ export default function MakePayment() {
           })
         : { sufficient: true, shortages: [] };
 
-      // On the create page there is no saved estimate to fall back to — the
-      // payment needs an invoice, and create.ts rejects the whole save when the
-      // stock is short. So warn first and let the user go ahead knowingly
-      // instead of handing them "not enough in the inventory".
       if (!isEditPage && !allowInsufficientInventory) {
         const newInvoiceInventory = await checkInventoryForInvoiceSave({
           invoiceId,
@@ -223,8 +219,6 @@ export default function MakePayment() {
         });
 
         if (!newInvoiceInventory.sufficient) {
-          // Already checked — hand the result straight to the warning dialog,
-          // which re-runs this submit with the shortage allowed on confirm.
           await runWithInventoryCheck(
             async () => newInvoiceInventory,
             () => handleSubmit(true, newInvoiceInventory.shortages),
@@ -270,13 +264,11 @@ export default function MakePayment() {
           });
           if (res2?.type === "success") {
             setDue(due - roundedAmount);
-            // Update totalPayment in the store for real-time UI update
+
             useEstimateCreateStore.setState((prev) => ({
               ...prev,
               totalPayment: prev.totalPayment + roundedAmount,
             }));
-
-            // setTotalPayment(currentTotalPayment + roundedAmount);
           }
         }
         // Add deposit
@@ -317,10 +309,6 @@ export default function MakePayment() {
             { id: "inventory-shortage" },
           );
 
-          // The conversion was skipped, so the server never ran its own
-          // lowInventoryNotification — tell the admins/managers here instead,
-          // otherwise nobody learns these products need restocking.
-          // Fire-and-forget: the server action completes even without awaiting.
           notifyInventoryShortage({
             invoiceId,
             shortages: inventory.shortages,
@@ -329,8 +317,6 @@ export default function MakePayment() {
           );
         }
 
-        // The user was warned and chose "Proceed anyway", so create.ts let the
-        // shortage through without raising it — report it here instead.
         if (allowInsufficientInventory && confirmedShortages.length) {
           notifyInventoryShortage({
             invoiceId,

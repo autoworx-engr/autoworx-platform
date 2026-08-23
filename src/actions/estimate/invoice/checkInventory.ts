@@ -16,11 +16,8 @@ export type InventoryCheckResult = {
   shortages: InventoryShortage[];
 };
 
-// Only the fields getProductWithQuantity actually reads — callers pass either
-// saved Prisma rows or the in-memory estimate items.
 export type MaterialLike = {
   productId?: number | null;
-  // Decimal on saved rows, plain numbers in the in-memory store.
   quantity?: unknown;
   sell?: unknown;
   name?: string | null;
@@ -59,8 +56,6 @@ export async function checkInventoryShortages({
       select: { id: true, name: true, quantity: true },
     });
 
-    // An invoice has already taken its materials out of stock, so only the
-    // difference against what is being saved hits the inventory.
     const savedMaterials =
       rule === "update" && invoiceId
         ? await db.material.findMany({
@@ -108,8 +103,6 @@ export async function checkInventoryShortages({
 
     return { sufficient: shortages.length === 0, shortages };
   } catch {
-    // A failed check must not block the save — the write path still enforces
-    // the same rules, so the worst case is the old "not enough stock" error.
     return enough;
   }
 }
@@ -157,8 +150,6 @@ export async function checkInventoryForInvoiceSave({
 }: {
   invoiceId?: string;
   materials: (MaterialLike | null)[];
-  // Callers still pass what they are saving as; the check no longer depends on
-  // it now that estimate saves are warned about too.
   targetType?: InvoiceType;
 }): Promise<InventoryCheckResult> {
   const enough: InventoryCheckResult = { sufficient: true, shortages: [] };

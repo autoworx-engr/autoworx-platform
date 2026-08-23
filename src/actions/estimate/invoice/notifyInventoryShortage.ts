@@ -3,13 +3,6 @@
 import { lowInventoryNotification } from "@/lib/notification/inventory-notify";
 import type { InventoryShortage } from "./checkInventory";
 
-/**
- * What happened to the estimate while the stock was short, which is the only
- * part of the notification that differs between the callers.
- *
- * - `"payment"` — the payment was recorded but the conversion was skipped
- * - `"saved-anyway"` — the user was warned and chose "Proceed anyway"
- */
 export type InventoryShortageReason = "payment" | "saved-anyway";
 
 function describe(
@@ -57,7 +50,6 @@ export async function notifyInventoryShortage({
         lowInventoryAlert: shortage.required,
         currentQuantity: shortage.available,
         description: describe(reason, invoiceId, shortage),
-        // One product failing must not stop the rest from being reported.
       }).catch((err) =>
         console.error("lowInventoryNotification failed", shortage.name, err),
       ),
