@@ -101,9 +101,6 @@ export function CalendarHeader({
   const searchParams = useSearchParams();
   const { setDate, setMonth, setWeek } = useCalendarStore();
 
-  // A `?date=` param (from a notification link) is re-applied to the store for
-  // as long as it stays in the URL, which pinned the calendar to that date on
-  // every prev/next click. Drop it as soon as the user navigates.
   const clearDateParam = () => {
     if (!searchParams.get("date") && !searchParams.get("time")) return;
     const params = new URLSearchParams(searchParams.toString());
@@ -121,8 +118,6 @@ export function CalendarHeader({
     setMonth(today.format("YYYY-MM"));
     setWeek(today.format("YYYY-[W]WW"));
 
-    // "Today" means today's day, so land on the Day view from whichever view
-    // the user is currently in. Pushing the bare path also drops any `?date=`.
     if (type !== "day") {
       router.push("/dashboard/task/day");
       return;
@@ -148,8 +143,6 @@ export function CalendarHeader({
     router.push(`/dashboard/task/${value}`);
     const fcView =
       VIEW_OPTIONS.find((v) => v.value === value)?.fcView ?? "timeGridDay";
-    // Keep the date the user is looking at when switching views — jumping to
-    // today here silently discarded their current position.
     calendarRef.current?.getApi().changeView(fcView, dateFormat);
   };
 
@@ -281,8 +274,6 @@ export function CalendarHeader({
           <CalendarSearch type={type} />
         </div>
 
-        {/* Tasks & Users — the side panel has no room below `md`, so it opens
-            as a sheet from here instead. */}
         <MobileSidePanel />
 
         {/* New Appointment */}

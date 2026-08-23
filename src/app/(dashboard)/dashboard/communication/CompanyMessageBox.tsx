@@ -361,7 +361,7 @@ export default function CompanyMessageBox({
     >
       {/* 🔹 Header */}
       <div
-        className={`flex items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0 z-30"}`}
+        className={`flex shrink-0 items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0 z-30"}`}
       >
         {/* Left Side */}
         <div className="flex items-center gap-2">
@@ -741,7 +741,7 @@ export default function CompanyMessageBox({
       )}
       <form
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
-        className={`flex relative items-center gap-2 border-t bg-gray-100 p-3 ${onBack && "sticky bottom-0 right-0 left-0"}`}
+        className={`flex relative shrink-0 items-center gap-2 border-t bg-gray-100 p-3 ${onBack && "sticky bottom-0 right-0 left-0"}`}
       >
         {/* attachment or estimate dropdown */}
         {showAttachment && (

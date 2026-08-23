@@ -36,8 +36,14 @@ export const Confirmation = () => {
   const fallbackServiceFee = settings.shopFeeEnabled
     ? Number(((serviceBaseTotal * settings.shopFeePercent) / 100).toFixed(2))
     : 0;
+  // Tax base: material price only (labor is excluded), same as invoice/estimate
+  const materialTotal = cart.reduce(
+    (sum, item) =>
+      sum + Number(item.service.materialTotal || 0) * item.quantity,
+    0,
+  );
   const fallbackTax = settings.taxEnabled
-    ? Number(((serviceBaseTotal * settings.taxPercent) / 100).toFixed(2))
+    ? Number(((materialTotal * settings.taxPercent) / 100).toFixed(2))
     : 0;
 
   const subtotal = bookingTotals
@@ -47,6 +53,8 @@ export const Confirmation = () => {
     ? Number(bookingTotals.serviceFee || 0)
     : fallbackServiceFee;
   const tax = bookingTotals ? Number(bookingTotals.tax || 0) : fallbackTax;
+  const shopFeeRate = bookingTotals?.serviceFeeRate ?? settings.shopFeePercent;
+  const taxRate = bookingTotals?.taxRate ?? settings.taxPercent;
   const grandTotal = bookingTotals
     ? Number(bookingTotals.grandTotal || 0)
     : Number((subtotal + shopFee + tax).toFixed(2));
@@ -194,13 +202,13 @@ END:VCALENDAR`;
             </div>
             {shopFee > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>Service Fee</span>
+                <span>Shop Fee ({shopFeeRate}%)</span>
                 <span>${shopFee.toFixed(2)}</span>
               </div>
             )}
-            {tax > 0 && (
+            {settings.taxEnabled && (
               <div className="flex justify-between text-muted-foreground">
-                <span>Tax</span>
+                <span>Tax ({taxRate}%)</span>
                 <span>${tax.toFixed(2)}</span>
               </div>
             )}

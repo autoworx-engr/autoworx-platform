@@ -348,12 +348,12 @@ export default function MessageBox({
   return (
     <div
       className={cn(
-        "app-shadow flex h-[calc(100vh-50px)] w-full flex-col justify-between overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
+        "app-shadow flex h-[calc(100dvh-56px)] w-full flex-col overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
         totalMessageBox > 2 && "sm:h-[44vh]",
       )}
     >
       {/* Chat Header */}
-      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
+      <div className="flex shrink-0 items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
         <div className="flex items-center gap-3">
           <button onClick={handleBack} className="flex-shrink-0 sm:hidden">
             <ArrowLeft size={20} className="font-bold" />
@@ -490,7 +490,7 @@ export default function MessageBox({
 
       {/* group user setting */}
       {fromGroup && openSettings && (
-        <div className="flex w-full items-center justify-between rounded-sm bg-[#D9D9D9] p-3">
+        <div className="flex w-full shrink-0 items-center justify-between rounded-sm bg-[#D9D9D9] p-3">
           <div className="flex flex-wrap items-center gap-2">
             {group?.users.map((user: User) => (
               <div
@@ -528,10 +528,7 @@ export default function MessageBox({
       {/* Messages */}
       <div
         id="messageBox"
-        className={cn(
-          "overflow-y-scroll",
-          totalMessageBox > 2 ? "h-[calc(100%-60px)]" : "h-[82%]",
-        )}
+        className="min-h-0 flex-1 overflow-y-scroll"
         ref={messageBoxRef}
       >
         {topSlot}
@@ -599,7 +596,7 @@ export default function MessageBox({
       {multiAttachmentFile && multiAttachmentFile.length > 0 && (
         <div
           className={cn(
-            "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
+            "relative w-full shrink-0 rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
             totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64",
           )}
         >
@@ -681,8 +678,8 @@ export default function MessageBox({
       {/* Input */}
       <form
         className={cn(
-          "relative flex items-center gap-2 border-t bg-gray-100 p-3",
-          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]",
+          "relative flex shrink-0 items-center gap-2 border-t bg-gray-100 p-3",
+          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "min-h-[50px]",
         )}
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
       >

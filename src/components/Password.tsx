@@ -14,6 +14,10 @@ export default function Input({
   value,
   onChange,
   required,
+  onBlur,
+  autoComplete,
+  invalid,
+  describedBy,
 }: {
   name: string;
   className?: string;
@@ -21,6 +25,10 @@ export default function Input({
   value?: any;
   onChange?: (e: any) => void;
   required?: boolean;
+  onBlur?: (e: any) => void;
+  autoComplete?: string;
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   const [inputValue, setInputValue] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,10 +53,14 @@ export default function Input({
               )
         }
         required={required}
-        value={value || inputValue}
+        value={value ?? inputValue}
         onChange={(e) => {
           onChange ? onChange(e) : setInputValue(e.target.value);
         }}
+        onBlur={onBlur}
+        autoComplete={autoComplete}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         placeholder={placeholder}
       />
       <button

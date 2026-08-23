@@ -39,10 +39,6 @@ interface Props {
   onLoading: (loading: boolean) => void;
 }
 
-// List view renders one row per event, so items sharing a time slot repeat
-// the same time label. Tag rows whose time matches the row directly above so
-// the stylesheet can hide the duplicate label and drop the divider between
-// them — the group then reads as a single row holding several cards.
 function markRepeatedListTime(arg: EventMountArg) {
   if (!arg.view.type.startsWith("list")) return;
 
@@ -50,9 +46,6 @@ function markRepeatedListTime(arg: EventMountArg) {
   const timeCell = row?.querySelector<HTMLElement>(".fc-list-event-time");
   if (!row || !timeCell) return;
 
-  // Remember the original text: once a row is marked as a repeat its label is
-  // hidden via CSS, but the text stays in the DOM so later rows still have
-  // something to compare against.
   const currentTime = timeCell.textContent?.trim() ?? "";
   if (!currentTime) return;
   row.dataset.slotTime = currentTime;

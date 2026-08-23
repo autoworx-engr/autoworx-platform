@@ -22,7 +22,7 @@ const SelectComponent = ({
   value,
 }: SelectProps) => {
   return (
-    <div className="w-full min-w-[300px] space-y-2">
+    <div className="w-full min-w-0 space-y-1">
       {label && (
         <label className="font-semibold text-slate-600 ml-1">{label}</label>
       )}
@@ -39,15 +39,16 @@ const SelectComponent = ({
         <Select.Portal>
           <Select.Content
             position="popper"
-            className="z-[100] min-w-[300px] overflow-hidden rounded-2xl border border-slate-50 bg-white shadow-xl animate-in fade-in zoom-in-95"
+            sideOffset={4}
+            className="z-[100] w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-slate-100 bg-white shadow-xl animate-in fade-in zoom-in-95"
           >
-            <Select.Viewport className="p-2">
-              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+            <Select.Viewport className="p-1">
+              <div className="flex max-h-44 flex-col overflow-y-auto">
                 {items.map((item) => (
                   <Select.Item
                     key={item.id}
                     value={item.value}
-                    className="relative flex py-3 cursor-pointer select-none items-center rounded-lg px-3 text-sm font-medium text-slate-600 outline-none border-b data-[highlighted]:bg-primary data-[highlighted]:text-white data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary"
+                    className="relative flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 outline-none data-[highlighted]:bg-primary data-[highlighted]:text-white data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary"
                   >
                     <Select.ItemText>{item.label}</Select.ItemText>
                   </Select.Item>

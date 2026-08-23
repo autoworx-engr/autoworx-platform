@@ -10,8 +10,8 @@ export default function useAutoScrollWhileDragging(
       if (!container) return;
 
       const { top, bottom } = container.getBoundingClientRect();
-      const offset = 40; // Distance from top/bottom to trigger scroll
-      const speed = 10; // Scroll speed
+      const offset = 40;
+      const speed = 10;
 
       if (e.clientY < top + offset) {
         container.scrollBy({ top: -speed, behavior: "smooth" });

@@ -22,10 +22,7 @@ export default function DisplayDate({ type }: { type: CalendarType }) {
 
   return (
     <>
-      {/* Small screen → short format */}
       <span className="block md:hidden">{formattedDateShort}</span>
-
-      {/* Medium & Large screen → long format */}
       <span className="hidden md:block">{formattedDateLong}</span>
     </>
   );

@@ -68,11 +68,16 @@ export async function GET(
 
   const recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioCredentials.accountSid}/Recordings/${recordingSid}.mp3`;
 
+  const range = req.headers.get("range");
+
+  // Twilio honours Range, so pass it through and let it send just the slice the
+  // player asked for instead of re-downloading the whole recording per seek.
   const response = await fetch(recordingUrl, {
     headers: {
       Authorization: `Basic ${Buffer.from(
         `${twilioCredentials.apiKeySid}:${twilioCredentials.apiKeySecret}`,
       ).toString("base64")}`,
+      ...(range ? { Range: range } : {}),
     },
   });
 
@@ -82,12 +87,73 @@ export async function GET(
     });
   }
 
-  const audioBuffer = await response.arrayBuffer();
+  const body = Buffer.from(await response.arrayBuffer());
 
-  return new Response(audioBuffer, {
-    headers: {
-      "Content-Type": "audio/mpeg",
-      "Content-Disposition": `inline; filename="${recordingSid}.mp3"`,
-    },
+  // `?download=1` turns the same URL into a save-to-disk link for the player's
+  // download action.
+  const disposition =
+    req.nextUrl.searchParams.get("download") === "1" ? "attachment" : "inline";
+
+  const baseHeaders: Record<string, string> = {
+    "Content-Type": "audio/mpeg",
+    "Content-Disposition": `${disposition}; filename="${recordingSid}.mp3"`,
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "private, max-age=3600",
+  };
+
+  // Twilio already answered with the requested slice — forward its range
+  // metadata rather than slicing again.
+  const upstreamRange = response.headers.get("content-range");
+  if (response.status === 206 && upstreamRange) {
+    return new Response(body, {
+      status: 206,
+      headers: {
+        ...baseHeaders,
+        "Content-Length": String(body.length),
+        "Content-Range": upstreamRange,
+      },
+    });
+  }
+
+  const match = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null;
+
+  if (match) {
+    const [, startRaw, endRaw] = match;
+    let start: number;
+    let end: number;
+
+    if (startRaw === "") {
+      // Suffix range: the last N bytes
+      const suffixLength = Number(endRaw);
+      start = Math.max(0, body.length - suffixLength);
+      end = body.length - 1;
+    } else {
+      start = Number(startRaw);
+      end =
+        endRaw === ""
+          ? body.length - 1
+          : Math.min(Number(endRaw), body.length - 1);
+    }
+
+    if (!Number.isFinite(start) || start > end || start >= body.length) {
+      return new Response("Range not satisfiable", {
+        status: 416,
+        headers: { "Content-Range": `bytes */${body.length}` },
+      });
+    }
+
+    const chunk = body.subarray(start, end + 1);
+    return new Response(chunk, {
+      status: 206,
+      headers: {
+        ...baseHeaders,
+        "Content-Length": String(chunk.length),
+        "Content-Range": `bytes ${start}-${end}/${body.length}`,
+      },
+    });
+  }
+
+  return new Response(body, {
+    headers: { ...baseHeaders, "Content-Length": String(body.length) },
   });
 }
