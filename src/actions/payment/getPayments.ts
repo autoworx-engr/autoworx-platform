@@ -139,7 +139,7 @@ function getPaymentMethod(payment: any) {
   } else if (payment.cash) {
     return "Cash";
   } else if (payment.check) {
-    return "Cheque";
+    return "Check";
   } else if (payment.other) {
     return payment.other.paymentMethod?.name;
   } else if (payment.type === "DEPOSIT") {

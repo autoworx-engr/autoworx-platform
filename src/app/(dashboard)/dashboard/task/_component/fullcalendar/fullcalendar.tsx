@@ -134,11 +134,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
 
-  // Every appointment in `filteredAppointments` overlaps the visible range —
-  // that is what the query asks for — and each one is drawn on the calendar, so
-  // the total covers all of them. Keying it off the start day instead dropped
-  // any appointment that began before the week it runs into, leaving the total
-  // out of step with both the appointment count and what's on screen.
   const estRevenue = useMemo(
     () =>
       filteredAppointments.reduce(

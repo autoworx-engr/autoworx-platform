@@ -32,7 +32,6 @@ type TCreateDraftEstimateParams = {
 const TOOLTIP_CLASS =
   "invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible";
 
-/** Greyed-out stand-in for an action that needs a client this lead lacks. */
 function DisabledAction({
   label,
   children,
@@ -323,9 +322,6 @@ export default function LeadActions({ lead }: TProps) {
   // point at a deleted client, which the appointment modal can't look up.
   const clientId = lead?.client?.id ?? undefined;
   const hasDraftEstimate = !!lead.isEstimateCreated && !!invoiceId;
-  // Communications, estimate, appointment and task all hang off a client, so a
-  // lead without one shows them greyed out rather than opening something that
-  // can't be saved.
   const hasClient = !!clientId;
   return (
     <>
