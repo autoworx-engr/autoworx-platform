@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-08-20T14:51:52.901Z
+ * Generated: 2026-08-22T20:01:00.967Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
@@ -23,13 +23,6 @@ export interface SearchItem {
 }
 
 export const generatedRegistry: SearchItem[] = [
-  {
-    id: "clickup-reporting",
-    label: "Clickup › Reporting",
-    href: "/clickup/reporting",
-    type: "page",
-    keywords: ["clickup", "reporting"],
-  },
   {
     id: "dashboard",
     label: "Dashboard",
@@ -709,4 +702,4 @@ export const generatedRegistry: SearchItem[] = [
   },
 ];
 
-// 66 route(s) registered
+// 65 route(s) registered

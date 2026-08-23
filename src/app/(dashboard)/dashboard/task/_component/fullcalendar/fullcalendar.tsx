@@ -133,11 +133,15 @@ export default function Calendar({ type }: { type: CalendarType }) {
   }, [events, view]);
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
-  const estRevenue = filteredAppointments.reduce((acc, apt: any) => {
-    const startDay = moment.utc(apt.date).format("YYYY-MM-DD");
-    if (startDay < dateRange.start || startDay > dateRange.end) return acc;
-    return acc + (Number(apt.invoiceGrandTotal) || 0);
-  }, 0);
+
+  const estRevenue = useMemo(
+    () =>
+      filteredAppointments.reduce(
+        (acc, apt: any) => acc + (Number(apt.invoiceGrandTotal) || 0),
+        0,
+      ),
+    [filteredAppointments],
+  );
 
   const eventType = selectedEvent?.extendedProps?.type;
   const originalData = selectedEvent?.extendedProps?.originalData;

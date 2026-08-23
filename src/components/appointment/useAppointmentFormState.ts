@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour } from "@/utils/time";
@@ -259,11 +260,12 @@ export function useAppointmentFormState({
   }, [estimates, invoices]);
 
   const filteredDraftEstimateOptions = useMemo(() => {
-    const term = draftSearch.toLowerCase();
+    const term = normalizeSearch(draftSearch);
+    if (!term) return draftEstimateOptions;
     return draftEstimateOptions.filter(
       (item) =>
-        item.id.includes(draftSearch) ||
-        item.vehicle.toLowerCase().includes(term),
+        normalizeSearch(item.id).includes(term) ||
+        normalizeSearch(item.vehicle).includes(term),
     );
   }, [draftSearch, draftEstimateOptions]);
 
@@ -545,18 +547,25 @@ export function useAppointmentFormState({
     if (!draftOpen) setDraftSearch("");
   }, [draftOpen]);
 
+  useEffect(() => {
+    if (fromEdit || !draftEstimateId) return;
+    setDraft(draftEstimateId);
+  }, [draftEstimateId, fromEdit]);
+
   const prevDraftClientId = useRef<number | null | undefined>(undefined);
   useEffect(() => {
     if (fromEdit && !appointment) return;
     const currentClientId = client?.id ?? null;
     if (prevDraftClientId.current === undefined) {
-      prevDraftClientId.current = currentClientId;
+      prevDraftClientId.current = fromEdit
+        ? (appointment?.client?.id ?? currentClientId)
+        : (clientId ?? currentClientId);
       return;
     }
     if (prevDraftClientId.current === currentClientId) return;
     prevDraftClientId.current = currentClientId;
     setDraft(null);
-  }, [client?.id, fromEdit, appointment]);
+  }, [client?.id, clientId, fromEdit, appointment]);
 
   const handleDate = (operator: "+" | "-") => {
     const delta = operator === "+" ? 1 : -1;

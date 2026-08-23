@@ -1,10 +1,7 @@
-import Input from "@/components/Input";
-import Password from "@/components/Password";
-import SubmitButton from "./SubmitButton";
-import Link from "next/link";
-import FormError from "@/components/FormError";
 import Image from "next/image";
+import Link from "next/link";
 import { Metadata } from "next";
+import RegisterForm from "./RegisterForm";
 
 export const metadata: Metadata = {
   title: "Register",
@@ -14,7 +11,12 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-slate-100 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4">
-      <form className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50">
+      {/* noValidate: the schema owns the messages, so the browser's native
+          bubbles would only compete with the inline errors. */}
+      <form
+        noValidate
+        className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50"
+      >
         {/* Top Accent Gradient Line */}
         <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#00b8b0] to-transparent opacity-50" />
 
@@ -41,114 +43,7 @@ export default function Page() {
           </p>
         </div>
 
-        <FormError />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="group transition-all duration-300">
-            <label
-              htmlFor="firstName"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              First Name <span className="text-destructive">*</span>
-            </label>
-            <Input
-              type="text"
-              name="firstName"
-              placeholder="John"
-              autoFocus
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
-            />
-          </div>
-
-          <div className="group transition-all duration-300">
-            <label
-              htmlFor="lastName"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Last Name
-            </label>
-            <Input
-              type="text"
-              name="lastName"
-              placeholder="Doe"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
-            />
-          </div>
-
-          <div className="group transition-all duration-300">
-            <label
-              htmlFor="email"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Email <span className="text-destructive">*</span>
-            </label>
-            <Input
-              type="email"
-              name="email"
-              placeholder="john@example.com"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
-            />
-          </div>
-
-          <div className="group transition-all duration-300">
-            <label
-              htmlFor="company"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Company <span className="text-destructive">*</span>
-            </label>
-            <Input
-              type="text"
-              name="company"
-              placeholder="Autoworx LLC"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
-            />
-          </div>
-
-          <div className="group transition-all duration-300">
-            <label
-              htmlFor="password"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Password <span className="text-destructive">*</span>
-            </label>
-            <Password
-              name="password"
-              placeholder="••••••••"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
-            />
-          </div>
-
-          <div className="group transition-all duration-300">
-            <label
-              htmlFor="confirmPassword"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Confirm Password <span className="text-destructive">*</span>
-            </label>
-            <Password
-              name="confirmPassword"
-              placeholder="••••••••"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
-            />
-          </div>
-
-          <div className="group transition-all duration-300 md:col-span-2">
-            <label
-              htmlFor="access"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Access Code <span className="text-destructive">*</span>
-            </label>
-            <Input
-              name="access"
-              placeholder="Enter your access code"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
-            />
-          </div>
-        </div>
-
-        <SubmitButton />
+        <RegisterForm />
 
         <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
           Already registered?{" "}

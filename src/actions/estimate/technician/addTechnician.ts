@@ -57,9 +57,11 @@ export async function addTechnician(
       currentTime.getMilliseconds(),
     );
 
+    const { imageUrls, ...restPayload } = payload as any;
+
     const newTechnician = await db.technician.create({
       data: {
-        ...payload,
+        ...restPayload,
         date: dateWithTime,
         companyId,
         dateClosed: payload.status === "Complete" ? new Date() : null,

@@ -14,6 +14,7 @@ import ClientItem from "./ClientItem";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { isIosPwa } from "@/utils/isIosPwa";
 import { useAutoLoadSelectedClient } from "../../_hooks/useAutoLoadSelectedClient";
+import { useScrollSelectedClientIntoView } from "../../_hooks/useScrollSelectedClientIntoView";
 import { useClientPageFetcher } from "../_hooks/useClientPageFetcher";
 
 type TClient = Client & {
@@ -43,6 +44,7 @@ export default function ClientInfinityScroll({
   // (initialsClients) — skip the redundant refetch that would otherwise
   // fire on mount for the default "All"/no-search view.
   const isFirstRun = useRef(true);
+  const listRef = useRef<HTMLDivElement>(null);
   const params = useParams();
 
   const clientIdParams = params?.id;
@@ -167,17 +169,26 @@ export default function ClientInfinityScroll({
   });
 
   const isDefaultView = filter === "All" && !normalizedSearch;
+  const selectedClientId = clientIdParams
+    ? parseInt(clientIdParams as string)
+    : null;
   useAutoLoadSelectedClient({
-    selectedId: clientIdParams ? parseInt(clientIdParams as string) : null,
+    selectedId: selectedClientId,
     clients,
     hasMore,
     isDefaultView,
     fetchNextPage: fetchData,
   });
+  useScrollSelectedClientIntoView({
+    selectedId: selectedClientId,
+    clients,
+    containerRef: listRef,
+  });
 
   return (
     <div
       id="scrollableDiv"
+      ref={listRef}
       // className="mt-2 flex h-[84%] flex-col gap-2 p-2 max-[1835px]:h-[82%] lg:overflow-y-auto"
       className="mt-2 h-[82%] overflow-y-auto p-2"
     >

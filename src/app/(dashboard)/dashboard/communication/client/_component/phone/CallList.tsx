@@ -169,7 +169,7 @@ export const CallList = ({
                   {missedLabel}
                 </div>
               ) : call.playableUrl ? (
-                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
+                <div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
                   <VoiceNotePlayer
                     src={call.playableUrl}
                     isOutgoing={isSentByMe}
