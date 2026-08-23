@@ -11,6 +11,11 @@ import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { useFormErrorStore } from "@/stores/form-error";
+import {
+  isValidEmail,
+  lowercaseEmailInput,
+  normalizeEmail,
+} from "@/utils/email";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
@@ -25,7 +30,6 @@ type TEditClientModalBodyProps = {
   onClose: () => void;
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DIGITS_RE = /^\d+$/;
 const NUMBER_RE = /^(\d*\.?\d+|\d+\.?\d*)$/;
 export default function EditClientModalBody({
@@ -92,7 +96,7 @@ export default function EditClientModalBody({
       let photo;
       const firstName = data.get("firstName") as string;
       const lastName = data.get("lastName") as string;
-      const email = data.get("email") as string;
+      const email = normalizeEmail((data.get("email") as string) ?? "");
       const mobileNumber = data.get("mobileNumber") as string;
       const address = data.get("address") as string;
       const city = data.get("city") as string;
@@ -125,7 +129,7 @@ export default function EditClientModalBody({
       }
 
       // Validate email format
-      if (!EMAIL_RE.test(email)) {
+      if (!isValidEmail(email)) {
         showError({
           field: "email",
           message: "Please enter a valid email address.",
@@ -353,16 +357,17 @@ export default function EditClientModalBody({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SlimInput
             name="email"
-            defaultValue={employee.email}
+            type="email"
+            defaultValue={normalizeEmail(employee.email ?? "")}
             required
             onChange={(e) => {
-              const value = e.target.value;
-              if (!value.trim()) {
+              const value = lowercaseEmailInput(e.target);
+              if (!value) {
                 showError({
                   field: "email",
                   message: "Email is required.",
                 });
-              } else if (!EMAIL_RE.test(value)) {
+              } else if (!isValidEmail(value)) {
                 showError({
                   field: "email",
                   message: "Please enter a valid email address.",
