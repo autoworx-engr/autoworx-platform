@@ -159,10 +159,11 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
       )}
 
       <div
-        className={cn("max-w-[85%] sm:max-w-[70%]", isOutgoing && "ml-auto")}
+        className={cn(
+          "min-w-0 max-w-[85%] sm:max-w-[70%]",
+          isOutgoing && "ml-auto",
+        )}
       >
-        {/* Attachment-only messages skip the colored bubble entirely so the
-            images float on their own instead of sitting inside a solid background. */}
         {(!!text || hasAttachments) && (
           <div
             className={cn(
@@ -177,7 +178,7 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
             )}
           >
             {text && (
-              <div className="break-words whitespace-pre-wrap">
+              <div className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                 {makeLinksClickable(text)}
               </div>
             )}
