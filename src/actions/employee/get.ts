@@ -65,15 +65,20 @@ export const getEmployeesForPaginate = cache(
       const trimmed = filter.searchParams.trim();
       const idCondition = getPaddedIdSearchCondition(trimmed);
 
-      whereClause.OR = trimmed
-        .split(/\s+/)
-        .flatMap((searchText) => [
-          { firstName: { contains: searchText, mode: "insensitive" } },
-          { lastName: { contains: searchText, mode: "insensitive" } },
-          { email: { contains: searchText, mode: "insensitive" } },
-          { phone: { contains: searchText, mode: "insensitive" } },
-        ]) as Prisma.UserWhereInput[];
-      if (idCondition) whereClause.OR.push(idCondition);
+      const wordsCondition: Prisma.UserWhereInput = {
+        AND: trimmed.split(/\s+/).map((searchText) => ({
+          OR: [
+            { firstName: { contains: searchText, mode: "insensitive" } },
+            { lastName: { contains: searchText, mode: "insensitive" } },
+            { email: { contains: searchText, mode: "insensitive" } },
+            { phone: { contains: searchText, mode: "insensitive" } },
+          ],
+        })) as Prisma.UserWhereInput[],
+      };
+
+      whereClause.OR = idCondition
+        ? [idCondition, wordsCondition]
+        : [wordsCondition];
     }
 
     if (
