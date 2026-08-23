@@ -89,7 +89,7 @@ const ServiceSelectAndAdd = ({
           categories: categoriesResult as Category[],
         });
       } catch (err) {
-        console.error("Failed to fetch data:", err);
+        // console.error("Failed to fetch data:", err);
         errorToast("Failed to load services and categories");
       } finally {
         if (!cancelled) setIsLoading(false);
