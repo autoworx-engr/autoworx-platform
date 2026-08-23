@@ -62,9 +62,15 @@ export const useClientCommunicationStore = create<ClientCommunicationState>(
 );
 
 export const clientListStore = create<{
-  clientList: Client[];
-  setClientList: (clientList: Client[]) => void;
+  bumpedClient: { clientId: number; nonce: number } | null;
+  bumpClientToTop: (clientId: number) => void;
 }>((set) => ({
-  clientList: [],
-  setClientList: (clientList) => set({ clientList }),
+  bumpedClient: null,
+  bumpClientToTop: (clientId) =>
+    set((state) => ({
+      bumpedClient: {
+        clientId,
+        nonce: (state.bumpedClient?.nonce ?? 0) + 1,
+      },
+    })),
 }));

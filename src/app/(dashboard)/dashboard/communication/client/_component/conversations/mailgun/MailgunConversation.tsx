@@ -101,7 +101,7 @@ export default function MailGunConversation({
     <div className="relative h-full w-full">
       <div
         ref={containerRef}
-        className="h-full w-full overflow-y-auto px-2 py-2"
+        className="h-full w-full overflow-y-auto overflow-x-hidden px-2 py-2"
       >
         <div className="flex w-full flex-col gap-3">
           {(() => {
@@ -163,7 +163,7 @@ export default function MailGunConversation({
 
                     <div
                       className={cn(
-                        "max-w-[86%] sm:max-w-[70%]",
+                        "min-w-0 max-w-[86%] sm:max-w-[70%]",
                         !isIncoming && "ml-auto",
                       )}
                     >
@@ -171,7 +171,7 @@ export default function MailGunConversation({
                         message?.attachments?.length) && (
                         <div
                           className={cn(
-                            "group relative w-fit text-[14px] transition select-text",
+                            "group relative w-fit max-w-full text-[14px] transition select-text",
                             !isIncoming && "ml-auto",
                             message?.text?.trim() &&
                               cn(
@@ -184,7 +184,7 @@ export default function MailGunConversation({
                         >
                           {/* Text */}
                           {message?.text?.trim() && (
-                            <div className="break-words whitespace-pre-wrap ">
+                            <div className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                               {makeLinksClickable(message.text)}
                             </div>
                           )}

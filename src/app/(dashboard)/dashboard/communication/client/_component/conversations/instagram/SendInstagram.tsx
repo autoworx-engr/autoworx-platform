@@ -3,13 +3,17 @@ import { SendHorizontal } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import useInstagramSendMutation from "../../../_hooks/useInstagramSendMutation";
 import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
-import { useClientCommunicationStore } from "@/stores/client-store";
+import {
+  clientListStore,
+  useClientCommunicationStore,
+} from "@/stores/client-store";
 import { errorToast } from "@/lib/toast";
 
 type TProps = { clientId: number };
 
 export default function SendInstagram({ clientId }: TProps) {
   const { mutate, isPending } = useInstagramSendMutation(clientId);
+  const bumpClientToTop = clientListStore((state) => state.bumpClientToTop);
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
 
@@ -53,6 +57,7 @@ export default function SendInstagram({ clientId }: TProps) {
 
     clearDraft();
     setTimeout(adjustHeight, 0);
+    bumpClientToTop(clientId);
 
     mutate({
       clientId,
