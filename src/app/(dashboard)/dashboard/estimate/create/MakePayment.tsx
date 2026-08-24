@@ -241,6 +241,20 @@ export default function MakePayment() {
           );
           return;
         }
+
+        if (
+          res1?.type === "success" &&
+          allowInsufficientInventory &&
+          confirmedShortages.length
+        ) {
+          notifyInventoryShortage({
+            invoiceId: res1.data?.id ?? invoiceId,
+            shortages: confirmedShortages,
+            reason: "saved-anyway",
+          }).catch((err) =>
+            console.error("notifyInventoryShortage failed", err),
+          );
+        }
       }
       let res2;
       let res3;
@@ -317,15 +331,6 @@ export default function MakePayment() {
           );
         }
 
-        if (allowInsufficientInventory && confirmedShortages.length) {
-          notifyInventoryShortage({
-            invoiceId,
-            shortages: confirmedShortages,
-            reason: "saved-anyway",
-          }).catch((err) =>
-            console.error("notifyInventoryShortage failed", err),
-          );
-        }
         reset();
       } else if (res2?.type === "globalError") {
         errorToast(
