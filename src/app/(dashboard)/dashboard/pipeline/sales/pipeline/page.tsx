@@ -42,8 +42,8 @@ export default async function SalesPipelinePage({ searchParams }: TProps) {
       <div className="mb-4 px-2">
         <div className="flex w-full flex-col gap-2 rounded-lg border border-slate-100 bg-background p-2 shadow-sm sm:flex-row sm:items-center sm:justify-between mx-2">
           <SearchSection searchValue={searchTerm} />
-          <div className="flex flex-row items-center gap-3 md:flex-1 md:flex-wrap md:min-w-fit justify-end">
-            <div className="relative flex-shrink-0">
+          <div className="flex w-full flex-row items-center gap-3 sm:w-auto md:flex-1 md:flex-wrap md:min-w-fit justify-end">
+            <div className="relative w-full flex-shrink-0 sm:w-auto">
               <OrderSelect searchParams={resolvedSearchParams} />
             </div>
           </div>
