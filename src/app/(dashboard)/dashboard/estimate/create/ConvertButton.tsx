@@ -12,7 +12,8 @@ import { errorToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { InvoiceType } from "@prisma/client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
 
 export default function ConvertButton({
   text,
@@ -26,6 +27,7 @@ export default function ConvertButton({
   className?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const createInvoice = useInvoiceCreate(type);
   const invoiceId = useEstimateCreateStore((state) => state.invoiceId);
   const items = useEstimateCreateStore((state) => state.items);
@@ -39,6 +41,21 @@ export default function ConvertButton({
   const targetType =
     status?.title === "In Progress" ? InvoiceType.Invoice : type;
 
+  const fallbackTimer = useRef<number | null>(null);
+
+  const clearFallback = useCallback(() => {
+    if (fallbackTimer.current !== null) {
+      window.clearTimeout(fallbackTimer.current);
+      fallbackTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    clearFallback();
+  }, [pathname, clearFallback]);
+
+  useEffect(() => clearFallback, [clearFallback]);
+
   function goToList(savedId?: string) {
     // Carry the just-saved id so the table view auto-opens its modal.
     const openParam = savedId ? `?openEstimateId=${savedId}` : "";
@@ -49,7 +66,9 @@ export default function ConvertButton({
 
     router.replace(target);
 
-    window.setTimeout(() => {
+    clearFallback();
+    fallbackTimer.current = window.setTimeout(() => {
+      fallbackTimer.current = null;
       if (window.location.pathname.includes("/estimate/create")) {
         window.location.assign(target);
       }
