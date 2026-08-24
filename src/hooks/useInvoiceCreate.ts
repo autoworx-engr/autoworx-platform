@@ -161,21 +161,22 @@ export function useInvoiceCreate(type: InvoiceType) {
       });
 
       if (res.type === "success") {
-        // Fire-and-forget: server action runs to completion on the server even without await.
-        // Awaiting it was blocking the toast + redirect by several seconds in production.
-        updateInventoryWhenInvoiceCreate({
-          items,
-          invoiceType: res.data.type,
-          companyId: res.data.companyId,
-          invoiceId,
-          allowInsufficientInventory,
-        });
+        if (res.data.type === InvoiceType.Invoice) {
+          updateInventoryWhenInvoiceCreate({
+            items,
+            invoiceType: res.data.type,
+            companyId: res.data.companyId,
+            invoiceId,
+            allowInsufficientInventory,
+          }).catch((err) =>
+            console.error("updateInventoryWhenInvoiceCreate failed", err),
+          );
+        }
 
         successToast(`${type} Create successfully`);
       }
     }
 
-    console.log("useInvoiceCreate Hook response", res);
     return res;
   }
 

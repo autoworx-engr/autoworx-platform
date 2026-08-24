@@ -6,34 +6,29 @@ import type {
 } from "@/actions/estimate/invoice/checkInventory";
 import { useCallback, useRef, useState } from "react";
 
-type Runner = (allowInsufficientInventory: boolean) => Promise<void> | void;
+type Runner = (
+  allowInsufficientInventory: boolean,
+  shortages: InventoryShortage[],
+) => Promise<void> | void;
 
-/**
- * Wraps any inventory-consuming action (create / update / convert / authorize)
- * with a "not enough stock" warning:
- *
- * - stock is fine -> the action runs straight away
- * - stock is short -> the warning opens; confirming re-runs the action with
- *   `allowInsufficientInventory: true`, cancelling does nothing at all
- *
- * Pass `dialogProps` to <InventoryShortageDialog />.
- */
 export function useInventoryConfirm() {
   const [shortages, setShortages] = useState<InventoryShortage[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const pendingRun = useRef<Runner | null>(null);
+  const pendingShortages = useRef<InventoryShortage[]>([]);
 
   const runWithInventoryCheck = useCallback(
     async (check: () => Promise<InventoryCheckResult>, run: Runner) => {
       const result = await check();
 
       if (result.sufficient) {
-        await run(false);
+        await run(false, []);
         return;
       }
 
       setShortages(result.shortages);
+      pendingShortages.current = result.shortages;
       pendingRun.current = run;
       setOpen(true);
     },
@@ -48,6 +43,7 @@ export function useInventoryConfirm() {
 
   const handleConfirm = useCallback(async () => {
     const run = pendingRun.current;
+    const confirmedShortages = pendingShortages.current;
     pendingRun.current = null;
 
     if (!run) {
@@ -57,7 +53,7 @@ export function useInventoryConfirm() {
 
     setLoading(true);
     try {
-      await run(true);
+      await run(true, confirmedShortages);
     } finally {
       setLoading(false);
       setOpen(false);

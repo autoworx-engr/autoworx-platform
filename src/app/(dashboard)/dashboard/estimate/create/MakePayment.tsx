@@ -1,8 +1,12 @@
+import { checkInventoryForInvoiceSave } from "@/actions/estimate/invoice/checkInventory";
+import type { InventoryShortage } from "@/actions/estimate/invoice/checkInventory";
 import {
   checkInventoryForPayment,
   type InventoryCheckResult,
 } from "@/actions/estimate/invoice/checkInventoryForPayment";
 import { notifyInventoryShortage } from "@/actions/estimate/invoice/notifyInventoryShortage";
+import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
+import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { paymentLeadsConvertion } from "@/actions/estimate/invoice/paymentLeadsConvertion";
 import { newPayment } from "@/actions/payment/newPayment";
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
@@ -28,7 +32,12 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { additionalDataValidation } from "@/validations/schemas/payment/payment.validation";
-import { CardType, PaymentMethod, PaymentType } from "@prisma/client";
+import {
+  CardType,
+  InvoiceType,
+  PaymentMethod,
+  PaymentType,
+} from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
 import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
@@ -86,6 +95,8 @@ export default function MakePayment() {
   const pathaname = usePathname();
   const [pending, startTransition] = useTransition();
   const isEditPage = pathaname?.includes("/dashboard/estimate/edit/");
+  const { runWithInventoryCheck, dialogProps: inventoryDialogProps } =
+    useInventoryConfirm();
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("CARD");
@@ -145,7 +156,10 @@ export default function MakePayment() {
     setDepositNotes("");
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(
+    allowInsufficientInventory: boolean = false,
+    confirmedShortages: InventoryShortage[] = [],
+  ) {
     const roundedDue = formatAmount(due);
 
     if (tab === "DEPOSIT") {
@@ -197,11 +211,27 @@ export default function MakePayment() {
           })
         : { sufficient: true, shortages: [] };
 
+      if (!isEditPage && !allowInsufficientInventory) {
+        const newInvoiceInventory = await checkInventoryForInvoiceSave({
+          invoiceId,
+          materials: items.flatMap((item) => item.materials ?? []),
+          targetType: InvoiceType.Invoice,
+        });
+
+        if (!newInvoiceInventory.sufficient) {
+          await runWithInventoryCheck(
+            async () => newInvoiceInventory,
+            () => handleSubmit(true, newInvoiceInventory.shortages),
+          );
+          return;
+        }
+      }
+
       const fromPayment = true;
       let res1: any = { type: "success" };
 
       if (inventory.sufficient) {
-        res1 = await createInvoice(fromPayment);
+        res1 = await createInvoice(fromPayment, allowInsufficientInventory);
 
         if (res1 && res1.type === "globalError") {
           errorToast(
@@ -210,6 +240,20 @@ export default function MakePayment() {
               : res1.message,
           );
           return;
+        }
+
+        if (
+          res1?.type === "success" &&
+          allowInsufficientInventory &&
+          confirmedShortages.length
+        ) {
+          notifyInventoryShortage({
+            invoiceId: res1.data?.id ?? invoiceId,
+            shortages: confirmedShortages,
+            reason: "saved-anyway",
+          }).catch((err) =>
+            console.error("notifyInventoryShortage failed", err),
+          );
         }
       }
       let res2;
@@ -234,13 +278,11 @@ export default function MakePayment() {
           });
           if (res2?.type === "success") {
             setDue(due - roundedAmount);
-            // Update totalPayment in the store for real-time UI update
+
             useEstimateCreateStore.setState((prev) => ({
               ...prev,
               totalPayment: prev.totalPayment + roundedAmount,
             }));
-
-            // setTotalPayment(currentTotalPayment + roundedAmount);
           }
         }
         // Add deposit
@@ -281,10 +323,6 @@ export default function MakePayment() {
             { id: "inventory-shortage" },
           );
 
-          // The conversion was skipped, so the server never ran its own
-          // lowInventoryNotification — tell the admins/managers here instead,
-          // otherwise nobody learns these products need restocking.
-          // Fire-and-forget: the server action completes even without awaiting.
           notifyInventoryShortage({
             invoiceId,
             shortages: inventory.shortages,
@@ -292,6 +330,7 @@ export default function MakePayment() {
             console.error("notifyInventoryShortage failed", err),
           );
         }
+
         reset();
       } else if (res2?.type === "globalError") {
         errorToast(
@@ -915,6 +954,8 @@ export default function MakePayment() {
                 Record
               </button>
             </DialogFooter>
+
+            <InventoryShortageDialog {...inventoryDialogProps} />
           </Tabs.Root>
         </form>
       </DialogContent>

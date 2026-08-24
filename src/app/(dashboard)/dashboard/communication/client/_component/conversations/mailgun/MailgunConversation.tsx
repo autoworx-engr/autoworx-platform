@@ -153,9 +153,9 @@ export default function MailGunConversation({
                             : "/images/default.png"
                         }
                         alt="Client avatar"
-                        width={28}
-                        height={28}
-                        className="mt-1 rounded-full ring-1 ring-white/50"
+                        width={30}
+                        height={30}
+                        className="mt-1 size-7 rounded-full object-cover ring-1 ring-[#0866FF]/40"
                       />
                     ) : (
                       <span className="w-[28px]" aria-hidden />
