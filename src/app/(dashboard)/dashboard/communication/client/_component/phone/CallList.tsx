@@ -1,6 +1,7 @@
 "use client";
 
 import { MISSED_STATUSES, isCallStale } from "@/lib/twilio/callDisplay";
+import moment from "moment";
 import { useEffect, useRef } from "react";
 import VoiceNotePlayer from "../conversations/sms/VoiceNotePlayer";
 import { useCallListRefresh } from "./useCallListRefresh";
@@ -49,10 +50,9 @@ export const CallList = ({
     }
   }, [data]);
 
-  const formatDateTime = (date: string | Date) => {
-    const d = new Date(date);
-    return d.toLocaleString(); // e.g., "5/13/2025, 2:45:10 PM"
-  };
+  // e.g., "5/13/2025, 2:45:10 PM"
+  const formatDateTime = (date: string | Date) =>
+    moment(date).format("MM/DD/YYYY, h:mm:ss A");
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

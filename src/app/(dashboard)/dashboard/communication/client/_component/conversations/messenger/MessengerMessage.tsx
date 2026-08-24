@@ -154,7 +154,7 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
           alt="Messenger user"
           width={30}
           height={30}
-          className="mt-1 rounded-full ring-1 ring-[#0866FF]/40"
+          className="mt-1 size-7 rounded-full object-cover ring-1 ring-[#0866FF]/40"
         />
       )}
 

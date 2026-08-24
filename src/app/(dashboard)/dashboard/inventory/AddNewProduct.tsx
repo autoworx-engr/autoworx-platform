@@ -21,7 +21,7 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, InventoryProductType, Vendor } from "@prisma/client";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { createProduct } from "../../../../actions/inventory/create";
 import { ProductFormFields } from "./ProductFormFields";
 
@@ -67,6 +67,8 @@ export default function AddNewProduct({
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [unit, setUnit] = useState("");
+  const [description, setDescription] = useState("");
+  const [, forceResync] = useReducer((count) => count + 1, 0);
 
   async function handleSubmit(data: FormData) {
     // Clear all errors before validation
@@ -74,7 +76,6 @@ export default function AddNewProduct({
 
     // Get form values
     const name = data.get("productName") as string;
-    const description = data.get("description") as string;
     const priceValue = data.get("price") as string;
     const categoryId = category?.id;
     const quantityValue = data.get("quantity") as string;
@@ -191,6 +192,7 @@ export default function AddNewProduct({
 
     // If any validation error, stop form submission
     if (hasError) {
+      setTimeout(forceResync, 0);
       return;
     }
     // Calculate per-unit price
@@ -262,6 +264,7 @@ export default function AddNewProduct({
     setQuantity("");
     setPrice("");
     setUnit("");
+    setDescription("");
     clearError();
   };
 
@@ -526,6 +529,8 @@ export default function AddNewProduct({
               placeholder="High-performance ceramic brake pads for front axle..."
               minLength={20}
               maxLength={250}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className={cn(
                 "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",

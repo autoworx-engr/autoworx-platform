@@ -82,7 +82,7 @@ export default function SearchSection({
       {searchTerm && (
         <button
           onClick={handleClearSearch}
-          className="absolute right-3 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-lg p-1 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-lg p-1 transition-colors"
         >
           <X size={18} strokeWidth={2} />
         </button>

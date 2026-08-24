@@ -56,7 +56,7 @@ export default function InstagramMessage({ message }: { message: TMessage }) {
           alt="Instagram user"
           width={30}
           height={30}
-          className="mt-1 rounded-full ring-1 ring-[#E1306C]/40"
+          className="mt-1 size-7 rounded-full object-cover ring-1 ring-[#0866FF]/40"
         />
       )}
 
