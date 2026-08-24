@@ -162,6 +162,9 @@ export default function Calendar({ type }: { type: CalendarType }) {
     const type = info.event.extendedProps?.type;
     if (type === "holiday" || type === "weekend") return;
     info.jsEvent.preventDefault();
+    document
+      .querySelectorAll<HTMLElement>(".fc-popover .fc-popover-close")
+      .forEach((closeButton) => closeButton.click());
     setSelectedEvent(info.event);
     setIsSheetOpen(true);
   };
