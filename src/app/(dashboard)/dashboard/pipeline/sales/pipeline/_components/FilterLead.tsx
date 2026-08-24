@@ -29,13 +29,13 @@ export default function FilterLead({ searchParams }: { searchParams: any }) {
   const isFilterApplied = Boolean(currentOrder);
 
   return (
-    <div className="flex gap-2">
-      <div className="relative">
+    <div className="flex w-full gap-2 sm:w-auto">
+      <div className="relative flex-1 sm:flex-none">
         <Select onValueChange={onValueChange} value={currentOrder || ""}>
           <SelectTrigger
             showIcon={false}
             className={cn(
-              "bg-white h-11 hover:border-slate-200 hover:bg-slate-50/30 rounded-xl border-2 border-slate-100 justify-start outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
+              "bg-white h-11 w-full sm:w-auto hover:border-slate-200 hover:bg-slate-50/30 rounded-xl border-2 border-slate-100 justify-start outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
               isFilterApplied && "border-primary/40 bg-primary/5",
             )}
           >
