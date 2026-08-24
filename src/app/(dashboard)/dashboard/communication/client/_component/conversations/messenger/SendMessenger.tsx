@@ -5,7 +5,10 @@ import React, { useEffect, useRef, useState } from "react";
 import useMessengerSendMutation from "../../../_hooks/useMessengerSendMutation";
 import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
 import AttachmentInput from "../AttachmentInput";
-import { useClientCommunicationStore } from "@/stores/client-store";
+import {
+  clientListStore,
+  useClientCommunicationStore,
+} from "@/stores/client-store";
 import { errorToast } from "@/lib/toast";
 import { ATTACHMENT_ACCEPT, mergeNewAttachments } from "../../../_utils";
 
@@ -13,6 +16,7 @@ type TProps = { clientId: number };
 
 export default function SendMessenger({ clientId }: TProps) {
   const { mutate, isPending } = useMessengerSendMutation(clientId);
+  const bumpClientToTop = clientListStore((state) => state.bumpClientToTop);
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
 
@@ -90,6 +94,7 @@ export default function SendMessenger({ clientId }: TProps) {
     clearDraft();
     setFiles([]);
     setTimeout(adjustHeight, 0);
+    bumpClientToTop(clientId);
 
     mutate({
       clientId,

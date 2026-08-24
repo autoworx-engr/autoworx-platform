@@ -1,5 +1,5 @@
 "use client";
-
+import moment from "moment-timezone";
 import { addEmployee } from "@/actions/employee/add";
 import SelectEmployeeType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeType";
 import {
@@ -15,6 +15,7 @@ import Password from "@/components/Password";
 import { SlimInput } from "@/components/SlimInput";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Label } from "@/components/ui/label";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { isValidEmail, normalizeEmail } from "@/utils/email";
@@ -38,6 +39,9 @@ export default function AddNewEmployee({
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [email, setEmail] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const companyTimezone = useCompanyTimezone();
+  const [joinDate, setJoinDate] = useState("");
+  const joinDateEdited = useRef(false);
 
   const phoneDataRef = useRef({
     mobile: "",
@@ -48,6 +52,21 @@ export default function AddNewEmployee({
     salaryType: SalaryType;
     salaryAmount: number;
   } | null>(null);
+
+  // Default "Date joined" to today in the company's timezone, and refresh it
+  // when the modal reopens unless the user picked a date themselves.
+  useEffect(() => {
+    if (!open) {
+      joinDateEdited.current = false;
+      return;
+    }
+    if (joinDateEdited.current) return;
+    setJoinDate(
+      companyTimezone
+        ? moment().tz(companyTimezone).format("YYYY-MM-DD")
+        : moment().format("YYYY-MM-DD"),
+    );
+  }, [open, companyTimezone]);
 
   const { showError, clearError } = useFormErrorStore();
   const { mobile, country, countryIsoCode } = phoneDataRef.current;
@@ -525,7 +544,12 @@ export default function AddNewEmployee({
             <DatePickerField
               name="date"
               label="Date joined"
-              defaultValue={new Date().toISOString().split("T")[0]}
+              timezone={companyTimezone}
+              value={joinDate}
+              onChange={(value) => {
+                joinDateEdited.current = true;
+                setJoinDate(value);
+              }}
             />
           </div>
 
