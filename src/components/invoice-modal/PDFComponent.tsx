@@ -612,10 +612,6 @@ const PDFComponent = function PDF({
   }, [id]);
 
   useEffect(() => {
-    // react-pdf fetches <Image> sources itself, and remote S3 images without
-    // CORS headers are unreliable there when multiple are rendered at once
-    // (only the first tends to resolve). Route each through the same-origin
-    // proxy and inline it as a data URI before handing it to <Image>.
     if (invoice.photos.length === 0) return;
     let cancelled = false;
 
@@ -692,10 +688,6 @@ const PDFComponent = function PDF({
   }, [companyDetails?.image]);
 
   useEffect(() => {
-    // Same react-pdf remote-fetch unreliability as the photos/logo above
-    // applies to the signature — it renders last and was competing with
-    // those other remote images, so it was the one most likely to silently
-    // fail to load.
     if (!signImageUrl) {
       setSignatureDataUrl(null);
       return;
