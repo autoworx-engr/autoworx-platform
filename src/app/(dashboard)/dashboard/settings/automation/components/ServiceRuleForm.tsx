@@ -112,7 +112,9 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   } = usePipelineStagesStore();
 
   const actionOptions = stages.filter(
-    (stage) => formData?.conditionColumnId != stage.id,
+    (stage) =>
+      formData?.conditionColumnId != stage.id ||
+      stage.id == formData?.targetColumnId,
   );
 
   const { mutate: updateServiceRule, isPending: isUpdatePending } =
