@@ -1365,6 +1365,7 @@ export default function InvoiceModalBody({
                   width={200}
                   height={50}
                   alt="signature"
+                  priority
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
@@ -1378,6 +1379,7 @@ export default function InvoiceModalBody({
                   width={200}
                   height={50}
                   alt="signature"
+                  priority
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
