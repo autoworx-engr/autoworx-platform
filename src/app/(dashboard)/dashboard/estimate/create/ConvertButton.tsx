@@ -39,13 +39,39 @@ export default function ConvertButton({
   const targetType =
     status?.title === "In Progress" ? InvoiceType.Invoice : type;
 
+  function goToList(savedId?: string) {
+    // Carry the just-saved id so the table view auto-opens its modal.
+    const openParam = savedId ? `?openEstimateId=${savedId}` : "";
+    const target =
+      type === "Estimate"
+        ? `/dashboard/estimate${openParam}`
+        : `/dashboard/estimate/invoices${openParam}`;
+
+    router.replace(target);
+
+    window.setTimeout(() => {
+      if (window.location.pathname.includes("/estimate/create")) {
+        window.location.assign(target);
+      }
+    }, 3000);
+  }
+
   async function save(
     allowInsufficientInventory: boolean,
     shortages: InventoryShortage[],
   ) {
-    const res = await createInvoice(false, allowInsufficientInventory);
-    if (res.type === "success") {
-      // Carry the just-saved id so the table view auto-opens its modal.
+    try {
+      const res = await createInvoice(false, allowInsufficientInventory);
+
+      if (res.type !== "success") {
+        const message =
+          "errorSource" in res && res.errorSource?.length
+            ? res.errorSource[0].message
+            : res.message;
+        errorToast(message || "Could not save. Please try again.");
+        return;
+      }
+
       const savedId = res.data?.id ?? invoiceId;
 
       if (shortages.length) {
@@ -57,32 +83,30 @@ export default function ConvertButton({
         }).catch((err) => console.error("notifyInventoryShortage failed", err));
       }
 
-      const openParam = savedId ? `?openEstimateId=${savedId}` : "";
-      if (type === "Estimate") {
-        router.replace(`/dashboard/estimate${openParam}`);
-      } else {
-        router.replace(`/dashboard/estimate/invoices${openParam}`);
-      }
+      goToList(savedId);
       // resetEstimateCreate();
       // resetLists();
-    } else if (res.type === "globalError") {
-      errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message,
-      );
-      return;
+    } catch (err) {
+      console.error("Saving the estimate failed", err);
+      errorToast("Could not save. Please try again.");
     }
   }
 
   async function handleSubmit() {
-    await runWithInventoryCheck(
-      () =>
-        checkInventoryForInvoiceSave({
-          invoiceId,
-          materials: items.flatMap((item) => item.materials ?? []),
-          targetType,
-        }),
-      save,
-    );
+    try {
+      await runWithInventoryCheck(
+        () =>
+          checkInventoryForInvoiceSave({
+            invoiceId,
+            materials: items.flatMap((item) => item.materials ?? []),
+            targetType,
+          }),
+        save,
+      );
+    } catch (err) {
+      console.error("Inventory check failed", err);
+      errorToast("Could not verify inventory. Please try again.");
+    }
   }
 
   return (
