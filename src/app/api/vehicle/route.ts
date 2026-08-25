@@ -1,8 +1,18 @@
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    const companyId = principal.companyId;
+
     const body = await req.json();
     const {
       year,
@@ -18,20 +28,30 @@ export async function POST(req: NextRequest) {
       other,
       notes,
       clientId,
-      companyId,
     } = body;
 
     // Match web: either "other" is provided, or all of year/make/model are.
     const hasOther = !!other?.trim();
     const hasYmm = !!year && !!make && !!model;
-    if (!clientId || !companyId || (!hasOther && !hasYmm)) {
+    if (!clientId || (!hasOther && !hasYmm)) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "clientId, companyId and either 'other' or year+make+model are required",
+            "clientId and either 'other' or year+make+model are required",
         },
         { status: 400 },
+      );
+    }
+
+    const client = await db.client.findFirst({
+      where: { id: Number(clientId), companyId },
+      select: { id: true },
+    });
+    if (!client) {
+      return NextResponse.json(
+        { success: false, message: "Client not found" },
+        { status: 404 },
       );
     }
 
@@ -43,7 +63,7 @@ export async function POST(req: NextRequest) {
           year: Number(year),
           make,
           model,
-          companyId: Number(companyId),
+          companyId,
         },
       });
 
@@ -67,7 +87,7 @@ export async function POST(req: NextRequest) {
         other: other?.trim() || undefined,
         notes: notes || undefined,
         clientId: Number(clientId),
-        companyId: Number(companyId),
+        companyId,
       },
     });
 
