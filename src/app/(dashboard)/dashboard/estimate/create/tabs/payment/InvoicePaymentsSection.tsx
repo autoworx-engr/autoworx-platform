@@ -67,7 +67,7 @@ export default function InvoicePaymentsSection({
                 const { mergedPayment, totalPaidForInvoice } = rowMeta(data);
                 return (
                   <tr
-                    key={data.id}
+                    key={data?.paymentId}
                     className={cn(
                       "py-3",
                       index % 2 === 0 ? evenColor : oddColor,
@@ -125,7 +125,7 @@ export default function InvoicePaymentsSection({
 
             return (
               <div
-                key={data.id}
+                key={data.paymentId}
                 className={cn(
                   "rounded-lg p-4 shadow-sm transition-all duration-200",
                   index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
