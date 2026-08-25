@@ -190,6 +190,16 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                   </td>
                   <td className={`${tDataCommonClasses}`}>
                     <div className="flex items-center justify-center gap-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditStatement(statement.id); // Updated handler
+                        }}
+                        disabled={isDeleting}
+                        className="text-blue-600 hover:text-blue-800 transition-colors disabled:cursor-not-allowed"
+                      >
+                        <PencilLineIcon size={20} />
+                      </button>
                       <Popconfirm
                         title="Delete this statement?"
                         description="Are you sure you want to delete this statement?"
@@ -201,6 +211,15 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                         placement="topLeft"
                         okText="Yes"
                         cancelText="No"
+                        overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                        okButtonProps={{
+                          className:
+                            "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                        }}
+                        cancelButtonProps={{
+                          className:
+                            "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                        }}
                       >
                         <button
                           onClick={(e) => e.stopPropagation()}
@@ -210,16 +229,6 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                           <Trash2 size={20} />
                         </button>
                       </Popconfirm>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditStatement(statement.id); // Updated handler
-                        }}
-                        disabled={isDeleting}
-                        className="text-blue-600 hover:text-blue-800 transition-colors disabled:cursor-not-allowed"
-                      >
-                        <PencilLineIcon size={20} />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -315,6 +324,16 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
 
                   {/* Action Buttons for Mobile */}
                   <div className="flex items-center justify-end gap-3 pt-2 border-t">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditStatement(statement.id); // Updated handler
+                      }}
+                      disabled={isDeleting}
+                      className="text-blue-600 hover:text-blue-800 transition-colors disabled:cursor-not-allowed"
+                    >
+                      <PencilLineIcon size={18} />
+                    </button>
                     <Popconfirm
                       title="Delete this statement?"
                       description="Are you sure you want to delete this statement?"
@@ -326,6 +345,15 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                       placement="topLeft"
                       okText="Yes"
                       cancelText="No"
+                      overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                      okButtonProps={{
+                        className:
+                          "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                      }}
+                      cancelButtonProps={{
+                        className:
+                          "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                      }}
                     >
                       <button
                         onClick={(e) => e.stopPropagation()}
@@ -335,16 +363,6 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                         <Trash2 size={18} />
                       </button>
                     </Popconfirm>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditStatement(statement.id); // Updated handler
-                      }}
-                      disabled={isDeleting}
-                      className="text-blue-600 hover:text-blue-800 transition-colors disabled:cursor-not-allowed"
-                    >
-                      <PencilLineIcon size={18} />
-                    </button>
                   </div>
                 </CardContent>
               </Card>

@@ -587,6 +587,7 @@ export default function MaterialCreate() {
                     description="Are you sure you want to remove this?"
                     okText="Delete"
                     cancelText="Cancel"
+                    placement="topLeft"
                     onConfirm={() => handleDeleteVendor(vendor.id)}
                     onPopupClick={(e) => e.stopPropagation()}
                     overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
