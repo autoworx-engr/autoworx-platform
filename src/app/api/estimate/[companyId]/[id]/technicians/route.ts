@@ -134,7 +134,12 @@ export async function POST(
     if (error) return error;
 
     const body = await req.json();
-    const { vehicleParts = [], imageUrls = [], ...rest } = body ?? {};
+    const {
+      vehicleParts = [],
+      imageUrls = [],
+      name: _name,
+      ...rest
+    } = body ?? {};
 
     const data = await createTechnician(
       {

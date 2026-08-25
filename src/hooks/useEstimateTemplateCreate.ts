@@ -56,7 +56,7 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
                 cost: Number(material?.cost) || 0,
                 sell: Number(material?.sell) || 0,
                 discount: Number(material?.discount) || 0,
-                quantity: material?.quantity,
+                quantity: Number(material?.quantity) || 0,
               }))
             : null,
           labor: item.labor
@@ -101,7 +101,7 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
             cost: Number(material?.cost) || 0,
             sell: Number(material?.sell) || 0,
             discount: Number(material?.discount) || 0,
-            quantity: material?.quantity,
+            quantity: Number(material?.quantity) || 0,
           })),
           labor: item.labor
             ? {

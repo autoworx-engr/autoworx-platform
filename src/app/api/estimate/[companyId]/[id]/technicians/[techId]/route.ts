@@ -123,7 +123,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Params }) {
     if (error) return error;
 
     const body = await req.json();
-    const { vehicleParts = [], imageUrls = [], ...rest } = body ?? {};
+    const {
+      vehicleParts = [],
+      imageUrls = [],
+      name: _name,
+      ...rest
+    } = body ?? {};
 
     const result = await updateTechnician(
       techId!,

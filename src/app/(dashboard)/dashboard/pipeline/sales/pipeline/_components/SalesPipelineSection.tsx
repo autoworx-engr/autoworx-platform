@@ -10,6 +10,7 @@ import {
 import { errorToast, successToast } from "@/lib/toast";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { useSearchParams } from "next/navigation";
 import LeadCard from "./LeadCard";
 import LeadInfinityScroll from "./LeadInfinityScroll";
 
@@ -17,6 +18,7 @@ export default function SalesPipelineSection() {
   const columnState = useColumnState();
   const pipelineColumns = useMemo(() => columnState || [], [columnState]);
   const dispatch = useColumnDispatch();
+  const hasActiveSearch = Boolean(useSearchParams()?.get("searchTerm"));
   const [screenWidth, setScreenWidth] = useState<number>(
     typeof window !== "undefined" ? window.innerWidth : 1200,
   );
@@ -182,6 +184,7 @@ export default function SalesPipelineSection() {
                   <LeadCard
                     key={lead.id}
                     leadData={lead}
+                    highlight={hasActiveSearch}
                     index={leadIndex}
                     columnIndex={columnIndex}
                     isDragDisabled={screenWidth < 768}
