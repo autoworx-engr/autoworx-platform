@@ -34,7 +34,6 @@ export default function CannedLabor({
   page: number;
   take: number;
   categories: Category[];
-  /** Rendered inside the side-by-side desktop split, so horizontal room is halved. */
   compact?: boolean;
 }) {
   const params = useSearchParams();
@@ -99,8 +98,7 @@ export default function CannedLabor({
             Canned Labor
           </h3>
         </div>
-        {/* Search + filter + add button. In the split view the column is only
-            ~half as wide, so the row collapses later than in the full-width tab. */}
+
         <div
           className={cn(
             "mt-4 flex flex-col gap-3",

@@ -33,7 +33,6 @@ export default function CannedServices({
   page: number;
   take: number;
   categories: Category[];
-  /** Rendered inside the side-by-side desktop split, so horizontal room is halved. */
   compact?: boolean;
 }) {
   const params = useSearchParams();
@@ -105,8 +104,7 @@ export default function CannedServices({
             Canned Services
           </h3>
         </div>
-        {/* Search + filter + add button, matching Canned Labor. In the split view
-            the column is only ~half as wide, so the row collapses later. */}
+
         <div
           className={cn(
             "mt-4 flex flex-col gap-3",
