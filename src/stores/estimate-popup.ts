@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type PopupType = "SERVICE" | "MATERIAL" | "LABOR" | "TAG" | null;
+export type PopupType = "SERVICE" | "MATERIAL" | "LABOR" | "TAG" | null;
 
 export interface EstimatePopupStore {
   type: PopupType;

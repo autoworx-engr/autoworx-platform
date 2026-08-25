@@ -20,12 +20,11 @@ import { Plus, X } from "lucide-react";
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 import {
+  MAX_MONEY_VALUE,
   validateMaterial,
   type MaterialField,
   type MaterialFieldErrors,
 } from "./materialValidation";
-
-const MAX_MONEY_VALUE = 99999999;
 
 export type EstimateMaterial = {
   id: number;
