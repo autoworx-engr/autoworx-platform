@@ -106,8 +106,6 @@ export async function POST(req: NextRequest) {
         companyId: user.companyId,
         clockIn: now,
         timezone,
-        createdAt: now,
-        updatedAt: now,
       },
     });
 

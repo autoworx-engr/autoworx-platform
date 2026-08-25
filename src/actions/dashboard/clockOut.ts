@@ -23,7 +23,6 @@ export async function clockOut({
       },
       data: {
         clockOut: now,
-        updatedAt: now,
       },
       include: {
         ClockBreak: true,
@@ -41,7 +40,6 @@ export async function clockOut({
           },
           data: {
             breakEnd: now,
-            updatedAt: now,
           },
         });
       }
