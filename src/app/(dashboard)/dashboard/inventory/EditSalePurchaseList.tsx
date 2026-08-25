@@ -148,6 +148,11 @@ export default function EditSalePurchaseList({
       return;
     }
 
+    if (/\d/.test(unit.trim())) {
+      showError({ message: "Unit cannot contain any numbers." });
+      return;
+    }
+
     if (
       history?.type === "Sale" &&
       product?.quantity &&
