@@ -5,11 +5,12 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
-import { guardOutboundSms, maskPhone } from "@/lib/sms/outboundSmsGuard";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
+import { guardOutboundSms, maskPhone } from "@/lib/sms/outboundSmsGuard";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
-import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
+import { updateNewSMSChatTrack } from "./chat-track";
 
 type TTwilioCredentials = {
   companyId?: number;
@@ -52,9 +53,7 @@ export async function sendTwilioMessage({
   attachments: { url: string; name: string; isVoiceNote?: boolean }[];
   userId?: number;
   isSalesAgent?: boolean;
-  /** Pass true when calling from a webhook/system context with no user session. */
   systemCall?: boolean;
-  /** When true (default), disables isSalesAgent on the client after sending. */
   shouldSalesAgentStop?: boolean;
 }) {
   try {
@@ -191,12 +190,18 @@ export async function sendTwilioMessage({
         isVoiceNote: file.isVoiceNote ?? false,
       }));
 
-      await updateNewSMSChatTrack({
+      const track = await updateNewSMSChatTrack({
         clientId,
         smsLastMessage: message ?? "",
         lastMessageBy: "Company",
         attachments: processedAttachments,
       });
+
+      try {
+        await sendClientMailOrSMSNotify(twilioCredentials.companyId, track);
+      } catch (error) {
+        console.error("sendTwilioMessage: client-notify failed", error);
+      }
 
       try {
         if (client?.Lead?.id && client?.Lead?.columnId) {

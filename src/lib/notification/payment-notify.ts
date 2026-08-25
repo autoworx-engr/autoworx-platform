@@ -77,8 +77,8 @@ export async function sendPaymentFailedNotification({
     });
     const redirectUrl = "/dashboard/settings/payments/webhook-events";
     const title = "Payment Processing Failed";
-    const reason = error ? ` Reason: ${error.slice(0, 140)}.` : "";
-    const description = `A ${gateway} payment failed to process (ref: ${eventId}).${reason} Check webhook events for details.`;
+
+    const description = `A ${gateway} payment failed to process (ref: ${eventId}). Check webhook events for details.`;
 
     for (const user of getUsers) {
       // Bypass notification settings — payment failures are critical alerts

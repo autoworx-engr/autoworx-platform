@@ -45,10 +45,15 @@ export async function createProduct(
         where: {
           name: validatedData.name,
           companyId,
+          type: validatedData.type,
         },
       });
       if (existingProduct) {
-        throw new Error("Product already exists");
+        throw new Error(
+          validatedData.type === "Supply"
+            ? "Supply already exists"
+            : "Product already exists",
+        );
       }
 
       const { categoryName, isDatabase, ...productData } = validatedData;

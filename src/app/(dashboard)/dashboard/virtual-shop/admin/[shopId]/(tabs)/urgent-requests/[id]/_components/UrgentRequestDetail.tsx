@@ -4,6 +4,7 @@ import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DatePickerField } from "@/components/ui/DatePickerField";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { Separator } from "@/components/ui/separator";
 import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { errorToast, successToast } from "@/lib/toast";
@@ -116,6 +117,7 @@ export default function UrgentRequestDetail({
   shopId,
 }: Props) {
   const router = useRouter();
+  const timezone = useCompanyTimezone();
   const [request, setRequest] = useState(initialRequest);
   const [activeAction, setActiveAction] = useState<
     EmergencyRequestStatus | "SAVE_NOTES" | null
@@ -556,6 +558,7 @@ export default function UrgentRequestDetail({
                     Date
                   </label>
                   <DatePickerField
+                    timezone={timezone}
                     value={proposedDate}
                     onChange={(value) => {
                       setProposedDate(value);

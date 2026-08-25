@@ -61,6 +61,7 @@ const notificationTypes: { type: NotificationType; roles: EmployeeType[] }[] = [
   { type: "CLIENT_CALL_ALERT", roles: ["Admin", "Manager", "Sales"] },
   { type: "CLIENT_EMAIL_ALERT", roles: ["Admin", "Manager", "Sales"] },
   { type: "COLLABORATION_MESSAGE_ALERT", roles: ["Admin", "Manager", "Sales"] },
+  { type: "COLLABORATION_INVITATION", roles: ["Admin", "Manager", "Sales"] },
 ];
 
 const sectionMapping: { [key: string]: string } = {
@@ -107,6 +108,7 @@ const sectionMapping: { [key: string]: string } = {
   CLIENT_CALL_ALERT: "COMMUNICATIONS",
   CLIENT_EMAIL_ALERT: "COMMUNICATIONS",
   COLLABORATION_MESSAGE_ALERT: "COMMUNICATIONS",
+  COLLABORATION_INVITATION: "COMMUNICATIONS",
 };
 
 export const notificationCategories = [

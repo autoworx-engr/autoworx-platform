@@ -15,9 +15,7 @@ export default async function ViewEstimate(props: {
 
   const { invoiceId } = params;
 
-  console.log("🚀 ~ ViewEstimate ~ invoiceId:", invoiceId);
   const isFleetStatement = (await searchParams?.fleet) === "true";
-  console.log("🚀 ~ ViewEstimate ~ isFleetStatement:", isFleetStatement);
 
   if (isFleetStatement) {
     // Load fleet statement data
@@ -44,7 +42,6 @@ export default async function ViewEstimate(props: {
         },
       },
     });
-    console.log("🚀 ~ ViewEstimate ~ statement:", statement);
 
     return (
       <InterceptedDialog>

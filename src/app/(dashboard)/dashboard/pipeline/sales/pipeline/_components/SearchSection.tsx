@@ -54,7 +54,7 @@ export default function SearchSection({
     router.push(`${pathname}?${searchParams.toString()}`);
   };
   return (
-    <div className="relative group flex flex-1 h-10 max-w-lg items-center rounded-md sm:w-auto ml-2">
+    <div className="relative flex-1 group">
       <Search
         size={18}
         className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary"
@@ -82,7 +82,7 @@ export default function SearchSection({
       {searchTerm && (
         <button
           onClick={handleClearSearch}
-          className="absolute right-3 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-lg p-1 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-lg p-1 transition-colors"
         >
           <X size={18} strokeWidth={2} />
         </button>

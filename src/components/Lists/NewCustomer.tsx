@@ -20,6 +20,7 @@ import { isDefaultClientSourceName } from "@/lib/consts";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
+import { isValidEmail, normalizeEmail } from "@/utils/email";
 import { stateStore } from "@/stores/stateStore";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -154,6 +155,14 @@ export default function NewCustomer({
       return;
     }
 
+    if (clientInfo.email && !isValidEmail(clientInfo.email)) {
+      showError({
+        field: "email",
+        message: "Please enter a valid email address.",
+      });
+      return;
+    }
+
     const fullPhone = `${country}${mobile}`;
     if (!mobile || mobile.length < 10) {
       showError({
@@ -196,7 +205,7 @@ export default function NewCustomer({
       {
         firstName: firstName.trim(),
         lastName,
-        email,
+        email: normalizeEmail(email),
         mobile: fullPhone,
         countryCode: countryIsoCode,
         customerCompany,
@@ -404,23 +413,23 @@ export default function NewCustomer({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <SlimInput
                 name="email"
+                type="email"
                 label="Email"
                 placeholder="Enter email address"
                 value={clientInfo.email}
                 // required
                 onChange={(e) => {
-                  const value = e.target.value;
+                  const value = normalizeEmail(e.target.value);
                   setClientInfo((prev) => ({ ...prev, email: value }));
 
-                  // Validate on input change
-                  // if (!value.trim()) {
-                  //   showError({
-                  //     field: "email",
-                  //     message: "Email is required.",
-                  //   });
-                  // } else {
-                  //   clearError();
-                  // }
+                  if (value && !isValidEmail(value)) {
+                    showError({
+                      field: "email",
+                      message: "Please enter a valid email address.",
+                    });
+                  } else {
+                    clearError();
+                  }
                 }}
               />
 

@@ -314,8 +314,19 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
                 <input
                   type="number"
                   min="1"
+                  step="1"
                   value={stackingLimit}
-                  onChange={(e) => setStackingLimit(e.target.value)}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                      setStackingLimit(nextValue);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (["e", "E", "+", "-", "."].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -332,7 +343,17 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
               min="5"
               step="5"
               value={timeSlotInterval}
-              onChange={(e) => setTimeSlotInterval(e.target.value)}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                  setTimeSlotInterval(nextValue);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-", "."].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
               className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>

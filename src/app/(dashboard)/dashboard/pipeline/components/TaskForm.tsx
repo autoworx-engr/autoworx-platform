@@ -5,45 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { successToast } from "@/lib/toast";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-
-// Task List Popup Component
-function TaskListPopup({
-  tasks,
-  onTaskClick,
-  isTechnician = false,
-}: {
-  tasks: Task[];
-  onTaskClick: (taskId: number) => void;
-  isTechnician?: boolean;
-}) {
-  return (
-    <div
-      className={`absolute ${isTechnician ? "-left-6" : "-left-20"} z-50 mt-1 hidden h-[90px] max-h-[110px] w-[200px] transform overflow-y-auto rounded-lg border border-[#66738C] bg-background p-2 group-hover:block`}
-      style={{ top: "-6rem" }}
-    >
-      {tasks.map((task) => (
-        <div
-          key={task.id}
-          className="mb-2 rounded-[3px] p-1 text-white cursor-pointer hover:opacity-80 transition-opacity"
-          style={{
-            backgroundColor:
-              task.priority === "Low"
-                ? "#6571FF"
-                : task.priority === "Medium"
-                  ? "#25AADD"
-                  : "#006D77",
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onTaskClick(task.id);
-          }}
-        >
-          {task.title}
-        </div>
-      ))}
-    </div>
-  );
-}
+import TaskListPopup from "../sales/pipeline/_components/TaskListPopup";
 
 export default function TaskForm({
   companyUsers,
@@ -155,6 +117,7 @@ export default function TaskForm({
           isTechnician={isTechnician}
           tasks={tasks}
           onTaskClick={handleTaskClick}
+          zIndexClass="z-50"
         />
       )}
     </div>

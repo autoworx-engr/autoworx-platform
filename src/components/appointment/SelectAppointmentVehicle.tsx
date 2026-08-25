@@ -21,7 +21,6 @@ import { SelectProps } from "../Lists/select-props";
 import { TruncatedText } from "@/components/ui/TruncatedText";
 import { normalizeSearch } from "@/utils/normalizeSearch";
 
-/** One label for the trigger, the rows and the search box to agree on. */
 const vehicleLabel = (vehicle: Partial<Vehicle>) =>
   [vehicle.year, vehicle.make, vehicle.model, vehicle.other]
     .filter(Boolean)
@@ -119,8 +118,6 @@ export function SelectAppointmentVehicle({
     };
   }, []);
 
-  // The selected vehicle isn't always part of the client's list (it can come
-  // from the lead), and it still has to be listed so it can show as ticked.
   const vehicleOptions = useMemo(() => {
     if (!vehicle?.id) return clientVehicles;
     return clientVehicles.some((option) => option.id === vehicle.id)
@@ -179,9 +176,6 @@ export function SelectAppointmentVehicle({
           }
           items={vehicleOptions}
           isLoading={isLoadingVehicles}
-          // Matched against the whole displayed label plus VIN/plate. Filtering
-          // on model and `other` alone meant searching the year or make of the
-          // vehicle you were looking at returned "No results found".
           onSearch={(search: string) => {
             const query = normalizeSearch(search);
             return vehicleOptions.filter((option) =>

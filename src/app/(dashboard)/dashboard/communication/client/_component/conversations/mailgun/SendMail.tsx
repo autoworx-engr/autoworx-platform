@@ -57,7 +57,7 @@ export default function SendMail({
     >
   >;
 }) {
-  const { clientList, setClientList } = clientListStore();
+  const bumpClientToTop = clientListStore((state) => state.bumpClientToTop);
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
   const { data: entitlements } = useServerGet(getEntitlements, companyId);
@@ -151,13 +151,7 @@ export default function SendMail({
 
       setTimeout(() => adjustTextareaHeight(), 0);
 
-      const currentClient = clientList?.find(
-        (client) => client.id === clientId,
-      );
-      const filterCurrentClient = clientList?.filter(
-        (client) => client.id !== clientId,
-      );
-      currentClient && setClientList([currentClient, ...filterCurrentClient]);
+      bumpClientToTop(clientId);
       router.refresh();
     } catch (e) {
       errorToast("Failed to send message");

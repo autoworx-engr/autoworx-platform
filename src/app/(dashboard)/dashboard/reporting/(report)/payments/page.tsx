@@ -302,7 +302,6 @@ export default async function PaymentReportPage(props: TProps) {
         CARD: PaymentType.CARD,
         CASH: PaymentType.CASH,
         CHECK: PaymentType.CHECK,
-        CHEQUE: PaymentType.CHECK,
         OTHER: PaymentType.OTHER,
         DEPOSIT: PaymentType.DEPOSIT,
       };

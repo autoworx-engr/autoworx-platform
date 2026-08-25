@@ -102,6 +102,7 @@ export default function AppointmentForm({
   containerRef,
   settings,
   handleDate,
+  timezone,
 }: AppointmentFormProps) {
   return (
     <div className="h-full sm:h-full overflow-y-auto max-h-[80vh] lg:max-h-none">
@@ -115,6 +116,7 @@ export default function AppointmentForm({
         <div className="grid grid-cols-2 items-end gap-3 lg:grid-cols-4">
           <DatePickerField
             label="Start Date"
+            timezone={timezone}
             required
             value={date ?? ""}
             onChange={(value) => {
@@ -128,6 +130,7 @@ export default function AppointmentForm({
 
           <DatePickerField
             label="End Date"
+            timezone={timezone}
             clearable
             value={endDate ?? ""}
             onChange={(value) => {

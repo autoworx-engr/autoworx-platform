@@ -9,7 +9,7 @@ import { Prisma, PaymentType } from "@prisma/client";
 export type PaymentMethodFilter =
   | "Card"
   | "Cash"
-  | "Cheque"
+  | "Check"
   | "Other"
   | "All"
   | "Deposit"
@@ -155,7 +155,7 @@ function buildWhereInput(
     case "Cash":
       where.type = PaymentType.CASH;
       break;
-    case "Cheque":
+    case "Check":
       where.type = PaymentType.CHECK;
       break;
     case "Other":
@@ -366,7 +366,7 @@ function getPaymentMethod(payment: PaymentListRecord) {
     return "Cash";
   }
   if (payment.type === PaymentType.CHECK) {
-    return "Cheque";
+    return "Check";
   }
   if (payment.type === PaymentType.OTHER) {
     return payment.other?.paymentMethod?.name || "Other";

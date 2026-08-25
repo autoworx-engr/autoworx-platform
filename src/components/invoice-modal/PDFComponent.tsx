@@ -595,6 +595,7 @@ const PDFComponent = function PDF({
     {},
   );
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch inspection data and damage notes from the backend
@@ -611,10 +612,6 @@ const PDFComponent = function PDF({
   }, [id]);
 
   useEffect(() => {
-    // react-pdf fetches <Image> sources itself, and remote S3 images without
-    // CORS headers are unreliable there when multiple are rendered at once
-    // (only the first tends to resolve). Route each through the same-origin
-    // proxy and inline it as a data URI before handing it to <Image>.
     if (invoice.photos.length === 0) return;
     let cancelled = false;
 
@@ -689,6 +686,39 @@ const PDFComponent = function PDF({
       cancelled = true;
     };
   }, [companyDetails?.image]);
+
+  useEffect(() => {
+    if (!signImageUrl) {
+      setSignatureDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+
+    const loadSignature = async () => {
+      try {
+        const res = await fetch(
+          `/api/proxy-image?url=${encodeURIComponent(signImageUrl)}`,
+        );
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+        if (!cancelled) setSignatureDataUrl(dataUrl);
+      } catch {
+        // Keep it unset if the signature fails to load.
+      }
+    };
+
+    loadSignature();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [signImageUrl]);
 
   useEffect(() => {
     if (invoice.damageNotes) {
@@ -1075,10 +1105,10 @@ const PDFComponent = function PDF({
             )}
           </View>
           <View style={styles.footerSignature}>
-            {signImageUrl ? (
+            {signatureDataUrl ? (
               /* eslint-disable-next-line jsx-a11y/alt-text */
               <Image
-                src={signImageUrl}
+                src={signatureDataUrl}
                 style={{ width: 100, height: 50, objectFit: "contain" }}
               />
             ) : authorizedName ? (

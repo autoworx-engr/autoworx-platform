@@ -158,8 +158,6 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   const [visibleTooltip, setVisibleTooltip] = useState<number | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
 
-  // Route → key resolution (including subtree prefixes and the entitlement
-  // carve-outs) lives in filterNavList so nav and route guards can't drift.
   const [filteredNavList, setFilteredNavList] = useState(() =>
     filterNavList(navList, permissions, companyFeaturePermission),
   );
@@ -172,61 +170,46 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   const unReadClientCount = clientConversations?.length || 0;
 
-  // const fetchClientByUnreadMsg = async () => {
-  //     try {
-  //         const data = await getClientByUnreadMsg(companyId as number);
-  //         if (data && data?.length > 0) {
-  //             setClientConversations(data);
-  //         }
-  //     } catch (err) {
-  //         console.error(err);
-  //     }
-  // };
+  const applyTrackChange = useCallback(
+    (track: Partial<ClientConversationTrack> | null) => {
+      if (!track) return;
+      const { clientId, smsIsRead, emailIsRead } = track;
+      const isRead =
+        smsIsRead !== false &&
+        emailIsRead !== false &&
+        track.messengerIsRead !== false &&
+        track.instagramIsRead !== false;
 
-  // // Filter navList and subnavs by company feature permission
-  // const [filteredNavList, setFilteredNavList] = useState(() =>
-  //     navList
-  //         .filter(
-  //             item => !item.link || canAccessCompanyFeatureRoute(item.link)
-  //         )
-  //         .map(item => {
-  //             if (item.subnav) {
-  //                 const filteredSubnav = item.subnav.filter(sub =>
-  //                     canAccessCompanyFeatureRoute(sub.link)
-  //                 );
-  //                 return {
-  //                     ...item,
-  //                     subnav:
-  //                         filteredSubnav.length > 0 ? filteredSubnav : null,
-  //                 };
-  //             }
-  //             return item;
-  //         })
-  // );
+      setClientConversations((prevClients) => {
+        const isCounted = prevClients.some(
+          (client) => client.clientId === clientId,
+        );
 
-  // const unReadClientCount = clientConversations?.length || 0;
+        if (isRead) {
+          return isCounted
+            ? prevClients.filter((client) => client.clientId !== clientId)
+            : prevClients;
+        }
+
+        return isCounted ? prevClients : [...prevClients, track];
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
-    pusher
-      .subscribe(`client-notify-${companyId}`)
-      .bind("client-notify", (data: ClientConversationTrack) => {
-        if (!data) return;
-        setClientConversations((prevClients) => {
-          if (!prevClients) return [data];
-          const findConversation = prevClients?.find(
-            (conversation) => conversation?.clientId === data?.clientId,
-          );
-          if (findConversation) {
-            return prevClients;
-          } else {
-            return [...prevClients, data];
-          }
-        });
-      });
-    return () => {
-      pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
+    if (!companyId) return;
+    const channel = pusher.subscribe(`client-notify-${companyId}`);
+    const handleClientNotify = (data: ClientConversationTrack) => {
+      if (!data) return;
+      applyTrackChange(data);
     };
-  }, [pathName]);
+
+    channel.bind("client-notify", handleClientNotify);
+    return () => {
+      channel.unbind("client-notify", handleClientNotify);
+    };
+  }, [companyId, applyTrackChange]);
 
   const fetchClientByUnreadMsg = async () => {
     try {
@@ -244,33 +227,6 @@ export default function SideNavbar({ navList, permissions }: TProps) {
       fetchClientByUnreadMsg();
     }
   }, [companyId]);
-
-  // Opening a conversation marks it read, and any sidebar row can be marked
-  // read or unread by hand — the badge has to follow both.
-  const applyTrackChange = useCallback(
-    (track: ClientConversationTrack | null) => {
-      if (!track) return;
-      const { clientId, smsIsRead, emailIsRead } = track;
-      const isRead = smsIsRead && emailIsRead;
-
-      setClientConversations((prevClients) => {
-        const isCounted = prevClients.some(
-          (client) => client.clientId === clientId,
-        );
-
-        if (isRead) {
-          return isCounted
-            ? prevClients.filter((client) => client.clientId !== clientId)
-            : prevClients;
-        }
-
-        // Newly unread — the badge has to grow too, not just shrink, or
-        // marking a thread unread only shows up after a reload.
-        return isCounted ? prevClients : [...prevClients, track];
-      });
-    },
-    [],
-  );
 
   useEffect(() => {
     applyTrackChange(clientConversationTrack);

@@ -10,7 +10,6 @@ import { FieldName, useRegisterForm } from "./useRegisterForm";
 const baseControl =
   "w-full rounded-xl border-2 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:outline-none dark:bg-slate-800/50 dark:text-white";
 
-// An invalid field gets a red border, so it reads as wrong at a glance.
 const controlClass = (hasError: boolean) =>
   `${baseControl} ${
     hasError
@@ -18,8 +17,19 @@ const controlClass = (hasError: boolean) =>
       : "border-slate-200 focus:border-primary/50 dark:border-slate-700"
   }`;
 
+const REQUIRED_FIELDS: FieldName[] = [
+  "firstName",
+  "email",
+  "company",
+  "password",
+  "confirmPassword",
+  "accessCode",
+];
+
 export default function RegisterForm() {
   const { values, errors, update, validateOnBlur, handler } = useRegisterForm();
+
+  const canSubmit = REQUIRED_FIELDS.every((f) => values[f].trim() !== "");
 
   const fieldProps = (field: FieldName, autoComplete: string) => ({
     name: field,
@@ -34,7 +44,9 @@ export default function RegisterForm() {
 
   return (
     <>
-      <FormError />
+      <div className="mb-4">
+        <FormError />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField
@@ -123,12 +135,14 @@ export default function RegisterForm() {
         </FormField>
       </div>
 
-      <Submit
-        className="mx-auto mt-4 w-full rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-10 py-2 text-white"
-        formAction={handler}
-      >
-        Submit
-      </Submit>
+      {canSubmit && (
+        <Submit
+          className="mx-auto mt-4 w-full rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-10 py-2 text-white"
+          formAction={handler}
+        >
+          Submit
+        </Submit>
+      )}
     </>
   );
 }

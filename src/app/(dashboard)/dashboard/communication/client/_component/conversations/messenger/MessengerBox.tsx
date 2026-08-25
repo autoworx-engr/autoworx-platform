@@ -148,7 +148,7 @@ export default function MessengerBox({ clientId }: { clientId: number }) {
     <div className="relative h-full w-full">
       <div
         ref={containerRef}
-        className="h-full w-full overflow-y-auto px-2 py-2"
+        className="h-full w-full overflow-y-auto overflow-x-hidden px-2 py-2"
       >
         <div
           className="flex justify-center py-2 min-h-[40px]"

@@ -100,7 +100,9 @@ const ZapForm = ({ company }: ZapFormProps) => {
 
       // Handler for postMessage
       const handleMessage = (event: MessageEvent) => {
-        const { source, token } = event.data || {};
+        if (event.data?.type !== "AUTOWORX_LEAD_FORM_PARAMS") return;
+
+        const { source, token } = event.data;
         if (!source && !token) return;
 
         setFormData((prev) => ({
@@ -240,6 +242,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           email: formData.email,
           phone: formData.phone,
           countryCode: formData.countryCode,
+          source: formData.source,
           opportunity_source: opportunitySource,
           multiServices: formData?.multiServices,
         }),

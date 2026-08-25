@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { getCompanyId } from "@/lib/companyId";
 import { revalidatePath } from "next/cache";
+import { notifyRequester } from "./acceptCompanyJoin";
 
 /**
  * Reject a company join request. The current company is derived from the
@@ -44,4 +45,5 @@ export async function rejectCompanyJoin(
   });
 
   revalidatePath("/dashboard/settings/networks");
+  await notifyRequester(join.companyOneId, currentCompanyId, "REJECTED");
 }

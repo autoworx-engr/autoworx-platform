@@ -1,6 +1,8 @@
 "use client";
 
+import type { InventoryShortage } from "@/actions/estimate/invoice/checkInventory";
 import { checkInventoryForInvoiceSave } from "@/actions/estimate/invoice/checkInventory";
+import { notifyInventoryShortage } from "@/actions/estimate/invoice/notifyInventoryShortage";
 import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
 import Submit from "@/components/Submit";
 import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
@@ -10,7 +12,8 @@ import { errorToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { InvoiceType } from "@prisma/client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
 
 export default function ConvertButton({
   text,
@@ -24,6 +27,7 @@ export default function ConvertButton({
   className?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const createInvoice = useInvoiceCreate(type);
   const invoiceId = useEstimateCreateStore((state) => state.invoiceId);
   const items = useEstimateCreateStore((state) => state.items);
@@ -37,37 +41,91 @@ export default function ConvertButton({
   const targetType =
     status?.title === "In Progress" ? InvoiceType.Invoice : type;
 
-  async function save(allowInsufficientInventory: boolean) {
-    const res = await createInvoice(false, allowInsufficientInventory);
-    if (res.type === "success") {
-      // Carry the just-saved id so the table view auto-opens its modal.
-      const savedId = res.data?.id ?? invoiceId;
-      const openParam = savedId ? `?openEstimateId=${savedId}` : "";
-      if (type === "Estimate") {
-        router.replace(`/dashboard/estimate${openParam}`);
-      } else {
-        router.replace(`/dashboard/estimate/invoices${openParam}`);
+  const fallbackTimer = useRef<number | null>(null);
+
+  const clearFallback = useCallback(() => {
+    if (fallbackTimer.current !== null) {
+      window.clearTimeout(fallbackTimer.current);
+      fallbackTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    clearFallback();
+  }, [pathname, clearFallback]);
+
+  useEffect(() => clearFallback, [clearFallback]);
+
+  function goToList(savedId?: string) {
+    // Carry the just-saved id so the table view auto-opens its modal.
+    const openParam = savedId ? `?openEstimateId=${savedId}` : "";
+    const target =
+      type === "Estimate"
+        ? `/dashboard/estimate${openParam}`
+        : `/dashboard/estimate/invoices${openParam}`;
+
+    router.replace(target);
+
+    clearFallback();
+    fallbackTimer.current = window.setTimeout(() => {
+      fallbackTimer.current = null;
+      if (window.location.pathname.includes("/estimate/create")) {
+        window.location.assign(target);
       }
+    }, 3000);
+  }
+
+  async function save(
+    allowInsufficientInventory: boolean,
+    shortages: InventoryShortage[],
+  ) {
+    try {
+      const res = await createInvoice(false, allowInsufficientInventory);
+
+      if (res.type !== "success") {
+        const message =
+          "errorSource" in res && res.errorSource?.length
+            ? res.errorSource[0].message
+            : res.message;
+        errorToast(message || "Could not save. Please try again.");
+        return;
+      }
+
+      const savedId = res.data?.id ?? invoiceId;
+
+      if (shortages.length) {
+        notifyInventoryShortage({
+          invoiceId: savedId,
+          shortages,
+          companyId: res.data?.companyId,
+          reason: "saved-anyway",
+        }).catch((err) => console.error("notifyInventoryShortage failed", err));
+      }
+
+      goToList(savedId);
       // resetEstimateCreate();
       // resetLists();
-    } else if (res.type === "globalError") {
-      errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message,
-      );
-      return;
+    } catch (err) {
+      console.error("Saving the estimate failed", err);
+      errorToast("Could not save. Please try again.");
     }
   }
 
   async function handleSubmit() {
-    await runWithInventoryCheck(
-      () =>
-        checkInventoryForInvoiceSave({
-          invoiceId,
-          materials: items.flatMap((item) => item.materials ?? []),
-          targetType,
-        }),
-      save,
-    );
+    try {
+      await runWithInventoryCheck(
+        () =>
+          checkInventoryForInvoiceSave({
+            invoiceId,
+            materials: items.flatMap((item) => item.materials ?? []),
+            targetType,
+          }),
+        save,
+      );
+    } catch (err) {
+      console.error("Inventory check failed", err);
+      errorToast("Could not verify inventory. Please try again.");
+    }
   }
 
   return (

@@ -154,6 +154,10 @@
   scrollbar-color: transparent transparent;
 }
 
+.calendarScope :global(.fc-popover) {
+  z-index: 30 !important;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

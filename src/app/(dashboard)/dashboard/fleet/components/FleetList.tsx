@@ -40,7 +40,7 @@ export default function FleetList({
     router.push(newPath);
   };
 
-  const showPagination = total > take;
+  const showPagination = total > 0;
 
   return (
     <div className="w-full p-2 sm:p-4 bg-background dark:bg-slate-950 min-h-[65vh] flex flex-col rounded-lg drop-shadow-[0_4px_4px_rgb(0_0_0_/_0.25)]">

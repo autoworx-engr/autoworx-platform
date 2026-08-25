@@ -116,8 +116,6 @@ export function MultiSelectorWithAdd({
 
   const normalizedOptions = normalizeOptions();
 
-  // Compared with whitespace and dots stripped from both sides, so a stray
-  // leading/trailing space or a double space between words still matches.
   const filteredOptions = searchTerm.trim()
     ? normalizedOptions.filter((opt) =>
         normalizeSearch(opt.title).includes(normalizeSearch(searchTerm)),
@@ -221,8 +219,6 @@ export function MultiSelectorWithAdd({
           </span>
         </button>
 
-        {/* Kept out of the trigger: a button inside a button is invalid markup
-            and only cleared when the click hit its 16px icon exactly. */}
         <div className="pointer-events-none absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
           {showClear && (
             <button

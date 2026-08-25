@@ -311,8 +311,7 @@ export default function NewVendor({
             required={false}
             onChange={(e) => {
               const value = e.target.value;
-              // value && !/^\d*$/.test(value)
-              if (value === "" || /^\d+$/.test(value)) {
+              if (value && !/^\d+$/.test(value)) {
                 showError({
                   field: "zip",
                   message: "Zip code should contain only numbers.",

@@ -101,7 +101,7 @@ const PaymentDateRange = ({
   };
 
   return (
-    <div ref={ref} className="relative z-50">
+    <div ref={ref} className="relative z-30">
       <button
         onClick={togglePicker}
         className={`

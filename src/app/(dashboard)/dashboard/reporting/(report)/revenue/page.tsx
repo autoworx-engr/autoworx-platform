@@ -185,27 +185,23 @@ export default async function RevenueReportPage(props: TProps) {
         companyId: session?.user?.companyId,
         title: "Delivered",
       },
-      invoiceItems: {
-        some:
-          searchParams.category || searchParams.service
-            ? {
-                OR: [
-                  {
-                    service: {
-                      OR: [
-                        {
-                          name: searchParams.service?.trim(),
-                        },
-                        {
-                          category: { name: searchParams.category },
-                        },
-                      ],
-                    },
-                  },
-                ],
-              }
-            : undefined,
-      },
+      invoiceItems:
+        searchParams.category || searchParams.service
+          ? {
+              some: {
+                service: {
+                  AND: [
+                    ...(searchParams.service?.trim()
+                      ? [{ name: searchParams.service.trim() }]
+                      : []),
+                    ...(searchParams.category
+                      ? [{ category: { name: searchParams.category } }]
+                      : []),
+                  ],
+                },
+              },
+            }
+          : undefined,
       ...(searchFilter || {}),
     },
     include: {
@@ -549,10 +545,6 @@ export default async function RevenueReportPage(props: TProps) {
         )
       : totalRevenue;
 
-  let getFilteredCategoryId = categories.find(
-    (category) => category.name === searchParams.category,
-  )?.id;
-
   let filterByValue = 0;
 
   if (searchParams?.filterRevenue) {
@@ -578,78 +570,53 @@ export default async function RevenueReportPage(props: TProps) {
     }, 0);
   }
 
-  if (searchParams.category) {
-    let filteredInvoiceItems = [];
+  if (searchParams.category || searchParams.service) {
+    const selectedCategoryId = searchParams.category
+      ? categories.find((c) => c.name === searchParams.category)?.id
+      : undefined;
 
-    const categoryServiceIds = new Set(
-      services
-        .filter((service) => service.categoryId === getFilteredCategoryId)
-        .map((service) => service.id),
-    );
+    const selectedService = searchParams.service?.trim()
+      ? services.find(
+          (s) =>
+            s.name === searchParams.service?.trim() &&
+            (!selectedCategoryId || s.categoryId === selectedCategoryId),
+        )
+      : undefined;
 
-    for (const invoice of filteredInvoices) {
-      for (const item of invoice.invoiceItems) {
-        let serviceId: any = item?.serviceId;
-        if (serviceId && categoryServiceIds.has(serviceId)) {
-          filteredInvoiceItems.push(item);
-        }
-      }
-    }
-    let totalMaterialCost = 0;
-    let totalLaborCost = 0;
-
-    filteredInvoiceItems.forEach((item: any) => {
-      if (item.labor) {
-        totalLaborCost +=
-          item.labor.hours * item.labor.charge - item.labor.discount;
-      }
-
-      item.materials.forEach((material: any) => {
-        const materialCost =
-          material.quantity * material.sell - material.discount;
-        totalMaterialCost += materialCost;
-      });
-    });
-    filteredRevenue = totalMaterialCost + totalLaborCost;
-  }
-
-  if (searchParams.service) {
-    if (!searchParams.category) {
+    if (searchParams.service && !selectedService) {
       filteredRevenue = 0;
-    }
-    let filteredInvoiceItems = [];
-
-    const selectedService = services.find(
-      (service) => service.name === searchParams.service?.trim(),
-    );
-
-    if (selectedService) {
-      for (const invoice of filteredInvoices) {
-        for (const item of invoice.invoiceItems) {
-          if (item.serviceId === selectedService.id) {
-            filteredInvoiceItems.push(item);
-          }
-        }
-      }
+    } else {
+      const matchingServiceIds = new Set(
+        services
+          .filter((s) => {
+            if (selectedService) return s.id === selectedService.id;
+            if (selectedCategoryId) return s.categoryId === selectedCategoryId;
+            return false;
+          })
+          .map((s) => s.id),
+      );
 
       let totalMaterialCost = 0;
       let totalLaborCost = 0;
 
-      filteredInvoiceItems.forEach((item: any) => {
-        if (item.labor) {
-          totalLaborCost +=
-            item.labor.hours * item.labor.charge - item.labor.discount;
+      for (const invoice of filteredInvoices) {
+        for (const item of invoice.invoiceItems) {
+          if (!item.serviceId || !matchingServiceIds.has(item.serviceId))
+            continue;
+          if (item.labor) {
+            totalLaborCost +=
+              Number(item.labor.hours ?? 0) * Number(item.labor.charge ?? 0) -
+              Number(item.labor.discount ?? 0);
+          }
+          for (const material of item.materials) {
+            totalMaterialCost +=
+              Number(material.quantity ?? 0) * Number(material.sell ?? 0) -
+              Number(material.discount ?? 0);
+          }
         }
+      }
 
-        item.materials.forEach((material: any) => {
-          const materialCost =
-            material.quantity * material.sell - material.discount;
-          totalMaterialCost += materialCost;
-        });
-      });
-      filteredRevenue = filteredRevenue + (totalMaterialCost + totalLaborCost);
-    } else {
-      filteredRevenue = 0;
+      filteredRevenue = totalMaterialCost + totalLaborCost;
     }
   }
 

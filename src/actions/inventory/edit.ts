@@ -23,6 +23,7 @@ export async function editProduct(
         where: {
           name,
           companyId,
+          type: otherFields.type,
           NOT: { id },
         },
       });
@@ -30,7 +31,10 @@ export async function editProduct(
       if (existingProduct) {
         throw {
           type: "error",
-          message: "Same name product already exists",
+          message:
+            otherFields.type === "Supply"
+              ? "Same name supply already exists"
+              : "Same name product already exists",
           field: "productName",
         };
       }

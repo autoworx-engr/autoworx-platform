@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { todayInTimezone } from "@/utils/todayInTimezone";
 
 type DatePickerFieldProps = {
   value?: string;
@@ -35,6 +36,8 @@ type DatePickerFieldProps = {
   yearsBack?: number;
   /** Years after the current one to offer in the year dropdown. */
   yearsForward?: number;
+  /** IANA zone that decides which day counts as today. Defaults to the browser. */
+  timezone?: string;
 };
 
 const FORMAT = "yyyy-MM-dd";
@@ -61,6 +64,7 @@ export function DatePickerField({
   // Widen per call site if a field ever needs distant years (a birth date, say).
   yearsBack = 5,
   yearsForward = 10,
+  timezone,
 }: DatePickerFieldProps) {
   const [open, setOpen] = useState(false);
 
@@ -77,9 +81,11 @@ export function DatePickerField({
     onChange?.(next);
   };
 
-  // Stretch the dropdown range to cover an already-selected date and any
-  // min/max bounds, so editing an older record can still show its own year.
-  const currentYear = new Date().getFullYear();
+  // Anchored on the company's day, not the viewer's, so the calendar marks the
+  // right "today" for a user sitting in another timezone.
+  const today = todayInTimezone(timezone);
+
+  const currentYear = today.getFullYear();
   const boundYears = [selected, minDate, maxDate]
     .filter((d): d is Date => !!d)
     .map((d) => d.getFullYear());
@@ -152,7 +158,8 @@ export function DatePickerField({
             captionLayout="dropdown"
             startMonth={startMonth}
             endMonth={endMonth}
-            defaultMonth={selected}
+            defaultMonth={selected ?? today}
+            today={today}
             autoFocus
           />
         </PopoverContent>

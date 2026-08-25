@@ -191,13 +191,13 @@ export default function EstimateCard({
               </span>
             </div>
             <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Tax</span>
+              <span>Tax ({estimate.taxRate.toFixed(2)}%)</span>
               <span className="font-medium text-slate-700 dark:text-slate-300">
                 ${estimate.taxAmount.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Service Fee</span>
+              <span>Service Fee ({estimate.serviceFeeRate.toFixed(2)}%)</span>
               <span className="font-medium text-slate-700 dark:text-slate-300">
                 ${estimate.serviceFee.toLocaleString()}
               </span>

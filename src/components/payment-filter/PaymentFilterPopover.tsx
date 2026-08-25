@@ -78,7 +78,7 @@ export default function PaymentFilterPopover({
             panelClassName,
           )}
         >
-          <div className="mt-2 max-h-[70vh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-slate-900/50 sm:w-72 lg:w-[400px]">
+          <div className="mt-2 max-h-[70vh] w-[min(18rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-slate-900/50 sm:w-72 lg:w-[400px]">
             <div className="mb-6">
               <div className="font-Inter mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Payment Method

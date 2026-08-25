@@ -1,6 +1,6 @@
 "use client";
 
-import { getCompanyById } from "@/actions/settings/getCompnayById";
+import { getCompanyInfoForLeadForm } from "@/actions/lead/getCompanyInfoForLeadForm";
 import CarLoading from "@/components/common/CarLoading";
 import ZapForm from "@/components/ZapForm";
 import { errorToast } from "@/lib/toast";
@@ -36,7 +36,7 @@ export default function LeadsClient() {
       }
 
       try {
-        const result = await getCompanyById({ companyId });
+        const result = await getCompanyInfoForLeadForm({ companyId });
 
         setCompany({
           name: result?.name ?? "",

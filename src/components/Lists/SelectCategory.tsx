@@ -22,6 +22,7 @@ export default function SelectCategory({
   className,
   allowEdit = false,
   isClear = false,
+  usePortal = false,
 }: {
   categoryData?: Category | null;
   onCategoryChange: (category: Category | null) => void;
@@ -32,8 +33,8 @@ export default function SelectCategory({
   onBlur?: () => void;
   className?: string;
   allowEdit?: boolean;
-  /** Show a "Clear Category" action so the selection can be removed. */
   isClear?: boolean;
+  usePortal?: boolean;
 }) {
   const { categories } = useListsStore();
   const [error, setError] = useState<string | null>();
@@ -220,6 +221,7 @@ export default function SelectCategory({
         selectedItem={category}
         setSelectedItem={setCategory}
         className={className}
+        usePortal={usePortal}
         footer={
           isClear && category ? (
             <ClearSelectionButton

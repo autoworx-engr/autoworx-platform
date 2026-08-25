@@ -11,6 +11,8 @@ import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
 import { DatePickerField } from "@/components/ui/DatePickerField";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { todayInTimezone } from "@/utils/todayInTimezone";
 import { fUsDate } from "@/utils/formatDate";
 import {
   useCreateGiftCardPromo,
@@ -254,6 +256,8 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
     useUpdateGiftCardPromo();
   const { mutateAsync: deleteGiftCardPromo, isPending: isDeletingPromo } =
     useDeleteGiftCardPromo();
+
+  const timezone = useCompanyTimezone();
 
   // Designs
   const [designs, setDesigns] = useState<CardDesign[]>(INITIAL_DESIGNS);
@@ -1191,9 +1195,10 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                       Expiry Date
                     </label>
                     <DatePickerField
+                      timezone={timezone}
                       value={promoExpireDate}
                       onChange={setPromoExpireDate}
-                      minDate={new Date()}
+                      minDate={todayInTimezone(timezone)}
                       placeholder="Select date"
                     />
                   </div>

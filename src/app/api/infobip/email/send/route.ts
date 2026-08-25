@@ -1,6 +1,7 @@
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
+import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
@@ -308,12 +309,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }
       }
 
-      await updateNewEmailChatTrack({
+      const track = await updateNewEmailChatTrack({
         clientId: parseInt(recipient),
         emailLastMessage: text,
         lastEmailBy: "Company",
         attachments: processedAttachments,
       });
+
+      try {
+        await sendClientMailOrSMSNotify(company.id, track);
+      } catch (error) {
+        console.error("infobip/email/send: client-notify failed", error);
+      }
 
       MailData = await db.mailgunEmail.findFirst({
         where: { id: mailData.id },

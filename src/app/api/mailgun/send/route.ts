@@ -1,6 +1,7 @@
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
+import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
@@ -202,11 +203,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           messageId: response.id,
         },
       });
-      await updateNewEmailChatTrack({
+      const track = await updateNewEmailChatTrack({
         clientId: parseInt(recipient),
         emailLastMessage: text || "",
         lastEmailBy: "Company",
       });
+
+      try {
+        await sendClientMailOrSMSNotify(company.id, track);
+      } catch (error) {
+        console.error("mailgun/send: client-notify failed", error);
+      }
       for (const file of attachments) {
         const formData2 = new FormData();
         formData2.append("file", file!);

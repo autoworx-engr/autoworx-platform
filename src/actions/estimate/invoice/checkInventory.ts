@@ -16,11 +16,8 @@ export type InventoryCheckResult = {
   shortages: InventoryShortage[];
 };
 
-// Only the fields getProductWithQuantity actually reads — callers pass either
-// saved Prisma rows or the in-memory estimate items.
 export type MaterialLike = {
   productId?: number | null;
-  // Decimal on saved rows, plain numbers in the in-memory store.
   quantity?: unknown;
   sell?: unknown;
   name?: string | null;
@@ -59,8 +56,6 @@ export async function checkInventoryShortages({
       select: { id: true, name: true, quantity: true },
     });
 
-    // An invoice has already taken its materials out of stock, so only the
-    // difference against what is being saved hits the inventory.
     const savedMaterials =
       rule === "update" && invoiceId
         ? await db.material.findMany({
@@ -108,8 +103,6 @@ export async function checkInventoryShortages({
 
     return { sufficient: shortages.length === 0, shortages };
   } catch {
-    // A failed check must not block the save — the write path still enforces
-    // the same rules, so the worst case is the old "not enough stock" error.
     return enough;
   }
 }
@@ -146,18 +139,18 @@ export async function checkInventoryForConversion(
 
 /**
  * Shortages for saving from the create/edit screen, where the materials live in
- * the browser store. The rule follows what create.ts / update.ts will actually
- * do: a saved invoice re-saves against the "update" rule, while anything else
- * only moves stock once it lands as an invoice.
+ * the browser store. A saved invoice re-saves against the "update" rule;
+ * everything else — an estimate save included, even though it only reserves the
+ * stock on paper — is measured against what the inventory holds right now, so
+ * the shortage can be warned about before the estimate is written.
  */
 export async function checkInventoryForInvoiceSave({
   invoiceId,
   materials,
-  targetType,
 }: {
   invoiceId?: string;
   materials: (MaterialLike | null)[];
-  targetType: InvoiceType;
+  targetType?: InvoiceType;
 }): Promise<InventoryCheckResult> {
   const enough: InventoryCheckResult = { sufficient: true, shortages: [] };
 
@@ -172,8 +165,6 @@ export async function checkInventoryForInvoiceSave({
     if (invoice?.type === InvoiceType.Invoice) {
       return checkInventoryShortages({ invoiceId, materials, rule: "update" });
     }
-
-    if (targetType !== InvoiceType.Invoice) return enough;
 
     return checkInventoryShortages({ materials, rule: "conversion" });
   } catch {

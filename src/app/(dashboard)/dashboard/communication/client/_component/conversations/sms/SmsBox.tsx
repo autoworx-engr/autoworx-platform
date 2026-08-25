@@ -210,7 +210,7 @@ export default function SmsBox({
       {/* scrollable area */}
       <div
         ref={containerRef}
-        className="h-full w-full overflow-y-auto px-2 py-2"
+        className="h-full w-full overflow-y-auto overflow-x-hidden px-2 py-2"
       >
         {/* TOP SENTINEL */}
         <div

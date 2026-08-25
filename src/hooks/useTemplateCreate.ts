@@ -81,7 +81,7 @@ export function useTemplateCreate(type: InvoiceType) {
                   cost: Number(material?.cost) || 0,
                   sell: Number(material?.sell) || 0,
                   discount: Number(material?.discount) || 0,
-                  quantity: material?.quantity?.toString() || "0",
+                  quantity: Number(material?.quantity) || 0,
                 }))
               : null,
             labor: item.labor
@@ -136,7 +136,7 @@ export function useTemplateCreate(type: InvoiceType) {
             cost: Number(material?.cost) || 0,
             sell: Number(material?.sell) || 0,
             discount: Number(material?.discount) || 0,
-            quantity: material?.quantity?.toString() || "0",
+            quantity: Number(material?.quantity) || 0,
           })),
           labor: item.labor
             ? {

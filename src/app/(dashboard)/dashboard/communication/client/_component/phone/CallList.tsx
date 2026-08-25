@@ -1,6 +1,7 @@
 "use client";
 
 import { MISSED_STATUSES, isCallStale } from "@/lib/twilio/callDisplay";
+import moment from "moment";
 import { useEffect, useRef } from "react";
 import VoiceNotePlayer from "../conversations/sms/VoiceNotePlayer";
 import { useCallListRefresh } from "./useCallListRefresh";
@@ -49,10 +50,9 @@ export const CallList = ({
     }
   }, [data]);
 
-  const formatDateTime = (date: string | Date) => {
-    const d = new Date(date);
-    return d.toLocaleString(); // e.g., "5/13/2025, 2:45:10 PM"
-  };
+  // e.g., "5/13/2025, 2:45:10 PM"
+  const formatDateTime = (date: string | Date) =>
+    moment(date).format("MM/DD/YYYY, h:mm:ss A");
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -169,7 +169,7 @@ export const CallList = ({
                   {missedLabel}
                 </div>
               ) : call.playableUrl ? (
-                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
+                <div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
                   <VoiceNotePlayer
                     src={call.playableUrl}
                     isOutgoing={isSentByMe}

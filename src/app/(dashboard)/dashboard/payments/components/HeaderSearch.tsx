@@ -42,8 +42,8 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
             onChange={(e) => setFilter({ search: e.target.value })}
           />
         </div>
-        <div className="z-50 flex w-full min-w-0 flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4 lg:w-auto">
-          <div className="z-50 min-w-0 flex-1 sm:flex-none">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4 lg:w-auto">
+          <div className="min-w-0 flex-1 sm:flex-none">
             <DateRange
               dateRange={dateRange}
               onOk={(start, end) => setFilter({ dateRange: [start, end] })}

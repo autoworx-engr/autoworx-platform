@@ -10,7 +10,7 @@ export const useDeleteServiceMaintenanceAutomationRule = () => {
     mutationFn: async (id: string) =>
       await deleteServiceMaintenanceAutomationRule(id),
     onSuccess: () => {
-      successToast("ServiceMaintenance automation rule deleted successfully!");
+      successToast("Service Maintenance automation rule deleted successfully!");
       queryClient.invalidateQueries({
         queryKey: ["service-maintenance-automation"],
       });

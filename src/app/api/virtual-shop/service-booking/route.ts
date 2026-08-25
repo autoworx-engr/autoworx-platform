@@ -20,6 +20,7 @@ import {
   calcMaterialSubtotal,
   mapInvoiceItemsForCreate,
 } from "@/services/shopServiceInvoiceItems";
+import { clientNameFilter } from "@/app/(dashboard)/dashboard/task/_utils/clientNameSearch";
 
 import z from "zod";
 
@@ -520,15 +521,9 @@ export async function GET(req: Request) {
 
     if (search) {
       const searchNum = parseInt(search, 10);
+      const nameFilter = clientNameFilter(search);
       baseWhereClause.OR = [
-        {
-          client: {
-            OR: [
-              { firstName: { contains: search, mode: "insensitive" } },
-              { lastName: { contains: search, mode: "insensitive" } },
-            ],
-          },
-        },
+        ...(nameFilter ? [{ client: nameFilter }] : []),
         {
           vehicle: {
             OR: [
@@ -721,7 +716,7 @@ export async function GET(req: Request) {
         data: shopBookings.map((sb) => {
           const subtotal = Number(sb.invoice?.subtotal || 0);
           const taxRate = Number(sb.invoice?.tax || 0);
-          const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
+          const serviceFeeRate = Number(sb.invoice?.serviceFee || 0);
           const grandTotal = Number(sb.invoice?.grandTotal || 0);
           const tipAmount = (sb.invoice?.payments || []).reduce(
             (sum, p) => sum + Number(p.tip || 0),
@@ -733,6 +728,7 @@ export async function GET(req: Request) {
             sb.invoice?.invoiceItems || [],
           );
           const taxAmount = (materialSubtotal * taxRate) / 100;
+          const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
           const { shop, ...rest } = sb;
           const isDepositEnabled = Boolean(

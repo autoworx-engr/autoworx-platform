@@ -10,7 +10,7 @@ export const useUpdateServiceMaintenanceAutomationRule = () => {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       updateServiceMaintenanceAutomationRule(id, data),
     onSuccess: () => {
-      successToast("ServiceMaintenance automation rule updated successfully!");
+      successToast("Service Maintenance automation rule updated successfully!");
       queryClient.invalidateQueries({
         queryKey: ["service-maintenance-automation"],
       });

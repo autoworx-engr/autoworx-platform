@@ -72,6 +72,7 @@ const EXCLUDED_HREF_PREFIXES = [
   "/dashboard/communication/photo",
   "/dashboard/estimate/photo",
   "/dashboard/settings/my-account/leave-requests",
+  "/clickup/reporting",
 ];
 
 // Keyword stopwords — short/common words that add noise to search

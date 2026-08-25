@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type PaymentMethod =
   | "Card"
   | "Cash"
-  | "Cheque"
+  | "Check"
   | "Other"
   | "All"
   | "Deposit"

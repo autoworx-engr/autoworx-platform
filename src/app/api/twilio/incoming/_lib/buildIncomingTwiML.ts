@@ -1,4 +1,5 @@
 import { twiml } from "twilio";
+import { INCOMING_DIAL_SUFFIXES, baseIdentity } from "@/lib/twilio/identity";
 
 type DialAttributes = Parameters<twiml.VoiceResponse["dial"]>[0];
 
@@ -54,8 +55,6 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
         timeout: 30,
         answerOnBridge: true,
         action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
-        // Play a ringback tone to the original caller while the forwarding
-        // number rings, so they don't hear silence (same fix as outbound PSTN).
         ringTone: "us",
         ...recordingOptions,
       },
@@ -69,22 +68,21 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
       ...recordingOptions,
     });
 
-    // Twilio Client identity cannot contain '+' or other special chars — normalize.
-    const clientIdentity = twilioPhoneNumber.replace(/[^a-zA-Z0-9_\-.~]/g, "");
+    const clientIdentity = baseIdentity(twilioPhoneNumber);
 
     const callerName =
       caller.firstName && caller.lastName
         ? `${caller.firstName} ${caller.lastName}`.trim()
         : caller.firstName || caller.lastName || caller.fallbackName;
 
-    const clientDial = dial.client(clientIdentity);
-    clientDial.parameter({ name: "ClientName", value: callerName });
-    clientDial.parameter({ name: "ClientId", value: caller.id.toString() });
-    clientDial.parameter({ name: "ParentCallSid", value: callId });
-    // Only forward a real avatar — the default placeholder path isn't a usable
-    // image on the mobile client, which falls back to a letter avatar instead.
-    if (caller.photo && caller.photo !== "/images/default.png") {
-      clientDial.parameter({ name: "ClientImage", value: caller.photo });
+    for (const suffix of INCOMING_DIAL_SUFFIXES) {
+      const clientDial = dial.client(`${clientIdentity}${suffix}`);
+      clientDial.parameter({ name: "ClientName", value: callerName });
+      clientDial.parameter({ name: "ClientId", value: caller.id.toString() });
+      clientDial.parameter({ name: "ParentCallSid", value: callId });
+      if (caller.photo && caller.photo !== "/images/default.png") {
+        clientDial.parameter({ name: "ClientImage", value: caller.photo });
+      }
     }
   }
 

@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 
 const SPEEDS = [0.5, 1, 1.5, 2];
 
+// Download row + "Speed" label + one row per speed, plus the menu's own padding.
+const MENU_HEIGHT = 190;
+
 type Props = {
   downloadUrl: string;
   fileName: string;
@@ -21,6 +24,7 @@ export default function AudioOptionsMenu({
   tone = "dark",
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,11 +36,22 @@ export default function AudioOptionsMenu({
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
+  // The player lives inside a scrolling call list, so a menu that always
+  // opens downward is unreachable for the calls near the bottom.
+  const toggleOpen = () => {
+    setOpen((isOpen) => {
+      if (isOpen) return false;
+      const rect = menuRef.current?.getBoundingClientRect();
+      if (rect) setDropUp(window.innerHeight - rect.bottom < MENU_HEIGHT);
+      return true;
+    });
+  };
+
   return (
     <div className="relative flex-shrink-0" ref={menuRef}>
       <button
         type="button"
-        onClick={() => setOpen((isOpen) => !isOpen)}
+        onClick={toggleOpen}
         aria-label="Recording options"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -52,7 +67,9 @@ export default function AudioOptionsMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-8 z-20 w-36 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+          className={`absolute right-0 z-50 w-36 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg ${
+            dropUp ? "bottom-8" : "top-8"
+          }`}
         >
           <a
             href={downloadUrl}

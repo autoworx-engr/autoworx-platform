@@ -50,7 +50,7 @@ export default function SendSms({
   companyId,
   canUseSms = true,
 }: TProps) {
-  const { clientList, setClientList } = clientListStore();
+  const bumpClientToTop = clientListStore((state) => state.bumpClientToTop);
   const { mutate, isSuccess, isPending } = useSmsSendMutation(clientId);
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
@@ -202,18 +202,13 @@ export default function SendSms({
     setFiles([]);
     setTimeout(() => adjustTextareaHeight(), 0);
 
+    bumpClientToTop(clientId);
+
     try {
       mutate(optimisticMessage);
 
       if (isSuccess) {
         await updateFirstContactTimeClient(clientId);
-
-        // Push this client to the top
-        const currentClient = clientList?.find((c) => c.id === clientId);
-        const filtered = clientList?.filter((c) => c.id !== clientId);
-        if (currentClient) {
-          setClientList([currentClient, ...filtered]);
-        }
       }
     } catch (err) {
       console.error("🚨 Send SMS Error:", err);

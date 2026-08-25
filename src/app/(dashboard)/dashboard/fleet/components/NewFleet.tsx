@@ -14,6 +14,7 @@ import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
+import { isValidEmail, normalizeEmail } from "@/utils/email";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
 import { CircleUserRound, PencilLineIcon } from "lucide-react";
@@ -51,7 +52,7 @@ export default function NewFleet({
   const [contactName, setContactName] = useState(
     fleet?.fleet?.contactName ?? "",
   );
-  const [email, setEmail] = useState(fleet?.email ?? "");
+  const [email, setEmail] = useState(normalizeEmail(fleet?.email ?? ""));
   const [address, setAddress] = useState(fleet?.address ?? "");
   const [city, setCity] = useState(fleet?.city ?? "");
   const [state, setState] = useState(fleet?.state ?? "");
@@ -64,7 +65,7 @@ export default function NewFleet({
     if (isEdit && fleet && open) {
       setFleetName(fleet?.fleet?.fleetName ?? "");
       setContactName(fleet?.fleet?.contactName ?? "");
-      setEmail(fleet?.email ?? "");
+      setEmail(normalizeEmail(fleet?.email ?? ""));
       setAddress(fleet?.address ?? "");
       setCity(fleet?.city ?? "");
       setState(fleet?.state ?? "");
@@ -74,8 +75,6 @@ export default function NewFleet({
         fleet ? fleet?.fleet!.preferredPaymentTerm : null,
       );
       setZip(fleet?.zip ?? "");
-      // Re-read on every open: closing the modal resets the form, so without
-      // this the tag stayed blank on the second open even though it was saved.
       setTag(fleet?.tag ?? undefined);
     }
   }, [isEdit, fleet, open]);
@@ -104,6 +103,13 @@ export default function NewFleet({
       showError({
         field: "email",
         message: "Email is required.",
+      });
+      return;
+    }
+    if (!isValidEmail(email)) {
+      showError({
+        field: "email",
+        message: "Please enter a valid email address.",
       });
       return;
     }
@@ -148,7 +154,7 @@ export default function NewFleet({
       res = await editFleet({
         fleetName,
         contactName,
-        email,
+        email: normalizeEmail(email),
         mobile: phone,
         countryCode: countryIsoCode,
         address,
@@ -165,7 +171,7 @@ export default function NewFleet({
       res = await addFleet({
         fleetName,
         contactName,
-        email,
+        email: normalizeEmail(email),
         mobile: phone,
         countryCode: countryIsoCode,
         address,
@@ -366,10 +372,23 @@ export default function NewFleet({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="email"
+              type="email"
               label="Email Address"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                const value = normalizeEmail(e.target.value);
+                setEmail(value);
+
+                if (value && !isValidEmail(value)) {
+                  showError({
+                    field: "email",
+                    message: "Please enter a valid email address.",
+                  });
+                } else {
+                  clearError();
+                }
+              }}
             />
             <div>
               <PhoneInput

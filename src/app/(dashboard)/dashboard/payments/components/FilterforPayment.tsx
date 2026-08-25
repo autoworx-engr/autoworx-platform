@@ -14,7 +14,7 @@ const PAYMENT_METHOD_OPTIONS: PaymentMethod[] = [
   "All",
   "Cash",
   "Card",
-  "Cheque",
+  "Check",
   "Deposit",
   "Other",
   "Refund",
