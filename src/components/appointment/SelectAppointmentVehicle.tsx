@@ -153,6 +153,16 @@ export function SelectAppointmentVehicle({
                 </button>
               }
               onAdd={(vehicle: Vehicle) => {
+                queryClient.setQueryData(
+                  queryKeys.vehicleByClientId(Number(clientId)),
+                  (oldVehicles: Vehicle[] | undefined) => {
+                    const vehicles = oldVehicles ?? [];
+                    return vehicles.some((v) => v.id === vehicle.id)
+                      ? vehicles
+                      : [...vehicles, vehicle];
+                  },
+                );
+
                 if (pathname.includes("/dashboard/client")) {
                   return;
                 }
@@ -161,14 +171,6 @@ export function SelectAppointmentVehicle({
                 useListsStore.setState(() => ({
                   newAddedVehicle: vehicle,
                 }));
-                queryClient.setQueryData(
-                  queryKeys.vehicleByClientId(Number(clientId)),
-                  (oldVehicle: Vehicle[]) => {
-                    return oldVehicle && oldVehicle.length > 0
-                      ? [...oldVehicle, vehicle]
-                      : [];
-                  },
-                );
                 vehicle && setOpenDropdown && setOpenDropdown(false);
               }}
               setIsAppointmentModalOpen={setIsAppointmentModalOpen}
