@@ -28,6 +28,7 @@ export async function deleteVehicleColor(
       data: null,
     };
   } catch (err) {
+    console.error("deleteVehicleColor error:", err);
     return errorHandler(err);
   }
 }
