@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/cn";
 import { Category, Service } from "@prisma/client";
 import { Pagination } from "antd";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -25,12 +26,15 @@ export default function CannedServices({
   page,
   take,
   categories,
+  compact = false,
 }: {
   services: (Service & { category: Category })[];
   total: number;
   page: number;
   take: number;
   categories: Category[];
+  /** Rendered inside the side-by-side desktop split, so horizontal room is halved. */
+  compact?: boolean;
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -88,22 +92,37 @@ export default function CannedServices({
   };
 
   return (
-    <div ref={containerRef} className="h-full w-full md:px-4 flex flex-col">
-      <section className="relative z-20 pb-4 border-b border-gray-200">
+    <div
+      ref={containerRef}
+      className={cn(
+        "flex h-full w-full min-w-0 flex-col",
+        compact && "lg:pl-4",
+      )}
+    >
+      <section className="relative z-20 border-b border-gray-200 pb-4">
         <div className="flex items-center gap-x-4">
-          <h3 className="text-2xl font-extrabold text-gray-800">
+          <h3 className="text-xl font-extrabold text-gray-800 sm:text-2xl">
             Canned Services
           </h3>
         </div>
-        {/* Updated layout to match Canned Labor: Search, Filter (Icon), Add Service (Button) on one line */}
-        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between gap-y-3">
-          <div className="flex-1">
+        {/* Search + filter + add button, matching Canned Labor. In the split view
+            the column is only ~half as wide, so the row collapses later. */}
+        <div
+          className={cn(
+            "mt-4 flex flex-col gap-3",
+            compact
+              ? "2xl:flex-row 2xl:items-center 2xl:justify-between"
+              : "sm:flex-row sm:items-center sm:justify-between",
+          )}
+        >
+          <div className="min-w-0 flex-1">
             <FilterBySearchBox
               searchText={serviceSearch as string}
               paramKey="serviceSearch"
+              className="sm:min-w-0"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
             <CannedFilterBySelection
               selectedItem={selectedCategory}
               items={uniqueCategories}
@@ -112,15 +131,17 @@ export default function CannedServices({
               closeModal={closeModal}
               activeModal={activeModal}
               toggleModal={toggleModal}
+              className="sm:w-40 xl:w-44"
             />
             <NewService
               newButton={
                 <button
-                  className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] w-full md:min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
+                  className="w-full shrink-0 whitespace-nowrap rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] px-4 py-2.5 text-sm font-medium text-white shadow-indigo-500/30
+                transition-all duration-200
                 hover:-translate-y-0.5 hover:scale-[1.02]
+                hover:shadow-xl hover:shadow-indigo-500/40
                 active:translate-y-0 active:scale-100
-                transition-all duration-200"
+                sm:w-auto"
                 >
                   + Add Service
                 </button>
@@ -131,19 +152,19 @@ export default function CannedServices({
       </section>
       {/* Desktop View */}
       <div className="hidden flex-1 h-full md:block mt-4 border border-gray-200">
-        <Table className="border-separate border-spacing-0">
+        <Table className="min-w-[480px] border-separate border-spacing-0">
           <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
+              <TableHead className="sticky top-0 z-10 whitespace-nowrap border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
                 Service Name
               </TableHead>
-              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
+              <TableHead className="sticky top-0 z-10 whitespace-nowrap border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
                 Category
               </TableHead>
-              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
+              <TableHead className="sticky top-0 z-10 whitespace-nowrap border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
                 Description
               </TableHead>
-              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
+              <TableHead className="sticky top-0 z-10 whitespace-nowrap border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
                 Actions
               </TableHead>
             </TableRow>
@@ -189,7 +210,7 @@ export default function CannedServices({
         )}
       </div>
       {showPagination && (
-        <div className="hidden h-10 justify-end lg:flex flex-shrink-0 mt-4">
+        <div className="mt-4 hidden flex-shrink-0 justify-end overflow-x-auto lg:flex">
           <Pagination
             className="custom-pagination"
             current={page}
@@ -198,12 +219,13 @@ export default function CannedServices({
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
+            size="small"
           />
         </div>
       )}
       {/* Mobile Pagination */}
       {showPagination && (
-        <div className="flex justify-center lg:hidden flex-shrink-0 mt-4">
+        <div className="mt-4 flex flex-shrink-0 justify-center overflow-x-auto lg:hidden">
           <Pagination
             className="custom-pagination"
             current={page}
@@ -212,6 +234,7 @@ export default function CannedServices({
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
+            size="small"
           />
         </div>
       )}
