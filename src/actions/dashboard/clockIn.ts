@@ -18,8 +18,6 @@ export async function clockIn({ timezone }: { timezone: string }) {
         companyId: user?.companyId,
         clockIn: now,
         timezone,
-        createdAt: now,
-        updatedAt: now,
       },
     });
     console.log("Clock-in record created:", clockedIn);

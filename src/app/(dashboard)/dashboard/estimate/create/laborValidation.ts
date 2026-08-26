@@ -20,6 +20,8 @@ export type LaborFieldErrors = Partial<Record<LaborField, string>>;
 
 export const LABOR_NAME_MAX_LENGTH = 50;
 
+export const MAX_LABOR_VALUE = 99999999;
+
 const NUMERIC_FIELDS = [
   { key: "hours", label: "No. of Hours" },
   { key: "charge", label: "$/hr" },

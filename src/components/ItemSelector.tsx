@@ -173,7 +173,10 @@ export default function ItemSelector<T>({
                 "relative flex min-h-11 w-full items-center justify-between gap-2 rounded-lg bg-gray-100/40 px-4 shadow-sm shadow-black/20 ring-1 ring-inset ring-slate-200",
               )}
             >
-              <p className="truncate text-sm font-semibold text-slate-700">
+              <p
+                title={(selected as any)[display]}
+                className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700"
+              >
                 {/* @ts-ignore */}
                 {selected[display]}
               </p>
@@ -219,7 +222,10 @@ export default function ItemSelector<T>({
             align="start"
             sideOffset={-44}
             className="z-50 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
-            style={{ minWidth: "var(--radix-popper-anchor-width)" }}
+            style={{
+              width: "var(--radix-popper-anchor-width)",
+              maxWidth: "var(--radix-popper-anchor-width)",
+            }}
           >
             {/* Search Header */}
             <div className="relative border-b border-slate-100 bg-slate-50/50 p-2">
@@ -256,7 +262,8 @@ export default function ItemSelector<T>({
                   <button
                     key={i}
                     type="button"
-                    className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-primary/10 hover:text-primary"
+                    title={(item as any)[display]}
+                    className="block w-full cursor-pointer truncate rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-primary/10 hover:text-primary"
                     onClick={() => {
                       setSelected(item);
                       onSelect && onSelect(item);

@@ -141,7 +141,6 @@ export async function POST(req: NextRequest) {
       },
       data: {
         clockOut: now,
-        updatedAt: now,
       },
       include: {
         ClockBreak: true,
@@ -161,7 +160,6 @@ export async function POST(req: NextRequest) {
         },
         data: {
           breakEnd: now,
-          updatedAt: now,
         },
       });
     }

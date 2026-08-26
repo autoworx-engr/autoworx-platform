@@ -125,6 +125,15 @@ export function PlaybookCard({
               onConfirm={() => onDelete?.()}
               okText="Yes"
               cancelText="No"
+              overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+              okButtonProps={{
+                className:
+                  "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+              }}
+              cancelButtonProps={{
+                className:
+                  "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+              }}
             >
               <div className="flex gap-2 mr-2 cursor-pointer">
                 <Trash2 className="mr-2 h-4 w-4" />

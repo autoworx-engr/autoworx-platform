@@ -1,5 +1,6 @@
 "use client";
 import { useDebounce } from "@/hooks/useDebounce";
+import { cn } from "@/lib/cn";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -7,11 +8,13 @@ type TProps = {
   searchText: string;
   paramKey?: string;
   placeholder?: string;
+  className?: string;
 };
 export default function FilterBySearchBox({
   searchText,
   paramKey,
   placeholder,
+  className,
 }: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
@@ -73,7 +76,12 @@ export default function FilterBySearchBox({
   };
 
   return (
-    <div className="relative w-full sm:min-w-[300px] max-w-[693px]">
+    <div
+      className={cn(
+        "relative w-full sm:min-w-[300px] max-w-[693px]",
+        className,
+      )}
+    >
       <Search
         size={20}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
