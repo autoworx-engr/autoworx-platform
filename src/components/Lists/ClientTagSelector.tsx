@@ -12,6 +12,7 @@ import { Tag } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { errorToast, successToast } from "@/lib/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,6 +90,9 @@ export function ClientTagSelector({
       if (tag?.id === id) {
         setTag(undefined!);
       }
+      successToast("Tag deleted successfully");
+    } else {
+      errorToast(res.message || "Failed to delete tag");
     }
   }
 
@@ -186,7 +190,11 @@ export function ClientTagSelector({
                     description="Are you sure you want to remove this tag?"
                     okText="Delete"
                     cancelText="Cancel"
-                    onConfirm={() => handleDelete(tagItem.id)}
+                    onConfirm={async (e) => {
+                      e?.stopPropagation();
+                      await handleDelete(tagItem.id);
+                    }}
+                    onCancel={(e) => e?.stopPropagation()}
                     onPopupClick={(e) => e.stopPropagation()}
                     overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
                     okButtonProps={{

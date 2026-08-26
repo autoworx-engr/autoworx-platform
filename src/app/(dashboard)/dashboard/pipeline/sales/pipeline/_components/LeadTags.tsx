@@ -119,13 +119,14 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
                 description="Are you sure you want to remove this tag?"
                 okText="Delete"
                 cancelText="Cancel"
-                onConfirm={() =>
-                  handleRemoveTag({
+                onConfirm={async (e) => {
+                  e?.stopPropagation();
+                  await handleRemoveTag({
                     leadId: lead.id,
                     columnId: lead.columnId!,
                     tagId: leadTag.id,
-                  })
-                }
+                  });
+                }}
                 onPopupClick={(e) => e.stopPropagation()}
                 overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
                 okButtonProps={{

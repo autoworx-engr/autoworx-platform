@@ -17,6 +17,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { Tag, User } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { ChevronUp, Palette, Search, X } from "lucide-react";
+import { errorToast, successToast } from "@/lib/toast";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
@@ -64,9 +65,12 @@ export function EmployeeTagSelector({
   // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(target) &&
+        !target.closest(".ant-popover") &&
+        !target.closest(".ant-popconfirm")
       ) {
         setOpen?.(false);
       }
@@ -87,7 +91,9 @@ export function EmployeeTagSelector({
     const res = await deleteTag(id);
     if (res.type === "success") {
       setTags((prev) => prev.filter((t) => t.id !== id));
-      // setOpen?.(false);
+      successToast("Tag deleted successfully");
+    } else {
+      errorToast(res.message || "Failed to delete tag");
     }
   };
 
@@ -160,7 +166,11 @@ export function EmployeeTagSelector({
                       description="Are you sure you want to remove this tag?"
                       okText="Delete"
                       cancelText="Cancel"
-                      onConfirm={() => handleDeleteTag(tagItem.id)}
+                      onConfirm={async (e) => {
+                        e?.stopPropagation();
+                        await handleDeleteTag(tagItem.id);
+                      }}
+                      onCancel={(e) => e?.stopPropagation()}
                       onPopupClick={(e) => e.stopPropagation()}
                       overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
                       okButtonProps={{

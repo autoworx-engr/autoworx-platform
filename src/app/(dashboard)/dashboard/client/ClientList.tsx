@@ -34,10 +34,11 @@ export default function ClientList({
     totalClients = data?.totalClients || 0;
   }
 
-  const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page ?? 0);
-    if (pageSize) {
-      setPageSize(pageSize);
+  const handlePageChange = (page: number, newPageSize?: number) => {
+    if (newPageSize && newPageSize !== pageSize) {
+      setPageSize(newPageSize);
+    } else {
+      setCurrentPage(page ?? 1);
     }
   };
 

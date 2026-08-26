@@ -12,12 +12,11 @@ import { laborCreateValidationSchema } from "@/validations/schemas/estimate/labo
 import { cn } from "@/lib/cn";
 import {
   LABOR_NAME_MAX_LENGTH,
+  MAX_LABOR_VALUE,
   validateLabor,
   type LaborField,
   type LaborFieldErrors,
 } from "./laborValidation";
-
-const MAX_LABOR_VALUE = 99999999;
 
 export default function LaborCreate() {
   const { categories } = useListsStore();

@@ -15,17 +15,23 @@ export const useClientFilterStore = create<ClientFilterState>((set) => ({
   currentPage: 1,
   pageSize: 50,
   setFilter: ({ search }) =>
-    set((state) => ({
-      search: search ?? state.search,
-    })),
+    set((state) => {
+      if (search !== undefined && search !== state.search) {
+        return { search, currentPage: 1 };
+      }
+      return { search: search ?? state.search };
+    }),
   setCurrentPage: (currentPage) =>
     set((state) => ({
       currentPage: currentPage ?? state.currentPage,
     })),
   setPageSize: (pageSize) =>
-    set((state) => ({
-      pageSize: pageSize ?? state.pageSize,
-    })),
+    set((state) => {
+      if (pageSize !== undefined && pageSize !== state.pageSize) {
+        return { pageSize, currentPage: 1 };
+      }
+      return { pageSize: pageSize ?? state.pageSize };
+    }),
   setClear: () =>
     set((state) => ({
       search: "",

@@ -31,12 +31,12 @@ const CannedMobileTabs = ({
   const [activeTab, setActiveTab] = useState<"labor" | "service">("labor");
 
   return (
-    <div className="lg:hidden">
+    <div className="min-w-0 lg:hidden">
       <div className="mb-4">
         <div className="flex gap-2 border-b border-gray-200">
           <button
             onClick={() => setActiveTab("labor")}
-            className={`flex-1 py-3 px-4 font-semibold text-sm transition-all ${
+            className={`flex-1 whitespace-nowrap px-2 py-3 text-sm font-semibold transition-all sm:px-4 ${
               activeTab === "labor"
                 ? "text-indigo-600 border-b-2 border-indigo-600"
                 : "text-gray-500 hover:text-gray-700"
@@ -46,7 +46,7 @@ const CannedMobileTabs = ({
           </button>
           <button
             onClick={() => setActiveTab("service")}
-            className={`flex-1 py-3 px-4 font-semibold text-sm transition-all ${
+            className={`flex-1 whitespace-nowrap px-2 py-3 text-sm font-semibold transition-all sm:px-4 ${
               activeTab === "service"
                 ? "text-indigo-600 border-b-2 border-indigo-600"
                 : "text-gray-500 hover:text-gray-700"
@@ -57,7 +57,7 @@ const CannedMobileTabs = ({
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 h-full">
+      <div className="flex h-full min-w-0 flex-1 flex-col">
         {activeTab === "labor" ? (
           <CannedLabor
             labors={labors}

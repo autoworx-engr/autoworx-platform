@@ -21,6 +21,7 @@ import { INVOICE_COLORS } from "@/lib/consts";
 import getUser from "@/lib/getUser";
 import { useFormErrorStore } from "@/stores/form-error";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
+import { errorToast, successToast } from "@/lib/toast";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -68,9 +69,12 @@ export function SalesTagSelector({
   // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(target) &&
+        !target.closest(".ant-popover") &&
+        !target.closest(".ant-popconfirm")
       ) {
         setOpen?.(false);
       }
@@ -95,6 +99,9 @@ export function SalesTagSelector({
     const res = await deleteSalesTag(id);
     if (res.type === "success") {
       setTags((prev) => prev.filter((t) => t.id !== id));
+      successToast("Tag deleted successfully");
+    } else {
+      errorToast(res.message || "Failed to delete tag");
     }
   };
 
@@ -164,7 +171,11 @@ export function SalesTagSelector({
                       description="Are you sure you want to remove this tag?"
                       okText="Delete"
                       cancelText="Cancel"
-                      onConfirm={() => handleDeleteTag(tagItem.id)}
+                      onConfirm={async (e) => {
+                        e?.stopPropagation();
+                        await handleDeleteTag(tagItem.id);
+                      }}
+                      onCancel={(e) => e?.stopPropagation()}
                       onPopupClick={(e) => e.stopPropagation()}
                       overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
                       okButtonProps={{

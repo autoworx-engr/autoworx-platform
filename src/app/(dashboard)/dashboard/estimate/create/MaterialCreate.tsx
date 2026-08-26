@@ -20,12 +20,11 @@ import { Plus, X } from "lucide-react";
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 import {
+  MAX_MONEY_VALUE,
   validateMaterial,
   type MaterialField,
   type MaterialFieldErrors,
 } from "./materialValidation";
-
-const MAX_MONEY_VALUE = 99999999;
 
 export type EstimateMaterial = {
   id: number;
@@ -587,6 +586,7 @@ export default function MaterialCreate() {
                     description="Are you sure you want to remove this?"
                     okText="Delete"
                     cancelText="Cancel"
+                    placement="topLeft"
                     onConfirm={() => handleDeleteVendor(vendor.id)}
                     onPopupClick={(e) => e.stopPropagation()}
                     overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"

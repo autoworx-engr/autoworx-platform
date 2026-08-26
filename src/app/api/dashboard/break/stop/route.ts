@@ -94,7 +94,6 @@ export async function POST(req: NextRequest) {
       },
       data: {
         breakEnd: now,
-        updatedAt: now,
       },
     });
 
