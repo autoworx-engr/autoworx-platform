@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getPlatformStripeClient } from "@/lib/platform-billing/stripe/client";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import type Stripe from "stripe";
 
@@ -45,6 +46,16 @@ export async function processPlatformStripeEvent(webhookEvent: {
       await handleInvoiceEvent(
         event.data.object as Stripe.Invoice,
         webhookEvent.id,
+      );
+      break;
+    case "payment_method.attached":
+      await handlePaymentMethodAttached(
+        event.data.object as Stripe.PaymentMethod,
+      );
+      break;
+    case "payment_method.detached":
+      await handlePaymentMethodDetached(
+        event.data.object as Stripe.PaymentMethod,
       );
       break;
     default:
@@ -183,6 +194,68 @@ async function upsertSubscriptionFromStripe(
   }
 }
 
+/**
+ * Keeps PlatformPaymentMethod in sync so the billing UI can show which card
+ * is on file — nothing on the Stripe path wrote this table before, so it was
+ * only ever populated by the legacy Authorize.Net flow.
+ *
+ * Both flows that attach a card here (initial Checkout, and a card update
+ * through the Customer Portal) end with the newly attached card being the one
+ * we bill, so the fresh card becomes default and any previous one is cleared.
+ */
+async function handlePaymentMethodAttached(
+  paymentMethod: Stripe.PaymentMethod,
+) {
+  const stripeCustomerId =
+    typeof paymentMethod.customer === "string"
+      ? paymentMethod.customer
+      : paymentMethod.customer?.id;
+  if (!stripeCustomerId) return;
+
+  const billingCustomer = await db.platformBillingCustomer.findUnique({
+    where: { stripeCustomerId },
+  });
+  if (!billingCustomer) return;
+
+  const card = paymentMethod.card;
+  const expiry = card
+    ? `${String(card.exp_month).padStart(2, "0")}/${card.exp_year}`
+    : null;
+
+  await db.$transaction(async (tx) => {
+    await tx.platformPaymentMethod.updateMany({
+      where: { billingCustomerId: billingCustomer.id, isDefault: true },
+      data: { isDefault: false },
+    });
+    await tx.platformPaymentMethod.upsert({
+      where: { stripePaymentMethodId: paymentMethod.id },
+      update: {
+        cardType: card?.brand ?? null,
+        last4: card?.last4 ?? null,
+        expiry,
+        isDefault: true,
+      },
+      create: {
+        billingCustomerId: billingCustomer.id,
+        stripePaymentMethodId: paymentMethod.id,
+        cardType: card?.brand ?? null,
+        last4: card?.last4 ?? null,
+        expiry,
+        isDefault: true,
+      },
+    });
+  });
+}
+
+async function handlePaymentMethodDetached(
+  paymentMethod: Stripe.PaymentMethod,
+) {
+  // The detached event's `customer` is already null, so match on the id.
+  await db.platformPaymentMethod.deleteMany({
+    where: { stripePaymentMethodId: paymentMethod.id },
+  });
+}
+
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   await db.platformSubscription.updateMany({
     where: { stripeSubscriptionId: subscription.id },
@@ -190,6 +263,38 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       status: PlatformSubscriptionStatus.CANCELED,
       cancelAtPeriodEnd: false,
     },
+  });
+}
+
+/**
+ * Returns the local PlatformSubscription for a Stripe subscription id,
+ * creating it from Stripe first if it doesn't exist yet.
+ *
+ * Stripe fires invoice.paid and customer.subscription.created in the same
+ * burst with no ordering guarantee, and on a brand-new signup invoice.paid
+ * reliably arrives first — before the event that creates this row. Failing
+ * and waiting for the pg-boss retry works, but that retry has a hard 60s
+ * floor plus backoff and polling (~2 minutes observed), during which the
+ * customer sees an empty payment history right after paying. Fetching the
+ * subscription from Stripe here makes this handler self-sufficient, so the
+ * invoice records on the first attempt regardless of arrival order.
+ */
+async function resolveSubscriptionRow(
+  stripeSubscriptionId: string,
+  webhookEventDbId: number,
+) {
+  const existing = await db.platformSubscription.findUnique({
+    where: { stripeSubscriptionId },
+  });
+  if (existing) return existing;
+
+  const stripe = getPlatformStripeClient();
+  const stripeSubscription =
+    await stripe.subscriptions.retrieve(stripeSubscriptionId);
+  await upsertSubscriptionFromStripe(stripeSubscription, webhookEventDbId);
+
+  return db.platformSubscription.findUnique({
+    where: { stripeSubscriptionId },
   });
 }
 
@@ -209,11 +314,15 @@ async function handleInvoiceEvent(
     return;
   }
 
-  const subscription = await db.platformSubscription.findUnique({
-    where: { stripeSubscriptionId: subscriptionId },
-  });
+  const subscription = await resolveSubscriptionRow(
+    subscriptionId,
+    webhookEventDbId,
+  );
 
   if (!subscription) {
+    // Genuinely unresolvable (e.g. subscription metadata is missing the
+    // companyId we set at checkout) — throw so pg-boss retries and the
+    // failure stays visible in the webhook-events browser.
     throw new Error(
       `PlatformSubscription not found for Stripe subscription: ${subscriptionId}`,
     );

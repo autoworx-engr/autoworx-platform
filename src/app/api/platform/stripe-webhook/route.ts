@@ -12,6 +12,8 @@ const HANDLED_EVENTS = new Set([
   "customer.subscription.deleted",
   "invoice.paid",
   "invoice.payment_failed",
+  "payment_method.attached",
+  "payment_method.detached",
 ]);
 
 export async function POST(req: NextRequest) {

@@ -83,6 +83,17 @@ export async function PATCH(req: NextRequest, props: Params) {
 
     const planId = params.id;
 
+    const existingPlan = await db.platformPlan.findUnique({
+      where: { id: planId },
+      select: { interval: true, trialLengthDays: true },
+    });
+    if (!existingPlan) {
+      return NextResponse.json(
+        { success: false, message: "Plan not found" },
+        { status: 404 },
+      );
+    }
+
     const updates: any = {};
 
     if (name !== undefined) {
@@ -136,6 +147,20 @@ export async function PATCH(req: NextRequest, props: Params) {
           { status: 400 },
         );
       }
+      // Billing cycle is fixed once a plan exists — changing it would desync
+      // the plan from the Stripe Price that existing subscribers are billed
+      // on. The editor UI disables this field and resubmits the current
+      // value, so only an actual change is rejected.
+      if (intervalValue !== existingPlan.interval) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Interval can't be changed after the plan is created. Create a new plan instead.",
+          },
+          { status: 400 },
+        );
+      }
       updates.interval = intervalValue;
     }
 
@@ -150,6 +175,18 @@ export async function PATCH(req: NextRequest, props: Params) {
           {
             success: false,
             message: "Trial length (days) must be a whole number 0 or more",
+          },
+          { status: 400 },
+        );
+      }
+      // Same reasoning as interval: the trial is baked into subscriptions
+      // already created from this plan, so it's fixed after creation.
+      if (trialValue !== existingPlan.trialLengthDays) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Trial length can't be changed after the plan is created. Create a new plan instead.",
           },
           { status: 400 },
         );
