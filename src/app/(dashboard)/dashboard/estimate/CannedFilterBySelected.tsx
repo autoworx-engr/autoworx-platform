@@ -22,6 +22,7 @@ type TProps = {
   closeModal: (modalName: string) => void;
   toggleModal: (modalName: string) => void;
   activeModal: TFilterModalState;
+  className?: string;
 };
 
 export default function CannedFilterBySelection({
@@ -32,6 +33,7 @@ export default function CannedFilterBySelection({
   closeModal,
   activeModal,
   toggleModal,
+  className,
 }: TProps) {
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -86,12 +88,12 @@ export default function CannedFilterBySelection({
   const isModalOpen = activeModal[modalName];
   const filterText = type === "types" ? "Types" : capitalCase(type);
   return (
-    <div className="relative w-full md:w-auto z-10">
+    <div className={cn("relative z-10 w-full", className)}>
       <button
         ref={buttonRef}
         onClick={() => toggleModal(modalName)}
         className={cn(
-          "flex w-full items-center justify-between gap-2 border p-2.5 px-4 text-sm font-medium transition-all duration-200 md:w-48 rounded-lg",
+          "flex w-full items-center justify-between gap-2 rounded-lg border p-2.5 px-3 text-sm font-medium transition-all duration-200",
           selectedItem
             ? "border-indigo-500 text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
             : "border-gray-300 text-gray-600 hover:border-indigo-400 bg-white",
@@ -117,7 +119,7 @@ export default function CannedFilterBySelection({
       {isModalOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 right-0 z-50 flex max-h-56 w-full flex-col overflow-hidden rounded-b-lg border border-t-0 border-gray-300 bg-white shadow-xl md:w-48"
+          className="absolute left-0 right-0 z-50 flex max-h-56 w-full flex-col overflow-hidden rounded-b-lg border border-t-0 border-gray-300 bg-white shadow-xl"
         >
           <div className="flex min-h-0 flex-1 flex-col space-y-1 overflow-y-auto p-3 pb-2">
             {items.map((item) => (
