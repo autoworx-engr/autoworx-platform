@@ -15,7 +15,7 @@ import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/cn";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { VehicleColor } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { ChevronDown, ChevronUp, Search, X, Check } from "lucide-react";
@@ -41,6 +41,14 @@ export default function ColorSelector({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (
+        target?.closest?.(".ant-popover") ||
+        target?.closest?.(".ant-popconfirm")
+      ) {
+        return;
+      }
+
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -87,7 +95,11 @@ export default function ColorSelector({
 
   // Handle color selection
   const handleSelectColor = (color: VehicleColor) => {
-    onSelect(color);
+    if (selectedColor?.id === color.id) {
+      onSelect(null);
+    } else {
+      onSelect(color);
+    }
     setColorOpen(false);
     setSearchQuery("");
     setFilteredColors(colors);
@@ -116,7 +128,20 @@ export default function ColorSelector({
               ? selectedColor.name
               : `Select a ${label.toLowerCase()}`}
           </span>
-          <span className="shrink-0 opacity-60">
+          <span className="shrink-0 opacity-60 flex items-center gap-1">
+            {selectedColor && (
+              <div
+                role="button"
+                tabIndex={0}
+                className="flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 p-0.5 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(null);
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </div>
+            )}
             {colorOpen ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -170,11 +195,15 @@ export default function ColorSelector({
                       <div onClick={(e) => e.stopPropagation()}>
                         <Popconfirm
                           title="Are you sure to delete this color?"
+                          getPopupContainer={() =>
+                            dropdownRef.current || document.body
+                          }
                           onConfirm={async (e) => {
                             e?.stopPropagation();
                             try {
                               const res = await deleteVehicleColor(color.id);
                               if (res.type === "success") {
+                                successToast("Color deleted successfully");
                                 setColors((prev) =>
                                   prev.filter((c) => c.id !== color.id),
                                 );
