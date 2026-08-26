@@ -56,6 +56,11 @@ export default function ReplenishProductForm({
       return;
     }
 
+    if (/\d/.test(unit.trim())) {
+      showError({ message: "Unit cannot contain any numbers." });
+      return;
+    }
+
     const perUnitPrice = parseFloat(price) / Number(quantity);
     const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
 

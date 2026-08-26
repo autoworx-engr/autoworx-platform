@@ -423,7 +423,7 @@ const Leads = ({ salesColumn }: TProps) => {
                   onCancel={() => setDateRange([null, null])}
                 />
               </div>
-              <div className="relative flex-shrink-0 w-[100px] sm:w-auto sm:flex-1">
+              <div className="relative flex-shrink-0 w-[130px] sm:w-auto sm:flex-1">
                 <LeadsFilterDropdown
                   filterOptions={filterOptions}
                   salesColumn={salesColumn}

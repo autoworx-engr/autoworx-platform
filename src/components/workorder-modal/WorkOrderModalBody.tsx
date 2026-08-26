@@ -142,10 +142,16 @@ export default function WorkOrderModalBody({
     }));
 
     if (typeof techId === "string" && techId.startsWith("temp_")) {
+      const {
+        name: _name,
+        isDraft: _isDraft,
+        hasPermission: _hp,
+        ...apiPayload
+      } = payload;
       setDraftOperations((prev) =>
         prev.map((op) =>
           op.type === "add" && op.tempId === techId
-            ? { ...op, payload: { ...op.payload, ...payload } }
+            ? { ...op, payload: { ...op.payload, ...apiPayload } }
             : op,
         ),
       );
