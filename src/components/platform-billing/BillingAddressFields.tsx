@@ -74,10 +74,12 @@ export function BillingAddressFields({
           <label className="text-xs font-bold text-slate-500 ml-1">Zip</label>
           <input
             type="text"
+            inputMode="numeric"
             placeholder="10001"
+            maxLength={10}
             className={inputClassName}
             value={value.zip}
-            onChange={(e) => onChange("zip", e.target.value)}
+            onChange={(e) => onChange("zip", e.target.value.replace(/\D/g, ""))}
             required
           />
         </div>
