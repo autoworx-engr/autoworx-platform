@@ -93,8 +93,6 @@ export async function POST(req: NextRequest) {
       data: {
         clockInOutId,
         breakStart: now,
-        createdAt: now,
-        updatedAt: now,
       },
     });
 

@@ -20,8 +20,6 @@ export async function takeBreak({
       data: {
         clockInOutId,
         breakStart: now,
-        createdAt: now,
-        updatedAt: now,
       },
     });
     revalidatePath("/");
@@ -48,7 +46,6 @@ export async function stopBreak({
       },
       data: {
         breakEnd: now,
-        updatedAt: now,
       },
     });
     revalidatePath("/");
