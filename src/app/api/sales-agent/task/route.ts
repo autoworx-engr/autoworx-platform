@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
-import { validateTaskRelations } from "./_authorizeTask";
 import {
   sendNewTaskAssignNotification,
   sendNewTaskNotification,
@@ -11,7 +9,7 @@ import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCal
 import createGoogleCalendarEvent from "@/actions/task/google-calendar/createGoogleCalendarEvent";
 import { revalidatePath } from "next/cache";
 
-// only for human
+// its only for ai sales agent not human
 
 /**
  * @swagger
@@ -23,6 +21,8 @@ import { revalidatePath } from "next/cache";
  *         - title
  *         - priority
  *         - assignedUsers
+ *         - userId
+ *         - companyId
  *       properties:
  *         title:
  *           type: string
@@ -43,10 +43,12 @@ import { revalidatePath } from "next/cache";
  *           example: [1, 2]
  *         userId:
  *           type: integer
- *           description: >-
- *             Optional task owner (maps to Task.userId). Must belong to the
- *             authenticated user's company; defaults to the authenticated user.
+ *           description: Creator user ID (maps to Task.userId)
  *           example: 12
+ *         companyId:
+ *           type: integer
+ *           description: Company ID (maps to Task.companyId)
+ *           example: 5
  *         date:
  *           type: string
  *           format: date-time
@@ -124,10 +126,7 @@ import { revalidatePath } from "next/cache";
  * /api/task:
  *   post:
  *     summary: Create Task
- *     description: >-
- *       Create a new task and assign multiple users. Requires an authenticated
- *       principal; companyId is taken from the caller, never the body. Machine
- *       callers use /api/sales-agent/task instead.
+ *     description: Create a new task and assign multiple users based on Prisma Task schema
  *     tags:
  *       - Task
  *     requestBody:
@@ -144,9 +143,9 @@ import { revalidatePath } from "next/cache";
  *             schema:
  *               $ref: '#/components/schemas/TaskResponse'
  *       400:
- *         description: Validation error, or client/lead/assigned user outside the caller's company
+ *         description: Validation error
  *       401:
- *         description: Unauthorized - missing or invalid auth principal
+ *         description: Unauthorized (No session)
  *       500:
  *         description: Internal server error
  */
@@ -168,16 +167,8 @@ export async function POST(req: NextRequest) {
       leadId,
       createdBy,
       userId,
+      companyId,
     } = body;
-
-    const principal = await getAuthPrincipal(req);
-    if (!principal) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-    const companyId = principal.companyId;
 
     // Manual validation based on Prisma schema
     if (!title) {
@@ -190,24 +181,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const relationError = await validateTaskRelations(
-      { clientId, leadId, assignedUsers },
-      companyId,
-    );
-    if (relationError) return relationError;
-
-    const ownerId = Number(userId);
-    if (userId !== undefined && userId !== null && Number.isFinite(ownerId)) {
-      const owner = await db.user.findFirst({
-        where: { id: ownerId, companyId },
-        select: { id: true },
-      });
-      if (!owner) {
-        return NextResponse.json(
-          { success: false, message: "Invalid task owner" },
-          { status: 400 },
-        );
-      }
+    if (!companyId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "CompanyId are required",
+        },
+        { status: 400 },
+      );
     }
 
     const priorityEnum = priority as Priority;
@@ -221,13 +202,14 @@ export async function POST(req: NextRequest) {
         startTime: startTime ?? null,
         endTime: endTime ?? null,
         priority: priorityEnum ?? "High",
-        userId: Number.isFinite(ownerId) ? ownerId : principal.userId,
-        companyId,
+        userId: userId === "anonymous" ? null : userId,
+        companyId: companyId,
         invoiceId: invoiceId ?? null,
         invoiceTemplateId: invoiceTemplateId ?? null,
         clientId: clientId ?? null,
         leadId: leadId ?? null,
-        createdBy: (createdBy as TaskAndAppointmentCreatedByEnum) ?? "user",
+        createdBy:
+          (createdBy as TaskAndAppointmentCreatedByEnum) ?? "sales_agent",
       },
       include: {
         client: true,
@@ -299,7 +281,7 @@ export async function POST(req: NextRequest) {
     } catch (calendarError) {
       console.error("Calendar Sync Error:", calendarError);
     }
-    revalidatePath("/dashboard/task");
+
     return NextResponse.json(
       {
         success: true,
@@ -312,54 +294,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 400 },
-    );
-  }
-}
-
-/**
- * @swagger
- * /api/task:
- *   get:
- *     summary: Get all tasks
- *     description: Returns pending tasks for the authenticated user's company.
- *     tags:
- *       - Task
- *     responses:
- *       200:
- *         description: List of tasks
- *       401:
- *         description: Unauthorized - missing or invalid auth principal
- */
-export async function GET(req: NextRequest) {
-  try {
-    const principal = await getAuthPrincipal(req);
-    if (!principal) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const tasks = await db.task.findMany({
-      where: { status: "pending", companyId: principal.companyId },
-      include: {
-        taskUser: true,
-        client: true,
-        lead: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: tasks,
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
     );
   }
 }
