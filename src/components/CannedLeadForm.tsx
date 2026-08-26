@@ -215,6 +215,15 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                               okText="Yes"
                               cancelText="No"
                               onConfirm={() => handleDeleteLink(entry.id)}
+                              overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                              okButtonProps={{
+                                className:
+                                  "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                              }}
+                              cancelButtonProps={{
+                                className:
+                                  "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                              }}
                             >
                               <button
                                 className="rounded-full p-2 transition-colors duration-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 text-red-600"

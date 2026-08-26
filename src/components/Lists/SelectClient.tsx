@@ -130,8 +130,6 @@ export function SelectClient({
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
       <Popconfirm
-        // Driven entirely by `pendingClient` — it opens when a different
-        // client is picked in the dropdown, not on hover/click of the trigger.
         open={!!pendingClient}
         title="Change client?"
         description={`Switching to ${clientName(
@@ -145,10 +143,16 @@ export function SelectClient({
           setPendingClient(null);
         }}
         onCancel={cancelClientChange}
+        overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+        okButtonProps={{
+          className:
+            "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+        }}
+        cancelButtonProps={{
+          className:
+            "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+        }}
       >
-        {/* Popconfirm anchors its popup by putting a ref on its child, and
-            Selector is a plain function component — without this wrapper there
-            is nothing to attach to and the popup never appears. */}
         <div className="max-w-[300px]">
           <Selector
             key={selectorKey}
@@ -156,7 +160,6 @@ export function SelectClient({
             label={(client: Client | null) =>
               client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
             }
-            // disabledDropdown={client?.fromRequest!}
             newButton={
               <NewCustomer
                 // @ts-ignore
