@@ -54,8 +54,6 @@ export default function AssignUsers({
   const doAssignUser = (user: User) => {
     onAssignUser && onAssignUser(user);
     setAssignedEmployeeSearch("");
-    setAddEmployeePersonOpen(false);
-    // No need to manually update employeeList as the useEffect will handle it
   };
 
   const doRemoveAssignedUser = (user: User) => {
