@@ -72,8 +72,6 @@ export async function POST(request: Request) {
     const twimlResponse = buildIncomingTwiML({
       callId,
       twilioPhoneNumber: context.twilioCredentials.phoneNumber,
-      companyName: context.company.name,
-      callWhisperEnabled: context.company.callWhisperEnabled ?? false,
       callForwardingNumber: context.company.callForwardingNumber,
       callRecordingEnabled: context.entitlements.callRecording,
       caller: {

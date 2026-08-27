@@ -5,6 +5,7 @@ import { twiml } from "twilio";
 // the bulk of spam/bot traffic without any paid spam-scoring add-on.
 export function buildGateTwiML(input: {
   companyName: string | null;
+  callWhisperEnabled: boolean;
   to: string;
 }): string {
   const voiceResponse = new twiml.VoiceResponse();
@@ -18,9 +19,12 @@ export function buildGateTwiML(input: {
     method: "POST",
     action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/incoming/gather?to=${encodeURIComponent(input.to)}`,
   });
+  const recordingNotice = input.callWhisperEnabled
+    ? " This call may be recorded for quality and training purposes."
+    : "";
   gather.say(
     { voice: "Polly.Joanna", language: "en-US" },
-    `Thanks for calling ${name}. Please press 1 to continue.`,
+    `Thanks for calling ${name}.${recordingNotice} Please press 1 to continue.`,
   );
 
   // Reached only if Twilio doesn't redirect to the action URL at all

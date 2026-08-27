@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     // /api/twilio/incoming/gather once the caller passes the gate.
     const twimlResponse = buildGateTwiML({
       companyName: context.company.name,
+      callWhisperEnabled: context.company.callWhisperEnabled ?? false,
       to,
     });
 
