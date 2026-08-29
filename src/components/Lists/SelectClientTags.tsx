@@ -11,6 +11,7 @@ import { Popconfirm } from "antd";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { deleteTag } from "../../actions/tag/deleteTag";
+import { successToast } from "@/lib/toast";
 import { getTags } from "../../actions/tag/getTags";
 import {
   DropdownMenu,
@@ -106,6 +107,7 @@ export function SelectClientTags({
         if (tag?.id === id) setTag(undefined!);
         queryClient.invalidateQueries({ queryKey: [CLIENT_DETAIL_KEY] });
         queryClient.invalidateQueries({ queryKey: [CLIENT_LIST_KEY] });
+        successToast("Tag deleted successfully");
       } else {
         setError("Failed to delete tag.");
       }
@@ -202,7 +204,11 @@ export function SelectClientTags({
                   description="Are you sure you want to delete this tag?"
                   okText="Delete"
                   cancelText="Cancel"
-                  onConfirm={() => handleDelete(tagItem.id)}
+                  onConfirm={async (e) => {
+                    e?.stopPropagation();
+                    await handleDelete(tagItem.id);
+                  }}
+                  onCancel={(e) => e?.stopPropagation()}
                   onPopupClick={(e) => e.stopPropagation()}
                   overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
                   okButtonProps={{

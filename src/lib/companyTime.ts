@@ -14,14 +14,3 @@ export function companyNow(timezone?: string | null): Date {
   }
   return new Date();
 }
-
-/** createdAt + updatedAt for a new row, both on the same instant. */
-export function createdUpdatedAt(timezone?: string | null) {
-  const now = companyNow(timezone);
-  return { createdAt: now, updatedAt: now };
-}
-
-/** updatedAt for an existing row. */
-export function updatedAt(timezone?: string | null) {
-  return { updatedAt: companyNow(timezone) };
-}

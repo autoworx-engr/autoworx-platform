@@ -1,4 +1,9 @@
+import {
+  validateEstimateItems,
+  validateOpenItemForm,
+} from "@/app/(dashboard)/dashboard/estimate/create/validateEstimateItems";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { usePathname } from "next/navigation";
 import { InvoiceType } from "@prisma/client";
 import { createInvoice } from "@/actions/estimate/invoice/create";
@@ -51,6 +56,18 @@ export function useInvoiceCreate(type: InvoiceType) {
         type: "globalError",
         message: "Please select a client before creating an estimate.",
       };
+    }
+
+    const openForm = validateOpenItemForm(
+      useEstimatePopupStore.getState().type,
+    );
+    if (openForm) {
+      return { type: "globalError", message: openForm };
+    }
+
+    const itemError = validateEstimateItems(items);
+    if (itemError) {
+      return { type: "globalError", message: itemError };
     }
 
     let res: ServerAction | TErrorHandler;
@@ -161,21 +178,22 @@ export function useInvoiceCreate(type: InvoiceType) {
       });
 
       if (res.type === "success") {
-        // Fire-and-forget: server action runs to completion on the server even without await.
-        // Awaiting it was blocking the toast + redirect by several seconds in production.
-        updateInventoryWhenInvoiceCreate({
-          items,
-          invoiceType: res.data.type,
-          companyId: res.data.companyId,
-          invoiceId,
-          allowInsufficientInventory,
-        });
+        if (res.data.type === InvoiceType.Invoice) {
+          updateInventoryWhenInvoiceCreate({
+            items,
+            invoiceType: res.data.type,
+            companyId: res.data.companyId,
+            invoiceId,
+            allowInsufficientInventory,
+          }).catch((err) =>
+            console.error("updateInventoryWhenInvoiceCreate failed", err),
+          );
+        }
 
         successToast(`${type} Create successfully`);
       }
     }
 
-    console.log("useInvoiceCreate Hook response", res);
     return res;
   }
 

@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { Priority } from "@prisma/client";
 import { cn } from "@/lib/cn";
 import { DatePickerField } from "@/components/ui/DatePickerField";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,6 +55,7 @@ export function TaskFormFields({
   titleError,
   clearTitleError,
 }: TaskFormFieldsProps) {
+  const timezone = useCompanyTimezone();
   const priorityStyles = taskPriorityStyles;
 
   const priorityItems = [{ id: "Low" }, { id: "Medium" }, { id: "High" }];
@@ -105,6 +107,7 @@ export function TaskFormFields({
           <div className="lg:col-span-2">
             <DatePickerField
               label="Date"
+              timezone={timezone}
               placeholder="Select date"
               clearable
               value={date ?? ""}

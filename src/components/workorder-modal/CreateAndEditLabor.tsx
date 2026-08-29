@@ -305,6 +305,9 @@ export default function CreateAndEditLabor({
               ? technician.vehicleParts || []
               : selectedVehicleParts,
             imageUrls: finalImageUrls,
+            name: employee
+              ? `${employee.firstName} ${employee.lastName}`
+              : technician.name,
           });
         } else {
           await updateTechnician(companyId!, invoiceId, technician.id, {

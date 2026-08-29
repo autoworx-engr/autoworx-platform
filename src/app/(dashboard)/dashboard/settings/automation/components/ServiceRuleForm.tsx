@@ -66,8 +66,6 @@ const template_variable_options = [
   { name: "<BUSINESS_NAME>", description: "Your business name" },
   { name: "<PHONE>", description: "Your business phone number" },
   { name: "<ADDRESS>", description: "Your business address" },
-  { name: "<VIDEO_DIRECTION>", description: "Video direction" },
-  { name: "<GOOGLE_MAP_LINK>", description: "Google map link" },
   { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" },
 ];
 
@@ -112,7 +110,9 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   } = usePipelineStagesStore();
 
   const actionOptions = stages.filter(
-    (stage) => formData?.conditionColumnId != stage.id,
+    (stage) =>
+      formData?.conditionColumnId != stage.id ||
+      stage.id == formData?.targetColumnId,
   );
 
   const { mutate: updateServiceRule, isPending: isUpdatePending } =

@@ -242,11 +242,16 @@ export function CheckoutForm({
             <div className="relative group">
               <input
                 type="text"
+                inputMode="numeric"
                 placeholder="••••  ••••  ••••  ••••"
+                maxLength={19}
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all duration-300 text-sm tracking-widest text-slate-600 dark:text-slate-200"
                 value={cardData.cardNumber}
                 onChange={(e) =>
-                  setCardData({ ...cardData, cardNumber: e.target.value })
+                  setCardData({
+                    ...cardData,
+                    cardNumber: e.target.value.replace(/\D/g, ""),
+                  })
                 }
                 required
               />
@@ -265,12 +270,16 @@ export function CheckoutForm({
               <div className="relative group">
                 <input
                   type="text"
+                  inputMode="numeric"
                   placeholder="MM"
                   maxLength={2}
                   className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-slate-600 dark:text-slate-200"
                   value={cardData.month}
                   onChange={(e) =>
-                    setCardData({ ...cardData, month: e.target.value })
+                    setCardData({
+                      ...cardData,
+                      month: e.target.value.replace(/\D/g, ""),
+                    })
                   }
                   required
                 />
@@ -286,12 +295,16 @@ export function CheckoutForm({
               </label>
               <input
                 type="text"
+                inputMode="numeric"
                 placeholder="YYYY"
                 maxLength={4}
                 className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-slate-600 dark:text-slate-200"
                 value={cardData.year}
                 onChange={(e) =>
-                  setCardData({ ...cardData, year: e.target.value })
+                  setCardData({
+                    ...cardData,
+                    year: e.target.value.replace(/\D/g, ""),
+                  })
                 }
                 required
               />
@@ -303,12 +316,16 @@ export function CheckoutForm({
               <div className="relative group">
                 <input
                   type="text"
+                  inputMode="numeric"
                   placeholder="•••"
                   maxLength={4}
                   className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-slate-600 dark:text-slate-200"
                   value={cardData.cardCode}
                   onChange={(e) =>
-                    setCardData({ ...cardData, cardCode: e.target.value })
+                    setCardData({
+                      ...cardData,
+                      cardCode: e.target.value.replace(/\D/g, ""),
+                    })
                   }
                   required
                 />

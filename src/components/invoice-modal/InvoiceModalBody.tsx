@@ -608,6 +608,15 @@ export default function InvoiceModalBody({
                           title="Send via Email?"
                           okText="Yes"
                           cancelText="No"
+                          overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                          okButtonProps={{
+                            className:
+                              "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                          }}
+                          cancelButtonProps={{
+                            className:
+                              "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                          }}
                         >
                           <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
                             <Mail className="h-4 w-4" />
@@ -621,6 +630,15 @@ export default function InvoiceModalBody({
                             title="Send via SMS?"
                             okText="Yes"
                             cancelText="No"
+                            overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                            okButtonProps={{
+                              className:
+                                "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                            }}
+                            cancelButtonProps={{
+                              className:
+                                "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                            }}
                           >
                             <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
                               <MessageCircle className="h-4 w-4" />
@@ -1365,6 +1383,7 @@ export default function InvoiceModalBody({
                   width={200}
                   height={50}
                   alt="signature"
+                  priority
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
@@ -1378,6 +1397,7 @@ export default function InvoiceModalBody({
                   width={200}
                   height={50}
                   alt="signature"
+                  priority
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">

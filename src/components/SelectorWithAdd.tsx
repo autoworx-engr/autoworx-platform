@@ -108,7 +108,11 @@ export function SelectorWithAdd({
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
       const target = event.target as HTMLElement | null;
-      if (target?.closest?.(".ant-popover, .ant-popconfirm")) {
+      if (
+        target?.closest?.(
+          ".ant-popover, .ant-popconfirm, [data-radix-popper-content-wrapper]",
+        )
+      ) {
         return;
       }
       if (
@@ -317,7 +321,8 @@ export function SelectorWithAdd({
         {isOpen && (
           <div
             className={cn(
-              "absolute z-50 w-full overflow-hidden rounded-2xl border-none bg-white/90 shadow-2xl backdrop-blur-xl ring-1 ring-slate-200/60 animate-in fade-in duration-200",
+              "absolute z-50 w-full rounded-2xl border-none bg-white/90 shadow-2xl backdrop-blur-xl ring-1 ring-slate-200/60 animate-in fade-in duration-200",
+              isAddingNew ? "overflow-visible" : "overflow-hidden",
               dropUp
                 ? "bottom-full mb-2 slide-in-from-bottom-2"
                 : "top-full mt-2 slide-in-from-top-2",
@@ -344,7 +349,7 @@ export function SelectorWithAdd({
 
             {/* Add New Item Surface */}
             {isAddingNew ? (
-              <div className="border-b border-slate-100 bg-slate-50/50 p-4">
+              <div className="rounded-2xl bg-slate-50/50 p-4">
                 <div className="space-y-3">
                   <input
                     ref={addNewInputRef}
@@ -365,6 +370,7 @@ export function SelectorWithAdd({
                         categoryData={category}
                         categoryOpen={categoryOpen}
                         setCategoryOpen={setCategoryOpen}
+                        usePortal
                       />
                     </div>
                   )}
@@ -445,6 +451,15 @@ export function SelectorWithAdd({
                                     e?.stopPropagation();
                                     setDeleteConfirmOpenId(null);
                                     onDelete?.(opt.id);
+                                  }}
+                                  overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                                  okButtonProps={{
+                                    className:
+                                      "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                                  }}
+                                  cancelButtonProps={{
+                                    className:
+                                      "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
                                   }}
                                 >
                                   <button

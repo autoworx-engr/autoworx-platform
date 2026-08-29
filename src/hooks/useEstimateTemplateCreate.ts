@@ -1,4 +1,9 @@
+import {
+  validateEstimateItems,
+  validateOpenItemForm,
+} from "@/app/(dashboard)/dashboard/estimate/create/validateEstimateItems";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { ServerAction } from "@/types/action";
 import { useListsStore } from "@/stores/lists";
 import { TErrorHandler } from "@/types/globalError";
@@ -31,6 +36,18 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
   async function handleSubmit(): Promise<ServerAction | TErrorHandler> {
     const columnId = status?.id;
 
+    const openForm = validateOpenItemForm(
+      useEstimatePopupStore.getState().type,
+    );
+    if (openForm) {
+      return { type: "globalError", message: openForm };
+    }
+
+    const itemError = validateEstimateItems(items);
+    if (itemError) {
+      return { type: "globalError", message: itemError };
+    }
+
     let res: ServerAction | TErrorHandler;
     if (isEdit && template?.id) {
       res = await updateEstimateTemplate({
@@ -56,7 +73,7 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
                 cost: Number(material?.cost) || 0,
                 sell: Number(material?.sell) || 0,
                 discount: Number(material?.discount) || 0,
-                quantity: material?.quantity,
+                quantity: Number(material?.quantity) || 0,
               }))
             : null,
           labor: item.labor
@@ -101,7 +118,7 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
             cost: Number(material?.cost) || 0,
             sell: Number(material?.sell) || 0,
             discount: Number(material?.discount) || 0,
-            quantity: material?.quantity,
+            quantity: Number(material?.quantity) || 0,
           })),
           labor: item.labor
             ? {

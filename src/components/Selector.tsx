@@ -41,7 +41,6 @@ interface SelectorProps<T> {
   showSearch?: boolean;
   usePortal?: boolean;
   isLoading?: boolean;
-  /** Empty-state text. Override when "No results found" is too vague to explain why the list is empty. */
   emptyMessage?: string;
   onRemoveItem?: (item: T, e: React.MouseEvent) => void;
 }
@@ -218,9 +217,6 @@ export default function Selector<T>({
                   )}
                 >
                   <div className="flex-1 min-w-0">{displayList(item)}</div>
-                  {/* Only reserve the trailing column when it actually has
-                      something in it — an always-on check placeholder left a
-                      dead gap on the right of every row. */}
                   {(onRemoveItem || isSelected) && (
                     <div className="flex shrink-0 items-center gap-1">
                       {onRemoveItem && (
@@ -240,6 +236,15 @@ export default function Selector<T>({
                             okText="Yes"
                             cancelText="No"
                             placement="topRight"
+                            overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                            okButtonProps={{
+                              className:
+                                "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                            }}
+                            cancelButtonProps={{
+                              className:
+                                "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                            }}
                           >
                             <X cursor={"pointer"} color="#f87171" size={20} />
                           </Popconfirm>
@@ -302,14 +307,6 @@ export default function Selector<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      {/*
-        FIX (alignment): the wrapper previously capped width at `max-w-sm`
-        (384px), which kept this control from stretching to match the width
-        of sibling SlimInput/DropdownSelection fields in a grid. `className`
-        (passed by callers) now comes after `w-full` with no competing
-        max-w-* utility, so callers can still constrain width when they
-        actually want to.
-      */}
       <div className={cn("w-full transition-all duration-300", className)}>
         <DropdownMenuTrigger
           onPointerDown={
@@ -327,13 +324,6 @@ export default function Selector<T>({
           }}
           disabled={disabledDropdown}
           className={cn(
-            // FIX (alignment): was `h-9 mt-1 w-[99%]`. The 9-unit height
-            // (36px) was 4px shorter than the h-10 (40px) SlimInput/
-            // DropdownSelection controls it sits next to in the grid, and
-            // `mt-1` added an extra 4px top offset on top of that — together
-            // these produced the vertical misalignment between "Assign To"/
-            // "Priority" and the other fields in the same row. `w-[99%]`
-            // is replaced with `w-full` to match sibling fields exactly.
             "group flex h-10 w-full items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
             "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
             "ring-1 ring-slate-200 dark:ring-slate-800",
@@ -382,7 +372,10 @@ export default function Selector<T>({
             <DropdownMenuContent
               align="start"
               sideOffset={4}
-              className={contentClassName}
+              className={cn(contentClassName, "z-[100]")}
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              onPointerDownOutside={(e) => e.stopPropagation()}
+              onFocusOutside={(e) => e.preventDefault()}
             >
               {dropdownInnerContent}
             </DropdownMenuContent>

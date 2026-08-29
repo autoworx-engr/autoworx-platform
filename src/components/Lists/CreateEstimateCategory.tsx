@@ -177,6 +177,15 @@ export default function SelectCategory({
                   placement="topLeft"
                   onConfirm={() => handleDeleteCategory(category?.id)}
                   onPopupClick={(e) => e.stopPropagation()}
+                  overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                  okButtonProps={{
+                    className:
+                      "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                  }}
+                  cancelButtonProps={{
+                    className:
+                      "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                  }}
                 >
                   <div
                     className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"

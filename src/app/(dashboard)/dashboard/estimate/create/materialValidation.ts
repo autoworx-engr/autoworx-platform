@@ -5,6 +5,8 @@
  * so the same rules can be reused by any other caller that builds a material.
  */
 
+export const MAX_MONEY_VALUE = 99999999;
+
 export type MaterialFormValues = {
   name: string;
   quantity: number | undefined;

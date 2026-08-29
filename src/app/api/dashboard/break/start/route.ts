@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 /**
  * @swagger
@@ -18,16 +19,11 @@ import { db } from "@/lib/db";
  *             type: object
  *             required:
  *               - clockInOutId
- *               - userId
  *             properties:
  *               clockInOutId:
  *                 type: integer
  *                 example: 55
  *                 description: ID of the clock-in record
- *               userId:
- *                 type: integer
- *                 example: 12
- *                 description: User ID starting the break
  *               timezone:
  *                 type: string
  *                 example: America/New_York
@@ -65,7 +61,11 @@ import { db } from "@/lib/db";
  *                       nullable: true
  *                       example: null
  *       400:
- *         description: Missing required parameters (clockInOutId or userId)
+ *         description: Missing required parameter (clockInOutId)
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       404:
+ *         description: Clock-in record not found
  *       500:
  *         description: Internal server error
  */
@@ -73,19 +73,35 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { clockInOutId, userId, timezone } = body;
+    const { clockInOutId, timezone } = body;
 
-    if (!clockInOutId || !userId) {
+    if (!clockInOutId) {
       return NextResponse.json(
-        { success: false, message: "clockInOutId and userId required" },
+        { success: false, message: "clockInOutId required" },
         { status: 400 },
       );
     }
 
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    const userId = principal.userId;
+
     const parent = await db.clockInOut.findUnique({
       where: { id: clockInOutId },
-      select: { timezone: true },
+      select: { timezone: true, userId: true },
     });
+
+    if (!parent || parent.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: "Clock-in record not found" },
+        { status: 404 },
+      );
+    }
 
     const now = companyNow(timezone || parent?.timezone);
 
@@ -93,8 +109,6 @@ export async function POST(req: NextRequest) {
       data: {
         clockInOutId,
         breakStart: now,
-        createdAt: now,
-        updatedAt: now,
       },
     });
 
