@@ -1,25 +1,19 @@
 "use server";
-
-import { ServerAction } from "@/types/action";
 import { db } from "@/lib/db";
+import { ZodError } from "zod";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
+import {
+  serviceUpdateValidationSchema,
+  TServiceUpdateValidationSchema,
+} from "@/validations/schemas/estimate/service/service.validation";
 
-export async function updateService({
-  id,
-  name,
-  categoryId,
-  description,
-  canned,
-}: {
-  id: number;
-  name: string;
-  categoryId?: number | null;
-  description?: string;
-  canned?: boolean;
-}) {
+export async function updateService(payload: TServiceUpdateValidationSchema) {
   try {
+    const { id, name, categoryId, description, canned } =
+      await serviceUpdateValidationSchema.parseAsync(payload);
+
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;
     if (!companyId) {
@@ -29,7 +23,7 @@ export async function updateService({
       const existingService = await db.service.findFirst({
         where: {
           companyId,
-          name: name,
+          name: { equals: name, mode: "insensitive" },
           canned: true,
           NOT: {
             id: id, // Exclude the current service being updated
@@ -59,7 +53,10 @@ export async function updateService({
     console.error("Error updating service:", error);
     return {
       type: "error",
-      message: error.message,
+      message:
+        error instanceof ZodError
+          ? error.errors[0]?.message || "Invalid service details"
+          : error.message,
     };
   }
 }
