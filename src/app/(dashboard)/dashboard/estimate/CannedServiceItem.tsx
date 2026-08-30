@@ -17,6 +17,11 @@ import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
+import {
+  SERVICE_DESCRIPTION_MAX_LENGTH,
+  SERVICE_NAME_MAX_LENGTH,
+  SERVICE_NAME_MIN_LENGTH,
+} from "@/validations/schemas/estimate/service/service.validation";
 import { Category, Service } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { PencilLineIcon, Trash2 } from "lucide-react";
@@ -60,17 +65,47 @@ export const CannedServiceItem = ({
     setDescriptionError("");
   };
 
-  async function handleUpdateService() {
-    if (!name.trim()) {
-      setNameError("Service name is required");
-      return;
+  const handleOpenChange = (value: boolean) => {
+    if (!value) {
+      setName(service.name);
+      setDescription(service.description);
+      setCategory(service?.category || null);
+      setNameError("");
+      setDescriptionError("");
     }
+    setOpen(value);
+  };
+
+  const validateName = (value: string) => {
+    const trimmed = value.trim();
+
+    if (!trimmed) return "Service name is required";
+    if (trimmed.length < SERVICE_NAME_MIN_LENGTH)
+      return `Service name must be at least ${SERVICE_NAME_MIN_LENGTH} characters`;
+    if (trimmed.length > SERVICE_NAME_MAX_LENGTH)
+      return `Service name must be less than ${SERVICE_NAME_MAX_LENGTH} characters`;
+    return "";
+  };
+
+  const validateDescription = (value: string) =>
+    value.length > SERVICE_DESCRIPTION_MAX_LENGTH
+      ? `Description must be less than ${SERVICE_DESCRIPTION_MAX_LENGTH} characters`
+      : "";
+
+  async function handleUpdateService() {
+    const nextNameError = validateName(name);
+    const nextDescriptionError = validateDescription(description || "");
+
+    setNameError(nextNameError);
+    setDescriptionError(nextDescriptionError);
+
+    if (nextNameError || nextDescriptionError) return;
 
     setIsPending(true);
     const res = await updateService({
       id: service.id,
-      name: name,
-      description: description || "",
+      name: name.trim(),
+      description: (description || "").trim(),
       categoryId: category?.id ?? null,
       canned: true,
     });
@@ -103,7 +138,7 @@ export const CannedServiceItem = ({
               {service.name}
             </h3>
             <div className="flex shrink-0 items-center gap-3 ml-4">
-              <Dialog open={open} onOpenChange={setOpen}>
+              <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogTrigger asChild>
                   <button
                     className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
@@ -125,8 +160,9 @@ export const CannedServiceItem = ({
                         type="text"
                         value={name}
                         onChange={(e) => {
-                          setName(e.target.value);
-                          if (nameError) setNameError("");
+                          const value = e.target.value;
+                          setName(value);
+                          if (nameError) setNameError(validateName(value));
                         }}
                         className={cn(
                           "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
@@ -163,14 +199,8 @@ export const CannedServiceItem = ({
                         value={description || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          if (value.length > 250) {
-                            setDescriptionError(
-                              "Description must be less than 250 characters",
-                            );
-                            return;
-                          }
                           setDescription(value);
-                          setDescriptionError("");
+                          setDescriptionError(validateDescription(value));
                         }}
                         className={cn(
                           "min-h-[100px] max-h-[200px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
@@ -266,7 +296,7 @@ export const CannedServiceItem = ({
         </span>
       </TableCell>
       <TableCell className="flex items-center space-x-3 py-3 h-full">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <button
               className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
@@ -291,8 +321,9 @@ export const CannedServiceItem = ({
                   type="text"
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
-                    if (nameError) setNameError("");
+                    const value = e.target.value;
+                    setName(value);
+                    if (nameError) setNameError(validateName(value));
                   }}
                   className={cn(
                     "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
@@ -330,7 +361,7 @@ export const CannedServiceItem = ({
                   onChange={(e) => {
                     const value = e.target.value;
                     setDescription(value);
-                    setDescriptionError("");
+                    setDescriptionError(validateDescription(value));
                   }}
                   className={cn(
                     "min-h-[100px] max-h-[200px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",

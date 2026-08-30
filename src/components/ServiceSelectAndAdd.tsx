@@ -47,7 +47,7 @@ const ServiceSelectAndAdd = ({
       try {
         // Authenticated service creation
         const res = await newService({
-          name: newItem,
+          name: newItem.trim(),
           categoryId: category.id,
         });
 
