@@ -164,8 +164,8 @@ const MyAccount = ({ user }: { user: User }) => {
     <div className="w-full pb-8">
       <div className="grid gap-8 lg:grid-cols-2">
         {/* account detail */}
-        <div className="flex flex-col">
-          <h3 className="mb-4 text-lg font-semibold text-slate-800">
+        <div className="flex flex-col gap-y-8">
+          <h3 className="-mb-4 text-lg font-semibold text-slate-800">
             Account Details
           </h3>
           <div className="space-y-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -319,96 +319,95 @@ const MyAccount = ({ user }: { user: User }) => {
               </div>
             </div>
           </div>
+
+          {/* 2fa section */}
+          <Setup2FA
+            email={user.email}
+            emailVerified={user.emailVerified ?? false}
+            twoFactorEnabled={user.twoFactorEnabled ?? false}
+          />
         </div>
         {/* right column */}
         <div className="flex min-w-0 flex-col gap-y-8 overflow-hidden">
           <div className="w-full">
             <ChangePassword />
           </div>
-          <>
-            {/* employee leave request */}
-            {/* except Admin, everyone can create leave request */}
-            {user.employeeType !== "Admin" && (
-              <div className="w-full">
-                <h3 className="mb-4 text-lg font-semibold text-slate-800">
-                  Leave Requests
-                </h3>
+          {/* employee leave request */}
+          {/* except Admin, everyone can create leave request */}
+          {user.employeeType !== "Admin" && (
+            <div className="w-full">
+              <h3 className="mb-4 text-lg font-semibold text-slate-800">
+                Leave Requests
+              </h3>
 
-                <div className="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="">
-                    <SlimInput
-                      name="title"
-                      value={leaveRequest.title}
-                      onChange={(e) =>
-                        setLeaveRequest({
-                          ...leaveRequest,
-                          title: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-8">
-                    <SlimInput
-                      name="startDate"
-                      value={leaveRequest.startDate}
-                      onChange={(e) =>
-                        setLeaveRequest({
-                          ...leaveRequest,
-                          startDate: e.target.value,
-                        })
-                      }
-                      type="date"
-                    />
-                    <SlimInput
-                      name="endDate"
-                      value={leaveRequest.endDate}
-                      onChange={(e) =>
-                        setLeaveRequest({
-                          ...leaveRequest,
-                          endDate: e.target.value,
-                        })
-                      }
-                      type="date"
-                    />
-                  </div>
-
-                  <SlimTextarea
-                    name="description"
-                    label="Description"
-                    value={leaveRequest.description}
-                    rows={3}
+              <div className="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="">
+                  <SlimInput
+                    name="title"
+                    value={leaveRequest.title}
                     onChange={(e) =>
                       setLeaveRequest({
                         ...leaveRequest,
-                        description: e.target.value,
+                        title: e.target.value,
                       })
                     }
                   />
-                  <div className="mt-6 flex items-center justify-end gap-x-4 border-t border-slate-100 pt-5">
-                    <Link
-                      href="/dashboard/settings/my-account/leave-requests"
-                      className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-                    >
-                      View All Requests
-                    </Link>
-                    <button
-                      onClick={handleSubmitLeaveRequest}
-                      className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5]"
-                    >
-                      Submit Request
-                    </button>
-                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-8">
+                  <SlimInput
+                    name="startDate"
+                    value={leaveRequest.startDate}
+                    onChange={(e) =>
+                      setLeaveRequest({
+                        ...leaveRequest,
+                        startDate: e.target.value,
+                      })
+                    }
+                    type="date"
+                  />
+                  <SlimInput
+                    name="endDate"
+                    value={leaveRequest.endDate}
+                    onChange={(e) =>
+                      setLeaveRequest({
+                        ...leaveRequest,
+                        endDate: e.target.value,
+                      })
+                    }
+                    type="date"
+                  />
+                </div>
+
+                <SlimTextarea
+                  name="description"
+                  label="Description"
+                  value={leaveRequest.description}
+                  rows={3}
+                  onChange={(e) =>
+                    setLeaveRequest({
+                      ...leaveRequest,
+                      description: e.target.value,
+                    })
+                  }
+                />
+                <div className="mt-6 flex items-center justify-end gap-x-4 border-t border-slate-100 pt-5">
+                  <Link
+                    href="/dashboard/settings/my-account/leave-requests"
+                    className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    View All Requests
+                  </Link>
+                  <button
+                    onClick={handleSubmitLeaveRequest}
+                    className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5]"
+                  >
+                    Submit Request
+                  </button>
                 </div>
               </div>
-            )}
-          </>
+            </div>
+          )}
         </div>
-        {/* 2fa section */}
-        <Setup2FA
-          email={user.email}
-          emailVerified={user.emailVerified ?? false}
-          twoFactorEnabled={user.twoFactorEnabled ?? false}
-        />
       </div>
     </div>
     // </div>
