@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfigById } from "./createInfobipConfig";
@@ -355,12 +356,22 @@ export async function sendInfobipMessage({
         isVoiceNote: file.isVoiceNote ?? false,
       }));
 
-      await updateNewSMSChatTrack({
+      const track = await updateNewSMSChatTrack({
         clientId,
         smsLastMessage: message ?? "",
         lastMessageBy: "Company",
         attachments: processedAttachments,
       });
+
+      // Without this the conversation list never hears about outbound Infobip
+      // messages, so the row's preview text and ordering only refresh on a
+      // reload (and other open sessions never update at all). Mirrors the
+      // same broadcast sendTwilioMessage already does.
+      try {
+        await sendClientMailOrSMSNotify(infobipConfig!.companyId, track);
+      } catch (error) {
+        console.error("sendInfobipMessage: client-notify failed", error);
+      }
 
       try {
         if (client?.Lead?.id && client?.Lead?.columnId) {

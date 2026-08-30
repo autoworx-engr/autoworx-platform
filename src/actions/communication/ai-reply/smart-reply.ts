@@ -111,14 +111,23 @@ export async function getSmartReplies({
     return [];
   }
 
-  // 1) Fetch context in parallel
-  const client = await db.client.findUnique({
-    where: { id: clientId },
-    select: { id: true, leadId: true },
-  });
+  // Enhance mode rewrites the author's OWN draft. The draft is the only
+  // permitted source of content, so we deliberately skip fetching the
+  // conversation/vehicles/invoices — data we must not use shouldn't be
+  // loaded, sent to the model, or paid for.
+  const isEnhance = mode === "enhance" && !!draft?.trim();
 
-  const recentMessagesPromise =
-    context === "email"
+  // 1) Fetch context in parallel (suggest mode only)
+  const client = isEnhance
+    ? null
+    : await db.client.findUnique({
+        where: { id: clientId },
+        select: { id: true, leadId: true },
+      });
+
+  const recentMessagesPromise = isEnhance
+    ? Promise.resolve([] as any[])
+    : context === "email"
       ? db.mailgunEmail.findMany({
           where: { clientId, companyId },
           orderBy: { createdAt: "desc" },
@@ -137,10 +146,12 @@ export async function getSmartReplies({
           take: 10, // Reduced from 15 to save tokens
         });
 
-  const vehiclesPromise = db.vehicle.findMany({
-    where: { clientId },
-    select: { id: true, year: true, make: true, model: true },
-  });
+  const vehiclesPromise = isEnhance
+    ? Promise.resolve([] as any[])
+    : db.vehicle.findMany({
+        where: { clientId },
+        select: { id: true, year: true, make: true, model: true },
+      });
 
   const leadPromise = client?.leadId
     ? db.lead.findUnique({
@@ -188,8 +199,10 @@ export async function getSmartReplies({
           )
           .join("\n");
 
-  // Early return if no conversation history
-  if (!convo.trim()) {
+  // Suggest mode has nothing to reply to without history. Enhance mode works
+  // off the draft alone, so polishing the first message of a brand-new
+  // conversation must still work.
+  if (!isEnhance && !convo.trim()) {
     return [];
   }
 
@@ -215,8 +228,6 @@ export async function getSmartReplies({
           .join("\n")
       : "No past invoices";
 
-  const isEnhance = mode === "enhance" && !!draft?.trim();
-
   // Check cache before making AI call
   const cacheKey = getCacheKey({
     clientId,
@@ -237,12 +248,36 @@ export async function getSmartReplies({
   const system =
     (isEnhance
       ? `
-ROLE: Autoworx AI editor for auto restyling/garage ${context === "email" ? "emails" : "SMS"}.
-STYLE: ${tone}, ${context === "email" ? "professional email format" : "≤320 chars"}. No emojis unless present in draft.
-RULES:
-- Preserve author intent; never invent prices or promises.
-- If price is mentioned but details are missing, ask only essentials (model/year/service).
-- If availability implied, propose max 2 tentative slots (do NOT confirm).
+ROLE: You are a copy editor for an auto restyling/garage shop. A staff member
+has written a draft ${context === "email" ? "email" : "SMS"} to a customer. Your job is to rewrite THEIR
+draft so it reads clearly and professionally.
+
+You are EDITING the author's text. You are NOT writing a reply, NOT answering
+the customer, and NOT continuing a conversation.
+
+STYLE: ${tone} tone, ${context === "email" ? "proper email structure with short paragraphs" : "plain SMS, 320 characters max"}.
+Write in the same language the draft uses. Keep emojis only if the draft already has them.
+
+WHAT TO IMPROVE:
+- Spelling, grammar, punctuation, capitalization
+- Awkward phrasing, run-on sentences, unclear or abrupt wording
+- Politeness and professionalism, without sounding stiff or corporate
+- Flow and readability${context === "email" ? " (a neutral greeting/closing may be added if missing — never invent a name)" : ""}
+
+HARD RULES — the draft is your ONLY source of information:
+- Add NO new facts. No prices, dates, times, durations, vehicle details, part or
+  service names, people's names, addresses, phone numbers, or links unless they
+  already appear in the draft.
+- Add NO promises, commitments, guarantees, or availability the author didn't write.
+- Add NO questions the author didn't ask.
+- Do NOT answer, respond to, or address anything the customer said — you only
+  have the author's draft, and you must not guess at what came before it.
+- Do NOT drop meaning. Every point the author made must survive the rewrite.
+- Keep the author's placeholders (e.g. [date], XX:XX, TBD) exactly as written.
+- If the draft is already clear and correct, change little or nothing.
+
+Rewriting is allowed. Inventing is not. When in doubt, say less.
+
 OUTPUT: JSON only (no prose, no code fences):
 {"suggestions":[{"text":"..."}]}
 `.trim()
@@ -285,20 +320,18 @@ STRICTNESS:
 `;
 
   const userBlock = isEnhance
-    ? `Client Context:
-Vehicles:
-${vehicleContext}
-Invoices:
-${invoiceContext}
+    ? `Polish the draft below. It is the only content you may use.
 
-Conversation (most recent last):
-${convo}
-
-Rewrite/Enhance this draft (keep intent, improve clarity):
+--- DRAFT START ---
 ${draft}
+--- DRAFT END ---
 
-Give ${Math.max(1, maxSuggestions)} improved options.
-Do not ask for year/make/model if it's irrelevant or already present—use the last vehicle from context when needed.`
+Return ${Math.max(1, maxSuggestions)} polished versions of that draft.
+
+Every version must convey exactly what the draft conveys — same facts, same
+intent, same commitments — just written better. Vary the wording and structure
+between versions; never vary the meaning. Do not add anything the draft doesn't
+already say.`
     : `Client Context:
 Vehicles:
 ${vehicleContext}
@@ -334,7 +367,10 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
   // nor draft edits need — disable it for fast, temperature-controlled output.
   const completion = await deepseek.chat.completions.create({
     model: "deepseek-v4-flash",
-    temperature: isEnhance ? 0.4 : 0.7, // Slightly higher temperature for more creative, context-aware suggestions
+    // Enhance is a faithfulness task (rewrite what's there), so keep sampling
+    // low — drift here means invented facts. Suggest is a generative task and
+    // benefits from more variety across the options.
+    temperature: isEnhance ? 0.3 : 0.7,
     max_tokens: 400, // Reduced from 512 to save costs (sufficient for 3 suggestions)
     response_format: { type: "json_object" },
     thinking: { type: "disabled" },

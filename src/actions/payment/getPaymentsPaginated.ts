@@ -57,6 +57,11 @@ const paymentListSelect = {
       receivedCash: true,
     },
   },
+  deposit: {
+    select: {
+      depositMethod: true,
+    },
+  },
   other: {
     select: {
       paymentMethod: {
@@ -372,7 +377,8 @@ function getPaymentMethod(payment: PaymentListRecord) {
     return payment.other?.paymentMethod?.name || "Other";
   }
   if (payment.type === PaymentType.DEPOSIT) {
-    return "Deposit";
+    const depositMethod = payment.deposit?.depositMethod?.trim();
+    return depositMethod ? `Deposit (${depositMethod})` : "Deposit";
   }
 
   return "Unknown";
