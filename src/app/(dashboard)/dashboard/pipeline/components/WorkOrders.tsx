@@ -5,6 +5,7 @@ import ResponsiveShopPipelineCard from "@/components/mobile-responsive/pipeline/
 import WorkOrdersTableSkeleton from "@/components/ui/WorkOrdersTableSkeleton";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { useServerGet } from "@/hooks/useServerGet";
+import { getInvoiceItemsLabel } from "@/utils/invoiceItemTitle";
 import { cn } from "@/lib/cn";
 import { Search } from "lucide-react";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
@@ -192,9 +193,9 @@ const WorkOrders = () => {
                           " " +
                           (invoice.client?.lastName ?? "");
                         const vehicle = `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
-                        const serviceString = invoice.invoiceItems
-                          .map((item) => item.service?.name)
-                          .join(", ");
+                        const serviceString = getInvoiceItemsLabel(
+                          invoice.invoiceItems,
+                        );
                         // TODO: this hasn't been tested properly. Need to test it.
                         const timeCreated = moment(
                           invoice.workOrderCreatedAt,
