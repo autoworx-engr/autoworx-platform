@@ -74,20 +74,17 @@ export default function TaskListBox() {
   }
 
   return (
-    <div className="flex-1 h-full shadow-lg transition-all duration-300 rounded-xl">
+    <div className="flex min-h-0 flex-1 flex-col rounded-xl shadow-lg transition-all duration-300 lg:h-full">
       <div
         className={cn(
           `
-          flex h-full flex-col p-4 md:p-6
-
-          // Premium Card/Glassmorphism Container Style (Enhanced)
+          flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6 lg:h-full
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
           rounded-2xl
           ring-1 ring-slate-900/5 dark:ring-white/10
           shadow-xl dark:shadow-2xl dark:shadow-blue-900/20
           transition-all duration-300
-          overflow-hidden // Important for height control
         `,
         )}
       >
