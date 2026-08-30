@@ -10,6 +10,11 @@ import { create } from "mutative";
 import { useEffect, useState } from "react";
 import Close from "./CloseEstimate";
 import { cn } from "@/lib/cn";
+import {
+  SERVICE_DESCRIPTION_MAX_LENGTH,
+  SERVICE_NAME_MAX_LENGTH,
+  SERVICE_NAME_MIN_LENGTH,
+} from "@/validations/schemas/estimate/service/service.validation";
 
 export default function ServiceCreate() {
   const { close, data } = useEstimatePopupStore();
@@ -20,6 +25,34 @@ export default function ServiceCreate() {
   const [category, setCategory] = useState<Category | null>(null);
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [descriptionError, setDescriptionError] = useState("");
+
+  const validateName = (value: string) => {
+    const trimmed = value.trim();
+
+    if (!trimmed) return "Service name is required";
+    if (trimmed.length < SERVICE_NAME_MIN_LENGTH)
+      return `Service name must be at least ${SERVICE_NAME_MIN_LENGTH} characters`;
+    if (trimmed.length > SERVICE_NAME_MAX_LENGTH)
+      return `Service name must be less than ${SERVICE_NAME_MAX_LENGTH} characters`;
+    return "";
+  };
+
+  const validateDescription = (value: string) =>
+    value.length > SERVICE_DESCRIPTION_MAX_LENGTH
+      ? `Description must be less than ${SERVICE_DESCRIPTION_MAX_LENGTH} characters`
+      : "";
+
+  const validateForm = () => {
+    const nextNameError = validateName(name);
+    const nextDescriptionError = validateDescription(description);
+
+    setNameError(nextNameError);
+    setDescriptionError(nextDescriptionError);
+
+    return !nextNameError && !nextDescriptionError;
+  };
 
   useEffect(() => {
     if (data?.service && data.edit) {
@@ -40,10 +73,12 @@ export default function ServiceCreate() {
   }, [data]);
 
   async function handleSubmit() {
+    if (!validateForm()) return;
+
     const res = await newService({
-      name,
+      name: name.trim(),
       categoryId: category?.id!,
-      description,
+      description: description.trim(),
     });
 
     if (res.type === "success") {
@@ -71,18 +106,20 @@ export default function ServiceCreate() {
   }
 
   async function handleEdit() {
-    if (!name) {
-      alert("Service name is required");
-      return;
-    }
+    if (!validateForm()) return;
 
     // Update the service
-    await updateService({
+    const res = await updateService({
       id: data?.service.id,
-      name,
+      name: name.trim(),
       categoryId: category?.id,
-      description,
+      description: description.trim(),
     });
+
+    if (res?.type !== "success") {
+      errorToast(res?.message ?? "Update failed. Please try again.");
+      return;
+    }
 
     // Change the service in the items
     // @ts-ignore
@@ -93,12 +130,12 @@ export default function ServiceCreate() {
             ...item,
             service: {
               ...item.service,
-              name,
+              name: name.trim(),
               categoryId: category?.id,
               category: category,
-              description,
+              description: description.trim(),
             },
-            serviceDesc: description,
+            serviceDesc: description.trim(),
           };
         }
         return item;
@@ -124,14 +161,23 @@ export default function ServiceCreate() {
           type="text"
           placeholder="Service Name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setName(value);
+            if (nameError) setNameError(validateName(value));
+          }}
+          onBlur={() => setNameError(validateName(name))}
           className={cn(
-            "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30",
+            "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset transition-all focus:outline-none focus:ring-2",
+            nameError
+              ? "ring-red-500 focus:ring-red-500/30"
+              : "ring-slate-200 focus:ring-primary/30",
             data.service?.canned &&
               "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner",
           )}
           readOnly={data.service?.canned}
         />
+        {nameError && <p className="ml-1 text-xs text-red-500">{nameError}</p>}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -157,9 +203,33 @@ export default function ServiceCreate() {
         <textarea
           placeholder="Provide details about this service..."
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="h-32 rounded-xl bg-white p-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+          onChange={(e) => {
+            const value = e.target.value;
+            setDescription(value);
+            setDescriptionError(validateDescription(value));
+          }}
+          className={cn(
+            "h-32 rounded-xl bg-white p-4 text-sm font-medium ring-1 ring-inset transition-all focus:outline-none focus:ring-2 resize-none",
+            descriptionError
+              ? "ring-red-500 focus:ring-red-500/30"
+              : "ring-slate-200 focus:ring-primary/30",
+          )}
         />
+        <div className="flex items-center justify-between ml-1">
+          {descriptionError ? (
+            <p className="text-xs text-red-500">{descriptionError}</p>
+          ) : (
+            <span />
+          )}
+          <span
+            className={cn(
+              "text-xs",
+              descriptionError ? "text-red-500" : "text-slate-500",
+            )}
+          >
+            {description.length}/{SERVICE_DESCRIPTION_MAX_LENGTH}
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-end gap-3">

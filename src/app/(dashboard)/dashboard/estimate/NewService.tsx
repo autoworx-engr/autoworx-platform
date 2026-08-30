@@ -15,6 +15,11 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
+import {
+  SERVICE_DESCRIPTION_MAX_LENGTH,
+  SERVICE_NAME_MAX_LENGTH,
+  SERVICE_NAME_MIN_LENGTH,
+} from "@/validations/schemas/estimate/service/service.validation";
 import { Category } from "@prisma/client";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -39,7 +44,7 @@ export default function NewService({
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const descriptionLength = description.length;
-  const maxDescriptionLength = 1500;
+  const maxDescriptionLength = SERVICE_DESCRIPTION_MAX_LENGTH;
   // Reset form when dialog opens or closes
 
   // Reset form function
@@ -48,6 +53,7 @@ export default function NewService({
     setCategory(null);
     setDescription("");
     setNameError("");
+    setNameTouched(false);
     clearError();
   };
 
@@ -70,18 +76,26 @@ export default function NewService({
 
   // Validation function
   const validateName = (value: string) => {
-    if (!value.trim()) {
-      setNameError("Service name is required");
-      showError({
-        field: "serviceName",
-        message: "Service name is required",
-      });
-      return false;
-    } else {
-      setNameError("");
-      clearError();
-      return true;
+    const trimmed = value.trim();
+    let message = "";
+
+    if (!trimmed) {
+      message = "Service name is required";
+    } else if (trimmed.length < SERVICE_NAME_MIN_LENGTH) {
+      message = `Service name must be at least ${SERVICE_NAME_MIN_LENGTH} characters`;
+    } else if (trimmed.length > SERVICE_NAME_MAX_LENGTH) {
+      message = `Service name must be less than ${SERVICE_NAME_MAX_LENGTH} characters`;
     }
+
+    if (message) {
+      setNameError(message);
+      showError({ field: "serviceName", message });
+      return false;
+    }
+
+    setNameError("");
+    clearError();
+    return true;
   };
 
   async function handleSubmit() {
@@ -96,9 +110,9 @@ export default function NewService({
       }
 
       const res = await newService({
-        name,
+        name: name.trim(),
         categoryId: category?.id ?? null,
-        description,
+        description: description.trim(),
         canned: true,
       });
 
@@ -162,9 +176,9 @@ export default function NewService({
               ...item,
               service: {
                 ...item.service,
-                name,
+                name: name.trim(),
                 categoryId: category?.id ?? null,
-                description,
+                description: description.trim(),
               },
             };
           }
@@ -256,13 +270,17 @@ export default function NewService({
                 onChange={(e) => {
                   const value = e.target.value;
                   setName(value);
-                  // Clear error when user starts typing
-                  if (value.trim()) {
+                  if (nameTouched) {
+                    validateName(value);
+                  } else if (value.trim()) {
                     setNameError("");
                     clearError();
                   }
                 }}
-                onBlur={() => setNameTouched(true)}
+                onBlur={() => {
+                  setNameTouched(true);
+                  validateName(name);
+                }}
                 className={`w-full px-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 ${
                   nameError
                     ? "border-red-500 focus:border-red-600"
@@ -271,7 +289,7 @@ export default function NewService({
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
-              {nameError && nameTouched && (
+              {nameError && (
                 <p
                   id="name-error"
                   className="flex items-center gap-1 text-xs text-red-600"
