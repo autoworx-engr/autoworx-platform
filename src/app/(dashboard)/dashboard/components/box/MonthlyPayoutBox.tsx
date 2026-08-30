@@ -62,17 +62,11 @@ export default async function MonthlyPayoutBox({
     <div
       className={cn(
         `
-          flex flex-col p-4 md:p-6 rounded-2xl transition-all duration-300
-
-          // Glassmorphism aesthetic (Replaces old rounded-md p-4 shadow-lg)
+          flex flex-col rounded-2xl p-4 transition-all duration-300 md:p-6
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
-
-          // Subtle border and lift
           ring-1 ring-slate-900/5 dark:ring-white/10
           shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
-
-          // Hover effect for interactivity
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
           ${isStretched ? "flex-1" : ""}
         `,

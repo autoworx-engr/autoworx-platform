@@ -2,10 +2,9 @@ import { getCurrentProjects } from "@/actions/dashboard/data/getTechnicianInfo";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { cn } from "@/lib/cn"; // Ensure cn is imported
 import { hasRouteAccess } from "@/lib/serverRouteGuard";
-import { ExternalLink } from "lucide-react";
 import moment from "moment-timezone";
-import Link from "next/link";
 import BoxRestricted from "./BoxRestricted";
+import BoxTitle from "./BoxTitle";
 
 type TCurrentProjectsBoxProps = {
   className?: string; // Accept className from parent (DashboardTechnician)
@@ -32,36 +31,21 @@ export default async function CurrentProjectsBox({
     <div
       className={cn(
         `
-          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full
-
-          // Glassmorphism aesthetic (Replacing old rounded-md p-6 shadow-lg)
+          flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl p-4 transition-all duration-300 md:p-6 lg:h-full
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
-
-          // Subtle border and lift
           ring-1 ring-slate-900/5 dark:ring-white/10
           shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
-
-          // Hover effect for interactivity
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
-
-          overflow-hidden // Important for internal scrolling
         `,
         className,
       )}
     >
-      {/* Box Title and Link */}
-      <div className="mb-4 md:mb-6 flex items-center justify-between flex-shrink-0">
-        <span className="text-xl font-bold text-slate-800 dark:text-slate-100">
-          Current Projects
-        </span>{" "}
-        <Link
-          href="/dashboard/pipeline/shop/pipeline"
-          className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 transition-colors"
-        >
-          <ExternalLink className="h-5 w-5" />
-        </Link>
-      </div>
+      <BoxTitle
+        title="Current Projects"
+        redirectLink="/dashboard/pipeline/shop/pipeline"
+        className="mb-4 flex-shrink-0 md:mb-6"
+      />
 
       {/* List Container: Scrollable content */}
       <div className="custom-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto pr-2">

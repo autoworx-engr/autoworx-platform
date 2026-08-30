@@ -105,30 +105,22 @@ export default async function AppointmentListBox() {
 
   return (
     // Outer Container: Apply full Glassmorphism style and ensure flex-1 stretching
-    <div className="flex-1 h-full shadow-lg transition-all duration-300 rounded-xl">
+    <div className="flex min-h-0 flex-1 flex-col rounded-xl shadow-lg transition-all duration-300 lg:h-full">
       <div
         className={cn(
           `
-          flex flex-1 flex-col md:p-6 rounded-2xl transition-all duration-300
-
-          // Glassmorphism aesthetic (Replaces old overflow-y-hidden h-full p-6 #md:pb-20 shadow-md)
+          flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl p-4 transition-all duration-300 md:p-6 lg:h-full
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
-
-          // Subtle border and lift
           ring-1 ring-slate-900/5 dark:ring-white/10
           shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
-
-          // Hover effect for interactivity
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
-
-          overflow-hidden // Crucial for containing the scrollable list
         `,
         )}
       >
-        <div className="flex-1 flex flex-col h-full">
+        <div className="flex min-h-0 flex-1 flex-col">
           <BoxTitle
-            title="Appointments" // Enhanced title
+            title="Appointments"
             redirectLink="/dashboard/task/day"
             className="mb-4 md:mb-6 flex-shrink-0"
           />
