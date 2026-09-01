@@ -139,7 +139,7 @@ export function AppointmentDetailCard({
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
-              Technicians
+              Teammates
             </p>
             <p className="text-sm font-medium text-gray-900">
               {assignedUsers

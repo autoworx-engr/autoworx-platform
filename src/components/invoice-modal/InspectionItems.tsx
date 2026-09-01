@@ -4,7 +4,7 @@ import { getInspections } from "@/actions/estimate/invoice/getInspections";
 import { cn } from "@/lib/cn";
 import { InvoiceInspection } from "@prisma/client";
 import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface InspectionItemsProps {
   damageNotes?: string;
@@ -17,9 +17,10 @@ export function InspectionItems({
   invoiceId,
   className = "",
 }: InspectionItemsProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(!!damageNotes);
   const [expandedItem, setExpandedItem] = useState<number | null>(null);
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
+  const autoOpened = useRef(!!damageNotes);
   useEffect(() => {
     // Fetch inspection data and damage notes from the backend
     const fetchInspectionData = async () => {
@@ -30,6 +31,10 @@ export function InspectionItems({
           (r) => r.title && r.title.trim() !== "" && (r.driver || r.passenger),
         );
         setInspectionData(filtered);
+        if (filtered.length > 0 && !autoOpened.current) {
+          autoOpened.current = true;
+          setIsExpanded(true);
+        }
       } catch (error) {
         console.error("Error fetching inspection data:", error);
       }
@@ -41,6 +46,10 @@ export function InspectionItems({
   const toggleItemExpansion = (index: number) => {
     setExpandedItem(expandedItem === index ? null : index);
   };
+
+  const hasContent = inspectionData.length > 0 || !!damageNotes;
+
+  if (!hasContent) return null;
 
   return (
     <div className={`w-full space-y-4 rounded-3xl ${className}`}>
@@ -67,85 +76,87 @@ export function InspectionItems({
       {isExpanded && (
         <div className="space-y-6 px-1 animate-in fade-in slide-in-from-top-2 duration-300">
           {/* Inspection table */}
-          <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="grid grid-cols-10 gap-1 bg-slate-50 p-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 dark:bg-slate-800/50">
-              <div className="col-span-5">Parts</div>
-              <div className="col-span-2 text-center">Driver</div>
-              <div className="col-span-3 text-center">Passenger</div>
-            </div>
+          {inspectionData.length > 0 && (
+            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="grid grid-cols-10 gap-1 bg-slate-50 p-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 dark:bg-slate-800/50">
+                <div className="col-span-5">Parts</div>
+                <div className="col-span-2 text-center">Driver</div>
+                <div className="col-span-3 text-center">Passenger</div>
+              </div>
 
-            <div className="max-h-80 overflow-y-auto">
-              {inspectionData.map((item, index) => (
-                <div
-                  key={index}
-                  className="group border-b border-slate-50 last:border-b-0 dark:border-slate-800/50"
-                >
+              <div className="max-h-80 overflow-y-auto">
+                {inspectionData.map((item, index) => (
                   <div
-                    className={`grid cursor-pointer grid-cols-10 gap-1 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${
-                      index % 2 === 0
-                        ? "bg-white dark:bg-slate-900"
-                        : "bg-[#FBFBFF] dark:bg-slate-800/10"
-                    }`}
-                    onClick={() => toggleItemExpansion(index)}
+                    key={index}
+                    className="group border-b border-slate-50 last:border-b-0 dark:border-slate-800/50"
                   >
-                    <div className="col-span-5 flex items-center">
-                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        {item.title}
-                      </span>
-                    </div>
+                    <div
+                      className={`grid cursor-pointer grid-cols-10 gap-1 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${
+                        index % 2 === 0
+                          ? "bg-white dark:bg-slate-900"
+                          : "bg-[#FBFBFF] dark:bg-slate-800/10"
+                      }`}
+                      onClick={() => toggleItemExpansion(index)}
+                    >
+                      <div className="col-span-5 flex items-center">
+                        <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                          {item.title}
+                        </span>
+                      </div>
 
-                    {/* Checkmark Columns */}
-                    {[item.driver, item.passenger].map((val, i) => (
-                      <div
-                        key={i}
-                        className={`${i === 0 ? "col-span-2" : "col-span-3"} flex items-center justify-center`}
-                      >
+                      {/* Checkmark Columns */}
+                      {[item.driver, item.passenger].map((val, i) => (
                         <div
-                          className={cn(
-                            "flex h-5 w-5 items-center justify-center rounded-lg border-2 transition-all duration-200",
-                            "border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700",
-                            val &&
-                              "border-primary bg-primary shadow-md shadow-primary/20",
-                          )}
+                          key={i}
+                          className={`${i === 0 ? "col-span-2" : "col-span-3"} flex items-center justify-center`}
                         >
-                          <svg
-                            viewBox="0 0 20 20"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="4"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                          <div
                             className={cn(
-                              "h-2.5 w-2.5 transition-all duration-200 mb-0.5",
-                              val
-                                ? "scale-100 opacity-100"
-                                : "scale-50 opacity-0",
+                              "flex h-5 w-5 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                              "border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700",
+                              val &&
+                                "border-primary bg-primary shadow-md shadow-primary/20",
                             )}
                           >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                            <svg
+                              viewBox="0 0 20 20"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className={cn(
+                                "h-2.5 w-2.5 transition-all duration-200 mb-0.5",
+                                val
+                                  ? "scale-100 opacity-100"
+                                  : "scale-50 opacity-0",
+                              )}
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Notes section with a "Bubble" look */}
+                    {expandedItem === index && item.notes && (
+                      <div className="bg-slate-50/30 px-4 pb-4 dark:bg-slate-800/20">
+                        <div className="rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                          <p className="font-bold text-primary uppercase text-[9px] mb-1 tracking-tighter">
+                            Technician Notes
+                          </p>
+                          <p className="text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                            {item.notes}
+                          </p>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-
-                  {/* Notes section with a "Bubble" look */}
-                  {expandedItem === index && item.notes && (
-                    <div className="bg-slate-50/30 px-4 pb-4 dark:bg-slate-800/20">
-                      <div className="rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                        <p className="font-bold text-primary uppercase text-[9px] mb-1 tracking-tighter">
-                          Technician Notes
-                        </p>
-                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
-                          {item.notes}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Overall damage notes section */}
           {damageNotes && (

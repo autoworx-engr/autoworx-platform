@@ -12,6 +12,7 @@ import {
 } from "@/validations/schemas/task/task.validation";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
 import createGoogleCalendarEvent from "./google-calendar/createGoogleCalendarEvent";
+import deleteGoogleCalendarEvent from "./google-calendar/deleteGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "./google-calendar/updateGoogleCalendarEvent";
 import { revalidatePath } from "next/cache";
 
@@ -21,8 +22,6 @@ export async function editTask({
 }: TUpdateTaskValidationSchema): Promise<ServerAction | TErrorHandler> {
   try {
     await updateTaskValidationSchema.parseAsync({ id, task });
-    // await
-    // Find the task users
     const taskUsers = await db.taskUser.findMany({
       where: {
         taskId: id,
@@ -84,26 +83,30 @@ export async function editTask({
         title: task.title,
         description: task.description,
         priority: task.priority,
-        startTime: task.startTime,
-        endTime: task.endTime,
-        date: task.date,
+        startTime: task.startTime || null,
+        endTime: task.endTime || null,
+        date: task.date ? new Date(task.date) : null,
       },
     });
 
-    // if the task has date, start time and end time, then insert it in google calendar
-    // also need to check if google calendar token exists or not, if not, then no need of inserting
     try {
       let googleCalendarToken = (await getGoogleCalendarToken())
         ?.googleCalendarToken;
 
-      if (
-        googleCalendarToken &&
-        updatedTask.googleEventId &&
+      const isScheduled = !!(
         updatedTask.startTime &&
         updatedTask.endTime &&
         updatedTask.date
-      ) {
+      );
+
+      if (googleCalendarToken && updatedTask.googleEventId && isScheduled) {
         await updateGoogleCalendarEvent(updatedTask.googleEventId, task);
+      } else if (googleCalendarToken && updatedTask.googleEventId) {
+        await deleteGoogleCalendarEvent(updatedTask.googleEventId);
+        updatedTask = await db.task.update({
+          where: { id: updatedTask.id },
+          data: { googleEventId: null },
+        });
       } else if (
         googleCalendarToken &&
         !updatedTask.googleEventId &&
