@@ -82,6 +82,12 @@ export default function EditClientModalBody({
   const [tag, setTag] = useState<Tag | undefined>(
     resolvedClient.tag ?? undefined,
   );
+
+  useEffect(() => {
+    if (clientData) {
+      setTag(clientData.tag ?? undefined);
+    }
+  }, [clientData]);
   const [isPremium, setIsPremium] = useState<boolean>(
     resolvedClient.isFleet ?? false,
   );
