@@ -142,6 +142,21 @@ export async function GET(req: NextRequest) {
       where.columnId = columnId;
     }
 
+    // Technicians only see work orders that include a service they're assigned
+    // to — matches the web dashboard's Shop Pipeline (getWorkOrdersPaginated.ts).
+    // Derived server-side from the authenticated user, not a client-supplied flag.
+    const caller = await db.user.findUnique({
+      where: { id: principal.userId },
+      select: { employeeType: true },
+    });
+    if (caller?.employeeType === "Technician") {
+      where.invoiceItems = {
+        some: {
+          service: { Technician: { some: { userId: principal.userId } } },
+        },
+      };
+    }
+
     if (search) {
       where.client = {
         OR: [
