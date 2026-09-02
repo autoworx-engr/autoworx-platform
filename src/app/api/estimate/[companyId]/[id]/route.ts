@@ -195,64 +195,86 @@ export async function GET(
     }
     const companyId = jwtCompanyId;
 
-    const estimate = await db.invoice.findFirst({
-      where: { id, companyId },
-      include: {
-        client: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            mobile: true,
-            countryCode: true,
-          },
+    const estimateInclude = {
+      client: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          mobile: true,
+          countryCode: true,
         },
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-          },
-        },
-        column: {
-          select: { id: true, title: true, bgColor: true, textColor: true },
-        },
-        invoiceItems: {
-          include: {
-            service: true,
-            labor: {
-              include: {
-                tags: { include: { tag: true } },
-              },
-            },
-            materials: {
-              include: {
-                tags: { include: { tag: true } },
-              },
-            },
-            tags: {
-              include: { tag: true },
-            },
-          },
-        },
-        photos: true,
-        tasks: true,
-        payments: {
-          include: {
-            card: true,
-            check: true,
-            cash: true,
-            other: true,
-            deposit: true,
-          },
-        },
-        tags: { include: { tag: true } },
-        technician: true,
-        Inspections: true,
       },
+      vehicle: {
+        select: {
+          id: true,
+          make: true,
+          model: true,
+          year: true,
+        },
+      },
+      column: {
+        select: { id: true, title: true, bgColor: true, textColor: true },
+      },
+      invoiceItems: {
+        include: {
+          service: true,
+          labor: {
+            include: {
+              tags: { include: { tag: true } },
+            },
+          },
+          materials: {
+            include: {
+              tags: { include: { tag: true } },
+            },
+          },
+          tags: {
+            include: { tag: true },
+          },
+        },
+      },
+      photos: true,
+      tasks: true,
+      payments: {
+        include: {
+          card: true,
+          check: true,
+          cash: true,
+          other: true,
+          deposit: true,
+        },
+      },
+      tags: { include: { tag: true } },
+      technician: true,
+      Inspections: true,
+    } as const;
+
+    let estimate = await db.invoice.findFirst({
+      where: { id, companyId },
+      include: estimateInclude,
     });
+
+    if (!estimate) {
+      const requestLink = await db.requestEstimate.findFirst({
+        where: {
+          invoiceId: id,
+          OR: [
+            { senderCompanyId: companyId },
+            { receiverCompanyId: companyId },
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (requestLink) {
+        estimate = await db.invoice.findFirst({
+          where: { id },
+          include: estimateInclude,
+        });
+      }
+    }
 
     if (!estimate) {
       return NextResponse.json(
