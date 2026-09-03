@@ -466,7 +466,7 @@ export default function MakePayment() {
       </DialogTrigger>
 
       <DialogContent className="w-full max-w-xl">
-        <form noValidate>
+        <form noValidate autoComplete="off">
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />
@@ -547,6 +547,10 @@ export default function MakePayment() {
                     <SlimInput
                       labelClassName="text-sm md:text-base"
                       name="card"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-1p-ignore
+                      data-form-type="other"
                       type="text"
                       label="Credit Cards (Last 4 digits)"
                       value={card}
