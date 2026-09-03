@@ -202,6 +202,10 @@ export default function Selector<T>({
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
+                    // Rows can contain their own dialogs, and React bubbles
+                    // events from a portal up the React tree, so typing a
+                    // space in one used to select the row and unmount it.
+                    if (e.target !== e.currentTarget) return;
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       handleSelectItem(item);
