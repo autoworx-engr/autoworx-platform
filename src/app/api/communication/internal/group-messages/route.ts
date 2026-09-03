@@ -128,6 +128,7 @@ export async function GET(request: NextRequest) {
             email: true,
             phone: true,
             image: true,
+            employeeType: true,
           },
         })
       : [];
