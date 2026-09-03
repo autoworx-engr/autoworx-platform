@@ -163,6 +163,8 @@ export async function GET(req: NextRequest) {
                 Technician: true,
               },
             },
+            labor: true,
+            materials: true,
           },
         },
         tags: {
