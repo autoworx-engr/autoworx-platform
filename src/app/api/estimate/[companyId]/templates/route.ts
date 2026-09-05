@@ -37,7 +37,7 @@ import { buildWordSearchAnd } from "@/lib/wordSearch";
  *         schema:
  *           type: string
  *           example: "Oil Change"
- *         description: Search by template title (case-insensitive)
+ *         description: Search by template title or template ID (case-insensitive)
  *       - in: query
  *         name: startDate
  *         schema:
@@ -348,7 +348,7 @@ export async function GET(
       }
     }
 
-    const searchAnd = buildWordSearchAnd(searchTerm, ["title"]);
+    const searchAnd = buildWordSearchAnd(searchTerm, ["title", "id"]);
     if (searchAnd) {
       where.AND = searchAnd;
     }
