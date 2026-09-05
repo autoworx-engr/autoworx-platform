@@ -34,31 +34,20 @@ export default async function getTasks(params?: TaskQueryParams) {
 
     const { where, include, select, orderBy, skip, take } = params || {};
 
+    const baseConditions: Prisma.TaskWhereInput[] = [
+      { companyId },
+      { status: "pending" },
+      {
+        OR: [{ userId: +userId }, { taskUser: { some: { userId: +userId } } }],
+      },
+    ];
+
     const whereCondition: Prisma.TaskWhereInput = {
-      AND: [
-        { companyId },
-        { status: "pending" },
-        {
-          OR: [
-            { userId: +userId },
-            { taskUser: { some: { userId: +userId } } },
-          ],
-        },
-        ...(where ? [where] : []),
-      ],
+      AND: [...baseConditions, ...(where ? [where] : [])],
     };
 
     const countWhere: Prisma.TaskWhereInput = {
-      AND: [
-        { companyId },
-        { status: "pending" },
-        {
-          OR: [
-            { userId: +userId },
-            { taskUser: { some: { userId: +userId } } },
-          ],
-        },
-      ],
+      AND: baseConditions,
     };
 
     const [tasks, totalTasks] = await Promise.all([

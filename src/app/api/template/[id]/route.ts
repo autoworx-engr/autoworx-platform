@@ -138,8 +138,8 @@ export async function GET(
       where: { invoiceTemplateId: estimateTemplate.id },
     });
 
-    // Fetch tasks
-    const tasks = await db.task.findMany({
+    // Fetch task blueprints (template DATA, not real tasks)
+    const tasks = await db.invoiceTemplateTask.findMany({
       where: { invoiceTemplateId: estimateTemplate.id },
     });
 
