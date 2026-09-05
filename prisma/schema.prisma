@@ -2252,7 +2252,7 @@ model Task {
   invoiceId         String?                          @map("invoice_id")
   user              User?                            @relation(fields: [userId], references: [id], onDelete: Cascade)
   company           Company?                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  Invoice           Invoice?                         @relation(fields: [invoiceId], references: [id])
+  Invoice           Invoice?                         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   clientId          Int?                             @map("client_id")
   client            Client?                          @relation(fields: [clientId], references: [id])
   googleEventId     String?

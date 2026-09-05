@@ -367,6 +367,11 @@ export async function DELETE(
       await tx.invoiceRedo.deleteMany({ where: { invoiceId: id } });
       await tx.technician.deleteMany({ where: { invoiceId: id } });
 
+      // Tasks belong to their invoice — they must not outlive it. The FK now
+      // cascades too, but deleting here keeps the behaviour correct on any
+      // database where that migration has not been applied yet.
+      await tx.task.deleteMany({ where: { invoiceId: id } });
+
       await tx.invoice.delete({ where: { id } });
 
       if (existing.client?.leadId) {
