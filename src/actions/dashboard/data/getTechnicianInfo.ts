@@ -7,6 +7,7 @@ import { getEssentials } from "@/lib/auth-utils";
 import { getDateRanges, growthRate } from "./lib";
 import { getSalaryPayouts } from "./getSalaryPayouts";
 import { TECHNICIAN_STATUS } from "@/lib/consts";
+import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
 
 /**
  * Get technician information including performance, monthly payout, and current projects.
@@ -86,6 +87,9 @@ export async function getCurrentProjects(
       technician: {
         include: {
           service: true,
+          invoiceItem: {
+            include: { service: true, labor: true, materials: true },
+          },
         },
       },
       vehicle: true,
@@ -128,7 +132,9 @@ export async function getCurrentProjects(
     return {
       id: invoice.id,
       services: technicians.map((technician) => ({
-        name: technician.service?.name,
+        name:
+          technician.service?.name ||
+          getInvoiceItemTitle(technician.invoiceItem),
         due: technician.due,
         startDate: technician.date,
       })),

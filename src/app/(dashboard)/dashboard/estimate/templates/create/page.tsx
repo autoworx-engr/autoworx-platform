@@ -150,7 +150,7 @@ export default async function Page(props: {
     photos = await db.templatePhoto.findMany({
       where: { invoiceTemplateId: invoice.id },
     });
-    tasks = await db.task.findMany({
+    tasks = await db.invoiceTemplateTask.findMany({
       where: { invoiceTemplateId: invoice.id },
     });
 

@@ -1,10 +1,15 @@
 "use server";
 
+import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import { getServerSession } from "next-auth";
 
 export async function getInvoiceModalData(id: string) {
   try {
-    const invoice = await db.invoice.findFirst({
+    const session = await getServerSession(authOptions);
+    const companyId = session?.user.companyId;
+
+    let invoice = await db.invoice.findFirst({
       where: { id },
       include: {
         company: true,
@@ -45,6 +50,22 @@ export async function getInvoiceModalData(id: string) {
         },
       },
     });
+
+    if (invoice && companyId && invoice.companyId !== companyId) {
+      const requestLink = await db.requestEstimate.findFirst({
+        where: {
+          invoiceId: id,
+          OR: [
+            { senderCompanyId: companyId },
+            { receiverCompanyId: companyId },
+          ],
+        },
+        select: { id: true },
+      });
+      if (!requestLink) {
+        invoice = null;
+      }
+    }
 
     const twilioCredential = await db.twilioCredentials.findFirst({
       where: {

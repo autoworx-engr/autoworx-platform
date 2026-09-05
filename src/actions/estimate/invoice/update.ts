@@ -601,9 +601,6 @@ export async function updateInvoice(
       },
     );
 
-    // Fire side effects only after the transaction has committed successfully,
-    // so a later rollback can't leave a notification/automation-trigger sent
-    // for a write that never actually persisted.
     if (
       invoice?.column?.title !== "Delivered" &&
       column?.title === "Delivered"
@@ -640,14 +637,17 @@ export async function updateInvoice(
       );
     }
 
-    // task create or update this section
     const invoiceTasks = await Promise.all(
       data?.tasks?.map(async (task) => {
+        const parts = task.task.split(":");
+        const title = parts[0].trim();
+        const description = parts.length > 1 ? parts[1].trim() : "";
+
         // if task.id is undefined, create a new task
         if (task.id === undefined) {
           const response = await createTask({
-            title: task.task.split(":")[0],
-            description: task.task.length > 1 ? task.task.split(":")[1] : "",
+            title,
+            description,
             assignedUsers: [],
             priority: "Medium",
             invoiceId: data.id,
@@ -665,10 +665,7 @@ export async function updateInvoice(
             where: {
               id: task?.id,
             },
-            data: {
-              title: task.task.split(":")[0],
-              description: task.task.length > 1 ? task.task.split(":")[1] : "",
-            },
+            data: { title, description },
           });
         }
       }),

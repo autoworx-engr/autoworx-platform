@@ -190,9 +190,9 @@ export async function POST(
           });
         }
 
-        // Clone tasks
+        // Clone task blueprints (template DATA — never real tasks)
         if (source.tasks.length > 0) {
-          await tx.task.createMany({
+          await tx.invoiceTemplateTask.createMany({
             data: source.tasks.map((t) => ({
               title: t.title,
               description: t.description ?? "",

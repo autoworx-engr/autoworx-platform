@@ -13,7 +13,7 @@ import {
   getTotalLeadsPerMonth,
 } from "@/actions/dashboard/data/getAdminInfo";
 import moment from "moment-timezone";
-import { Task, TaskStatus } from "@prisma/client";
+import { getDashboardTasks } from "@/actions/dashboard/data/getDashboardTasks";
 
 /**
  * @swagger
@@ -402,63 +402,11 @@ export async function GET(req: NextRequest) {
     }
 
     //task list
-    let tasks: Task[] = [];
-    let totalTasks: number = 0;
-
-    if (!userId) {
-      throw new Error("User ID is required to fetch tasks.");
-    }
-
-    // Get pending tasks created by user OR assigned to user, upcoming only
-    const nowTz = moment.tz(timezone);
-    const todayLocalDate = nowTz.format("YYYY-MM-DD");
-    const todayStart = moment.utc(todayLocalDate).toDate();
-    const tomorrowStart = moment.utc(todayLocalDate).add(1, "day").toDate();
-    const currentTime = nowTz.format("HH:mm");
-
-    const whereCondition = {
-      AND: [
-        { companyId },
-        { status: TaskStatus.pending },
-        {
-          OR: [
-            { userId: +userId }, // Tasks created by the user
-            { taskUser: { some: { userId: +userId } } }, // Tasks assigned to the user
-          ],
-        },
-        {
-          OR: [
-            // Any task after today should be shown.
-            { date: { gte: tomorrowStart } },
-            // Today's tasks should only show if they are upcoming or all-day.
-            {
-              AND: [
-                { date: { gte: todayStart } },
-                { date: { lt: tomorrowStart } },
-                {
-                  OR: [
-                    { startTime: null },
-                    { startTime: "" },
-                    { startTime: { gte: currentTime } },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    [tasks, totalTasks] = await Promise.all([
-      db.task.findMany({
-        where: whereCondition,
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      }),
-      db.task.count({
-        where: whereCondition,
-      }),
-    ]);
+    const { tasks, totalTasks } = await getDashboardTasks({
+      companyId,
+      userId,
+      timezone,
+    });
 
     const data = {
       user,
