@@ -58,8 +58,15 @@ import { NextRequest, NextResponse } from "next/server";
  *         required: false
  *         schema:
  *           type: string
- *         description: Search by client first or last name (case-insensitive)
+ *         description: Search by client first/last name, invoice id, or vehicle make/model/year (case-insensitive)
  *         example: John
+ *       - in: query
+ *         name: invoiceId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Return only this invoice — a targeted single-row lookup
+ *         example: clx1y2z3a0000abc123
  *     responses:
  *       200:
  *         description: Work orders retrieved successfully
@@ -118,6 +125,7 @@ export async function GET(req: NextRequest) {
       | "desc";
     const columnIdParam = searchParams.get("columnId");
     const search = searchParams.get("search")?.trim() || undefined;
+    const invoiceId = searchParams.get("invoiceId")?.trim() || undefined;
 
     const page = pageParam ? Math.max(1, parseInt(pageParam)) : 1;
     const take = takeParam ? parseInt(takeParam) : undefined;
@@ -142,13 +150,54 @@ export async function GET(req: NextRequest) {
       where.columnId = columnId;
     }
 
-    if (search) {
-      where.client = {
-        OR: [
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-        ],
+    if (invoiceId) {
+      where.id = invoiceId;
+    }
+
+    // Technicians only see work orders that include a service they're assigned
+    // to — matches the web dashboard's Shop Pipeline (getWorkOrdersPaginated.ts).
+    // Derived server-side from the authenticated user, not a client-supplied flag.
+    const caller = await db.user.findUnique({
+      where: { id: principal.userId },
+      select: { employeeType: true },
+    });
+    if (caller?.employeeType === "Technician") {
+      where.invoiceItems = {
+        some: {
+          service: { Technician: { some: { userId: principal.userId } } },
+        },
       };
+    }
+
+    if (search) {
+      const searchAsYear = /^\d+$/.test(search)
+        ? parseInt(search, 10)
+        : undefined;
+
+      where.OR = [
+        {
+          client: {
+            is: {
+              OR: [
+                { firstName: { contains: search, mode: "insensitive" } },
+                { lastName: { contains: search, mode: "insensitive" } },
+              ],
+            },
+          },
+        },
+        { id: { contains: search, mode: "insensitive" } },
+        {
+          vehicle: {
+            is: {
+              OR: [
+                { make: { contains: search, mode: "insensitive" } },
+                { model: { contains: search, mode: "insensitive" } },
+                ...(searchAsYear !== undefined ? [{ year: searchAsYear }] : []),
+              ],
+            },
+          },
+        },
+      ];
     }
 
     const findManyArgs: Prisma.InvoiceFindManyArgs = {
