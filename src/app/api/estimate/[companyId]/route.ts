@@ -663,7 +663,8 @@ export async function POST(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    const principal = await getAuthPrincipal(req);
+    const jwtCompanyId = principal?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -672,6 +673,7 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const companyId = jwtCompanyId;
+    const actingUserId = principal?.userId ?? null;
 
     const company = await db.company.findUnique({ where: { id: companyId } });
     if (!company) {
@@ -903,6 +905,10 @@ export async function POST(
       }
 
       // Tasks
+      //
+      // `userId`/`createdBy` mirror the web create action (actions/estimate/
+      // invoice/create.ts). Task & Activity scopes to creator-or-assignee, so a
+      // task written without an owner is invisible in every task list.
       for (const t of tasks as any[]) {
         if (!t?.task) continue;
         const parts = t.task.split(":");
@@ -914,6 +920,8 @@ export async function POST(
             companyId,
             clientId: clientId ? Number(clientId) : undefined,
             priority: "Medium",
+            userId: actingUserId,
+            createdBy: "user",
           },
         });
       }

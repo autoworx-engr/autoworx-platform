@@ -1,52 +1,69 @@
 "use client";
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useTransition,
-  useCallback,
-} from "react";
-import { Client, MailgunEmail, User } from "@prisma/client";
-import { FullMessage } from "@/actions/dashboard/technician/recentMessages";
+import React, { useEffect, useState, useCallback } from "react";
+import { User } from "@prisma/client";
 import { Message } from "./Message"; // Assuming Message component is styled separately
 import { formatInternalAttachmentMessage } from "@/utils/formatAttachmentMessage";
 import { normalizeSearch } from "@/utils/normalizeSearch";
-import { cn } from "@/lib/cn"; // Utility for merging Tailwind classes
 import { Search as SearchIcon, Loader2 } from "lucide-react"; // Import for premium input
-import { getClientMessages } from "@/actions/message/getClientMessages";
-import { useDebounce } from "@/hooks/useDebounce";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { useRecentMessagesSeen } from "./_hooks/useRecentMessagesSeen";
+import { useClientMessagesList } from "./_hooks/useClientMessagesList";
+import { TClientMessage, TInternalMessage } from "./_hooks/recentMessageTypes";
 
 type TMessageContainerProps = {
-  // clientMessages?: (Client & {
-  //   MailgunEmail: (MailgunEmail & { client: Client })[];
-  // })[];
-  initialClientMessages?: (Client & {
-    MailgunEmail: (MailgunEmail & { client: Client })[];
-  })[];
-  internalMessages?: FullMessage[];
+  initialClientMessages?: TClientMessage[];
+  internalMessages?: TInternalMessage[];
   user: User;
   canSeeClientMessages?: boolean;
 };
 
 export default function MessageContainer({
-  // clientMessages = [],
   initialClientMessages = [],
   internalMessages = [],
   user,
   canSeeClientMessages = false,
 }: TMessageContainerProps) {
   const [search, setSearch] = useState("");
-  const [clientMessages, setClientMessages] = useState(initialClientMessages);
-  const [hasMore, setHasMore] = useState(initialClientMessages.length >= 20);
-  const [isPending, startTransition] = useTransition();
+  const [internalState, setInternalState] = useState(internalMessages);
+
+  const {
+    clientMessages,
+    setClientMessages,
+    hasMore,
+    fetchMoreClients,
+    runSearch,
+  } = useClientMessagesList({
+    initialClientMessages,
+    canSeeClientMessages,
+    search,
+  });
+
+  // The server component re-renders this box on navigation; keep local state
+  // in step with the freshly fetched lists.
+  useEffect(() => {
+    setInternalState(internalMessages);
+  }, [internalMessages]);
+
+  const internalCounterpartId = useCallback(
+    (message: TInternalMessage) =>
+      user?.id === message?.from?.id ? message?.to?.id : message?.from?.id,
+    [user?.id],
+  );
+
+  useRecentMessagesSeen({
+    userId: user?.id,
+    companyId: user?.companyId,
+    setInternalMessages: setInternalState,
+    setClientMessages,
+    counterpartId: internalCounterpartId,
+  });
 
   const filteredInternalMessages = React.useMemo(() => {
-    if (search === "") return internalMessages;
+    if (search === "") return internalState;
 
     const normalizedSearchTerm = normalizeSearch(search.toLowerCase());
 
-    return internalMessages.filter((msg) => {
+    return internalState.filter((msg) => {
       const fromFullName = `${msg?.from?.firstName} ${msg?.from?.lastName}`;
       const toFullName = `${msg?.to?.firstName} ${msg?.to?.lastName}`;
 
@@ -55,60 +72,13 @@ export default function MessageContainer({
         normalizeSearch(toFullName)?.includes(normalizedSearchTerm)
       );
     });
-  }, [search, internalMessages]);
-
-  // Debounced search function
-  const debouncedSearch = useDebounce((searchTerm: string) => {
-    if (!canSeeClientMessages) return; // internal list filters locally
-    if (searchTerm.trim()) {
-      startTransition(async () => {
-        try {
-          const data = await getClientMessages(1, searchTerm.trim());
-          setClientMessages(data.messages);
-          setHasMore(false);
-        } catch (error) {
-          console.error("Error searching messages:", error);
-        }
-      });
-    } else {
-      // Reset to initial when search is cleared
-      setClientMessages(initialClientMessages);
-      setHasMore(initialClientMessages.length >= 20);
-    }
-  }, 500);
-
-  // Fetch more client messages
-  const fetchMoreClients = useCallback(async () => {
-    if (!canSeeClientMessages || isPending || search || !hasMore) return;
-
-    startTransition(async () => {
-      try {
-        const data = await getClientMessages(
-          Math.floor(clientMessages.length / 20) + 1,
-          "",
-        );
-
-        setClientMessages((prev) => {
-          const existingIds = new Set(prev.map((client) => client.id));
-          const newClients = data.messages.filter(
-            (client) => !existingIds.has(client.id),
-          );
-          return [...prev, ...newClients];
-        });
-
-        setHasMore(data.hasMore);
-      } catch (error) {
-        console.error("Error loading more messages:", error);
-        setHasMore(false);
-      }
-    });
-  }, [canSeeClientMessages, clientMessages.length, isPending, search, hasMore]);
+  }, [search, internalState]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
-    debouncedSearch(value); // Call debounced function
+    runSearch(value); // Debounced client-message search
   };
 
   const hasMessages =
@@ -185,13 +155,13 @@ export default function MessageContainer({
                 redirectUrl={`/dashboard/communication/client/${data.id}?chat=true`}
                 communicationType="Client"
                 photoUrl={data.photo}
-                // timestamp={latestEmail.createdAt} // Pass timestamp for sorting/display
+                isSeen={data.isSeen}
               />
             );
           })}
 
           {/* 2. Internal Messages (Technician focus) */}
-          {filteredInternalMessages?.map((data: FullMessage) => {
+          {filteredInternalMessages?.map((data: TInternalMessage) => {
             const targetUser =
               user?.id === data?.from?.id ? data?.to : data?.from;
             const userName = `${targetUser?.firstName || ""} ${targetUser?.lastName || ""}`;
@@ -211,7 +181,7 @@ export default function MessageContainer({
                 redirectUrl={`/dashboard/communication/internal/?id=${targetUser?.id}`}
                 communicationType="Internal"
                 photoUrl={targetUser?.image} // Use the target user's image
-                // timestamp={data.createdAt} // Pass timestamp for sorting/display
+                isSeen={data.isSeen}
               />
             );
           })}

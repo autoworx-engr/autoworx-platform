@@ -362,7 +362,7 @@ export async function GET(
 
     const [photos, tasks, inspections] = await Promise.all([
       db.templatePhoto.findMany({ where: { invoiceTemplateId: id } }),
-      db.task.findMany({ where: { invoiceTemplateId: id } }),
+      db.invoiceTemplateTask.findMany({ where: { invoiceTemplateId: id } }),
       db.invoiceInspection.findMany({
         where: { invoiceTemplateId: id },
         select: {
@@ -733,6 +733,8 @@ export async function PATCH(
         }
 
         // --- Tasks (upsert + delete removed) ---
+        // Template DATA only (`InvoiceTemplateTask`). Updating a template's
+        // task list must never create or touch a real `Task`.
         const keptTaskIds: number[] = [];
         if (Array.isArray(tasks)) {
           for (const t of tasks as any[]) {
@@ -741,26 +743,31 @@ export async function PATCH(
             const taskTitle = parts[0].trim();
             const taskDesc = parts.length > 1 ? parts[1].trim() : "";
 
+            // Scope the update to this template so a caller cannot rewrite
+            // another template's (or another company's) row by id. An id that
+            // isn't ours falls through and is created fresh.
             if (t.id) {
-              const updatedTask = await tx.task.update({
-                where: { id: Number(t.id) },
+              const { count } = await tx.invoiceTemplateTask.updateMany({
+                where: { id: Number(t.id), invoiceTemplateId: id },
                 data: { title: taskTitle, description: taskDesc },
               });
-              keptTaskIds.push(updatedTask.id);
-            } else {
-              const newTask = await tx.task.create({
-                data: {
-                  title: taskTitle,
-                  description: taskDesc,
-                  invoiceTemplateId: id,
-                  companyId,
-                  priority: "Medium",
-                },
-              });
-              keptTaskIds.push(newTask.id);
+              if (count > 0) {
+                keptTaskIds.push(Number(t.id));
+                continue;
+              }
             }
+
+            const newTask = await tx.invoiceTemplateTask.create({
+              data: {
+                title: taskTitle,
+                description: taskDesc,
+                invoiceTemplateId: id,
+                companyId,
+              },
+            });
+            keptTaskIds.push(newTask.id);
           }
-          await tx.task.deleteMany({
+          await tx.invoiceTemplateTask.deleteMany({
             where: { invoiceTemplateId: id, id: { notIn: keptTaskIds } },
           });
         }
@@ -844,7 +851,9 @@ export async function DELETE(
         where: { invoiceTemplateId: id },
       });
       await tx.invoiceTags.deleteMany({ where: { invoiceTemplateId: id } });
-      await tx.task.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceTemplateTask.deleteMany({
+        where: { invoiceTemplateId: id },
+      });
       await tx.material.deleteMany({ where: { invoiceTemplateId: id } });
       await tx.invoiceItem.deleteMany({ where: { invoiceTemplateId: id } });
       await tx.invoiceTemplate.delete({ where: { id } });

@@ -641,13 +641,22 @@ export async function updateInvoice(
     }
 
     // task create or update this section
+    //
+    // Tasks arriving without an id are new — including every task a template
+    // contributed, since a template only carries task *data*. Those become
+    // real, owned tasks here (createTask stamps the acting user), which is what
+    // puts them in Task & Activity.
     const invoiceTasks = await Promise.all(
       data?.tasks?.map(async (task) => {
+        const parts = task.task.split(":");
+        const title = parts[0].trim();
+        const description = parts.length > 1 ? parts[1].trim() : "";
+
         // if task.id is undefined, create a new task
         if (task.id === undefined) {
           const response = await createTask({
-            title: task.task.split(":")[0],
-            description: task.task.length > 1 ? task.task.split(":")[1] : "",
+            title,
+            description,
             assignedUsers: [],
             priority: "Medium",
             invoiceId: data.id,
@@ -665,10 +674,7 @@ export async function updateInvoice(
             where: {
               id: task?.id,
             },
-            data: {
-              title: task.task.split(":")[0],
-              description: task.task.length > 1 ? task.task.split(":")[1] : "",
-            },
+            data: { title, description },
           });
         }
       }),

@@ -277,7 +277,8 @@ export async function PATCH(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    const principal = await getAuthPrincipal(req);
+    const jwtCompanyId = principal?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -287,7 +288,12 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const result = await fullUpdateInvoice(id, jwtCompanyId, body);
+    const result = await fullUpdateInvoice(
+      id,
+      jwtCompanyId,
+      body,
+      principal?.userId ?? null,
+    );
     return NextResponse.json(
       { success: result.success, message: result.message, data: result.data },
       { status: result.status },

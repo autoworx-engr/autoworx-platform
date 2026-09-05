@@ -5,6 +5,7 @@ export async function fullUpdateInvoice(
   id: string,
   companyId: number,
   body: any,
+  actingUserId: number | null = null,
 ): Promise<{ success: boolean; message: string; data?: any; status: number }> {
   const {
     clientId,
@@ -410,6 +411,8 @@ export async function fullUpdateInvoice(
       });
       keptTaskIds.push(upd.id);
     } else {
+      // `userId`/`createdBy` mirror the web update action. Task & Activity
+      // scopes to creator-or-assignee, so an ownerless task never shows up.
       const created = await db.task.create({
         data: {
           title,
@@ -418,6 +421,8 @@ export async function fullUpdateInvoice(
           companyId,
           clientId: clientId ? Number(clientId) : undefined,
           priority: "Medium",
+          userId: actingUserId,
+          createdBy: "user",
         },
       });
       keptTaskIds.push(created.id);

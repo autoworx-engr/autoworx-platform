@@ -32,7 +32,9 @@ export default function SyncEstimate({
   template?: InvoiceTemplate;
   items: Item[];
   photos: InvoicePhoto[];
-  tasks: Task[];
+  // Either real invoice tasks (`Task`, id present) or a template's task
+  // blueprint. Applying a template passes no ids — see DynamicTemplateLoader.
+  tasks: { id?: number; title: string; description: string | null }[];
   payment: FullPayment;
   inspections: InspectionType[];
 }) {

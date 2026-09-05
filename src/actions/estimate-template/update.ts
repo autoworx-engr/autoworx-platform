@@ -9,7 +9,6 @@ import { Labor, Material, Service, Tag, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { InspectionType } from "@/stores/estimate-create";
 import { estimateTemplateEditValidationSchema } from "@/validations/schemas/estimate-template/estimate.validation";
-import { createTask } from "../task/createTask";
 
 interface UpdateEstimateTemplateInput {
   id: string;
@@ -505,42 +504,40 @@ export async function updateEstimateTemplate(
       },
     );
 
-    // task create or update this section
+    // Task blueprint create/update section.
+    //
+    // These are template DATA rows, not real tasks — editing a template's task
+    // list must never touch Task & Activity.
     const invoiceTasks = await Promise.all(
       data?.tasks?.map(async (task) => {
-        // if task.id is undefined, create a new task
-        if (task.id === undefined) {
-          const response = await createTask({
-            title: task.task.split(":")[0],
-            description: task.task.length > 1 ? task.task.split(":")[1] : "",
-            assignedUsers: [],
-            priority: "Medium",
-            invoiceTemplateId: data.id,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            clientId: null,
-            createdBy: "user",
-          });
+        const parts = task.task.split(":");
+        const title = parts[0].trim();
+        const description = parts.length > 1 ? parts[1].trim() : "";
 
-          if (response.type === "success") {
-            return response.data;
-          }
-        } else if (task.id) {
-          // if task.id is not undefined, update the task
-          return db.task.update({
-            where: {
-              id: task?.id,
-            },
-            data: {
-              title: task.task.split(":")[0],
-              description: task.task.length > 1 ? task.task.split(":")[1] : "",
-            },
+        // An existing blueprint row is updated in place, scoped to this
+        // template so an id from elsewhere cannot be rewritten. Anything else
+        // (no id, or an id that isn't ours) becomes a new row.
+        if (task.id) {
+          const { count } = await db.invoiceTemplateTask.updateMany({
+            where: { id: task.id, invoiceTemplateId: data.id },
+            data: { title, description },
           });
+          if (count > 0) return { id: task.id };
         }
+
+        return db.invoiceTemplateTask.create({
+          data: {
+            title,
+            description,
+            invoiceTemplateId: data.id,
+            companyId,
+          },
+        });
       }),
     );
 
     // delete tasks which are removed from the invoice
-    await db.task.deleteMany({
+    await db.invoiceTemplateTask.deleteMany({
       where: {
         invoiceTemplateId: data.id,
         id: {
