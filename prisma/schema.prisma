@@ -1573,12 +1573,7 @@ model InvoiceTemplate {
   @@index([companyId], name: "fk_template_company")
 }
 
-// Task *blueprint* carried by an invoice template.
-//
-// Deliberately NOT a `Task`: adding a task to a template must never produce a
-// real task in Task & Activity. These rows are pure template content. When an
-// estimate/invoice is created from the template, its task list is copied into
-// real `Task` rows owned by the acting user.
+
 model InvoiceTemplateTask {
   id                Int             @id @default(autoincrement())
   title             String          @db.VarChar(100)

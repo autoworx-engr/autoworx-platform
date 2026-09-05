@@ -11,11 +11,6 @@ type Args = {
   search: string;
 };
 
-/**
- * Owns the client half of the recent-messages list: the debounced server
- * search and the infinite-scroll paging. Split out of MessageContainer to
- * keep that component within the file-size limit.
- */
 export function useClientMessagesList({
   initialClientMessages,
   canSeeClientMessages,

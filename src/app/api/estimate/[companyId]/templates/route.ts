@@ -612,11 +612,6 @@ export async function POST(
         }
       }
 
-      // Tasks
-      // Stored as template DATA (`InvoiceTemplateTask`), never as a real
-      // `Task` — adding a task to a template must not create anything in
-      // Task & Activity. Real tasks appear only when an estimate/invoice is
-      // created from this template.
       for (const t of tasks as any[]) {
         if (!t?.task) continue;
         const parts = (t.task as string).split(":");

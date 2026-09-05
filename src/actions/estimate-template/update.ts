@@ -504,19 +504,12 @@ export async function updateEstimateTemplate(
       },
     );
 
-    // Task blueprint create/update section.
-    //
-    // These are template DATA rows, not real tasks — editing a template's task
-    // list must never touch Task & Activity.
     const invoiceTasks = await Promise.all(
       data?.tasks?.map(async (task) => {
         const parts = task.task.split(":");
         const title = parts[0].trim();
         const description = parts.length > 1 ? parts[1].trim() : "";
 
-        // An existing blueprint row is updated in place, scoped to this
-        // template so an id from elsewhere cannot be rewritten. Anything else
-        // (no id, or an id that isn't ours) becomes a new row.
         if (task.id) {
           const { count } = await db.invoiceTemplateTask.updateMany({
             where: { id: task.id, invoiceTemplateId: data.id },

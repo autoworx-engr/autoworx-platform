@@ -361,15 +361,9 @@ export async function DELETE(
     }
 
     await db.$transaction(async (tx) => {
-      // Technician rows require an invoiceId with no cascade, and InvoiceRedo
-      // rows require a technicianId with no cascade, so both must be cleared
-      // before the invoice can be deleted or P2003 is thrown.
       await tx.invoiceRedo.deleteMany({ where: { invoiceId: id } });
       await tx.technician.deleteMany({ where: { invoiceId: id } });
 
-      // Tasks belong to their invoice — they must not outlive it. The FK now
-      // cascades too, but deleting here keeps the behaviour correct on any
-      // database where that migration has not been applied yet.
       await tx.task.deleteMany({ where: { invoiceId: id } });
 
       await tx.invoice.delete({ where: { id } });

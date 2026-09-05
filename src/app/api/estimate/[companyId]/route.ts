@@ -905,11 +905,6 @@ export async function POST(
         }
       }
 
-      // Tasks
-      //
-      // `userId`/`createdBy` mirror the web create action (actions/estimate/
-      // invoice/create.ts). Task & Activity scopes to creator-or-assignee, so a
-      // task written without an owner is invisible in every task list.
       for (const t of tasks as any[]) {
         if (!t?.task) continue;
         const parts = t.task.split(":");

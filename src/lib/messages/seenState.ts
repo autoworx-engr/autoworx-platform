@@ -3,13 +3,6 @@ import { FullMessage } from "@/actions/dashboard/technician/recentMessages";
 
 export type WithSeen<T> = T & { isSeen: boolean };
 
-/**
- * Marks each internal message as seen/unseen for the viewer.
- *
- * Messages the viewer sent are always seen. For received messages the read
- * state lives on `chatTrack` (senderId → receiverId, section "internal"), the
- * same source the internal chat sidebar uses for its unread badges.
- */
 export async function attachInternalSeenState(
   messages: FullMessage[],
   userId: number,
@@ -50,12 +43,6 @@ export async function attachInternalSeenState(
   }));
 }
 
-/**
- * Marks each client conversation as seen/unseen for the viewer. Mirrors the
- * client hub indicator: a conversation counts as unseen while any channel
- * (email, sms, messenger, instagram) still has an unread flag. Clients with no
- * conversation track have nothing to read, so they are seen.
- */
 export async function attachClientSeenState<T extends { id: number }>(
   clients: T[],
 ): Promise<WithSeen<T>[]> {

@@ -732,9 +732,6 @@ export async function PATCH(
           });
         }
 
-        // --- Tasks (upsert + delete removed) ---
-        // Template DATA only (`InvoiceTemplateTask`). Updating a template's
-        // task list must never create or touch a real `Task`.
         const keptTaskIds: number[] = [];
         if (Array.isArray(tasks)) {
           for (const t of tasks as any[]) {
@@ -743,9 +740,6 @@ export async function PATCH(
             const taskTitle = parts[0].trim();
             const taskDesc = parts.length > 1 ? parts[1].trim() : "";
 
-            // Scope the update to this template so a caller cannot rewrite
-            // another template's (or another company's) row by id. An id that
-            // isn't ours falls through and is created fresh.
             if (t.id) {
               const { count } = await tx.invoiceTemplateTask.updateMany({
                 where: { id: Number(t.id), invoiceTemplateId: id },

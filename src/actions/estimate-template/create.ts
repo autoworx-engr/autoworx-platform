@@ -281,9 +281,6 @@ export async function createEstimateTemplate({
       },
     );
 
-    // Store the template's task blueprint as template DATA — never as a `Task`.
-    // Adding a task to a template must not create anything in Task & Activity;
-    // real tasks are only created when an estimate/invoice uses this template.
     const templateTasks = tasks
       .filter((task) => task?.task)
       .map((task) => {

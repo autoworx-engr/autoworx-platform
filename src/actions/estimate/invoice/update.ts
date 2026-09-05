@@ -601,9 +601,6 @@ export async function updateInvoice(
       },
     );
 
-    // Fire side effects only after the transaction has committed successfully,
-    // so a later rollback can't leave a notification/automation-trigger sent
-    // for a write that never actually persisted.
     if (
       invoice?.column?.title !== "Delivered" &&
       column?.title === "Delivered"
@@ -640,12 +637,6 @@ export async function updateInvoice(
       );
     }
 
-    // task create or update this section
-    //
-    // Tasks arriving without an id are new — including every task a template
-    // contributed, since a template only carries task *data*. Those become
-    // real, owned tasks here (createTask stamps the acting user), which is what
-    // puts them in Task & Activity.
     const invoiceTasks = await Promise.all(
       data?.tasks?.map(async (task) => {
         const parts = task.task.split(":");

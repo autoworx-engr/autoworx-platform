@@ -44,10 +44,6 @@ export default function DynamicTemplateLoader({
         setTemplate(data.template);
         setStatus(data.template?.column);
         setItems(data.items);
-        // Drop the blueprint ids. A template's tasks live in
-        // `InvoiceTemplateTask`; the estimate's live in `Task`. Carrying an id
-        // across would make the save step update the template's own row
-        // instead of creating a real task for this estimate.
         setTasks(
           (data.tasks ?? []).map(
             (t: { title: string; description: string }) => ({

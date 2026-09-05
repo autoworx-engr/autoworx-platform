@@ -412,8 +412,6 @@ export async function fullUpdateInvoice(
       });
       keptTaskIds.push(upd.id);
     } else {
-      // `userId`/`createdBy` mirror the web update action. Task & Activity
-      // scopes to creator-or-assignee, so an ownerless task never shows up.
       const created = await db.task.create({
         data: {
           title,
