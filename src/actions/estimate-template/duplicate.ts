@@ -109,6 +109,20 @@ export async function duplicateEstimateTemplate({
         ),
       );
 
+      // 4️⃣b Duplicate task blueprints. `tasks` was already being loaded but
+      // never copied, so duplicated templates silently lost their task list.
+      if (template.tasks.length > 0) {
+        await db.invoiceTemplateTask.createMany({
+          data: template.tasks.map((t) => ({
+            invoiceTemplateId: createdTemplate.id,
+            title: t.title,
+            description: t.description,
+            priority: t.priority,
+            companyId,
+          })),
+        });
+      }
+
       // 5️⃣ Duplicate photos
       await Promise.all(
         template.templatePhotos.map((p) =>

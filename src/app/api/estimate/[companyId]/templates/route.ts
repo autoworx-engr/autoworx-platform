@@ -612,17 +612,15 @@ export async function POST(
         }
       }
 
-      // Tasks
       for (const t of tasks as any[]) {
         if (!t?.task) continue;
         const parts = (t.task as string).split(":");
-        await tx.task.create({
+        await tx.invoiceTemplateTask.create({
           data: {
             title: parts[0].trim(),
             description: parts.length > 1 ? parts[1].trim() : "",
             invoiceTemplateId: newTemplate.id,
             companyId,
-            priority: "Medium",
           },
         });
       }

@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
+import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { InvoiceType } from "@prisma/client";
 
 export async function fullUpdateInvoice(
   id: string,
   companyId: number,
   body: any,
+  actingUserId: number | null = null,
 ): Promise<{ success: boolean; message: string; data?: any; status: number }> {
   const {
     clientId,
@@ -418,6 +420,8 @@ export async function fullUpdateInvoice(
           companyId,
           clientId: clientId ? Number(clientId) : undefined,
           priority: "Medium",
+          userId: actingUserId,
+          createdBy: "user",
         },
       });
       keptTaskIds.push(created.id);
@@ -426,6 +430,25 @@ export async function fullUpdateInvoice(
   await db.task.deleteMany({
     where: { invoiceId: id, id: { notIn: keptTaskIds } },
   });
+
+  if (invoice.column?.title !== "Delivered" && column?.title === "Delivered") {
+    const notifyClient = updated.clientId
+      ? await db.client.findUnique({
+          where: { id: updated.clientId },
+          select: { firstName: true, lastName: true },
+        })
+      : null;
+
+    sendInvoiceDeliveredNotification({
+      companyId,
+      invoiceId: updated.id,
+      clientName: notifyClient
+        ? `${notifyClient.firstName} ${notifyClient.lastName ?? ""}`.trim()
+        : undefined,
+    }).catch((err) =>
+      console.error("sendInvoiceDeliveredNotification failed", err),
+    );
+  }
 
   return {
     success: true,
