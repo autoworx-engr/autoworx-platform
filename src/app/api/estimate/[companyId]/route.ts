@@ -1,4 +1,5 @@
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { InvoiceType, Prisma } from "@prisma/client";
@@ -933,6 +934,24 @@ export async function POST(
 
       return newInvoice;
     });
+
+    const notifyClient = invoice.clientId
+      ? await db.client.findUnique({
+          where: { id: invoice.clientId },
+          select: { firstName: true, lastName: true },
+        })
+      : null;
+
+    sendEstimateCreateNotification({
+      companyId,
+      invoiceId: invoice.id,
+      invoiceType: invoice.type,
+      clientName: notifyClient
+        ? `${notifyClient.firstName} ${notifyClient.lastName ?? ""}`.trim()
+        : undefined,
+    }).catch((err) =>
+      console.error("sendEstimateCreateNotification failed", err),
+    );
 
     return NextResponse.json(
       {

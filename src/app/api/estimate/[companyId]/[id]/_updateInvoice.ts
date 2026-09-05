@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { InvoiceType } from "@prisma/client";
 
 export async function fullUpdateInvoice(
@@ -431,6 +432,25 @@ export async function fullUpdateInvoice(
   await db.task.deleteMany({
     where: { invoiceId: id, id: { notIn: keptTaskIds } },
   });
+
+  if (invoice.column?.title !== "Delivered" && column?.title === "Delivered") {
+    const notifyClient = updated.clientId
+      ? await db.client.findUnique({
+          where: { id: updated.clientId },
+          select: { firstName: true, lastName: true },
+        })
+      : null;
+
+    sendInvoiceDeliveredNotification({
+      companyId,
+      invoiceId: updated.id,
+      clientName: notifyClient
+        ? `${notifyClient.firstName} ${notifyClient.lastName ?? ""}`.trim()
+        : undefined,
+    }).catch((err) =>
+      console.error("sendInvoiceDeliveredNotification failed", err),
+    );
+  }
 
   return {
     success: true,
