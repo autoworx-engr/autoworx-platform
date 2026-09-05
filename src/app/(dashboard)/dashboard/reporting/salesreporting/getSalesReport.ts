@@ -264,6 +264,7 @@ export async function getSalesReportData(
         include: {
           Invoice: {
             where: { type: "Invoice" },
+            include: { column: { select: { title: true } } },
           },
         },
       },
@@ -286,6 +287,7 @@ export async function getSalesReportData(
           include: {
             Invoice: {
               where: { type: "Invoice" },
+              include: { column: { select: { title: true } } },
             },
           },
         })
@@ -322,9 +324,10 @@ export async function getSalesReportData(
         ...client,
         Invoice: client.Invoice.filter(
           (inv) =>
-            inv.convertedAt !== null &&
-            inv.convertedAt >= customStart &&
-            inv.convertedAt <= customEnd,
+            inv.column?.title === "Delivered" &&
+            inv.deliveredAt !== null &&
+            inv.deliveredAt >= customStart &&
+            inv.deliveredAt <= customEnd,
         ),
       })),
     }));
@@ -335,9 +338,10 @@ export async function getSalesReportData(
         ...client,
         Invoice: client.Invoice.filter(
           (inv) =>
-            inv.convertedAt !== null &&
-            inv.convertedAt >= previousStart &&
-            inv.convertedAt <= previousEnd,
+            inv.column?.title === "Delivered" &&
+            inv.deliveredAt !== null &&
+            inv.deliveredAt >= previousStart &&
+            inv.deliveredAt <= previousEnd,
         ),
       })),
     }));
@@ -348,9 +352,10 @@ export async function getSalesReportData(
         ...client,
         Invoice: client.Invoice.filter(
           (inv) =>
-            inv.convertedAt !== null &&
-            inv.convertedAt >= twoAgoStart &&
-            inv.convertedAt <= twoAgoEnd,
+            inv.column?.title === "Delivered" &&
+            inv.deliveredAt !== null &&
+            inv.deliveredAt >= twoAgoStart &&
+            inv.deliveredAt <= twoAgoEnd,
         ),
       })),
     }));
@@ -384,9 +389,10 @@ export async function getSalesReportData(
       ...client,
       Invoice: client.Invoice.filter(
         (inv) =>
-          inv.convertedAt !== null &&
-          inv.convertedAt >= currentMonthStart &&
-          inv.convertedAt <= currentMonthEnd,
+          inv.column?.title === "Delivered" &&
+          inv.deliveredAt !== null &&
+          inv.deliveredAt >= currentMonthStart &&
+          inv.deliveredAt <= currentMonthEnd,
       ),
     })),
   }));
@@ -397,9 +403,10 @@ export async function getSalesReportData(
       ...client,
       Invoice: client.Invoice.filter(
         (inv) =>
-          inv.convertedAt !== null &&
-          inv.convertedAt >= previousMonthStart &&
-          inv.convertedAt <= previousMonthEnd,
+          inv.column?.title === "Delivered" &&
+          inv.deliveredAt !== null &&
+          inv.deliveredAt >= previousMonthStart &&
+          inv.deliveredAt <= previousMonthEnd,
       ),
     })),
   }));
@@ -410,9 +417,10 @@ export async function getSalesReportData(
       ...client,
       Invoice: client.Invoice.filter(
         (inv) =>
-          inv.convertedAt !== null &&
-          inv.convertedAt >= twoMonthsAgoStart &&
-          inv.convertedAt <= twoMonthsAgoEnd,
+          inv.column?.title === "Delivered" &&
+          inv.deliveredAt !== null &&
+          inv.deliveredAt >= twoMonthsAgoStart &&
+          inv.deliveredAt <= twoMonthsAgoEnd,
       ),
     })),
   }));

@@ -81,7 +81,7 @@ export async function updateEmployee({
       state,
       zip,
       companyName: company?.name,
-      commission,
+      commission: type === "Sales" ? commission : 0,
       joinDate: new Date(date || Date.now()),
       employeeType: type,
       image: profilePicture ? profilePicture : undefined,

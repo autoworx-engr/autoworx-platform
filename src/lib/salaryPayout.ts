@@ -4,10 +4,7 @@ import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { getDateRanges } from "@/actions/dashboard/data/lib";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import {
-  getSalaryHistoryForPeriod,
-  getActiveSalary,
-} from "@/lib/salaryHistoryManager";
+import { getSalaryHistoryForPeriod } from "@/lib/salaryHistoryManager";
 
 /**
  * Calculate salary-based previous month earnings
@@ -46,39 +43,6 @@ export async function calculateSalaryCurrentMonthEarnings(
   const { timezone } = await getCompanyTimezone(currentCompany);
 
   const { currentMonthStart, currentMonthEnd } = getDateRanges(timezone);
-
-  // Get active salary for special handling of monthly and bi-weekly salaries
-  const activeSalary = await getActiveSalary(userId, companyId);
-  if (!activeSalary) {
-    return 0;
-  }
-
-  // For monthly salary, always return the monthly amount for current month regardless of completion
-  if (activeSalary.salaryType === "MONTHLY") {
-    return parseFloat(Number(activeSalary.salaryAmount).toFixed(2));
-  }
-
-  // For bi-weekly salary, show the amount if we're in a current pay period (even if not completed)
-  if (activeSalary.salaryType === "BI_WEEKLY") {
-    // Check if we're currently in a bi-weekly period that started this month
-    const now = new Date();
-    const salaryStartDate = new Date(activeSalary.startDate);
-
-    // Find current bi-weekly period
-    const daysSinceStart = Math.floor(
-      (now.getTime() - salaryStartDate.getTime()) / (24 * 60 * 60 * 1000),
-    );
-    const currentPeriodNumber = Math.floor(daysSinceStart / 14);
-    const currentPeriodStart = new Date(
-      salaryStartDate.getTime() +
-        currentPeriodNumber * 14 * 24 * 60 * 60 * 1000,
-    );
-
-    // If current period started in this month, show the amount
-    if (currentPeriodStart >= currentMonthStart) {
-      return parseFloat(Number(activeSalary.salaryAmount).toFixed(2));
-    }
-  }
 
   return await calculateSalaryForPeriodWithHistory(
     userId,
@@ -150,8 +114,12 @@ export async function calculateSalaryTotalEarnings(
 }
 
 /**
- * Calculate salary for a specific period using salary history
- * This handles multiple salary changes within the period
+ * Total salary earned inside a period.
+ *
+ * Hourly accrues from real clock records, so each rate span is summed on its own.
+ * Fixed salaries pay once per completed cycle. Cycles are anchored to the
+ * employee's join date, NOT to each salary record — anchoring per record restarts
+ * the cycle on every raise, which pays the overlapping month twice.
  */
 async function calculateSalaryForPeriodWithHistory(
   userId: number,
@@ -159,7 +127,6 @@ async function calculateSalaryForPeriodWithHistory(
   periodEnd: Date,
   timezone: string,
 ): Promise<number> {
-  // Get all salary periods that overlap with the target period
   const salaryPeriods = await getSalaryHistoryForPeriod(
     userId,
     periodStart,
@@ -173,100 +140,132 @@ async function calculateSalaryForPeriodWithHistory(
   let totalEarnings = 0;
 
   for (const salaryPeriod of salaryPeriods) {
-    // Calculate the effective start and end dates for this salary period within our target period
+    if (salaryPeriod.salaryType !== "HOURLY") continue;
+
     const effectiveStart = new Date(
       Math.max(periodStart.getTime(), salaryPeriod.startDate.getTime()),
     );
     const effectiveEnd = new Date(
       Math.min(
         periodEnd.getTime(),
-        salaryPeriod.endDate
-          ? salaryPeriod.endDate.getTime()
-          : new Date().getTime(),
+        salaryPeriod.endDate ? salaryPeriod.endDate.getTime() : Date.now(),
       ),
     );
 
-    // Skip if this period doesn't actually overlap
-    if (effectiveStart >= effectiveEnd) {
-      continue;
-    }
+    if (effectiveStart >= effectiveEnd) continue;
 
-    // Calculate earnings for this specific salary period
-    const periodEarnings = await calculateSalaryForPeriod(
+    totalEarnings += await calculateHourlyForPeriod(
       userId,
-      salaryPeriod.salaryType,
-      salaryPeriod.salaryAmount,
-      salaryPeriod.startDate,
+      Number(salaryPeriod.salaryAmount),
       effectiveStart,
       effectiveEnd,
-      timezone,
     );
+  }
 
-    totalEarnings += periodEarnings;
+  const fixedPeriods = salaryPeriods.filter((p) => p.salaryType !== "HOURLY");
+
+  if (fixedPeriods.length > 0) {
+    totalEarnings += await calculateFixedSalaryForPeriod(
+      userId,
+      fixedPeriods,
+      periodStart,
+      periodEnd,
+    );
   }
 
   return parseFloat(totalEarnings.toFixed(2));
 }
 
+type FixedSalaryPeriod = {
+  salaryType: string;
+  salaryAmount: any;
+  startDate: Date;
+  endDate: Date | null;
+};
+
+function salaryActiveAt(periods: FixedSalaryPeriod[], when: Date) {
+  const active = periods.filter(
+    (p) => p.startDate <= when && (!p.endDate || p.endDate >= when),
+  );
+  return active.length > 0 ? active[active.length - 1] : null;
+}
+
+function cycleEndFor(cycleStart: Date, salaryType: string, anchorDay: number) {
+  if (salaryType === "WEEKLY" || salaryType === "BI_WEEKLY") {
+    const days = salaryType === "WEEKLY" ? 7 : 14;
+    // Calendar arithmetic, not milliseconds: adding 7*24h lands an hour out
+    // across a DST change, which pushes the cycle to 8 days and shifts every
+    // later boundary.
+    const end = new Date(
+      cycleStart.getFullYear(),
+      cycleStart.getMonth(),
+      cycleStart.getDate() + days - 1,
+    );
+    end.setHours(23, 59, 59, 999);
+    return end;
+  }
+
+  const month = cycleStart.getMonth();
+  const year = cycleStart.getFullYear();
+  const nextMonth = month === 11 ? 0 : month + 1;
+  const nextYear = month === 11 ? year + 1 : year;
+  const end = new Date(
+    nextYear,
+    nextMonth,
+    clampDayToMonth(nextYear, nextMonth, anchorDay) - 1,
+  );
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
 /**
- * Calculate salary for a specific period with a single salary configuration
+ * Walks one cycle timeline from the join date. A cycle pays only once it has
+ * completed, at the rate in force when it ended.
  */
-async function calculateSalaryForPeriod(
+async function calculateFixedSalaryForPeriod(
   userId: number,
-  salaryType: string,
-  salaryAmount: any,
-  salaryStartedAt: Date,
+  fixedPeriods: FixedSalaryPeriod[],
   periodStart: Date,
   periodEnd: Date,
-  timezone: string,
 ): Promise<number> {
-  const salaryStartDate = new Date(salaryStartedAt);
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { joinDate: true },
+  });
 
-  // If the period is before salary started, return 0
-  if (periodEnd < salaryStartDate) {
-    return 0;
+  const raw = user?.joinDate ?? fixedPeriods[0].startDate;
+  const anchor = new Date(
+    new Date(raw).getFullYear(),
+    new Date(raw).getMonth(),
+    new Date(raw).getDate(),
+  );
+
+  const anchorDay = anchor.getDate();
+  const now = new Date();
+
+  let total = 0;
+  let cycleStart = new Date(anchor);
+
+  for (let guard = 0; guard < 5000; guard++) {
+    const shaping = salaryActiveAt(fixedPeriods, cycleStart);
+    const cycleEnd = cycleEndFor(
+      cycleStart,
+      shaping?.salaryType ?? fixedPeriods[fixedPeriods.length - 1].salaryType,
+      anchorDay,
+    );
+
+    if (cycleEnd > now) break;
+    if (cycleStart > periodEnd) break;
+
+    if (cycleEnd >= periodStart && cycleEnd <= periodEnd) {
+      const paying = salaryActiveAt(fixedPeriods, cycleEnd);
+      if (paying) total += Number(paying.salaryAmount);
+    }
+
+    cycleStart = new Date(cycleEnd.getTime() + 1);
   }
 
-  // Adjust period start if it's before salary started
-  const effectiveStart =
-    periodStart < salaryStartDate ? salaryStartDate : periodStart;
-
-  switch (salaryType) {
-    case "HOURLY":
-      return await calculateHourlyForPeriod(
-        userId,
-        Number(salaryAmount),
-        effectiveStart,
-        periodEnd,
-      );
-
-    case "WEEKLY":
-      return calculateWeeklyForPeriod(
-        Number(salaryAmount),
-        salaryStartDate,
-        effectiveStart,
-        periodEnd,
-      );
-
-    case "BI_WEEKLY":
-      return calculateBiWeeklyForPeriod(
-        Number(salaryAmount),
-        salaryStartDate,
-        effectiveStart,
-        periodEnd,
-      );
-
-    case "MONTHLY":
-      return calculateMonthlyForPeriod(
-        Number(salaryAmount),
-        salaryStartDate,
-        effectiveStart,
-        periodEnd,
-      );
-
-    default:
-      return 0;
-  }
+  return total;
 }
 
 /**
@@ -322,154 +321,11 @@ async function calculateHourlyForPeriod(
   return parseFloat((totalHours * hourlyRate).toFixed(2));
 }
 
-/**
- * Calculate weekly earnings for a period
- */
-function calculateWeeklyForPeriod(
-  weeklyAmount: number,
-  salaryStartDate: Date,
-  periodStart: Date,
-  periodEnd: Date,
-): number {
-  // Adjust period to not go before salary started
-  const effectiveStart =
-    periodStart < salaryStartDate ? salaryStartDate : periodStart;
-
-  // If the period is entirely before salary started, return 0
-  if (periodEnd < salaryStartDate) {
-    return 0;
-  }
-
-  const salaryStartTime = salaryStartDate.getTime();
-  const effectiveStartTime = effectiveStart.getTime();
-  const periodEndTime = periodEnd.getTime();
-
-  let completeWeeks = 0;
-  let currentWeekStart = salaryStartTime;
-
-  while (currentWeekStart <= new Date().getTime()) {
-    const currentWeekEnd = currentWeekStart + 7 * 24 * 60 * 60 * 1000 - 1;
-
-    const hasCompleted = currentWeekEnd <= new Date().getTime();
-    const endsInPeriod =
-      hasCompleted &&
-      currentWeekEnd >= effectiveStartTime &&
-      currentWeekEnd <= periodEndTime;
-
-    if (endsInPeriod) {
-      completeWeeks++;
-    }
-
-    currentWeekStart += 7 * 24 * 60 * 60 * 1000;
-  }
-
-  const totalEarnings = completeWeeks * weeklyAmount;
-
-  return parseFloat(totalEarnings.toFixed(2));
-}
-
-/**
- * Calculate bi-weekly earnings for a period
- */
-function calculateBiWeeklyForPeriod(
-  biWeeklyAmount: number,
-  salaryStartDate: Date,
-  periodStart: Date,
-  periodEnd: Date,
-): number {
-  // Adjust period to not go before salary started
-  const effectiveStart =
-    periodStart < salaryStartDate ? salaryStartDate : periodStart;
-
-  // If the period is entirely before salary started, return 0
-  if (periodEnd < salaryStartDate) {
-    return 0;
-  }
-
-  const salaryStartTime = salaryStartDate.getTime();
-  const effectiveStartTime = effectiveStart.getTime();
-  const periodEndTime = periodEnd.getTime();
-
-  let completeBiWeeks = 0;
-  let currentBiWeekStart = salaryStartTime;
-
-  while (currentBiWeekStart <= new Date().getTime()) {
-    const currentBiWeekEnd = currentBiWeekStart + 14 * 24 * 60 * 60 * 1000 - 1;
-
-    const hasCompleted = currentBiWeekEnd <= new Date().getTime();
-    const endsInPeriod =
-      hasCompleted &&
-      currentBiWeekEnd >= effectiveStartTime &&
-      currentBiWeekEnd <= periodEndTime;
-
-    if (endsInPeriod) {
-      completeBiWeeks++;
-    }
-
-    currentBiWeekStart += 14 * 24 * 60 * 60 * 1000;
-  }
-
-  const totalEarnings = completeBiWeeks * biWeeklyAmount;
-
-  return parseFloat(totalEarnings.toFixed(2));
-}
-
-/**
- * Calculate monthly earnings for a period
- */
-function calculateMonthlyForPeriod(
-  monthlyAmount: number,
-  salaryStartDate: Date,
-  periodStart: Date,
-  periodEnd: Date,
-): number {
-  // Adjust period to not go before salary started
-  const effectiveStart =
-    periodStart < salaryStartDate ? salaryStartDate : periodStart;
-
-  // If the period is entirely before salary started, return 0
-  if (periodEnd < salaryStartDate) {
-    return 0;
-  }
-
-  const salaryStartDay = salaryStartDate.getDate();
-  const salaryStartMonth = salaryStartDate.getMonth();
-  const salaryStartYear = salaryStartDate.getFullYear();
-
-  let completeMonths = 0;
-
-  let currentYear = salaryStartYear;
-  let currentMonth = salaryStartMonth;
-
-  while (true) {
-    const monthStart = new Date(currentYear, currentMonth, salaryStartDay);
-    const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
-    const monthEnd = new Date(nextYear, nextMonth, salaryStartDay - 1);
-    monthEnd.setHours(23, 59, 59, 999);
-
-    if (monthEnd > new Date()) {
-      break;
-    }
-
-    const overlapsTarget =
-      monthEnd >= effectiveStart && monthStart <= periodEnd;
-
-    if (overlapsTarget) {
-      completeMonths++;
-    }
-
-    currentMonth = nextMonth;
-    currentYear = nextYear;
-
-    if (currentYear > new Date().getFullYear() + 1) {
-      break;
-    }
-  }
-
-  const totalEarnings = completeMonths * monthlyAmount;
-
-  return parseFloat(totalEarnings.toFixed(2));
+// Without clamping, an anchor day of 29-31 rolls `new Date` into the next
+// month and the cycle drifts further every iteration.
+function clampDayToMonth(year: number, month: number, day: number) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return Math.min(day, daysInMonth);
 }
 
 /**

@@ -24,6 +24,7 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
 import SelectEmployeeType from "./SelectEmployeeType";
+import RoleChangeWarning from "./components/RoleChangeWarning";
 
 type TEditClientModalBodyProps = {
   employee: User;
@@ -38,6 +39,9 @@ export default function EditClientModalBody({
 }: TEditClientModalBodyProps) {
   const { data: session } = useSession();
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<EmployeeType | null>(
+    (employee.employeeType as EmployeeType) ?? null,
+  );
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<string | null>(
     employee.image !== DEFAULT_IMAGE_URL ? employee.image : null,
@@ -470,31 +474,34 @@ export default function EditClientModalBody({
             }}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <SlimInput
-            rootClassName="flex-1"
-            name="commission"
-            defaultValue={Number(employee.commission!)}
-            required={false}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value && !NUMBER_RE.test(value)) {
-                showError({
-                  field: "commission",
-                  message: "Commission must be a valid number.",
-                });
-              } else {
-                clearError();
-              }
-            }}
-          />
-        </div>
+        {selectedType === "Sales" && (
+          <div className="flex items-center justify-between">
+            <SlimInput
+              rootClassName="flex-1"
+              name="commission"
+              defaultValue={Number(employee.commission!)}
+              required={false}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value && !NUMBER_RE.test(value)) {
+                  showError({
+                    field: "commission",
+                    message: "Commission must be a valid number.",
+                  });
+                } else {
+                  clearError();
+                }
+              }}
+            />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4 items-end">
           <SelectEmployeeType
             key={`employee-type-${employee.id}`}
             employeeTypeOpen={employeeTypeOpen}
             setEmployeeTypeOpen={setEmployeeTypeOpen}
             defaultType={employee.employeeType as EmployeeType | undefined}
+            onTypeChange={setSelectedType}
           />
           <SlimInput
             name="date"
@@ -505,6 +512,10 @@ export default function EditClientModalBody({
             defaultValue={moment.utc(employee.joinDate).format("YYYY-MM-DD")}
           />
         </div>
+        <RoleChangeWarning
+          from={employee.employeeType as EmployeeType}
+          to={selectedType}
+        />
 
         <SlimSalaryManagement
           userId={employee.id}

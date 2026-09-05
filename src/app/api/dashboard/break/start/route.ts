@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { isHourlyEmployee } from "@/lib/employeeSalaryType";
 
 /**
  * @swagger
@@ -100,6 +101,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, message: "Clock-in record not found" },
         { status: 404 },
+      );
+    }
+
+    if (!(await isHourlyEmployee(userId, principal.companyId))) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Breaks are only available for hourly employees.",
+        },
+        { status: 403 },
       );
     }
 

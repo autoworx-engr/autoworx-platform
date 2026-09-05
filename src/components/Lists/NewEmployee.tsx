@@ -35,6 +35,7 @@ export default function AddNewEmployee({
 }) {
   const [open, setOpen] = useState(false);
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<EmployeeType | null>(null);
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [email, setEmail] = useState("");
@@ -513,33 +514,36 @@ export default function AddNewEmployee({
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <SlimInput
-              rootClassName="flex-1"
-              name="commission"
-              label="Commission %"
-              placeholder="commission"
-              type="number"
-              required={false}
-              onChange={(e: any) => {
-                const value = e.target.value;
-                if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
-                  showError({
-                    field: "commission",
-                    message: "Commission must be a valid number.",
-                  });
-                } else {
-                  clearError();
-                }
-              }}
-            />
-          </div>
+          {selectedType === "Sales" && (
+            <div className="flex items-center justify-between">
+              <SlimInput
+                rootClassName="flex-1"
+                name="commission"
+                label="Commission %"
+                placeholder="commission"
+                type="number"
+                required={false}
+                onChange={(e: any) => {
+                  const value = e.target.value;
+                  if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
+                    showError({
+                      field: "commission",
+                      message: "Commission must be a valid number.",
+                    });
+                  } else {
+                    clearError();
+                  }
+                }}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 items-end">
             <SelectEmployeeType
               required
               employeeTypeOpen={employeeTypeOpen}
               setEmployeeTypeOpen={setEmployeeTypeOpen}
+              onTypeChange={setSelectedType}
             />
             <DatePickerField
               name="date"

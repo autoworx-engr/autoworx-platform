@@ -7,7 +7,6 @@
 
 import { db } from "@/lib/db";
 import { getCompanyId } from "@/lib/companyId";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { SalaryType } from "@prisma/client";
 
 /**
@@ -26,15 +25,8 @@ export async function manageSalaryHistory({
   startDate?: Date;
 }): Promise<void> {
   const companyId = await getCompanyId();
-  const { timezone } = await getCompanyTimezone();
 
-  // Get the effective start date in company timezone
-  const effectiveStartDate = startDate || new Date();
-
-  // Convert to company timezone for consistent tracking
-  const timezoneAdjustedDate = new Date(
-    effectiveStartDate.toLocaleString("en-US", { timeZone: timezone }),
-  );
+  const timezoneAdjustedDate = startDate || new Date();
 
   await db.$transaction(async (tx) => {
     // Check if user has an active salary record

@@ -25,6 +25,8 @@ export default async function TechnicianReportingPage() {
 
   if (!employee) return notFound();
 
+  const { timezone } = await getCompanyTimezone();
+
   // TODO: don't fetch "technicians" if the employee is not a technician
   const technicians = await db.technician.findMany({
     where: { userId: employee.id },
@@ -51,8 +53,12 @@ export default async function TechnicianReportingPage() {
     <div className="p-4 sm:p-6">
       <h1 className="my-4 text-2xl font-bold">Technician Reporting</h1>
 
-      {/* Unified payout calculation (work-based + salary if available) */}
-      <Payout info={technicians} showBreakdown={true} />
+      <Payout
+        info={technicians}
+        employeeId={employee.id}
+        employeeType={employee.employeeType}
+        timezone={timezone}
+      />
 
       <TechnicianDetails info={technicians} employee={employee} />
 

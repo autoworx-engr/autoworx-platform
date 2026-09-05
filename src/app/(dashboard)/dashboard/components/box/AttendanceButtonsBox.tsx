@@ -3,7 +3,7 @@
 import { clockIn } from "@/actions/dashboard/clockIn";
 import { clockOut } from "@/actions/dashboard/clockOut";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { successToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { ClockBreak, ClockInOut } from "@prisma/client";
 import { ClockIcon } from "./attendance/AttendanceIcons";
 import BreakButton from "./attendance/BreakButton";
@@ -78,6 +78,8 @@ export default function AttendanceButtonsBox({
                 const res = await clockIn({ timezone: companyTimezone });
                 if (res.success) {
                   successToast("Clocked In Successfully");
+                } else {
+                  errorToast(res.message || "Unable to clock in");
                 }
               }
             }}

@@ -93,6 +93,7 @@ export async function addEmployee({
     const newEmployee = await db.user.create({
       data: {
         ...employeeInfo,
+        commission: type === "Sales" ? employeeInfo.commission : 0,
         password: hashedPassword,
         companyId,
         role: "employee",

@@ -9,11 +9,13 @@ import { Popconfirm } from "antd";
 import { CircleX } from "lucide-react";
 import { useState, useTransition } from "react";
 import CreateAndEditLabor from "./CreateAndEditLabor";
+import EquallyDistribute from "./EquallyDistribute";
 
 export default function LaborItems({
   invoiceItemId,
   invoiceId,
   serviceId,
+  serviceAmount = 0,
   writePermission,
   technicianList,
   onAddTechnician,
@@ -23,6 +25,7 @@ export default function LaborItems({
   invoiceItemId: number;
   invoiceId: string;
   serviceId: number | null;
+  serviceAmount?: number;
   writePermission: boolean;
   technicianList: (Technician & {
     name: string;
@@ -77,6 +80,16 @@ export default function LaborItems({
   return (
     <div className="mx-10 h-32 overflow-y-auto rounded-md border border-solid border-primary p-2">
       {error && <p className="text-center text-sm text-red-400">{error}</p>}
+
+      <EquallyDistribute
+        invoiceItemId={invoiceItemId}
+        invoiceId={invoiceId}
+        serviceId={serviceId}
+        serviceAmount={serviceAmount}
+        technicianList={technicianList}
+        writePermission={writePermission}
+        onUpdateTechnician={onUpdateTechnician}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <CreateAndEditLabor

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { isHourlyEmployee } from "@/lib/employeeSalaryType";
+import { sendDuplicateClockInNotification } from "@/lib/notification/workForce-notify";
 import moment from "moment-timezone";
 
 /**
@@ -106,7 +108,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!(await isHourlyEmployee(user.id, user.companyId))) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Clock in is only available for hourly employees.",
+        },
+        { status: 403 },
+      );
+    }
+
     const now = companyNow(timezone);
+
+    const existingToday = await db.clockInOut.findFirst({
+      where: {
+        userId: user.id,
+        companyId: user.companyId,
+        clockIn: {
+          gte: moment.tz(now, timezone).startOf("day").toDate(),
+          lte: moment.tz(now, timezone).endOf("day").toDate(),
+        },
+      },
+    });
+
+    if (existingToday) {
+      await sendDuplicateClockInNotification({
+        companyId: user.companyId,
+        employeeId: user.id,
+        employeeName: `${user.firstName} ${user.lastName ?? ""}`.trim(),
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          requiresApproval: true,
+          message:
+            "You have already clocked in today. An admin has been notified to review and approve this request.",
+        },
+        { status: 409 },
+      );
+    }
+
     const clockedIn = await db.clockInOut.create({
       data: {
         userId: user.id,

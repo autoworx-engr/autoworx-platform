@@ -147,6 +147,10 @@ export function InvoiceItems({
               invoiceItemId={item?.id}
               invoiceId={item?.invoiceId as string}
               serviceId={item?.serviceId ?? null}
+              serviceAmount={
+                Number(item?.labor?.hours ?? 0) *
+                Number(item?.labor?.charge ?? 0)
+              }
               writePermission={writePermission}
               technicianList={(techniciansPerItem[item.id] || []) as any}
               onAddTechnician={onAddTechnician}

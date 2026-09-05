@@ -1,7 +1,7 @@
 import Selector from "@/components/Selector";
 import { cn } from "@/lib/cn";
 import { EmployeeType } from "@prisma/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const employeeTypes: EmployeeType[] = [
   "Sales",
@@ -16,16 +16,23 @@ export default function SelectEmployeeType({
   setEmployeeTypeOpen,
   defaultType,
   required, // New prop
+  onTypeChange,
 }: {
   labelPosition?: "top" | "left" | "none";
   employeeTypeOpen: boolean;
   setEmployeeTypeOpen: React.Dispatch<React.SetStateAction<boolean>>;
   defaultType?: EmployeeType;
   required?: boolean; // Prop to show *
+  onTypeChange?: (type: EmployeeType | null) => void;
 }) {
   const [employeeType, setEmployeeType] = useState<EmployeeType | null>(
     defaultType || null,
   );
+
+  useEffect(() => {
+    onTypeChange?.(employeeType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employeeType]);
 
   return (
     <div className={cn("flex w-full flex-col gap-1.5")}>

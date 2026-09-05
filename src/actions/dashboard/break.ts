@@ -3,6 +3,7 @@
 import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
+import { isHourlyEmployee } from "@/lib/employeeSalaryType";
 import { revalidatePath } from "next/cache";
 import { getLastClockInOutForUser } from "./clockIn";
 
@@ -14,7 +15,15 @@ export async function takeBreak({
   timezone?: string;
 }) {
   try {
-    await getUser();
+    const user = await getUser();
+
+    if (!(await isHourlyEmployee(user.id, user.companyId))) {
+      return {
+        success: false,
+        message: "Breaks are only available for hourly employees.",
+      };
+    }
+
     const now = companyNow(timezone);
     const clockedIn = await db.clockBreak.create({
       data: {

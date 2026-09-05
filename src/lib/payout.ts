@@ -95,7 +95,7 @@ export async function calculateCurrentMonthEarnings(technicians: History[]) {
 export function calculateTotalEarnings(histories: History[]) {
   // Filter the technicians who have closed tasks
   const totalEarnings = histories.reduce((total, history) => {
-    if (history.dateClosed) {
+    if (history.status === "Complete" && history.dateClosed) {
       return total + Number(history.amount || 0);
     }
     return total;

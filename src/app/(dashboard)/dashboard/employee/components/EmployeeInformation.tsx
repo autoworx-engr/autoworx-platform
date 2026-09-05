@@ -3,7 +3,6 @@ import { User } from "@prisma/client";
 import EditEmployee from "../EditEmployee";
 import { EmployeeWorkInfo } from "./employeeWorkInfoType";
 import Payout from "./Payout";
-import PayoutSales from "./PayoutSales";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { db } from "@/lib/db";
 import { Mail, MapPin, Phone } from "lucide-react";
@@ -140,11 +139,12 @@ export default async function EmployeeInformation({
       {/* --- PAYOUT SECTION --- */}
       {/* Placed below the landscape card */}
       <div className="w-full">
-        {employee.employeeType !== "Sales" ? (
-          <Payout info={info} showBreakdown={true} />
-        ) : (
-          <PayoutSales employee={employee} timezone={timezone} />
-        )}
+        <Payout
+          info={info}
+          employeeId={employee.id}
+          employeeType={employee.employeeType}
+          timezone={timezone}
+        />
       </div>
     </div>
   );

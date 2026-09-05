@@ -1,8 +1,7 @@
 "use server";
 
-import { getCompanyId } from "@/lib/companyId";
+import { getDateRanges } from "@/actions/dashboard/data/lib";
 import { db } from "@/lib/db";
-import { getServerSession } from "next-auth";
 import { getEssentials } from "@/lib/auth-utils";
 import {
   calculateSalaryCurrentMonthEarnings,
@@ -94,18 +93,21 @@ export async function getSalaryPayouts(
       };
     }
 
-    // For non-hourly salary types, use the calculation functions from salaryPayout.ts
-    if (currentSalary.salaryType !== "HOURLY") {
-      const currentMonthPayout = await calculateSalaryCurrentMonthEarnings(
-        userId,
-        companyId,
-      );
-      const previousMonthPayout = await calculateSalaryPreviousMonthEarnings(
-        userId,
-        companyId,
-      );
-      const totalPayout = await calculateSalaryTotalEarnings(userId, companyId);
+    const currentMonthPayout = await calculateSalaryCurrentMonthEarnings(
+      userId,
+      companyId,
+    );
+    const previousMonthPayout = await calculateSalaryPreviousMonthEarnings(
+      userId,
+      companyId,
+    );
+    const totalPayout = await calculateSalaryTotalEarnings(userId, companyId);
 
+    const salaryAmount = parseFloat(
+      Number(currentSalary.salaryAmount).toFixed(2),
+    );
+
+    if (currentSalary.salaryType !== "HOURLY") {
       return {
         currentPeriodPayout: currentMonthPayout,
         pendingPayout: 0,
@@ -114,9 +116,7 @@ export async function getSalaryPayouts(
         totalHours: 0,
         salaryInfo: {
           salaryType: currentSalary.salaryType,
-          salaryAmount: parseFloat(
-            Number(currentSalary.salaryAmount).toFixed(2),
-          ),
+          salaryAmount,
           previousMonthPayout,
           currentMonthPayout,
           totalPayout,
@@ -125,12 +125,25 @@ export async function getSalaryPayouts(
       };
     }
 
-    // For hourly, use the existing hourly calculation
-    return await calculateHourlyPayout(
-      userId,
-      currentSalary.salaryAmount,
-      timezone,
-    );
+    const { totalHours, payPeriodStart, payPeriodEnd } =
+      await getHourlyPeriodStats(userId, timezone);
+
+    return {
+      currentPeriodPayout: currentMonthPayout,
+      pendingPayout: 0,
+      payPeriodStart,
+      payPeriodEnd,
+      totalHours,
+      salaryInfo: {
+        salaryType: "HOURLY",
+        salaryAmount,
+        hourlyRate: salaryAmount,
+        previousMonthPayout,
+        currentMonthPayout,
+        totalPayout,
+      },
+      error: null,
+    };
   } catch (error) {
     console.error("getSalaryPayouts error:", error);
     return {
@@ -152,86 +165,48 @@ export async function getSalaryPayouts(
 }
 
 /**
- * Calculate hourly payout based on clock in/out records
+ * Hours worked and pay-period boundaries for the current month.
+ * The money itself comes from the shared salary calculators so that
+ * rate changes recorded in salary history are applied.
  */
-async function calculateHourlyPayout(
-  userId: number,
-  hourlyRate: any,
-  timezone: string,
-) {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+async function getHourlyPeriodStats(userId: number, timezone: string) {
+  const { currentMonthStart, currentMonthEnd } = getDateRanges(timezone);
 
-  const endOfMonth = new Date();
-  endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-  endOfMonth.setDate(0);
-  endOfMonth.setHours(23, 59, 59, 999);
-
-  // Get all completed clock in/out records for current month
   const clockRecords = await db.clockInOut.findMany({
     where: {
       userId,
-      clockIn: {
-        gte: startOfMonth,
-        lte: endOfMonth,
-      },
-      clockOut: {
-        not: null, // Only count completed sessions
-      },
+      clockIn: { gte: currentMonthStart, lte: currentMonthEnd },
+      clockOut: { not: null },
     },
-    include: {
-      ClockBreak: true,
-    },
+    include: { ClockBreak: true },
   });
 
   let totalHours = 0;
-  let totalBreakMinutes = 0;
 
   for (const record of clockRecords) {
-    if (record.clockOut) {
-      const clockInTime = new Date(record.clockIn);
-      const clockOutTime = new Date(record.clockOut);
-      const sessionHours =
-        (clockOutTime.getTime() - clockInTime.getTime()) / (1000 * 60 * 60);
+    if (!record.clockOut) continue;
 
-      // Calculate break time for this session
-      const breakTime = record.ClockBreak.reduce((total, breakRecord) => {
-        if (breakRecord.breakEnd) {
-          const breakStart = new Date(breakRecord.breakStart);
-          const breakEnd = new Date(breakRecord.breakEnd);
-          return (
-            total + (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60)
-          );
-        }
-        return total;
-      }, 0);
+    const sessionHours =
+      (new Date(record.clockOut).getTime() -
+        new Date(record.clockIn).getTime()) /
+      (1000 * 60 * 60);
 
-      totalBreakMinutes += breakTime;
-      totalHours += sessionHours;
-    }
+    const breakMinutes = record.ClockBreak.reduce((total, breakRecord) => {
+      if (!breakRecord.breakEnd) return total;
+      return (
+        total +
+        (new Date(breakRecord.breakEnd).getTime() -
+          new Date(breakRecord.breakStart).getTime()) /
+          (1000 * 60)
+      );
+    }, 0);
+
+    totalHours += sessionHours - breakMinutes / 60;
   }
 
-  // Subtract break time from total hours
-  totalHours -= totalBreakMinutes / 60;
-
-  const currentPeriodPayout = parseFloat(
-    (totalHours * Number(hourlyRate)).toFixed(2),
-  );
-
   return {
-    currentPeriodPayout,
-    pendingPayout: 0, // For hourly, pending is same as current
-    payPeriodStart: startOfMonth,
-    payPeriodEnd: endOfMonth,
-    totalHours,
-    salaryInfo: {
-      salaryType: "HOURLY",
-      hourlyRate: parseFloat(Number(hourlyRate).toFixed(2)),
-      currentMonthPayout: currentPeriodPayout,
-      previousMonthPayout: 0, // Would need separate calculation for previous month hourly
-      totalPayout: currentPeriodPayout, // For now, same as current
-    },
-    error: null,
+    totalHours: Math.max(0, totalHours),
+    payPeriodStart: currentMonthStart,
+    payPeriodEnd: currentMonthEnd,
   };
 }

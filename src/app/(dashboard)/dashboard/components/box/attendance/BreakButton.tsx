@@ -1,7 +1,7 @@
 "use client";
 
 import { stopBreak, takeBreak } from "@/actions/dashboard/break";
-import { successToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { ClockBreak } from "@prisma/client";
 import { ClockIcon } from "./AttendanceIcons";
 import { ClockInOutWithBreaks, formatToTimeString } from "./attendanceHelpers";
@@ -66,6 +66,8 @@ export default function BreakButton({
         });
         if (res?.success) {
           successToast("Break Started");
+        } else {
+          errorToast(res?.message || "Unable to start break");
         }
       }}
       className={`${baseButtonClasses} ${

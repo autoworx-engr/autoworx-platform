@@ -3,6 +3,7 @@
 import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import moment from "moment";
+import { sendAttendanceEditedNotification } from "@/lib/notification/workForce-notify";
 import { getCompany } from "../settings/getCompany";
 
 export async function updateAttendanceTime(
@@ -99,6 +100,16 @@ export async function updateAttendanceTime(
     await db.clockInOut.update({
       where: { id: clockInOut.id },
       data: updateData,
+    });
+
+    await sendAttendanceEditedNotification({
+      companyId: user.companyId,
+      employeeId: user.id,
+      employeeName: `${user.firstName} ${user.lastName ?? ""}`.trim(),
+      employeeEmail: user.email,
+      employeePhone: user.phone,
+      field,
+      newTime: moment(combinedDateTime).format("MMM D, YYYY h:mm A"),
     });
 
     return { success: true, message: "Attendance time updated successfully" };
