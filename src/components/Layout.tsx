@@ -8,6 +8,7 @@ import { EmployeeType } from "@prisma/client";
 import { Session } from "next-auth";
 import { redirect, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import AICopilotFab from "./ai-copilot/AICopilotFab";
 import MobileNav from "./mobile-responsive/MobileNav";
 import PopupState from "./PopupState";
 import PrivateRoute from "./PrivateRoute";
@@ -220,6 +221,7 @@ export default function Layout({
             <UserBugReport />
           </main>
         </div>
+        <AICopilotFab />
       </div>
     </VoiceDeviceProvider>
   );

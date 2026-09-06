@@ -2,7 +2,6 @@
 
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { usePathname } from "next/navigation";
-import AICopilotButton from "./ai-copilot/AICopilotButton";
 import BugReport from "./bug-report/BugReport";
 import LogoutBtn from "./LogoutBtn";
 // import { NotificationsPopover } from './NotificationProvider';
@@ -33,10 +32,6 @@ export default function TopNavbarIcons() {
       </Link>
       {/* <SwitchDashboard /> */}
 
-      {(currentUser?.employeeType == "Admin" ||
-        currentUser?.employeeType == "Manager" ||
-        currentUser?.employeeType == "Sales") &&
-        isDashboard && <AICopilotButton />}
       {(currentUser?.employeeType == "Admin" ||
         currentUser?.employeeType == "Manager" ||
         currentUser?.employeeType == "Sales") &&

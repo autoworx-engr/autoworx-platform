@@ -6,13 +6,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import {
-  CalendarPlus,
-  FilePlus2,
-  Lock,
-  MessagesSquare,
-  Sparkles,
-} from "lucide-react";
+import { CalendarPlus, FilePlus2, Lock, MessagesSquare } from "lucide-react";
+import Image from "next/image";
 
 const upcomingCapabilities = [
   {
@@ -34,22 +29,15 @@ const upcomingCapabilities = [
   },
 ];
 
-function CopilotAvatar({
-  className,
-  iconClassName,
-}: {
-  className?: string;
-  iconClassName?: string;
-}) {
+function CopilotLogo({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        "flex shrink-0 items-center justify-center bg-gradient-to-br from-primary to-[#5a66ee]",
-        className,
-      )}
-    >
-      <Sparkles className={cn("text-white", iconClassName)} />
-    </span>
+    <Image
+      src="/icons/autoworx-icon.png"
+      alt=""
+      width={64}
+      height={64}
+      className={cn("shrink-0 border bg-white object-contain", className)}
+    />
   );
 }
 
@@ -59,10 +47,7 @@ function CopilotHeroVisual() {
       <div className="absolute size-28 rounded-full bg-primary/15 blur-2xl" />
       <div className="absolute size-28 animate-ping rounded-full border border-primary/20 [animation-duration:3s]" />
       <div className="absolute size-20 rounded-full border border-primary/25" />
-      <CopilotAvatar
-        className="relative size-16 rounded-2xl shadow-lg shadow-primary/25"
-        iconClassName="size-7"
-      />
+      <CopilotLogo className="relative size-16 rounded-2xl shadow-lg shadow-primary/25" />
     </div>
   );
 }
@@ -72,10 +57,7 @@ export default function AICopilotPanel() {
     <div className="flex h-full flex-col">
       <SheetHeader className="gap-0 border-b bg-gradient-to-br from-primary/10 to-transparent p-4 pr-12">
         <div className="flex items-center gap-3">
-          <CopilotAvatar
-            className="size-10 rounded-xl shadow-sm shadow-primary/25"
-            iconClassName="size-5"
-          />
+          <CopilotLogo className="size-10 rounded-xl shadow-sm shadow-primary/25" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <SheetTitle className="text-base font-semibold">
