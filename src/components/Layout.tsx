@@ -221,7 +221,7 @@ export default function Layout({
             <UserBugReport />
           </main>
         </div>
-        <AICopilotFab />
+        {!isSuperAdminRoute && <AICopilotFab />}
       </div>
     </VoiceDeviceProvider>
   );

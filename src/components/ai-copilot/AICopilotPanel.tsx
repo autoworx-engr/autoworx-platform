@@ -6,7 +6,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { CalendarPlus, FilePlus2, Lock, MessagesSquare } from "lucide-react";
+import {
+  CalendarPlus,
+  FilePlus2,
+  Lock,
+  MessagesSquare,
+  Sparkles,
+} from "lucide-react";
 import Image from "next/image";
 
 const upcomingCapabilities = [
@@ -29,15 +35,33 @@ const upcomingCapabilities = [
   },
 ];
 
-function CopilotLogo({ className }: { className?: string }) {
+function CopilotLogo({
+  className,
+  badgeClassName,
+  iconClassName,
+}: {
+  className?: string;
+  badgeClassName?: string;
+  iconClassName?: string;
+}) {
   return (
-    <Image
-      src="/icons/autoworx-icon.png"
-      alt=""
-      width={64}
-      height={64}
-      className={cn("shrink-0 border bg-white object-contain", className)}
-    />
+    <span className="relative shrink-0">
+      <Image
+        src="/icons/autoworx-icon.png"
+        alt=""
+        width={64}
+        height={64}
+        className={cn("border bg-white object-contain", className)}
+      />
+      <span
+        className={cn(
+          "absolute -bottom-1 -right-1 flex items-center justify-center rounded-full bg-primary ring-2 ring-background",
+          badgeClassName,
+        )}
+      >
+        <Sparkles className={cn("text-white", iconClassName)} />
+      </span>
+    </span>
   );
 }
 
@@ -47,7 +71,11 @@ function CopilotHeroVisual() {
       <div className="absolute size-28 rounded-full bg-primary/15 blur-2xl" />
       <div className="absolute size-28 animate-ping rounded-full border border-primary/20 [animation-duration:3s]" />
       <div className="absolute size-20 rounded-full border border-primary/25" />
-      <CopilotLogo className="relative size-16 rounded-2xl shadow-lg shadow-primary/25" />
+      <CopilotLogo
+        className="size-16 rounded-2xl shadow-lg shadow-primary/25"
+        badgeClassName="size-7"
+        iconClassName="size-4"
+      />
     </div>
   );
 }
@@ -57,7 +85,11 @@ export default function AICopilotPanel() {
     <div className="flex h-full flex-col">
       <SheetHeader className="gap-0 border-b bg-gradient-to-br from-primary/10 to-transparent p-4 pr-12">
         <div className="flex items-center gap-3">
-          <CopilotLogo className="size-10 rounded-xl shadow-sm shadow-primary/25" />
+          <CopilotLogo
+            className="size-10 rounded-xl shadow-sm shadow-primary/25"
+            badgeClassName="size-5"
+            iconClassName="size-3"
+          />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <SheetTitle className="text-base font-semibold">
