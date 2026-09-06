@@ -60,7 +60,7 @@ export async function deleteEstimateTemplate({
           )
         : [];
 
-      await db.task.deleteMany({
+      await db.invoiceTemplateTask.deleteMany({
         where: { invoiceTemplateId: id },
       });
 

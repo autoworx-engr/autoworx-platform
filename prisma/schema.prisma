@@ -677,6 +677,7 @@ model Company {
   zapierToken                      String?                            @unique @db.VarChar(240)
   users                            User[]
   tasks                            Task[]
+  invoiceTemplateTasks             InvoiceTemplateTask[]
   clients                          Client[]
   services                         Service[]
   vehicles                         Vehicle[]
@@ -1557,7 +1558,7 @@ model InvoiceTemplate {
   columnId       Int?                @map("column_id")
   company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   invoiceItems   InvoiceItem[]
-  tasks          Task[]
+  tasks          InvoiceTemplateTask[]
   status         Status?             @relation(fields: [statusId], references: [id])
   Material       Material[]
   tags           InvoiceTags[]
@@ -1570,6 +1571,23 @@ model InvoiceTemplate {
   templatePhotos TemplatePhoto[]
 
   @@index([companyId], name: "fk_template_company")
+}
+
+
+model InvoiceTemplateTask {
+  id                Int             @id @default(autoincrement())
+  title             String          @db.VarChar(100)
+  description       String?
+  priority          Priority        @default(Medium)
+  invoiceTemplateId String          @map("invoice_template_id")
+  companyId         Int             @map("company_id")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at")
+  invoiceTemplate   InvoiceTemplate @relation(fields: [invoiceTemplateId], references: [id], onDelete: Cascade)
+  company           Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceTemplateId], name: "fk_invoice_template_tasks_template")
+  @@index([companyId], name: "fk_invoice_template_tasks_company")
 }
 
 model InvoiceTags {
@@ -2229,14 +2247,12 @@ model Task {
   invoiceId         String?                          @map("invoice_id")
   user              User?                            @relation(fields: [userId], references: [id], onDelete: Cascade)
   company           Company?                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  Invoice           Invoice?                         @relation(fields: [invoiceId], references: [id])
+  Invoice           Invoice?                         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   clientId          Int?                             @map("client_id")
   client            Client?                          @relation(fields: [clientId], references: [id])
   googleEventId     String?
   leadId            Int?                             @map("lead_id")
   lead              Lead?                            @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  invoiceTemplate   InvoiceTemplate?                 @relation(fields: [invoiceTemplateId], references: [id])
-  invoiceTemplateId String?
   createdBy         TaskAndAppointmentCreatedByEnum? @default(user)
   status            TaskStatus                       @default(pending)
   completedAt       DateTime?                        @map("completed_at")

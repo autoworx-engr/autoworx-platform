@@ -1,6 +1,6 @@
 import { getCurrentProjects } from "@/actions/dashboard/data/getTechnicianInfo";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
-import { cn } from "@/lib/cn"; // Ensure cn is imported
+import { cn } from "@/lib/cn";
 import { hasRouteAccess } from "@/lib/serverRouteGuard";
 import { ExternalLink } from "lucide-react";
 import moment from "moment-timezone";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import BoxRestricted from "./BoxRestricted";
 
 type TCurrentProjectsBoxProps = {
-  className?: string; // Accept className from parent (DashboardTechnician)
+  className?: string;
 };
 
 export default async function CurrentProjectsBox({
@@ -80,11 +80,13 @@ export default async function CurrentProjectsBox({
                   {project.yearMakeModel || "N/A"}
                 </p>
                 <div className="flex flex-col text-sm text-slate-700 dark:text-slate-300">
-                  {project.services.map((service, index) => (
-                    <p key={index} className="opacity-85 truncate">
-                      • {service.name}
-                    </p>
-                  ))}
+                  {project.services
+                    .filter((service) => !!service.name?.trim())
+                    .map((service, index) => (
+                      <p key={index} className="opacity-85 truncate">
+                        • {service.name}
+                      </p>
+                    ))}
                 </div>
               </div>
 

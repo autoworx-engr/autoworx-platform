@@ -68,9 +68,6 @@ import { revalidatePath } from "next/cache";
  *         invoiceId:
  *           type: string
  *           nullable: true
- *         invoiceTemplateId:
- *           type: string
- *           nullable: true
  *         createdBy:
  *           type: string
  *           enum: [user, sales_agent]
@@ -163,7 +160,6 @@ export async function POST(req: NextRequest) {
       priority,
       assignedUsers,
       invoiceId,
-      invoiceTemplateId,
       clientId,
       leadId,
       createdBy,
@@ -224,7 +220,6 @@ export async function POST(req: NextRequest) {
         userId: Number.isFinite(ownerId) ? ownerId : principal.userId,
         companyId,
         invoiceId: invoiceId ?? null,
-        invoiceTemplateId: invoiceTemplateId ?? null,
         clientId: clientId ?? null,
         leadId: leadId ?? null,
         createdBy: (createdBy as TaskAndAppointmentCreatedByEnum) ?? "user",

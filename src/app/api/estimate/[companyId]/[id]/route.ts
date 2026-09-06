@@ -195,64 +195,86 @@ export async function GET(
     }
     const companyId = jwtCompanyId;
 
-    const estimate = await db.invoice.findFirst({
-      where: { id, companyId },
-      include: {
-        client: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            mobile: true,
-            countryCode: true,
-          },
+    const estimateInclude = {
+      client: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          mobile: true,
+          countryCode: true,
         },
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-          },
-        },
-        column: {
-          select: { id: true, title: true, bgColor: true, textColor: true },
-        },
-        invoiceItems: {
-          include: {
-            service: true,
-            labor: {
-              include: {
-                tags: { include: { tag: true } },
-              },
-            },
-            materials: {
-              include: {
-                tags: { include: { tag: true } },
-              },
-            },
-            tags: {
-              include: { tag: true },
-            },
-          },
-        },
-        photos: true,
-        tasks: true,
-        payments: {
-          include: {
-            card: true,
-            check: true,
-            cash: true,
-            other: true,
-            deposit: true,
-          },
-        },
-        tags: { include: { tag: true } },
-        technician: true,
-        Inspections: true,
       },
+      vehicle: {
+        select: {
+          id: true,
+          make: true,
+          model: true,
+          year: true,
+        },
+      },
+      column: {
+        select: { id: true, title: true, bgColor: true, textColor: true },
+      },
+      invoiceItems: {
+        include: {
+          service: true,
+          labor: {
+            include: {
+              tags: { include: { tag: true } },
+            },
+          },
+          materials: {
+            include: {
+              tags: { include: { tag: true } },
+            },
+          },
+          tags: {
+            include: { tag: true },
+          },
+        },
+      },
+      photos: true,
+      tasks: true,
+      payments: {
+        include: {
+          card: true,
+          check: true,
+          cash: true,
+          other: true,
+          deposit: true,
+        },
+      },
+      tags: { include: { tag: true } },
+      technician: true,
+      Inspections: true,
+    } as const;
+
+    let estimate = await db.invoice.findFirst({
+      where: { id, companyId },
+      include: estimateInclude,
     });
+
+    if (!estimate) {
+      const requestLink = await db.requestEstimate.findFirst({
+        where: {
+          invoiceId: id,
+          OR: [
+            { senderCompanyId: companyId },
+            { receiverCompanyId: companyId },
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (requestLink) {
+        estimate = await db.invoice.findFirst({
+          where: { id },
+          include: estimateInclude,
+        });
+      }
+    }
 
     if (!estimate) {
       return NextResponse.json(
@@ -277,7 +299,8 @@ export async function PATCH(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    const principal = await getAuthPrincipal(req);
+    const jwtCompanyId = principal?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -287,7 +310,12 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const result = await fullUpdateInvoice(id, jwtCompanyId, body);
+    const result = await fullUpdateInvoice(
+      id,
+      jwtCompanyId,
+      body,
+      principal?.userId ?? null,
+    );
     return NextResponse.json(
       { success: result.success, message: result.message, data: result.data },
       { status: result.status },
@@ -333,11 +361,10 @@ export async function DELETE(
     }
 
     await db.$transaction(async (tx) => {
-      // Technician rows require an invoiceId with no cascade, and InvoiceRedo
-      // rows require a technicianId with no cascade, so both must be cleared
-      // before the invoice can be deleted or P2003 is thrown.
       await tx.invoiceRedo.deleteMany({ where: { invoiceId: id } });
       await tx.technician.deleteMany({ where: { invoiceId: id } });
+
+      await tx.task.deleteMany({ where: { invoiceId: id } });
 
       await tx.invoice.delete({ where: { id } });
 

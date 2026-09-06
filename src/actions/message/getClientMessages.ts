@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
+import { attachClientSeenState } from "@/lib/messages/seenState";
 import { Client, MailgunEmail, User } from "@prisma/client";
 
 type TClient = Client & {
@@ -71,7 +72,7 @@ export async function getClientMessages(
   const paginatedClients = sortedClients.slice(skip, skip + limit);
 
   return {
-    messages: paginatedClients,
+    messages: await attachClientSeenState(paginatedClients),
     total: sortedClients.length,
     // hasMore: skip + paginatedClients.length < sortedClients.length,
     hasMore: skip + limit < sortedClients.length,
