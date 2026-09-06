@@ -5,6 +5,7 @@ import { getConvertedLeadsPerMonth } from "@/actions/dashboard/data/getAdminInfo
 import moment from "moment-timezone";
 import { getSalespersonLeads } from "@/actions/dashboard/data/getSalesWinRate";
 import { getDateRanges } from "@/actions/dashboard/data/lib";
+import { getSalesCurrentMonthPayout } from "@/actions/dashboard/data/getSalesCurrentMonthPayout";
 
 /**
  * @swagger
@@ -346,6 +347,11 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Same figure as the "Current Month Payout" card on
+    // /dashboard/reporting/salesreporting.
+    const { currentMonthPayout, growth: payoutGrowth } =
+      await getSalesCurrentMonthPayout(timezone, userId, companyId);
+
     const data = {
       appointments,
       taskData: {
@@ -358,6 +364,9 @@ export async function GET(req: NextRequest) {
         leadsConvertedIsPositive,
         leadsConvertedRate,
         winLossRate,
+        currentMonthPayout,
+        payoutGrowthRate: payoutGrowth.rate,
+        isPayoutGrowthPositive: payoutGrowth.isPositive,
       },
     };
 
