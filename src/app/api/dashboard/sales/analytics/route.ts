@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getDashboardTasks } from "@/actions/dashboard/data/getDashboardTasks";
 import { getConvertedLeadsPerMonth } from "@/actions/dashboard/data/getAdminInfo";
 import moment from "moment-timezone";
-import { Task } from "@prisma/client";
 import { getSalespersonLeads } from "@/actions/dashboard/data/getSalesWinRate";
 import { getDateRanges } from "@/actions/dashboard/data/lib";
 
@@ -306,32 +306,10 @@ export async function GET(req: NextRequest) {
     }
 
     //task list
-    let tasks: Task[] = [];
-    let totalTasks: number = 0;
-
-    if (!userId) {
-      throw new Error("User ID is required to fetch tasks.");
-    }
-
-    // Get tasks created by user OR assigned to user
-    const whereCondition = {
+    const { tasks, totalTasks } = await getDashboardTasks({
       companyId,
-      OR: [
-        { userId: +userId }, // Tasks created by the user
-        { taskUser: { some: { userId: +userId } } }, // Tasks assigned to the user
-      ],
-    };
-
-    tasks = await db.task.findMany({
-      where: whereCondition,
-      take: 20,
-    });
-
-    totalTasks = await db.task.count({
-      where: {
-        companyId,
-        OR: [{ userId: +userId }, { taskUser: { some: { userId: +userId } } }],
-      },
+      userId,
+      timezone,
     });
 
     //* sales performance

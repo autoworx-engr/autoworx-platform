@@ -110,6 +110,10 @@ import { ZodError } from "zod";
  *                         format: date-time
  *       500:
  *         description: Internal server error
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - companyId does not match the authenticated principal
  */
 export async function GET(
   req: NextRequest,
@@ -118,6 +122,27 @@ export async function GET(
   const params = await props.params;
   try {
     const companyId = Number(params.companyId);
+
+    if (!companyId || isNaN(companyId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid companyId" },
+        { status: 400 },
+      );
+    }
+
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    if (companyId !== principal.companyId) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: company mismatch" },
+        { status: 403 },
+      );
+    }
 
     const { searchParams } = new URL(req.url);
 

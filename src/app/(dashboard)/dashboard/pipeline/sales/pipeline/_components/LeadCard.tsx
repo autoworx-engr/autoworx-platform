@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
@@ -42,6 +44,7 @@ export default memo(function LeadCard({
 }: LeadCardProps) {
   const dispatch = useColumnDispatch();
   const pipelineColumns = useColumnState() || [];
+  const companyTimezone = useCompanyTimezone();
   const [showColumnSelect, setShowColumnSelect] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
@@ -200,6 +203,15 @@ export default memo(function LeadCard({
           <Popconfirm
             title="Delete the lead"
             onConfirm={() => handleRemoveLead(leadData.id, leadData?.columnId!)}
+            overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+            okButtonProps={{
+              className:
+                "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+            }}
+            cancelButtonProps={{
+              className:
+                "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+            }}
           >
             <div className="absolute -top-3 -right-2 bg-[#6571FFed] rounded-full">
               <X size={18} className="cursor-pointer text-white p-0.5" />
@@ -222,7 +234,7 @@ export default memo(function LeadCard({
       <p className="text-xs text-blue-500">{leadData.services}</p>
       <p className="text-xs">{leadData.source}</p>
       <p className="mb-2 text-xs">
-        {new Date(leadData.createdAt).toLocaleDateString("en-US")}
+        {FormatUtcToTimezone(leadData.createdAt, companyTimezone, "MM/DD/YYYY")}
       </p>
 
       <LeadActions lead={leadData} />

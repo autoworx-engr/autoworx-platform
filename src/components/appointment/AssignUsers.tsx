@@ -23,7 +23,6 @@ export default function AssignUsers({
   onAssignUser,
   onRemoveAssignedUser,
 }: TAssignedUser) {
-  // "employee" reads correctly for the unfiltered list; a type narrows it.
   const employeeLabel = employeeType ?? "employee";
   const {
     data: employees = [],
@@ -34,10 +33,8 @@ export default function AssignUsers({
 
   const [employeeList, setEmployeeList] = useState<User[]>([]);
 
-  // Calculate available employees by filtering out assigned users from the original employees data
   useEffect(() => {
     if (isSuccess && employees) {
-      // Always start from the original employees data and filter out assigned users
       const availableEmployees = employees.filter(
         (employee) =>
           !assignedUsers.some(
@@ -54,18 +51,12 @@ export default function AssignUsers({
   const doAssignUser = (user: User) => {
     onAssignUser && onAssignUser(user);
     setAssignedEmployeeSearch("");
-    setAddEmployeePersonOpen(false);
-    // No need to manually update employeeList as the useEffect will handle it
   };
 
   const doRemoveAssignedUser = (user: User) => {
     onRemoveAssignedUser && onRemoveAssignedUser(user);
-    // No need to manually update employeeList as the useEffect will handle it
   };
 
-  // Filter before rendering so the empty state reflects the *searched* list —
-  // checking employeeList alone showed a blank box when a search matched
-  // nothing. Trimmed so surrounding whitespace can't discard every match.
   const normalizedSearch = assignedEmployeeSearch.trim().toLowerCase();
   const visibleEmployees = normalizedSearch
     ? employeeList.filter((employee) =>
@@ -77,8 +68,6 @@ export default function AssignUsers({
 
   let content = null;
   if (isLoading && !isError) {
-    // Skeleton rows mirror the real employee rows below, so the box keeps its
-    // shape instead of collapsing around a lone spinner.
     content = (
       <div className="space-y-0.5 p-1" aria-busy="true" aria-live="polite">
         <span className="sr-only">Loading employees…</span>

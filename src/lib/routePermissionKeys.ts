@@ -88,7 +88,9 @@ export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
   "/dashboard/communication/collaboration": "communicationHubCollaboration",
   "/dashboard/communication/internal": "communicationHubInternal",
   "/dashboard/inventory": ["inventoryAllViewOnly", "inventoryAll"],
-  "/dashboard/inventory/vendor": "inventoryAll",
+  // Viewable with view-only Inventory; the add/edit/delete controls inside are
+  // gated separately on the full `inventoryAll` key.
+  "/dashboard/inventory/vendor": ["inventoryAll", "inventoryAllViewOnly"],
   "/dashboard/inventory/camera": "inventoryAll",
   "/dashboard/estimate": "estimatesInvoices",
   "/dashboard/payments": "payments",

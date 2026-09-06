@@ -17,6 +17,8 @@ import {
   X,
 } from "lucide-react";
 import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
+import { useHasPermissionKey } from "@/hooks/useHasPermissionKey";
+import { cn } from "@/lib/cn";
 
 const SHADOW_COLOR = "shadow-lg shadow-slate-900/10 dark:shadow-white/5";
 const BASE_TEXT_COLOR = "text-slate-600 dark:text-white";
@@ -34,6 +36,9 @@ const VendorCard = ({
   const [mounted, setMounted] = useState<boolean>(false);
   const { searchTerm } = useDemoVendorFilterStore();
   const { isActive, setActive } = VendorListStore();
+
+  // View-only Inventory reads the list; only full Inventory may change it.
+  const canManageVendors = useHasPermissionKey("inventoryAll");
 
   useEffect(() => {
     setActive(!!vendorId);
@@ -95,8 +100,13 @@ const VendorCard = ({
                   </p>
                 </div>
 
-                {/* Right: Action Buttons (Edit & Delete) */}
-                <div className="flex gap-2 flex-shrink-0">
+                {/* Right: Action Buttons (Edit & Delete) — full Inventory only */}
+                <div
+                  className={cn(
+                    "flex gap-2 flex-shrink-0",
+                    !canManageVendors && "hidden",
+                  )}
+                >
                   {/* Edit Button: Encased in a soft, clickable container */}
                   <EditVendor
                     vendor={vendor}
@@ -123,6 +133,15 @@ const VendorCard = ({
                     }}
                     okText="Yes, Delete"
                     cancelText="Cancel"
+                    overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                    okButtonProps={{
+                      className:
+                        "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                    }}
+                    cancelButtonProps={{
+                      className:
+                        "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                    }}
                   >
                     <button
                       type="button"

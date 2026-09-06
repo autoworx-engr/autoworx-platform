@@ -32,26 +32,28 @@ const CannedTable = (props: Props) => {
       />
 
       {/* Desktop View */}
-      <div className="hidden lg:flex lg:flex-row lg:gap-x-4 flex-1 h-full">
+      <div className="hidden h-full flex-1 lg:flex lg:flex-row lg:gap-x-4">
         {/* Canned Labor Wrapper */}
-        <div className="w-full lg:basis-1/2 flex flex-col flex-1 h-full">
+        <div className="flex h-full min-w-0 flex-1 flex-col lg:basis-1/2">
           <CannedLabor
             labors={props.labors}
             total={props.laborTotal}
             page={props.laborPage}
             take={props.laborTake}
             categories={props.categories}
+            compact
           />
         </div>
 
         {/* Canned Services Wrapper */}
-        <div className="w-full lg:basis-1/2 flex flex-col flex-1 h-full">
+        <div className="flex h-full min-w-0 flex-1 flex-col lg:basis-1/2">
           <CannedServices
             services={props.services}
             total={props.serviceTotal}
             page={props.servicePage}
             take={props.serviceTake}
             categories={props.categories}
+            compact
           />
         </div>
       </div>

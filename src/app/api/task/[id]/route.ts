@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { authorizeTaskAccess, validateTaskRelations } from "../_authorizeTask";
+import {
+  getTaskNotifySnapshot,
+  notifyTaskUpdated,
+} from "../_taskNotifications";
 import { Priority } from "@prisma/client";
 
 /**
@@ -20,6 +25,10 @@ import { Priority } from "@prisma/client";
  *         description: Task found
  *       404:
  *         description: Task not found
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - record belongs to another company
  */
 export async function GET(
   req: NextRequest,
@@ -27,7 +36,9 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
-    const taskId = Number(params.id);
+    const access = await authorizeTaskAccess(req, params.id);
+    if ("error" in access) return access.error;
+    const { taskId } = access;
 
     const task = await db.task.findUnique({
       where: { id: taskId },
@@ -91,6 +102,12 @@ export async function GET(
  *     responses:
  *       200:
  *         description: Task updated
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       400:
+ *         description: Invalid client, lead, or assigned users for this company
+ *       403:
+ *         description: Forbidden - record belongs to another company
  */
 export async function PATCH(
   req: NextRequest,
@@ -98,7 +115,9 @@ export async function PATCH(
 ) {
   const params = await props.params;
   try {
-    const taskId = Number(params.id);
+    const access = await authorizeTaskAccess(req, params.id);
+    if ("error" in access) return access.error;
+    const { taskId, companyId } = access;
     const body = await req.json();
 
     const {
@@ -128,6 +147,14 @@ export async function PATCH(
       data.completedAt = status === "completed" ? new Date() : null;
     }
 
+    const relationError = await validateTaskRelations(
+      { clientId, leadId, assignedUsers },
+      companyId,
+    );
+    if (relationError) return relationError;
+
+    const before = await getTaskNotifySnapshot(taskId);
+
     const updatedTask = await db.$transaction(async (tx) => {
       const task = await tx.task.update({
         where: { id: taskId },
@@ -151,6 +178,15 @@ export async function PATCH(
       }
 
       return task;
+    });
+
+    await notifyTaskUpdated({
+      taskId,
+      companyId,
+      title: updatedTask.title,
+      date: updatedTask.date,
+      status: updatedTask.status,
+      before,
     });
 
     return NextResponse.json({
@@ -185,6 +221,10 @@ export async function PATCH(
  *     responses:
  *       200:
  *         description: Task deleted
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - record belongs to another company
  */
 export async function DELETE(
   req: NextRequest,
@@ -192,7 +232,9 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
-    const taskId = Number(params.id);
+    const access = await authorizeTaskAccess(req, params.id);
+    if ("error" in access) return access.error;
+    const { taskId } = access;
 
     await db.taskUser.deleteMany({
       where: { taskId },

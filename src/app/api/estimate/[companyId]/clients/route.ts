@@ -24,7 +24,7 @@ import { buildWordSearchAnd } from "@/lib/wordSearch";
  *         schema:
  *           type: string
  *           example: "John"
- *         description: Filter clients by first name, last name or email
+ *         description: Filter clients by first name, last name, email or mobile number
  *       - in: query
  *         name: page
  *         schema:
@@ -101,6 +101,7 @@ export async function GET(
       "firstName",
       "lastName",
       "email",
+      "mobile",
     ]);
     if (searchAnd) {
       where.AND = searchAnd;

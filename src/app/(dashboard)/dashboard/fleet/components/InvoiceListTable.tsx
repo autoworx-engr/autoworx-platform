@@ -228,7 +228,7 @@ const InvoiceListTable = ({
                           item.column?.title,
                         )}`}
                       >
-                        {item.column?.title}
+                        {item.column?.title || "N/A"}
                       </span>
                     </td>
                   </tr>
@@ -324,7 +324,7 @@ const InvoiceListTable = ({
                         item.column?.title,
                       )}`}
                     >
-                      {item.column?.title}
+                      {item.column?.title || "N/A"}
                     </span>
                   </div>
                 </div>
