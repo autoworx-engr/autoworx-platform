@@ -4,7 +4,8 @@ import moment from "moment-timezone";
 /**
  * Dashboard task lists only show what is still ahead: every task from tomorrow
  * onwards, plus today's tasks that are all-day or whose start time has not
- * passed yet.
+ * passed yet, plus tasks with no date at all — `Task.date` is optional, and an
+ * undated task has nothing to be past.
  *
  * `Task.date` is stored at UTC midnight for the calendar day it belongs to, so
  * the day boundaries are built from the company-local date read as UTC rather
@@ -23,6 +24,7 @@ export function getUpcomingTaskDateFilter(
 
   return {
     OR: [
+      { date: null },
       { date: { gte: tomorrowStart } },
       {
         AND: [

@@ -75,9 +75,6 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
  *         invoiceId:
  *           type: string
  *           nullable: true
- *         invoiceTemplateId:
- *           type: string
- *           nullable: true
  *         clientId:
  *           type: integer
  *           nullable: true

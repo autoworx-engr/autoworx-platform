@@ -91,20 +91,22 @@ export const sendNewAppointmentNotification = async ({
       }
     }
 
-    for (const user of uniqueUsersToNotify.values()) {
-      sendUserNotifications({
-        userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
-        userEmail: user.email || "",
-        userPhoneNo: user.phone || "",
-        companyId: companyUniqueId,
-        iconType: sendNotiInfo.type as "task",
-        title: sendNotiInfo.title,
-        description,
-        type: "APPOINTMENT_CREATED",
-        redirectUrl: sendNotiInfo.redirectUrl,
-      });
-    }
+    await Promise.all(
+      Array.from(uniqueUsersToNotify.values()).map((user) =>
+        sendUserNotifications({
+          userId: user.id,
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email || "",
+          userPhoneNo: user.phone || "",
+          companyId: companyUniqueId,
+          iconType: sendNotiInfo.type as "task",
+          title: sendNotiInfo.title,
+          description,
+          type: "APPOINTMENT_CREATED",
+          redirectUrl: sendNotiInfo.redirectUrl,
+        }),
+      ),
+    );
   } catch (err) {
     console.error(err);
     throw err;
@@ -121,8 +123,7 @@ export const sendNewTaskNotification = async ({
 }: TNewTaskNotification) => {
   try {
     const companyUniqueId = companyId || (await getCompanyId());
-    // update technician status to complete
-    // get all company admins and managers
+
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
       firstName: true,
@@ -153,20 +154,22 @@ export const sendNewTaskNotification = async ({
       description: description,
     };
 
-    for (const user of getUsers) {
-      sendUserNotifications({
-        userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
-        userEmail: user.email || "",
-        userPhoneNo: user.phone || "",
-        companyId: companyUniqueId,
-        iconType: sendNotiInfo.type as "task",
-        title: sendNotiInfo.title,
-        description,
-        type: "APPOINTMENT_CREATED",
-        redirectUrl: sendNotiInfo.redirectUrl,
-      });
-    }
+    await Promise.all(
+      getUsers.map((user) =>
+        sendUserNotifications({
+          userId: user.id,
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email || "",
+          userPhoneNo: user.phone || "",
+          companyId: companyUniqueId,
+          iconType: sendNotiInfo.type as "task",
+          title: sendNotiInfo.title,
+          description,
+          type: "APPOINTMENT_CREATED",
+          redirectUrl: sendNotiInfo.redirectUrl,
+        }),
+      ),
+    );
   } catch (err) {
     console.error(err);
     throw err;
@@ -247,20 +250,22 @@ export const sendAppointmentUpdateNotification = async ({
       }
     }
 
-    for (const user of uniqueUsersToNotify.values()) {
-      sendUserNotifications({
-        userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
-        userEmail: user.email || "",
-        userPhoneNo: user.phone || "",
-        iconType: sendNotiInfo.type as "task",
-        companyId,
-        title: sendNotiInfo.title,
-        description: sendNotiInfo.description,
-        type: "APPOINTMENT_UPDATED",
-        redirectUrl: sendNotiInfo.redirectUrl,
-      });
-    }
+    await Promise.all(
+      Array.from(uniqueUsersToNotify.values()).map((user) =>
+        sendUserNotifications({
+          userId: user.id,
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email || "",
+          userPhoneNo: user.phone || "",
+          iconType: sendNotiInfo.type as "task",
+          companyId,
+          title: sendNotiInfo.title,
+          description: sendNotiInfo.description,
+          type: "APPOINTMENT_UPDATED",
+          redirectUrl: sendNotiInfo.redirectUrl,
+        }),
+      ),
+    );
   } catch (err) {
     console.log("client email error", err);
     throw err;
@@ -304,7 +309,7 @@ export const sendNewTaskAssignNotification = async ({
 
     const redirectUrl = `/dashboard/task/day?date=${formattedDate}`;
 
-    sendUserNotifications({
+    await sendUserNotifications({
       userId: assignTaskUser.id,
       userName: `${assignTaskUser.firstName} ${assignTaskUser.lastName}`,
       userEmail: assignTaskUser.email || "",
@@ -367,20 +372,22 @@ export const sendTaskCompleteNotification = async ({
       }
     }
 
-    for (const { user, title } of uniqueUsersToNotify.values()) {
-      sendUserNotifications({
-        userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
-        userEmail: user.email || "",
-        userPhoneNo: user.phone || "",
-        iconType: "task",
-        companyId: user.companyId || companyId,
-        title,
-        description,
-        type: "TASK_FINISHED",
-        redirectUrl: "/",
-      });
-    }
+    await Promise.all(
+      Array.from(uniqueUsersToNotify.values()).map(({ user, title }) =>
+        sendUserNotifications({
+          userId: user.id,
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email || "",
+          userPhoneNo: user.phone || "",
+          iconType: "task",
+          companyId: user.companyId || companyId,
+          title,
+          description,
+          type: "TASK_FINISHED",
+          redirectUrl: "/",
+        }),
+      ),
+    );
   } catch (err) {
     console.error(err);
     throw err;

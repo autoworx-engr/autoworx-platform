@@ -9,7 +9,6 @@ import { estimateTemplateCreateValidationSchema } from "@/validations/schemas/es
 import { InvoiceTemplate, Labor, Material, Service, Tag } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { createTask } from "../task/createTask";
 
 /**
  * Creates a new invoice in the system
@@ -282,24 +281,21 @@ export async function createEstimateTemplate({
       },
     );
 
-    // Create associated tasks
-    await Promise.all(
-      tasks.map(async (task) => {
-        if (!task) return;
-
+    const templateTasks = tasks
+      .filter((task) => task?.task)
+      .map((task) => {
         const taskSplit = task.task.split(":");
-
-        return createTask({
+        return {
           title: taskSplit[0].trim(),
           description: taskSplit.length > 1 ? taskSplit[1].trim() : "",
-          priority: "Medium",
-          assignedUsers: [],
           invoiceTemplateId: template.id,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          createdBy: "user",
-        });
-      }),
-    );
+          companyId,
+        };
+      });
+
+    if (templateTasks.length > 0) {
+      await db.invoiceTemplateTask.createMany({ data: templateTasks });
+    }
 
     // Step 12: Revalidate the estimate page
     revalidatePath("/estimate/templates");

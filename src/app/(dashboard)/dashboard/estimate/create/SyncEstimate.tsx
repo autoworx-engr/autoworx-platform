@@ -32,7 +32,9 @@ export default function SyncEstimate({
   template?: InvoiceTemplate;
   items: Item[];
   photos: InvoicePhoto[];
-  tasks: Task[];
+  // Either real invoice tasks (`Task`, id present) or a template's task
+  // blueprint. Applying a template passes no ids — see DynamicTemplateLoader.
+  tasks: { id?: number; title: string; description: string | null }[];
   payment: FullPayment;
   inspections: InspectionType[];
 }) {
@@ -139,12 +141,11 @@ export default function SyncEstimate({
       customerNotes:
         (invoice ? invoice.customerNotes : template?.customerNotes) || "",
       customerComments: (invoice && invoice.customerComments) || "",
+
       tasks: tasks.map((task) => ({
-        id: task.id,
+        id: template ? undefined : task.id,
         task: `${task.title}: ${task.description || ""}`,
       })),
-      // when applying a template, add its items to whatever was already there
-      // instead of replacing them (see templateSnapshot for the "clear" side)
       items: template ? [...current.items, ...items] : items,
       currentSelectedCategoryId: null,
       payment,
