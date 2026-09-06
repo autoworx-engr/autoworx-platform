@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { DropdownProps } from "react-day-picker";
 import { format, parse, isValid } from "date-fns";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { CalendarDropdown } from "@/components/ui/CalendarDropdown";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -59,14 +61,16 @@ export function DatePickerField({
   clearable = false,
   minDate,
   maxDate,
-  // These fields hold scheduling and record dates, so the year dropdown starts
-  // near today instead of spanning a century the user has to scroll through.
-  // Widen per call site if a field ever needs distant years (a birth date, say).
   yearsBack = 5,
   yearsForward = 10,
   timezone,
 }: DatePickerFieldProps) {
   const [open, setOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState<Date | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<"month" | "year" | null>(
+    null,
+  );
+  const pressCommittedAt = useRef(0);
 
   const [internal, setInternal] = useState(defaultValue ?? "");
   const current = value ?? internal;
@@ -81,8 +85,6 @@ export function DatePickerField({
     onChange?.(next);
   };
 
-  // Anchored on the company's day, not the viewer's, so the calendar marks the
-  // right "today" for a user sitting in another timezone.
   const today = todayInTimezone(timezone);
 
   const currentYear = today.getFullYear();
@@ -93,6 +95,28 @@ export function DatePickerField({
   const endYear = Math.max(currentYear + yearsForward, ...boundYears);
   const startMonth = new Date(startYear, 0);
   const endMonth = new Date(endYear, 11);
+  const month = visibleMonth ?? selected ?? today;
+
+  // Both dropdowns share one open slot, so only one list shows at a time.
+  const calendarComponents = useMemo(
+    () => ({
+      MonthsDropdown: (props: DropdownProps) => (
+        <CalendarDropdown
+          {...props}
+          open={openDropdown === "month"}
+          onOpenChange={(next) => setOpenDropdown(next ? "month" : null)}
+        />
+      ),
+      YearsDropdown: (props: DropdownProps) => (
+        <CalendarDropdown
+          {...props}
+          open={openDropdown === "year"}
+          onOpenChange={(next) => setOpenDropdown(next ? "year" : null)}
+        />
+      ),
+    }),
+    [openDropdown],
+  );
 
   return (
     <div className={cn("flex w-full flex-col gap-1.5", rootClassName)}>
@@ -103,7 +127,16 @@ export function DatePickerField({
         </Label>
       )}
 
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) {
+            setVisibleMonth(null);
+            setOpenDropdown(null);
+          }
+        }}
+      >
         <div className="relative">
           <PopoverTrigger asChild>
             <Button
@@ -138,11 +171,44 @@ export function DatePickerField({
             </button>
           )}
         </div>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          // The dialog's scroll lock otherwise swallows wheel events in here,
+          // same as TimeScrollPicker.
+          onWheel={(event) => event.stopPropagation()}
+          onPointerDown={(event) => {
+            const target = event.target as HTMLElement | null;
+            const nav = target?.closest?.(
+              ".rdp-button_previous, .rdp-button_next",
+            );
+            if (nav) {
+              event.preventDefault();
+              const delta = nav.classList.contains("rdp-button_previous")
+                ? -1
+                : 1;
+              setVisibleMonth(
+                new Date(month.getFullYear(), month.getMonth() + delta, 1),
+              );
+              setOpenDropdown(null);
+              return;
+            }
+
+            const cell = target?.closest?.('[role="gridcell"][data-day]');
+            if (!cell || cell.hasAttribute("data-disabled")) return;
+            const iso = cell.getAttribute("data-day");
+            if (!iso) return;
+            event.preventDefault();
+            pressCommittedAt.current = Date.now();
+            handleSelect(iso);
+            setOpen(false);
+          }}
+        >
           <Calendar
             mode="single"
             selected={selected}
             onSelect={(date) => {
+              if (Date.now() - pressCommittedAt.current < 700) return;
               handleSelect(date ? format(date, FORMAT) : "");
               setOpen(false);
             }}
@@ -156,9 +222,11 @@ export function DatePickerField({
             }
             // Month + year dropdowns for quick navigation (like the native input).
             captionLayout="dropdown"
+            components={calendarComponents}
             startMonth={startMonth}
             endMonth={endMonth}
-            defaultMonth={selected ?? today}
+            month={month}
+            onMonthChange={setVisibleMonth}
             today={today}
             autoFocus
           />
