@@ -637,7 +637,7 @@ export default async function RevenueReportPage(props: TProps) {
       >
         <Calculation content="WEEK" amount={totalWeekProfit} />
         <Calculation content="MONTH" amount={totalMonthProfit} />
-        <Calculation content="YTD" amount={totalProfit} />
+        <Calculation content="LTV" amount={totalProfit} />
         <CalculationWithTooltip
           content="REVENUE (FILTERED)"
           amount={filteredRevenue}
