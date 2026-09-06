@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authorizeTaskAccess, validateTaskRelations } from "../_authorizeTask";
+import {
+  getTaskNotifySnapshot,
+  notifyTaskUpdated,
+} from "../_taskNotifications";
 import { Priority } from "@prisma/client";
 
 /**
@@ -149,6 +153,8 @@ export async function PATCH(
     );
     if (relationError) return relationError;
 
+    const before = await getTaskNotifySnapshot(taskId);
+
     const updatedTask = await db.$transaction(async (tx) => {
       const task = await tx.task.update({
         where: { id: taskId },
@@ -172,6 +178,15 @@ export async function PATCH(
       }
 
       return task;
+    });
+
+    await notifyTaskUpdated({
+      taskId,
+      companyId,
+      title: updatedTask.title,
+      date: updatedTask.date,
+      status: updatedTask.status,
+      before,
     });
 
     return NextResponse.json({
