@@ -43,7 +43,6 @@ const PipelinePage = async (props: {
     const filterUserId = isTechnician ? Number(currentUser?.id) : undefined;
 
     if (search) {
-      // Single consolidated DB query for all technicians — replaces N parallel queries
       const techIds = uniqueTechnicians.map((t) => t.id);
       const grouped = await getWorkOrdersForTeamSearch(
         techIds,

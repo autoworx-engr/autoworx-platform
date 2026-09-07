@@ -34,6 +34,7 @@ function makeInclude(timezone?: string | null) {
     tasks: true,
     assignedTo: true,
     column: true,
+    technician: { select: { userId: true } },
   };
 }
 
@@ -88,6 +89,17 @@ function toShopLead(invoice: any): ShopLead {
   };
 }
 
+// Work orders belong to the technicians assigned on the invoice itself.
+// `Service` is a company-wide catalogue row shared by many invoices, so filtering
+// through invoiceItems -> service -> Technician leaks work orders between
+// technicians who happen to share a service. Use Invoice.technician instead.
+function assignedTechnicianFilter(
+  userId: number | { in: number[] },
+  companyId: number,
+) {
+  return { technician: { some: { userId, companyId } } };
+}
+
 function makeSearchCondition(search?: string) {
   if (!search?.trim()) return null;
 
@@ -95,8 +107,6 @@ function makeSearchCondition(search?: string) {
 
   const makeWordCondition = (word: string) => {
     const ci = { contains: word, mode: "insensitive" as const };
-    // Use explicit `is:` wrappers on optional relations so Prisma generates
-    // correct SQL when these filters appear inside an OR clause.
     const conditions: any[] = [
       { client: { is: { firstName: ci } } },
       { client: { is: { lastName: ci } } },
@@ -138,13 +148,7 @@ export async function getWorkOrdersByColumn(
   const andConditions: any[] = [];
 
   if (filterByUserId) {
-    andConditions.push({
-      invoiceItems: {
-        some: {
-          service: { Technician: { some: { userId: filterByUserId } } },
-        },
-      },
-    });
+    andConditions.push(assignedTechnicianFilter(filterByUserId, companyId));
   }
 
   const searchCondition = makeSearchCondition(search);
@@ -182,24 +186,12 @@ export async function getWorkOrdersByTechnician(
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
 
-  const techFilter = {
-    invoiceItems: {
-      some: {
-        service: { Technician: { some: { userId: technicianId } } },
-      },
-    },
-  };
-
-  const andConditions: any[] = [techFilter];
+  const andConditions: any[] = [
+    assignedTechnicianFilter(technicianId, companyId),
+  ];
 
   if (filterByUserId) {
-    andConditions.push({
-      invoiceItems: {
-        some: {
-          service: { Technician: { some: { userId: filterByUserId } } },
-        },
-      },
-    });
+    andConditions.push(assignedTechnicianFilter(filterByUserId, companyId));
   }
 
   const searchCondition = makeSearchCondition(search);
@@ -232,8 +224,6 @@ export async function getWorkOrdersByTechnician(
 
 const TEAM_SEARCH_PAGE_SIZE = 10;
 
-// Single consolidated query for all technicians when a search term is present.
-// Replaces N parallel getWorkOrdersByTechnician calls with one DB round-trip.
 export async function getWorkOrdersForTeamSearch(
   technicianUserIds: number[],
   search: string,
@@ -252,25 +242,11 @@ export async function getWorkOrdersForTeamSearch(
   const techIdSet = new Set(technicianUserIds);
 
   const andConditions: any[] = [
-    {
-      invoiceItems: {
-        some: {
-          service: {
-            Technician: { some: { userId: { in: technicianUserIds } } },
-          },
-        },
-      },
-    },
+    assignedTechnicianFilter({ in: technicianUserIds }, companyId),
   ];
 
   if (filterByUserId) {
-    andConditions.push({
-      invoiceItems: {
-        some: {
-          service: { Technician: { some: { userId: filterByUserId } } },
-        },
-      },
-    });
+    andConditions.push(assignedTechnicianFilter(filterByUserId, companyId));
   }
 
   const searchCondition = makeSearchCondition(search);
@@ -294,16 +270,8 @@ export async function getWorkOrdersForTeamSearch(
   for (const invoice of invoices) {
     const lead = toShopLead(invoice);
     const assignedIds = new Set<number>();
-    for (const item of invoice.invoiceItems) {
-      for (const tech of (item.service?.Technician ?? []) as any[]) {
-        if (
-          tech.userId != null &&
-          tech.invoiceId === invoice.id &&
-          techIdSet.has(tech.userId)
-        ) {
-          assignedIds.add(tech.userId);
-        }
-      }
+    for (const tech of invoice.technician) {
+      if (techIdSet.has(tech.userId)) assignedIds.add(tech.userId);
     }
     for (const uid of assignedIds) grouped.get(uid)!.push(lead);
   }
