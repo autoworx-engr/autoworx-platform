@@ -75,6 +75,7 @@ type DroppableColumnProps = {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  fullWidth?: boolean;
 };
 
 const DroppableColumn = ({
@@ -112,6 +113,7 @@ const DroppableColumn = ({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  fullWidth = false,
 }: DroppableColumnProps) => {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -165,7 +167,11 @@ const DroppableColumn = ({
         columnRef.current = el;
         setColumnRef(el);
       }}
-      className={`mx-2 w-full max-w-md flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)] ${isDraggedOver ? "ring-2 ring-blue-50" : ""}`}
+      className={`mx-2 w-full rounded-md border ${
+        fullWidth
+          ? ""
+          : "max-w-md flex-shrink-0 sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
+      } ${isDraggedOver ? "ring-2 ring-blue-50" : ""}`}
       style={{
         backgroundColor: "rgba(101, 113, 255, 0.15)",
         padding: "0",
@@ -201,7 +207,7 @@ const DroppableColumn = ({
               categoryIndex={categoryIndex}
               leadIndex={leadIndex}
               lead={lead}
-              userId={Number(item.id)}
+              userId={item.id ?? undefined}
               leadRefs={leadRefs}
               isTeamPipeline={isTeamPipeline}
               handleColumnDropdownToggle={handleColumnDropdownToggle}

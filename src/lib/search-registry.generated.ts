@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-08-22T20:01:00.967Z
+ * Generated: 2026-09-07T14:17:26.253Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
@@ -185,7 +185,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "inventory", "vendor"],
     description: "Manage your vendors",
-    permissionKey: "inventoryAll",
+    permissionKey: ["inventoryAll", "inventoryAllViewOnly"],
     featureKey: "inventory",
   },
   {
@@ -239,22 +239,22 @@ export const generatedRegistry: SearchItem[] = [
     featureKey: "shopPipeline",
   },
   {
+    id: "dashboard-pipeline-team-list",
+    label: "Pipelines - Team List",
+    href: "/dashboard/pipeline/team/list",
+    type: "page",
+    keywords: ["dashboard", "pipeline", "team", "list", "pipelines"],
+    description: "Every team work order in a single list",
+    permissionKey: "teamPipeline",
+    featureKey: "teamPipeline",
+  },
+  {
     id: "dashboard-pipeline-team-pipeline",
     label: "Pipelines - Team Pipeline",
     href: "/dashboard/pipeline/team/pipeline",
     type: "page",
     keywords: ["dashboard", "pipeline", "team", "pipelines"],
     description: "Manage your team pipeline",
-    permissionKey: "teamPipeline",
-    featureKey: "teamPipeline",
-  },
-  {
-    id: "dashboard-pipeline-team-workorder",
-    label: "Team Work Orders",
-    href: "/dashboard/pipeline/team/workorder",
-    type: "page",
-    keywords: ["dashboard", "pipeline", "team", "workorder", "work", "orders"],
-    description: "View and manage your team work orders",
     permissionKey: "teamPipeline",
     featureKey: "teamPipeline",
   },

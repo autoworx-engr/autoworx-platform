@@ -62,6 +62,7 @@ export const FEATURE_PERMISSIONS_MAP: Record<string, RouteFeatureKey> = {
   "/dashboard/visualization": "visualization",
   "/dashboard/pipeline/shop/workorder": "shopPipeline",
   "/dashboard/pipeline/team/pipeline": "teamPipeline",
+  "/dashboard/pipeline/team/list": "teamPipeline",
   "/dashboard/pipeline/team/workorder": "teamPipeline",
   // These three settings pages are shown/hidden by their own product
   // entitlement — Virtual Shop, the Automation group and AI Sales Agent. Every
