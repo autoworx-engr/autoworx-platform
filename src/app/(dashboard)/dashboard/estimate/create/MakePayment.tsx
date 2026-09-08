@@ -339,6 +339,10 @@ export default function MakePayment() {
             : res2.message,
         );
       }
+
+      if (!isEditPage && res1?.type === "success") {
+        router.replace(`/dashboard/estimate/edit/${invoiceId}`);
+      }
     } catch (err) {
       const formattedError = errorHandler(err);
       errorToast(
