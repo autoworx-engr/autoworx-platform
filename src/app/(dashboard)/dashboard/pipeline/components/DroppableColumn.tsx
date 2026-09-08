@@ -76,8 +76,9 @@ type DroppableColumnProps = {
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
   fullWidth?: boolean;
-  /** Replaces DraggableLead for boards that render their own card */
   renderLead?: (lead: ShopLead, leadIndex: number) => React.ReactNode;
+  renderHeader?: (item: ShopPipelineData) => React.ReactNode;
+  listClassName?: string;
 };
 
 const DroppableColumn = ({
@@ -117,6 +118,8 @@ const DroppableColumn = ({
   onLoadMore,
   fullWidth = false,
   renderLead,
+  renderHeader,
+  listClassName = "gap-1 p-1",
 }: DroppableColumnProps) => {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -180,18 +183,22 @@ const DroppableColumn = ({
         padding: "0",
       }}
     >
-      <h2 className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-center text-white">
-        <span className="min-w-0 break-words text-base font-bold">
-          {item.title || ""}
-        </span>
-        <span className="shrink-0 rounded-lg bg-[#3F49B9] px-2 text-base font-bold">
-          {item.totalCount ?? item.leads.length}
-        </span>
-      </h2>
+      {renderHeader ? (
+        renderHeader(item)
+      ) : (
+        <h2 className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-center text-white">
+          <span className="min-w-0 break-words text-base font-bold">
+            {item.title || ""}
+          </span>
+          <span className="shrink-0 rounded-lg bg-[#3F49B9] px-2 text-base font-bold">
+            {item.totalCount ?? item.leads.length}
+          </span>
+        </h2>
+      )}
 
       <ul
         ref={ulRef}
-        className="mt-1 flex min-w-0 max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
+        className={`mt-1 flex min-h-[65vh] max-h-[65vh] min-w-0 flex-col overflow-y-auto ${listClassName}`}
         style={{ maxHeight: "65vh" }}
       >
         {item.leads.map((lead, leadIndex) => {

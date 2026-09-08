@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-09-07T14:17:26.253Z
+ * Generated: 2026-09-08T16:34:52.043Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
@@ -239,22 +239,22 @@ export const generatedRegistry: SearchItem[] = [
     featureKey: "shopPipeline",
   },
   {
-    id: "dashboard-pipeline-team-list",
-    label: "Pipelines - Team List",
-    href: "/dashboard/pipeline/team/list",
+    id: "dashboard-pipeline-team-kanban",
+    label: "Pipelines - Team Pipeline",
+    href: "/dashboard/pipeline/team/kanban",
     type: "page",
-    keywords: ["dashboard", "pipeline", "team", "list", "pipelines"],
-    description: "Every team work order in a single list",
+    keywords: ["dashboard", "pipeline", "team", "kanban", "pipelines"],
+    description: "Manage your team pipeline",
     permissionKey: "teamPipeline",
     featureKey: "teamPipeline",
   },
   {
     id: "dashboard-pipeline-team-pipeline",
-    label: "Pipelines - Team Pipeline",
+    label: "Pipelines - Team List",
     href: "/dashboard/pipeline/team/pipeline",
     type: "page",
-    keywords: ["dashboard", "pipeline", "team", "pipelines"],
-    description: "Manage your team pipeline",
+    keywords: ["dashboard", "pipeline", "team", "pipelines", "list"],
+    description: "Every team work order in a single list",
     permissionKey: "teamPipeline",
     featureKey: "teamPipeline",
   },

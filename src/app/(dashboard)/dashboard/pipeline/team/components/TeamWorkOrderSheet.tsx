@@ -1,28 +1,37 @@
 "use client";
 
+import CarLoading from "@/components/common/CarLoading";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { queryKeys } from "@/lib/queryKeys";
 import { ShopLead } from "@/types/invoiceLead";
 import { getWorkOrderData } from "@/service/work-order/api";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useQuery } from "@tanstack/react-query";
-import { PencilLineIcon } from "lucide-react";
+import { BookCheck, PencilLineIcon } from "lucide-react";
 import TeamWorkOrderDetails from "./TeamWorkOrderDetails";
 
 interface TeamWorkOrderSheetProps {
   lead: ShopLead | null;
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
+  onViewInvoice: () => void;
 }
 
 export default function TeamWorkOrderSheet({
   lead,
   onOpenChange,
   onEdit,
+  onViewInvoice,
 }: TeamWorkOrderSheetProps) {
   const currentUser = useGetCurrentUser();
   const companyId = currentUser?.companyId;
   const invoiceId = lead?.invoiceId;
+
+  // Same gate DraggableLead uses for its View Invoice action
+  const canViewInvoice =
+    currentUser?.employeeType === "Manager" ||
+    currentUser?.employeeType === "Admin" ||
+    currentUser?.isSuperAdmin === true;
 
   // Same query key as WorkOrderModalBody, so opening Edit reuses this cache
   const { data, isLoading, isError } = useQuery({
@@ -52,7 +61,10 @@ export default function TeamWorkOrderSheet({
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {isLoading && (
-            <p className="text-sm text-slate-400">Loading work order…</p>
+            <div className="flex flex-col items-center justify-center py-10">
+              <CarLoading />
+              <p className="mt-2 text-sm text-slate-400">Loading work order…</p>
+            </div>
           )}
           {isError && (
             <p className="text-sm text-rose-500">
@@ -62,7 +74,7 @@ export default function TeamWorkOrderSheet({
           {!isLoading && !isError && <TeamWorkOrderDetails data={data} />}
         </div>
 
-        <div className="border-t border-slate-100 p-4">
+        <div className="flex flex-col gap-2 border-t border-slate-100 p-4">
           <button
             type="button"
             onClick={onEdit}
@@ -71,6 +83,17 @@ export default function TeamWorkOrderSheet({
             <PencilLineIcon className="size-4" />
             Edit Work Order
           </button>
+
+          {canViewInvoice && (
+            <button
+              type="button"
+              onClick={onViewInvoice}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              <BookCheck className="size-4" />
+              View Invoice
+            </button>
+          )}
         </div>
       </SheetContent>
     </Sheet>
