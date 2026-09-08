@@ -88,10 +88,14 @@ export async function newPayment({
     // transaction use for payment process
     const { newPayment, invoice } = await db.$transaction(
       async (tx) => {
-        // Get current invoice to calculate due after payment
         const currentInvoice = await tx.invoice.findUnique({
           where: { id: invoiceId },
-          select: { due: true },
+          select: {
+            due: true,
+            type: true,
+            workOrderCreatedAt: true,
+            column: { select: { title: true } },
+          },
         });
 
         if (!currentInvoice) {
@@ -241,6 +245,21 @@ export async function newPayment({
             throw new Error("Invalid payment type");
         }
 
+        // Paying an estimate converts it to an invoice, and an invoice belongs
+        // in "In Progress" — the same column/type invariant every other path
+        // enforces (see estimate/invoice/create.ts and updateInvoiceStatus.ts).
+        // Only a "Pending" estimate is moved; anything already further along
+        // keeps the column it is in.
+        const isConverting =
+          convertToInvoice && currentInvoice.type === InvoiceType.Estimate;
+        const inProgressColumn =
+          isConverting && currentInvoice.column?.title === "Pending"
+            ? await tx.column.findFirst({
+                where: { title: "In Progress", type: "shop", companyId: cId },
+                select: { id: true },
+              })
+            : null;
+
         // update the invoice
         let invoice = await tx.invoice.update({
           where: {
@@ -250,6 +269,19 @@ export async function newPayment({
             // `undefined` leaves the column alone, so an estimate the
             // inventory can't cover stays an estimate.
             type: convertToInvoice ? InvoiceType.Invoice : undefined,
+            // A missing "In Progress" column must not fail the payment, so
+            // this stays `undefined` and the invoice keeps its column.
+            columnId: inProgressColumn?.id,
+            // "In Progress" means it is a work order, and it must not look
+            // delivered.
+            ...(inProgressColumn
+              ? {
+                  isWorkOrder: true,
+                  workOrderCreatedAt:
+                    currentInvoice.workOrderCreatedAt ?? new Date(),
+                  deliveredAt: null,
+                }
+              : {}),
             due: {
               decrement: amount,
             },
