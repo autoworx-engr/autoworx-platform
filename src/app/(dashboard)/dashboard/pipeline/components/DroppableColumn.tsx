@@ -77,7 +77,6 @@ type DroppableColumnProps = {
   onLoadMore?: () => void;
   fullWidth?: boolean;
   renderLead?: (lead: ShopLead, leadIndex: number) => React.ReactNode;
-  renderHeader?: (item: ShopPipelineData) => React.ReactNode;
   listClassName?: string;
 };
 
@@ -118,7 +117,6 @@ const DroppableColumn = ({
   onLoadMore,
   fullWidth = false,
   renderLead,
-  renderHeader,
   listClassName = "gap-1 p-1",
 }: DroppableColumnProps) => {
   const columnRef = useRef<HTMLDivElement | null>(null);
@@ -183,18 +181,14 @@ const DroppableColumn = ({
         padding: "0",
       }}
     >
-      {renderHeader ? (
-        renderHeader(item)
-      ) : (
-        <h2 className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-center text-white">
-          <span className="min-w-0 break-words text-base font-bold">
-            {item.title || ""}
-          </span>
-          <span className="shrink-0 rounded-lg bg-[#3F49B9] px-2 text-base font-bold">
-            {item.totalCount ?? item.leads.length}
-          </span>
-        </h2>
-      )}
+      <h2 className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-center text-white">
+        <span className="min-w-0 break-words text-base font-bold">
+          {item.title || ""}
+        </span>
+        <span className="shrink-0 rounded-lg bg-[#3F49B9] px-2 text-base font-bold">
+          {item.totalCount ?? item.leads.length}
+        </span>
+      </h2>
 
       <ul
         ref={ulRef}

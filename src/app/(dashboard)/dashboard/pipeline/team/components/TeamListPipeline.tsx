@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import SearchScroll from "../../components/SearchScroll";
 import { SelectedEmployee } from "../../components/SearchScrollFilters";
-import TeamListCard from "./TeamListCard";
+import TeamListRow from "./TeamListRow";
 import { useTeamWorkOrderPanel } from "./useTeamWorkOrderPanel";
 
 const PAGE_SIZE = 20;
@@ -119,16 +119,16 @@ export default function TeamListPipeline({
       </div>
 
       <div className="px-4">
-        <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
-          <div className="flex items-center justify-between bg-primary px-4 py-3 text-white">
-            <p className="text-base font-bold">All Work Orders</p>
-            <span className="rounded-lg bg-[#3F49B9] px-2 py-0.5 text-sm font-semibold">
+        <div className="overflow-hidden rounded-xl border border-slate-100 bg-[#6675FF] shadow-sm">
+          <div className="flex items-center justify-between bg-[#6574FD] px-4 py-2.5 text-white">
+            <p className="text-sm font-bold">All Work Orders</p>
+            <span className="rounded-md bg-white px-2 py-0.5 text-xs font-bold text-slate-700">
               {total}
             </span>
           </div>
 
           {loadedLeads.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center gap-2 text-center">
+            <div className="flex flex-col items-center justify-center gap-2 py-14 text-center">
               <p className="text-lg font-semibold text-gray-500">
                 No work orders found
               </p>
@@ -139,11 +139,11 @@ export default function TeamListPipeline({
           ) : (
             <div
               ref={listRef}
-              className="max-h-[65vh] min-h-[65vh] overflow-y-auto bg-slate-50/60 p-2"
+              className="max-h-[70vh] overflow-y-auto bg-slate-50/60 p-2"
             >
               <ul className="flex flex-col gap-2">
                 {loadedLeads.map((lead) => (
-                  <TeamListCard
+                  <TeamListRow
                     key={lead.invoiceId}
                     lead={lead}
                     isSelected={selectedLead?.invoiceId === lead.invoiceId}

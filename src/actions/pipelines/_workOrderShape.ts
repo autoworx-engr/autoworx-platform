@@ -29,7 +29,7 @@ export function makeInclude(timezone?: string | null) {
     tasks: true,
     assignedTo: true,
     column: true,
-    technician: { select: { userId: true } },
+    technician: true,
   };
 }
 
@@ -37,7 +37,6 @@ export function toShopLead(invoice: any): ShopLead {
   const completed: string[] = [];
   const incomplete: string[] = [];
   const unAssigned: string[] = [];
-  const allTechnicians: Technician[] = [];
 
   for (const item of invoice.invoiceItems) {
     const techs: Technician[] =
@@ -57,7 +56,6 @@ export function toShopLead(invoice: any): ShopLead {
     } else {
       if (item.service?.name) unAssigned.push(item.service.name);
     }
-    allTechnicians.push(...techs);
   }
 
   const latestAppointment = invoice.client?.appointments?.[0] ?? null;
@@ -80,7 +78,7 @@ export function toShopLead(invoice: any): ShopLead {
     columnId: invoice.columnId,
     columnTitle: invoice.column?.title ?? null,
     dueBalance: Number(invoice.due),
-    technicians: allTechnicians,
+    technicians: invoice.technician ?? [],
     appointment: latestAppointment,
   };
 }

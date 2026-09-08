@@ -29,7 +29,6 @@ import DroppableColumn from "../../components/DroppableColumn";
 import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
 import SearchScroll from "../../components/SearchScroll";
 import { SelectedEmployee } from "../../components/SearchScrollFilters";
-import TeamColumnHeader from "./TeamColumnHeader";
 import TeamListCard from "./TeamListCard";
 import { useTeamWorkOrderPanel } from "./useTeamWorkOrderPanel";
 
@@ -649,13 +648,6 @@ export default function TeamPipelines({
                 }
                 onLoadMore={() => loadMoreForColumn(categoryIndex)}
                 listClassName="gap-2 p-2"
-                renderHeader={(column) => (
-                  <TeamColumnHeader
-                    title={column.title}
-                    count={column.totalCount ?? column.leads.length}
-                    employee={columns?.find((user) => user.id === column.id)}
-                  />
-                )}
                 renderLead={(lead, leadIndex) => (
                   <TeamListCard
                     key={lead.invoiceId}

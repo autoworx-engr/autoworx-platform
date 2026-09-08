@@ -13,7 +13,6 @@ import {
   Wrench,
 } from "lucide-react";
 import {
-  accentFor,
   priorityPillClass,
   shortDate,
   statusPillClass,
@@ -44,18 +43,10 @@ function InfoRow({
   );
 }
 
-function DateChip({
-  icon,
-  label,
-  tone,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  tone: string;
-}) {
+function DateChip({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <span className="flex shrink-0 items-center gap-1 rounded-md bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
-      <span className={tone}>{icon}</span>
+      <span className="text-slate-400">{icon}</span>
       {label}
     </span>
   );
@@ -74,15 +65,10 @@ function AssignmentRow({ tech }: { tech: Technician }) {
             <DateChip
               icon={<CalendarCheck2 className="size-3" />}
               label={assigned}
-              tone="text-emerald-500"
             />
           )}
           {due && (
-            <DateChip
-              icon={<CalendarClock className="size-3" />}
-              label={due}
-              tone="text-rose-500"
-            />
+            <DateChip icon={<CalendarClock className="size-3" />} label={due} />
           )}
         </div>
       )}
@@ -155,7 +141,7 @@ export default function TeamListCard({
         )}
       >
         <div className="flex min-w-0 items-start gap-2">
-          <span className={cn("shrink-0 rounded-lg p-1.5", accentFor(title))}>
+          <span className="shrink-0 rounded-lg bg-[#6675FF]/10 p-1.5 text-[#6675FF]">
             <Wrench className="size-3.5" />
           </span>
           <p className="min-w-0 flex-1 break-words text-sm font-bold leading-snug text-slate-900">
@@ -220,12 +206,6 @@ export default function TeamListCard({
             #{lead.invoiceId}
           </span>
           <div className="flex shrink-0 items-center gap-1">
-            {noteCount > 0 && (
-              <span className="flex items-center gap-1 rounded-md bg-orange-50 px-1.5 py-0.5 text-[11px] font-semibold text-orange-600">
-                <StickyNote className="size-3" />
-                {noteCount}
-              </span>
-            )}
             {lead.columnTitle && (
               <span className="max-w-[7rem] truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary">
                 {lead.columnTitle}
