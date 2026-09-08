@@ -2,7 +2,6 @@
 
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
-import { ShopLead } from "@/types/invoiceLead";
 import { useState } from "react";
 import TeamWorkOrderSheet from "./TeamWorkOrderSheet";
 
@@ -13,10 +12,16 @@ import TeamWorkOrderSheet from "./TeamWorkOrderSheet";
  * Radix dialog counts as an outside-interaction for the Radix sheet, which
  * would close the sheet and unmount the modal with it.
  */
+/**
+ * The sheet and both modals only need to identify the work order — ShopLead is
+ * structurally assignable, so board callers can keep passing a whole lead.
+ */
+export type WorkOrderRef = { invoiceId: string; name: string };
+
 export function useTeamWorkOrderPanel() {
-  const [selectedLead, setSelectedLead] = useState<ShopLead | null>(null);
-  const [editingLead, setEditingLead] = useState<ShopLead | null>(null);
-  const [invoiceLead, setInvoiceLead] = useState<ShopLead | null>(null);
+  const [selectedLead, setSelectedLead] = useState<WorkOrderRef | null>(null);
+  const [editingLead, setEditingLead] = useState<WorkOrderRef | null>(null);
+  const [invoiceLead, setInvoiceLead] = useState<WorkOrderRef | null>(null);
 
   const panel = (
     <>

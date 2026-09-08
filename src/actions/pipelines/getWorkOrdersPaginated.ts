@@ -92,7 +92,11 @@ export async function getWorkOrdersByTechnician(
     db.invoice.findMany({
       where,
       include: makeInclude(timezone),
-      orderBy: { createdAt: "desc" },
+      // Soonest work order due date first; undated ones sort last
+      orderBy: [
+        { dueDate: { sort: "asc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
       skip,
       take,
     }),
@@ -144,7 +148,11 @@ export async function getWorkOrdersForTeamSearch(
       AND: andConditions,
     },
     include: makeInclude(timezone),
-    orderBy: [{ deliveredAt: "desc" }, { createdAt: "desc" }],
+    // Soonest work order due date first; the grouping below preserves this order
+    orderBy: [
+      { dueDate: { sort: "asc", nulls: "last" } },
+      { createdAt: "desc" },
+    ],
   });
 
   // Group invoices by technician userId — an invoice can appear in multiple columns

@@ -3,15 +3,15 @@
 import CarLoading from "@/components/common/CarLoading";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { queryKeys } from "@/lib/queryKeys";
-import { ShopLead } from "@/types/invoiceLead";
 import { getWorkOrderData } from "@/service/work-order/api";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useQuery } from "@tanstack/react-query";
 import { BookCheck, PencilLineIcon } from "lucide-react";
 import TeamWorkOrderDetails from "./TeamWorkOrderDetails";
+import { WorkOrderRef } from "./useTeamWorkOrderPanel";
 
 interface TeamWorkOrderSheetProps {
-  lead: ShopLead | null;
+  lead: WorkOrderRef | null;
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
   onViewInvoice: () => void;

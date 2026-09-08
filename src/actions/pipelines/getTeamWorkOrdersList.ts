@@ -56,7 +56,11 @@ export async function getTeamWorkOrdersList(
     db.invoice.findMany({
       where,
       include: makeInclude(timezone),
-      orderBy: [{ deliveredAt: "desc" }, { createdAt: "desc" }],
+      // Soonest work order due date first; undated ones sort last
+      orderBy: [
+        { dueDate: { sort: "asc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
       skip,
       take,
     }),

@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-09-08T16:34:52.043Z
+ * Generated: 2026-09-08T18:28:48.078Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
@@ -255,6 +255,16 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "pipeline", "team", "pipelines", "list"],
     description: "Every team work order in a single list",
+    permissionKey: "teamPipeline",
+    featureKey: "teamPipeline",
+  },
+  {
+    id: "dashboard-pipeline-team-week",
+    label: "Pipelines - Team Week",
+    href: "/dashboard/pipeline/team/week",
+    type: "page",
+    keywords: ["dashboard", "pipeline", "team", "week", "pipelines"],
+    description: "The team",
     permissionKey: "teamPipeline",
     featureKey: "teamPipeline",
   },
@@ -702,4 +712,4 @@ export const generatedRegistry: SearchItem[] = [
   },
 ];
 
-// 65 route(s) registered
+// 66 route(s) registered

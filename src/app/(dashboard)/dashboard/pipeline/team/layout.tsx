@@ -11,7 +11,8 @@ export default async function TeamLayout({
   await requireRouteAccess("/dashboard/pipeline/team/pipeline");
 
   const toggleButtons = [
-    { label: "List", href: "/dashboard/pipeline/team/pipeline" },
+    { label: "Pipeline", href: "/dashboard/pipeline/team/pipeline" },
+    { label: "Week", href: "/dashboard/pipeline/team/week" },
     { label: "Kanban", href: "/dashboard/pipeline/team/kanban" },
   ];
 

@@ -108,6 +108,7 @@ export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
   "/dashboard/pipeline/shop/workorder": "shopPipeline",
   "/dashboard/pipeline/team/pipeline": "teamPipeline",
   "/dashboard/pipeline/team/kanban": "teamPipeline",
+  "/dashboard/pipeline/team/week": "teamPipeline",
   "/dashboard/visualization": "visualization",
   "/dashboard/client": "clientDirectory",
   "/dashboard/employee": "employeeDirectory",
