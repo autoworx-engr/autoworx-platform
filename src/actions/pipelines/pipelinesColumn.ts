@@ -37,12 +37,14 @@ export const getColumnsByType = async (
 
 export const getEmployeeColumnByCompany = async (
   employeeType?: EmployeeType,
+  userId?: number,
 ) => {
   const companyId = await getCompanyId();
   return db.user.findMany({
     where: {
       companyId,
       ...(employeeType && { employeeType }),
+      ...(userId && { id: userId }),
     },
     orderBy: { createdAt: "asc" },
   });

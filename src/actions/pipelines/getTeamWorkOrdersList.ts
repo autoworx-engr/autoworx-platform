@@ -19,16 +19,22 @@ export async function getTeamWorkOrdersList(
   employeeType?: EmployeeType,
   filterByUserId?: number,
   search?: string,
+  employeeId?: number,
 ) {
   const companyId = await getCompanyId();
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
 
+  // filterByUserId is the technician self-scope derived from the session, so it
+  // wins over the employee the viewer picked — a technician can never widen the
+  // filter to somebody else's work orders.
+  const userId = filterByUserId ?? employeeId;
+
   const assignedFilter = {
     technician: {
       some: {
         companyId,
-        ...(filterByUserId && { userId: filterByUserId }),
+        ...(userId && { userId }),
         ...(employeeType && { user: { employeeType } }),
       },
     },

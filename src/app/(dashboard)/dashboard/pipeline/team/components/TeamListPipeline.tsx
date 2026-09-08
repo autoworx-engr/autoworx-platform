@@ -12,6 +12,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DroppableColumn from "../../components/DroppableColumn";
 import SearchScroll from "../../components/SearchScroll";
+import { SelectedEmployee } from "../../components/SearchScrollFilters";
 
 const PAGE_SIZE = 20;
 
@@ -20,6 +21,8 @@ interface TeamListPipelineProps {
   totalCount: number;
   hasMore: boolean;
   employeeType?: EmployeeType;
+  employeeId?: number;
+  selectedEmployee?: SelectedEmployee | null;
   isTechnician?: boolean;
 }
 
@@ -31,6 +34,8 @@ export default function TeamListPipeline({
   totalCount,
   hasMore: initialHasMore,
   employeeType,
+  employeeId,
+  selectedEmployee,
   isTechnician,
 }: TeamListPipelineProps) {
   const currentUser = useGetCurrentUser();
@@ -87,6 +92,7 @@ export default function TeamListPipeline({
         employeeType,
         isTechnician ? Number(currentUser?.id) : undefined,
         searchTerm || undefined,
+        employeeId,
       );
       setColumn((prev) => ({
         ...prev,
@@ -104,6 +110,7 @@ export default function TeamListPipeline({
     column.leads.length,
     hasMore,
     employeeType,
+    employeeId,
     isTechnician,
     currentUser,
     searchTerm,
@@ -167,7 +174,7 @@ export default function TeamListPipeline({
         <SearchScroll
           pipelineData={[column]}
           isTeamPipeline={true}
-          employeeType={employeeType}
+          selectedEmployee={selectedEmployee}
         />
       </div>
 

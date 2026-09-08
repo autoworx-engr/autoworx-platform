@@ -12,7 +12,7 @@ export default async function TeamLayout({
 
   const toggleButtons = [
     { label: "Pipeline", href: "/dashboard/pipeline/team/pipeline" },
-    { label: "List", href: "/dashboard/pipeline/team/list" },
+    { label: "Kanban", href: "/dashboard/pipeline/team/kanban" },
   ];
 
   return (

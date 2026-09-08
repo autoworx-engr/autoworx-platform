@@ -28,6 +28,7 @@ import toast from "react-hot-toast";
 import DroppableColumn from "../../components/DroppableColumn";
 import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
 import SearchScroll from "../../components/SearchScroll";
+import { SelectedEmployee } from "../../components/SearchScrollFilters";
 
 const PIPELINE_PAGE_SIZE = 10;
 
@@ -38,6 +39,7 @@ interface PipelinesProps {
   loading?: boolean;
   isTechnician?: boolean;
   employeeType?: EmployeeType;
+  selectedEmployee?: SelectedEmployee | null;
 }
 
 type ColumnMeta = {
@@ -53,6 +55,7 @@ export default function TeamPipelines({
   shopPipelineDataProp,
   isTechnician,
   employeeType,
+  selectedEmployee,
 }: PipelinesProps) {
   const router = useRouter();
 
@@ -577,6 +580,7 @@ export default function TeamPipelines({
           onSearchResult={handleSearchResult}
           onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
           isTeamPipeline={true}
+          selectedEmployee={selectedEmployee}
         />
       </div>
 
