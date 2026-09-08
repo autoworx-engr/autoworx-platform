@@ -1,6 +1,7 @@
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { customAlphabet } from "nanoid";
 
 /**
  * @swagger
@@ -146,6 +147,7 @@ export async function POST(
         // Create the cloned template
         const newTemplate = await tx.invoiceTemplate.create({
           data: {
+            id: customAlphabet("1234567890", 10)(),
             title: cloneTitle,
             companyId,
             columnId: source.columnId,

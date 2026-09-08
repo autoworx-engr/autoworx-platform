@@ -163,9 +163,15 @@ export async function GET(req: NextRequest) {
     }
 
     if (search) {
-      const searchAsYear = /^\d+$/.test(search)
+      const searchAsYearCandidate = /^\d+$/.test(search)
         ? parseInt(search, 10)
         : undefined;
+      const searchAsYear =
+        searchAsYearCandidate !== undefined &&
+        searchAsYearCandidate >= 1900 &&
+        searchAsYearCandidate <= 2100
+          ? searchAsYearCandidate
+          : undefined;
 
       where.OR = [
         {
