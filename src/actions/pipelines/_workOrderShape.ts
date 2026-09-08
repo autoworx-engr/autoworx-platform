@@ -78,16 +78,13 @@ export function toShopLead(invoice: any): ShopLead {
     assignedTo: invoice.assignedTo,
     createdAt: new Date(invoice.createdAt).toDateString(),
     columnId: invoice.columnId,
+    columnTitle: invoice.column?.title ?? null,
     dueBalance: Number(invoice.due),
     technicians: allTechnicians,
     appointment: latestAppointment,
   };
 }
 
-// Work orders belong to the technicians assigned on the invoice itself.
-// `Service` is a company-wide catalogue row shared by many invoices, so filtering
-// through invoiceItems -> service -> Technician leaks work orders between
-// technicians who happen to share a service. Use Invoice.technician instead.
 export function assignedTechnicianFilter(
   userId: number | { in: number[] },
   companyId: number,
@@ -102,8 +99,6 @@ export function makeSearchCondition(search?: string) {
 
   const makeWordCondition = (word: string) => {
     const ci = { contains: word, mode: "insensitive" as const };
-    // Use explicit `is:` wrappers on optional relations so Prisma generates
-    // correct SQL when these filters appear inside an OR clause.
     const conditions: any[] = [
       { client: { is: { firstName: ci } } },
       { client: { is: { lastName: ci } } },

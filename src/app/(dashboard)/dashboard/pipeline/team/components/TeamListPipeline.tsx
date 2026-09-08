@@ -1,18 +1,15 @@
 "use client";
 
 import { getTeamWorkOrdersList } from "@/actions/pipelines/getTeamWorkOrdersList";
-import {
-  removeInvoiceTag,
-  saveInvoiceTag,
-} from "@/actions/pipelines/invoiceTag";
-import { ShopLead, ShopPipelineData } from "@/types/invoiceLead";
+import { ShopLead } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { EmployeeType, Tag } from "@prisma/client";
+import { EmployeeType } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import DroppableColumn from "../../components/DroppableColumn";
 import SearchScroll from "../../components/SearchScroll";
 import { SelectedEmployee } from "../../components/SearchScrollFilters";
+import TeamListCard from "./TeamListCard";
+import { useTeamWorkOrderPanel } from "./useTeamWorkOrderPanel";
 
 const PAGE_SIZE = 20;
 
@@ -25,9 +22,6 @@ interface TeamListPipelineProps {
   selectedEmployee?: SelectedEmployee | null;
   isTechnician?: boolean;
 }
-
-const noop = () => {};
-const asyncNoop = async () => {};
 
 export default function TeamListPipeline({
   leads,
@@ -42,42 +36,22 @@ export default function TeamListPipeline({
   const searchParams = useSearchParams();
   const searchTerm = searchParams.get("search") ?? "";
 
-  const [column, setColumn] = useState<ShopPipelineData>({
-    id: null,
-    title: "All Work Orders",
-    leads,
-    totalCount,
-    hasMore: initialHasMore,
-  });
+  const [loadedLeads, setLoadedLeads] = useState<ShopLead[]>(leads);
+  const [total, setTotal] = useState(totalCount);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [openServiceDropdown, setOpenServiceDropdown] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [screenWidth, setScreenWidth] = useState(0);
+  const { selectedLead, openLead, panel } = useTeamWorkOrderPanel();
 
-  const columnRef = useRef<HTMLDivElement | null>(null);
-  const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const isFetchingRef = useRef(false);
+  const loadMoreRef = useRef<() => void>(() => {});
 
+  // A fresh server render (search / filter change) resets the list
   useEffect(() => {
-    const updateWidth = () => setScreenWidth(window.innerWidth);
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
-
-  // A fresh server render (search / type change) resets the list
-  useEffect(() => {
-    setColumn({
-      id: null,
-      title: "All Work Orders",
-      leads,
-      totalCount,
-      hasMore: initialHasMore,
-    });
+    setLoadedLeads(leads);
+    setTotal(totalCount);
     setHasMore(initialHasMore);
-    leadRefs.current = new Map();
   }, [leads, totalCount, initialHasMore]);
 
   const loadMore = useCallback(async () => {
@@ -87,27 +61,24 @@ export default function TeamListPipeline({
 
     try {
       const result = await getTeamWorkOrdersList(
-        column.leads.length,
+        loadedLeads.length,
         PAGE_SIZE,
         employeeType,
         isTechnician ? Number(currentUser?.id) : undefined,
         searchTerm || undefined,
         employeeId,
       );
-      setColumn((prev) => ({
-        ...prev,
-        leads: [...prev.leads, ...result.leads],
-        totalCount: result.total,
-      }));
+      setLoadedLeads((prev) => [...prev, ...result.leads]);
+      setTotal(result.total);
       setHasMore(result.hasMore);
     } catch {
-      // leave the list as-is; the sentinel stays and can retry on next scroll
+      // leave the list as-is; the sentinel can retry on the next scroll
     } finally {
       isFetchingRef.current = false;
       setIsLoadingMore(false);
     }
   }, [
-    column.leads.length,
+    loadedLeads.length,
     hasMore,
     employeeType,
     employeeId,
@@ -116,116 +87,91 @@ export default function TeamListPipeline({
     searchTerm,
   ]);
 
-  const handleTagSelect = async (
-    _categoryIndex: number,
-    leadIndex: number,
-    selectedTag: Tag | undefined,
-  ) => {
-    if (!selectedTag) return;
-    const lead = column.leads[leadIndex];
-    const result = await saveInvoiceTag(lead.invoiceId, selectedTag.id);
-    if (!result) return;
+  useEffect(() => {
+    loadMoreRef.current = loadMore;
+  }, [loadMore]);
 
-    setColumn((prev) => {
-      const nextLeads = [...prev.leads];
-      nextLeads[leadIndex] = {
-        ...nextLeads[leadIndex],
-        tags: [
-          ...nextLeads[leadIndex].tags,
-          { id: selectedTag.id, tag: selectedTag },
-        ],
-      };
-      return { ...prev, leads: nextLeads };
-    });
-  };
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
-  const handleTagRemove = async (
-    _categoryIndex: number,
-    leadIndex: number,
-    tagToRemove: Tag,
-  ) => {
-    const lead = column.leads[leadIndex];
-    const result = await removeInvoiceTag(lead.invoiceId, tagToRemove.id);
-    if (!result) return;
-
-    setColumn((prev) => {
-      const nextLeads = [...prev.leads];
-      nextLeads[leadIndex] = {
-        ...nextLeads[leadIndex],
-        tags: nextLeads[leadIndex].tags.filter(
-          (t) => t.tag.id !== tagToRemove.id,
-        ),
-      };
-      return { ...prev, leads: nextLeads };
-    });
-  };
-
-  const handleServiceDropdownToggle = (
-    _categoryIndex: number,
-    leadIndex: number,
-  ) => {
-    const key = `0-${leadIndex}`;
-    setOpenServiceDropdown((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) loadMoreRef.current();
+      },
+      { root: listRef.current, rootMargin: "80px", threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadedLeads.length]);
 
   return (
     <>
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={[column]}
+          pipelineData={[
+            { id: null, title: "All Work Orders", leads: loadedLeads },
+          ]}
           isTeamPipeline={true}
           selectedEmployee={selectedEmployee}
         />
       </div>
 
-      {column.leads.length === 0 ? (
-        <div className="flex h-64 w-full flex-col items-center justify-center gap-2 text-center">
-          <p className="text-lg font-semibold text-gray-500">
-            No work orders found
-          </p>
-          <p className="text-sm text-gray-400">
-            Nothing is assigned to the team for this filter yet.
-          </p>
+      <div className="px-4">
+        <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
+          <div className="flex items-center justify-between bg-primary px-4 py-3 text-white">
+            <p className="text-base font-bold">All Work Orders</p>
+            <span className="rounded-lg bg-[#3F49B9] px-2 py-0.5 text-sm font-semibold">
+              {total}
+            </span>
+          </div>
+
+          {loadedLeads.length === 0 ? (
+            <div className="flex h-64 flex-col items-center justify-center gap-2 text-center">
+              <p className="text-lg font-semibold text-gray-500">
+                No work orders found
+              </p>
+              <p className="text-sm text-gray-400">
+                Nothing is assigned to the team for this filter yet.
+              </p>
+            </div>
+          ) : (
+            <div
+              ref={listRef}
+              className="max-h-[65vh] min-h-[65vh] overflow-y-auto bg-slate-50/60 p-2"
+            >
+              <ul className="flex flex-col gap-2">
+                {loadedLeads.map((lead) => (
+                  <TeamListCard
+                    key={lead.invoiceId}
+                    lead={lead}
+                    isSelected={selectedLead?.invoiceId === lead.invoiceId}
+                    onSelect={() => openLead(lead)}
+                  />
+                ))}
+              </ul>
+
+              {hasMore && (
+                <div
+                  ref={sentinelRef}
+                  className="flex items-center justify-center py-3"
+                >
+                  {isLoadingMore ? (
+                    <span className="text-xs text-slate-400">Loading…</span>
+                  ) : (
+                    <span className="text-xs text-slate-400">
+                      {loadedLeads.length} of {total} loaded
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="h-full w-full px-2">
-          <DroppableColumn
-            fullWidth
-            isTeamPipeline={true}
-            setColumnRef={(el) => {
-              columnRef.current = el;
-            }}
-            categoryIndex={0}
-            item={column}
-            pipelineData={[column]}
-            pipelineType="Team Pipelines"
-            screenWidth={screenWidth}
-            leadRefs={leadRefs}
-            isTechnician={isTechnician}
-            searchTerm={searchTerm}
-            hasMore={hasMore}
-            isLoadingMore={isLoadingMore}
-            onLoadMore={loadMore}
-            openServiceDropdown={openServiceDropdown}
-            handleServiceDropdownToggle={handleServiceDropdownToggle}
-            handleTagSelect={handleTagSelect}
-            handleTagRemove={handleTagRemove}
-            tagDropdownStates={{}}
-            handleTagDropdownToggle={noop}
-            openDropdownIndex={null}
-            handleDropdownToggle={noop}
-            setOpenDropdownIndex={noop}
-            createEmployeeSelectHandler={() => noop}
-            companyUsers={[]}
-            showColumnSelect={{}}
-            setShowColumnSelect={noop}
-            columnDropdownOpen={{}}
-            setColumnDropdownOpen={noop}
-            handleColumnDropdownToggle={noop}
-            handleColumnChange={asyncNoop}
-          />
-        </div>
-      )}
+      </div>
+
+      {panel}
     </>
   );
 }

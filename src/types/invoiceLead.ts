@@ -45,6 +45,7 @@ export interface ShopLead {
   tasks?: Task[];
   assignedTo: User | Employee | null;
   columnId: number | null;
+  columnTitle?: string | null;
   dueBalance: number;
   appointment?: {
     id: number;

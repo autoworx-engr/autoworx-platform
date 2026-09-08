@@ -29,6 +29,8 @@ import DroppableColumn from "../../components/DroppableColumn";
 import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
 import SearchScroll from "../../components/SearchScroll";
 import { SelectedEmployee } from "../../components/SearchScrollFilters";
+import TeamListCard from "./TeamListCard";
+import { useTeamWorkOrderPanel } from "./useTeamWorkOrderPanel";
 
 const PIPELINE_PAGE_SIZE = 10;
 
@@ -71,6 +73,7 @@ export default function TeamPipelines({
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
+  const { selectedLead, openLead, panel } = useTeamWorkOrderPanel();
   const urlSearchParams = useSearchParams();
   const searchTerm = urlSearchParams.get("search") ?? "";
   const searchTermRef = useRef(searchTerm);
@@ -644,11 +647,27 @@ export default function TeamPipelines({
                     : false
                 }
                 onLoadMore={() => loadMoreForColumn(categoryIndex)}
+                renderLead={(lead, leadIndex) => (
+                  <TeamListCard
+                    key={lead.invoiceId}
+                    lead={lead}
+                    technicianUserId={item.id ?? undefined}
+                    isSelected={selectedLead?.invoiceId === lead.invoiceId}
+                    onSelect={() => openLead(lead)}
+                    registerRef={(el) => {
+                      const key = `${categoryIndex}-${leadIndex}`;
+                      if (el) leadRefs.current.set(key, el);
+                      else leadRefs.current.delete(key);
+                    }}
+                  />
+                )}
               />
             ))}
           </div>
         </div>
       )}
+
+      {panel}
     </>
   );
 }
