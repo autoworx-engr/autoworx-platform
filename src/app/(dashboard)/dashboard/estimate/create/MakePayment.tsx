@@ -26,6 +26,7 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { formatAmount, useAmountField } from "@/hooks/useAmountField";
 import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { useGoToEstimateEdit } from "@/hooks/useGoToEstimateEdit";
 import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
@@ -42,7 +43,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import React, { useEffect, useState, useTransition } from "react";
 
 function TabTrigger({
@@ -91,7 +92,7 @@ export default function MakePayment() {
     setPaymentModalOpen,
   } = useEstimateCreateStore();
   const createInvoice = useInvoiceCreate("Invoice");
-  const router = useRouter();
+  const goToEstimateEdit = useGoToEstimateEdit();
   const pathaname = usePathname();
   const [pending, startTransition] = useTransition();
   const isEditPage = pathaname?.includes("/dashboard/estimate/edit/");
@@ -339,6 +340,10 @@ export default function MakePayment() {
             : res2.message,
         );
       }
+
+      if (!isEditPage && res1?.type === "success") {
+        goToEstimateEdit(invoiceId);
+      }
     } catch (err) {
       const formattedError = errorHandler(err);
       errorToast(
@@ -466,7 +471,7 @@ export default function MakePayment() {
       </DialogTrigger>
 
       <DialogContent className="w-full max-w-xl">
-        <form noValidate>
+        <form noValidate autoComplete="off">
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />
@@ -547,6 +552,10 @@ export default function MakePayment() {
                     <SlimInput
                       labelClassName="text-sm md:text-base"
                       name="card"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-1p-ignore
+                      data-form-type="other"
                       type="text"
                       label="Credit Cards (Last 4 digits)"
                       value={card}

@@ -270,7 +270,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-xl">
-        <form noValidate>
+        <form noValidate autoComplete="off">
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />
@@ -362,6 +362,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <SlimInput
                       labelClassName="text-sm md:text-base"
                       name="card"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-1p-ignore
+                      data-form-type="other"
                       type="text"
                       label="Credit Card (Last 4 digits)"
                       value={card}
