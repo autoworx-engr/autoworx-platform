@@ -27,6 +27,11 @@ export const ASANA_BASE_URL = "https://app.asana.com/api/1.0";
 export const USER_FEEDBACK_EMAILS = ["krshanto2005@gmail.com"];
 export const INFO_EMAIL = "info@autoworx.tech";
 
+export const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.awx.autoworx";
+export const APP_STORE_URL =
+  "https://apps.apple.com/us/app/autoworx/id6758582913";
+
 export const TASK_COLOR = {
   Low: "#6571FF",
   Medium: "#25AADD",

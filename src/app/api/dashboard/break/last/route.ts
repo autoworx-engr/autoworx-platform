@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 /**
  * @swagger
  * /api/dashboard/break/last:
  *   get:
  *     summary: Get the last break record for a user
- *     description: Fetches the most recent break for the given user, including break start and end time.
+ *     description: Fetches the most recent break for the authenticated user, including break start and end time.
  *     tags:
  *       - Attendance
  *     parameters:
- *       - in: query
- *         name: userId
- *         required: true
- *         schema:
- *           type: integer
- *           example: 12
- *         description: ID of the user
  *       - in: query
  *         name: timezone
  *         required: true
@@ -54,19 +48,8 @@ import { db } from "@/lib/db";
  *                       format: date-time
  *                       nullable: true
  *                       example: 2026-03-11T12:45:00.000Z
- *       400:
- *         description: Missing required query parameters (userId or timezone)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "userId required"
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
  *       500:
  *         description: Internal server error
  *         content:
@@ -83,16 +66,14 @@ import { db } from "@/lib/db";
  */
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-
-    const userId = Number(searchParams.get("userId"));
-
-    if (!userId) {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
       return NextResponse.json(
-        { success: false, message: "userId required" },
-        { status: 400 },
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
       );
     }
+    const userId = principal.userId;
 
     const lastClockInOut = await db.clockInOut.findFirst({
       where: {

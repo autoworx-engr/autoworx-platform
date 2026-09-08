@@ -11,6 +11,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
+import { hasPermissionKey } from "@/lib/serverRouteGuard";
 import { formatCurrency } from "@/utils/formatCurrency";
 import {
   Building2,
@@ -124,6 +125,10 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     0,
   );
   // End Data fetching logic
+
+  // View-only Inventory (what the Sales role has) can read this page but not
+  // change the vendor, so the Edit control is hidden.
+  const canManageVendors = await hasPermissionKey("inventoryAll");
 
   return (
     <div className="h-full px-4 sm:px-6 lg:px-8">
@@ -300,18 +305,20 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
               <h3 className={`text-xl font-bold ${BASE_TEXT_COLOR}`}>
                 Vendor Details
               </h3>
-              <EditVendor
-                vendor={vendor!}
-                button={
-                  // Primary Button Style for Edit Action
-                  <button
-                    className={`flex items-center gap-1 rounded-lg bg-[${ACCENT_COLOR}] text-black font-medium px-4 py-2 text-sm shadow-md shadow-[${ACCENT_COLOR}]/30 hover:-translate-y-0.5 ${TRANSITION_UTILITY}`}
-                  >
-                    <PencilLineIcon size={16} />
-                    Edit
-                  </button>
-                }
-              />
+              {canManageVendors && (
+                <EditVendor
+                  vendor={vendor!}
+                  button={
+                    // Primary Button Style for Edit Action
+                    <button
+                      className={`flex items-center gap-1 rounded-lg bg-[${ACCENT_COLOR}] text-black font-medium px-4 py-2 text-sm shadow-md shadow-[${ACCENT_COLOR}]/30 hover:-translate-y-0.5 ${TRANSITION_UTILITY}`}
+                    >
+                      <PencilLineIcon size={16} />
+                      Edit
+                    </button>
+                  }
+                />
+              )}
             </div>
 
             {/* Structured Vendor Details using DetailRow */}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import moment from "moment-timezone";
 
 /**
@@ -18,13 +19,8 @@ import moment from "moment-timezone";
  *           schema:
  *             type: object
  *             required:
- *               - userId
  *               - timezone
  *             properties:
- *               userId:
- *                 type: integer
- *                 example: 12
- *                 description: User ID
  *               timezone:
  *                 type: string
  *                 example: America/New_York
@@ -63,7 +59,9 @@ import moment from "moment-timezone";
  *                       type: string
  *                       example: America/New_York
  *       400:
- *         description: userId and timezone are required
+ *         description: timezone is required
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
  *       404:
  *         description: User not found
  *       500:
@@ -73,17 +71,26 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { userId, timezone } = body;
+    const { timezone } = body;
 
-    if (!userId || !timezone) {
+    if (!timezone) {
       return NextResponse.json(
         {
           success: false,
-          message: "userId and timezone are required",
+          message: "timezone is required",
         },
         { status: 400 },
       );
     }
+
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    const userId = principal.userId;
 
     const user = await db.user.findUnique({
       where: { id: userId },
@@ -157,13 +164,6 @@ export async function POST(req: NextRequest) {
  *       - Attendance
  *     parameters:
  *       - in: query
- *         name: userId
- *         required: true
- *         description: User ID
- *         schema:
- *           type: integer
- *           example: 12
- *       - in: query
  *         name: timezone
  *         required: true
  *         description: User timezone
@@ -205,7 +205,9 @@ export async function POST(req: NextRequest) {
  *                       items:
  *                         type: object
  *       400:
- *         description: userId and timezone are required
+ *         description: timezone is required
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
  *       404:
  *         description: User not found
  *       500:
@@ -216,18 +218,26 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const userId = Number(searchParams.get("userId"));
     const timezone = searchParams.get("timezone");
 
-    if (!userId || !timezone) {
+    if (!timezone) {
       return NextResponse.json(
         {
           success: false,
-          message: "userId and timezone are required",
+          message: "timezone is required",
         },
         { status: 400 },
       );
     }
+
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    const userId = principal.userId;
 
     const user = await db.user.findUnique({
       where: { id: userId },

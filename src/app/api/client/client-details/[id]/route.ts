@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { authorizeClientAccess } from "./_authorizeClient";
 import {
   normalizePhoneForStorage,
   phoneLookupWhereClause,
@@ -298,6 +299,10 @@ const updateClientSchema = z.object({
  *                 message:
  *                   type: string
  *                   example: Failed to fetch client
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - record belongs to another company
  */
 export async function GET(
   req: NextRequest,
@@ -305,14 +310,9 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
-    const clientId = parseInt(params.id);
-
-    if (isNaN(clientId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid client ID" },
-        { status: 400 },
-      );
-    }
+    const access = await authorizeClientAccess(req, params.id);
+    if ("error" in access) return access.error;
+    const { clientId } = access;
 
     const client = await db.client.findUnique({
       where: { id: clientId },
@@ -531,6 +531,10 @@ export async function GET(
  *                 message:
  *                   type: string
  *                   example: Failed to update client
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - record belongs to another company
  */
 export async function PATCH(
   req: NextRequest,
@@ -538,14 +542,9 @@ export async function PATCH(
 ) {
   const params = await props.params;
   try {
-    const clientId = parseInt(params.id);
-
-    if (isNaN(clientId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid client ID" },
-        { status: 400 },
-      );
-    }
+    const access = await authorizeClientAccess(req, params.id);
+    if ("error" in access) return access.error;
+    const { clientId } = access;
 
     const body = await req.json();
     const validatedData = updateClientSchema.parse(body);
@@ -684,6 +683,10 @@ export async function PATCH(
  *                 message:
  *                   type: string
  *                   example: Failed to delete client
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - record belongs to another company
  */
 export async function DELETE(
   req: NextRequest,
@@ -691,14 +694,9 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
-    const clientId = parseInt(params.id);
-
-    if (isNaN(clientId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid client ID" },
-        { status: 400 },
-      );
-    }
+    const access = await authorizeClientAccess(req, params.id);
+    if ("error" in access) return access.error;
+    const { clientId } = access;
 
     const existingClient = await db.client.findUnique({
       where: { id: clientId },

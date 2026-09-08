@@ -127,10 +127,10 @@ export async function proxy(request: NextRequest) {
 
     // check api access token
     if (!authHeader && isExternalApiRequest) {
-      return NextResponse.json({
-        status: 401,
-        message: "Invalid or expired access token.",
-      });
+      return NextResponse.json(
+        { status: 401, message: "Invalid or expired access token." },
+        { status: 401 },
+      );
     } else if (authHeader && isExternalApiRequest) {
       const accessToken = authHeader.startsWith("Bearer ")
         ? authHeader.split(" ")[1]
@@ -145,10 +145,10 @@ export async function proxy(request: NextRequest) {
         throw new Error("Token expired");
       } catch (err) {
         console.error("Invalid API access token:", err);
-        return NextResponse.json({
-          status: 401,
-          message: "Invalid or expired access token.",
-        });
+        return NextResponse.json(
+          { status: 401, message: "Invalid or expired access token." },
+          { status: 401 },
+        );
       }
     }
 

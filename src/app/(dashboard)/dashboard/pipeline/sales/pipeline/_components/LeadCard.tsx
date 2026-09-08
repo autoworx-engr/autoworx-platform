@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
@@ -42,6 +44,7 @@ export default memo(function LeadCard({
 }: LeadCardProps) {
   const dispatch = useColumnDispatch();
   const pipelineColumns = useColumnState() || [];
+  const companyTimezone = useCompanyTimezone();
   const [showColumnSelect, setShowColumnSelect] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
@@ -231,7 +234,7 @@ export default memo(function LeadCard({
       <p className="text-xs text-blue-500">{leadData.services}</p>
       <p className="text-xs">{leadData.source}</p>
       <p className="mb-2 text-xs">
-        {new Date(leadData.createdAt).toLocaleDateString("en-US")}
+        {FormatUtcToTimezone(leadData.createdAt, companyTimezone, "MM/DD/YYYY")}
       </p>
 
       <LeadActions lead={leadData} />

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/card";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { cn } from "@/lib/cn";
+import { getInvoiceItemsLabel } from "@/utils/invoiceItemTitle";
 import moment from "moment";
 
 const ResponsiveShopPipelineCard = ({
@@ -20,9 +21,7 @@ const ResponsiveShopPipelineCard = ({
   const client =
     (invoice.client?.firstName ?? "") + " " + (invoice.client?.lastName ?? "");
   const vehicle = `${invoice.vehicle?.year || ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
-  const serviceString = invoice?.invoiceItems
-    ?.map((item: any) => item.service?.name)
-    .join(", ");
+  const serviceString = getInvoiceItemsLabel(invoice?.invoiceItems);
   // TODO: this hasn't been tested properly. Need to test it.
   const timeCreated = moment(invoice?.workOrderCreatedAt).format("MM/DD/YYYY");
   const dueDate = invoice?.dueDate

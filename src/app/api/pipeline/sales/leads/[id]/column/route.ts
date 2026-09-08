@@ -85,34 +85,38 @@ export async function PUT(
       );
     }
 
+    const targetColumnId = parseInt(finalColumnId);
+
     const updatedLead = await db.lead.update({
       where: { id: leadId },
-      data: { columnId: parseInt(finalColumnId), columnChangedAt: new Date() },
+      data: { columnId: targetColumnId, columnChangedAt: new Date() },
       include: { column: true },
     });
 
     if (updatedLead.column?.title === "Converted") {
-      sendLeadStageChangeOrCloseNotification({
+      await sendLeadStageChangeOrCloseNotification({
         companyId,
         description: `Lead "${updatedLead.clientName}" has been closed. Track it in your pipeline.`,
         title: "Lead Closed",
         notificationType: "LEADS_CLOSED",
-      });
+      }).catch((err) => console.error("Lead Closed notification failed", err));
     }
 
-    sendLeadStageChangeOrCloseNotification({
+    await sendLeadStageChangeOrCloseNotification({
       companyId,
       description: `Lead "${updatedLead.clientName}" moved to "${updatedLead?.column?.title}". Track progress in Autoworx.`,
       title: "Lead Stage Changed",
       notificationType: "STAGE",
-    });
+    }).catch((err) =>
+      console.error("Lead Stage Changed notification failed", err),
+    );
 
     try {
       await updatePipelineAutomationTrigger({
         companyId: companyId,
         condition: "TIME_DELAY",
         leadId: leadId,
-        columnId: newColumnId,
+        columnId: targetColumnId,
       });
     } catch (error) {
       console.log("updatePipelineAutomationTrigger error", error);
@@ -123,7 +127,7 @@ export async function PUT(
       await updateCommunicationAutomationTrigger({
         companyId: companyId,
         leadId: leadId,
-        columnId: newColumnId,
+        columnId: targetColumnId,
       });
     } catch (error) {
       console.log("error", error);
@@ -131,7 +135,7 @@ export async function PUT(
     }
 
     const response = await updateTagAutomationTrigger({
-      columnId: newColumnId,
+      columnId: targetColumnId,
       companyId: companyId,
       pipelineType: "SALES",
       leadId: leadId,

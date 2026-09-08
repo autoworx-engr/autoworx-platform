@@ -3,8 +3,24 @@ import { authOptions } from "@/authOptions";
 import { getServerSession } from "next-auth";
 import { db } from "./db";
 import getPermissions from "./getPermissions";
-import { canAccessRoute, canAccessWithFeatureKey } from "./routeAccess";
+import {
+  canAccessRoute,
+  canAccessWithFeatureKey,
+  canAccessWithPermissionKey,
+} from "./routeAccess";
 import { resolveRouteFeatureKey } from "./routeFeatureKeys";
+import type { PermissionKey } from "./routePermissionKeys";
+
+/**
+ * Server-side counterpart to the `useHasPermissionKey` hook: action-level check
+ * for gating controls inside a page the user may already open (e.g. hiding
+ * "Add New Vendor" from a view-only role).
+ */
+export async function hasPermissionKey(
+  key: PermissionKey | PermissionKey[],
+): Promise<boolean> {
+  return canAccessWithPermissionKey(key, await getPermissions());
+}
 
 /**
  * Server-side equivalent of the `useCanAccessRoute` hook: runs the company

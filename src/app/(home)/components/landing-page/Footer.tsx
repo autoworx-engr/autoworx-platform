@@ -1,119 +1,74 @@
 import { INFO_EMAIL } from "@/lib/consts";
+import { Mail } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import AppDownloadLinks from "./AppDownloadLinks";
+import FooterLinkColumn from "./FooterLinkColumn";
+import { FOOTER_COMPANY, FOOTER_LEGAL, FOOTER_SOLUTIONS } from "./footerLinks";
 
 export default function Footer() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="bg-[#024B5A] py-16 text-white">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          {/* Contact Section */}
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Any Questions?</h2>
-            <p className="text-gray-300">We are here to help!</p>
+    <footer className="relative overflow-hidden bg-gradient-to-b from-[#024B5A] to-[#012931] text-white">
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-[#26AADF] to-transparent" />
 
-            <div className="space-y-2">
-              <h3 className="text-lg">Email</h3>
-              <a href="mailto:autoworx@autoworx.com" className="text-xl">
-                {INFO_EMAIL}
-              </a>
-            </div>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-24 -top-32 h-80 w-80 rounded-full bg-[#26AADF]/20 blur-[120px]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-40 -right-16 h-80 w-80 rounded-full bg-[#01A79E]/20 blur-[120px]"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 pt-16 lg:pt-20 xl:px-20">
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+          <div className="space-y-6 lg:col-span-4">
+            <Image
+              src="/icons/footerLogo.png"
+              alt="Autoworx"
+              width={180}
+              height={90}
+              className="h-auto w-[180px]"
+            />
+            <p className="max-w-sm text-sm leading-relaxed text-white/70">
+              AutoWorx makes running your automotive shop easier than ever —
+              from hassle-free customer management to streamlined garage
+              operations, everything you need to manage your shop efficiently in
+              one place.
+            </p>
+
+            <a
+              href={`mailto:${INFO_EMAIL}`}
+              className="group inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#26AADF]/60 hover:bg-white/10"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#26AADF] to-[#01A79E]">
+                <Mail className="h-4 w-4" />
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-[10px] uppercase tracking-wide text-white/50">
+                  Any questions?
+                </span>
+                <span className="text-sm font-semibold">{INFO_EMAIL}</span>
+              </span>
+            </a>
           </div>
 
-          {/* Explore Section */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold">Solutions</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/#crm" className="hover:text-[#00B8D4]">
-                  CRM
-                </Link>
-              </li>
-              <li>
-                <Link href="/#invoicing" className="hover:text-[#00B8D4]">
-                  Invoicing
-                </Link>
-              </li>
-              <li>
-                <Link href="/#task-management" className="hover:text-[#00B8D4]">
-                  Scheduling
-                </Link>
-              </li>
-              <li>
-                <Link href="/#task-management" className="hover:text-[#00B8D4]">
-                  Task Management
-                </Link>
-              </li>
-              <li>
-                <Link href="/#team-management" className="hover:text-[#00B8D4]">
-                  Team Management
-                </Link>
-              </li>
-              <li>
-                <Link href="/#crm" className="hover:text-[#00B8D4]">
-                  Workflows
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/#inventory-tracking"
-                  className="hover:text-[#00B8D4]"
-                >
-                  Inventory
-                </Link>
-              </li>
-            </ul>
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-5">
+            <FooterLinkColumn title="Solutions" links={FOOTER_SOLUTIONS} />
+            <FooterLinkColumn title="Company" links={FOOTER_COMPANY} />
+            <FooterLinkColumn title="Legal" links={FOOTER_LEGAL} />
           </div>
 
-          {/* Company Section */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold">Company</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/#pricing" className="hover:text-[#00B8D4]">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-[#00B8D4]">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms-and-conditions"
-                  className="hover:text-[#00B8D4]"
-                >
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy-policy" className="hover:text-[#00B8D4]">
-                  Privacy Policy
-                </Link>
-              </li>
-            </ul>
+          <div className="lg:col-span-3">
+            <AppDownloadLinks />
           </div>
+        </div>
 
-          {/* Logo Section */}
-          <div className="flex items-center justify-center md:justify-end">
-            <div className="space-y-2">
-              <div className="w-full">
-                <Image
-                  src="/icons/footerLogo.png"
-                  alt="Autoworx Logo"
-                  width={200}
-                  height={100}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </div>
+        <div className="mt-10 flex items-center justify-center gap-4 border-t border-white/10 py-8">
+          <p className="text-xs text-white/50">
+            © {year} Autoworx. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

@@ -1,14 +1,14 @@
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const companyId = Number(req.nextUrl.searchParams.get("companyId"));
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "companyId is required" },
-        { status: 400 },
-      );
+    // The company comes from the verified token, not the query string — a
+    // caller must not be able to read another tenant's colours by changing it.
+    const companyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (companyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const colors = await db.vehicleColor.findMany({
@@ -28,23 +28,25 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, companyId } = await req.json();
+    const companyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (companyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!name?.trim()) {
+    const { name } = await req.json();
+    const trimmed = typeof name === "string" ? name.trim() : "";
+
+    if (!trimmed) {
       return NextResponse.json(
         { success: false, message: "name is required" },
         { status: 400 },
       );
     }
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "companyId is required" },
-        { status: 400 },
-      );
-    }
 
+    // Case-insensitive so "Red", "red" and "RED" can't coexist. This is the
+    // authoritative check — the client's own filtering is only a convenience.
     const existing = await db.vehicleColor.findFirst({
-      where: { name: { equals: name.trim(), mode: "insensitive" }, companyId },
+      where: { name: { equals: trimmed, mode: "insensitive" }, companyId },
     });
     if (existing) {
       return NextResponse.json(
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     const color = await db.vehicleColor.create({
-      data: { name: name.trim(), companyId },
+      data: { name: trimmed, companyId },
     });
 
     return NextResponse.json({ success: true, data: color });

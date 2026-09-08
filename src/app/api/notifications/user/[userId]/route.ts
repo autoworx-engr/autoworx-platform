@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -88,6 +89,10 @@ import { NextRequest, NextResponse } from "next/server";
  *                         format: date-time
  *       400:
  *         description: Invalid userId
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - userId does not match the authenticated principal
  *       500:
  *         description: Failed to fetch notifications
  */
@@ -107,6 +112,20 @@ export async function GET(
           message: "Invalid userId",
         },
         { status: 400 },
+      );
+    }
+
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    if (userId !== principal.userId) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: user mismatch" },
+        { status: 403 },
       );
     }
 

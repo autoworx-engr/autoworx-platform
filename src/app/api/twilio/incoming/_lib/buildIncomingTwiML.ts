@@ -6,8 +6,6 @@ type DialAttributes = Parameters<twiml.VoiceResponse["dial"]>[0];
 export type IncomingTwiMLInput = {
   callId: string;
   twilioPhoneNumber: string;
-  companyName: string | null;
-  callWhisperEnabled: boolean;
   callForwardingNumber: string | null;
   callRecordingEnabled: boolean;
   caller: {
@@ -23,8 +21,6 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
   const {
     callId,
     twilioPhoneNumber,
-    companyName,
-    callWhisperEnabled,
     callForwardingNumber,
     callRecordingEnabled,
     caller,
@@ -40,14 +36,9 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
       }
     : {};
 
-  // Inform the caller that the call may be recorded (only if whisper is enabled)
-  if (callWhisperEnabled) {
-    const name = companyName ?? "this company";
-    voiceResponse.say(
-      { voice: "Polly.Joanna", language: "en-US" },
-      `Thanks for calling ${name}. This call may be recorded for quality and training purposes.`,
-    );
-  }
+  // The "may be recorded" notice now plays once, upfront, as part of the
+  // DTMF gate prompt (buildGateTwiML) — before the caller even presses 1 —
+  // instead of repeating here after they've already been connected.
 
   if (callForwardingNumber) {
     voiceResponse.dial(

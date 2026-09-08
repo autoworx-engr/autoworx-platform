@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Group, Message, User } from "@prisma/client";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import CreateGroupModal from "./CreateGroupModal";
 import { SidebarChatList } from "./_components/SidebarChatList";
@@ -43,7 +44,10 @@ export default function List({
   const companyId = session?.user?.companyId ?? 0;
   const sessionUserId = session?.user?.id ? parseInt(session.user.id) : null;
 
-  const [tab, setTab] = useState<"users" | "groups">("users");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<"users" | "groups">(() =>
+    searchParams.get("groupId") ? "groups" : "users",
+  );
   const [searchTerm, setSearchTerm] = useState("");
   // Both lists start empty; the infinite-query hooks below populate them on
   // mount, and Pusher updates keep them in sync.

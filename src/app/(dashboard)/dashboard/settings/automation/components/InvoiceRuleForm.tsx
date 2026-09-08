@@ -61,7 +61,6 @@ const template_variable_options = [
   { name: "<CLIENT>", description: "Client name" },
   { name: "<BUSINESS_NAME>", description: "Your business name" },
   { name: "<DATE>", description: "Date" },
-  { name: "<REVIEW_LINK>", description: "Review link" },
   { name: "<SERVICE>", description: "Service" },
   { name: "<PHONE>", description: "Your business phone number" },
   { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" },

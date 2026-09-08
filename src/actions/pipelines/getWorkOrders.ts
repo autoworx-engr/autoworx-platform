@@ -21,6 +21,8 @@ export async function getWorkOrders() {
               Technician: true,
             },
           },
+          labor: true,
+          materials: true,
         },
       },
       tags: {

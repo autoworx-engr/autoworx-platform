@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 /**
  * @swagger
@@ -18,16 +19,11 @@ import { db } from "@/lib/db";
  *             type: object
  *             required:
  *               - clockInOutId
- *               - userId
  *             properties:
  *               clockInOutId:
  *                 type: integer
  *                 example: 55
  *                 description: ID of the clock-in record
- *               userId:
- *                 type: integer
- *                 example: 12
- *                 description: User ID
  *               timezone:
  *                 type: string
  *                 example: America/New_York
@@ -83,7 +79,9 @@ import { db } from "@/lib/db";
  *                             format: date-time
  *                             example: 2026-03-11T13:00:00.000Z
  *       400:
- *         description: clockInOutId and userId are required
+ *         description: clockInOutId is required
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
  *       404:
  *         description: User not found or clock-in record not found
  *       500:
@@ -93,17 +91,26 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { clockInOutId, userId, timezone } = body;
+    const { clockInOutId, timezone } = body;
 
-    if (!clockInOutId || !userId) {
+    if (!clockInOutId) {
       return NextResponse.json(
         {
           success: false,
-          message: "clockInOutId and userId are required",
+          message: "clockInOutId is required",
         },
         { status: 400 },
       );
     }
+
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    const userId = principal.userId;
 
     const user = await db.user.findUnique({
       where: { id: userId },

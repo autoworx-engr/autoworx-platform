@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getClientMessages } from "@/actions/message/getClientMessages";
 import { fetchRecentMessages } from "@/actions/dashboard/technician/recentMessages";
+import { attachInternalSeenState } from "@/lib/messages/seenState";
 
 /**
  * @swagger
@@ -46,10 +47,29 @@ import { fetchRecentMessages } from "@/actions/dashboard/technician/recentMessag
  *                     clientMessages:
  *                       type: object
  *                       nullable: true
+ *                       properties:
+ *                         messages:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               isSeen:
+ *                                 type: boolean
+ *                                 example: false
+ *                                 description: False while any client channel still has an unread message
+ *                         total:
+ *                           type: integer
+ *                         hasMore:
+ *                           type: boolean
  *                     internalMessages:
  *                       type: array
  *                       items:
  *                         type: object
+ *                         properties:
+ *                           isSeen:
+ *                             type: boolean
+ *                             example: true
+ *                             description: False when the viewer has not read this conversation yet
  *       400:
  *         description: User ID is required or invalid user
  *       500:
@@ -104,7 +124,10 @@ export async function GET(req: NextRequest) {
       message: "Recent messages retrieved successfully",
       data: {
         clientMessages: clientData,
-        internalMessages,
+        internalMessages: await attachInternalSeenState(
+          internalMessages,
+          user.id,
+        ),
       },
     });
   } catch (error) {

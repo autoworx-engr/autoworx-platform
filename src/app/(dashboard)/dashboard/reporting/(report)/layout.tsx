@@ -90,7 +90,9 @@ export default function ReportLayout({ children }: TProps) {
 
   return (
     <div>
-      {permissions?.role === "Admin" || permissions?.role === "Manager" ? (
+      {permissions?.role === "Admin" ||
+      permissions?.role === "Manager" ||
+      permissions?.role === "Other" ? (
         <div>
           <div className="flex flex-col p-5 lg:flex-row lg:items-center">
             <h1 className="mb-4  text-slate-600 text-2xl font-bold lg:mb-0 lg:mr-4 text-left">

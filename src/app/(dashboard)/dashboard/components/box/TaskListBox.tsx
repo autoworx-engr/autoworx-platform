@@ -63,7 +63,7 @@ export default function TaskListBox() {
           Task List Clear
         </span>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          No upcoming tasks scheduled for now.
+          No upcoming or unscheduled tasks right now.
         </p>
       </div>
     );

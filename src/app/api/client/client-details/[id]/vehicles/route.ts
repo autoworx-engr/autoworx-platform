@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { authorizeClientAccess } from "../_authorizeClient";
 
 /**
  * @swagger
@@ -128,6 +129,12 @@ import { db } from "@/lib/db";
  *         description: Client not found
  *       500:
  *         description: Failed to fetch client vehicles
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - record belongs to another company
+ *       404:
+ *         description: Client not found
  */
 export async function GET(
   req: NextRequest,
@@ -135,13 +142,9 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
-    const clientId = parseInt(params.id);
-    if (isNaN(clientId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid client ID" },
-        { status: 400 },
-      );
-    }
+    const access = await authorizeClientAccess(req, params.id);
+    if ("error" in access) return access.error;
+    const { clientId } = access;
 
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");

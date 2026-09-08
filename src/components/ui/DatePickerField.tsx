@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { format, parse, isValid } from "date-fns";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -59,14 +59,12 @@ export function DatePickerField({
   clearable = false,
   minDate,
   maxDate,
-  // These fields hold scheduling and record dates, so the year dropdown starts
-  // near today instead of spanning a century the user has to scroll through.
-  // Widen per call site if a field ever needs distant years (a birth date, say).
   yearsBack = 5,
   yearsForward = 10,
   timezone,
 }: DatePickerFieldProps) {
   const [open, setOpen] = useState(false);
+  const pressCommittedAt = useRef(0);
 
   const [internal, setInternal] = useState(defaultValue ?? "");
   const current = value ?? internal;
@@ -81,8 +79,6 @@ export function DatePickerField({
     onChange?.(next);
   };
 
-  // Anchored on the company's day, not the viewer's, so the calendar marks the
-  // right "today" for a user sitting in another timezone.
   const today = todayInTimezone(timezone);
 
   const currentYear = today.getFullYear();
@@ -138,11 +134,27 @@ export function DatePickerField({
             </button>
           )}
         </div>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          onPointerDown={(event) => {
+            const cell = (event.target as HTMLElement | null)?.closest?.(
+              '[role="gridcell"][data-day]',
+            );
+            if (!cell || cell.hasAttribute("data-disabled")) return;
+            const iso = cell.getAttribute("data-day");
+            if (!iso) return;
+            event.preventDefault();
+            pressCommittedAt.current = Date.now();
+            handleSelect(iso);
+            setOpen(false);
+          }}
+        >
           <Calendar
             mode="single"
             selected={selected}
             onSelect={(date) => {
+              if (Date.now() - pressCommittedAt.current < 700) return;
               handleSelect(date ? format(date, FORMAT) : "");
               setOpen(false);
             }}

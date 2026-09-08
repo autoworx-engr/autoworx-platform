@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 /**
  * @swagger
@@ -57,6 +58,8 @@ import { db } from "@/lib/db";
  *                   type: array
  *                   items:
  *                     type: object
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
  */
 export async function GET(
   req: NextRequest,
@@ -64,6 +67,14 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const invoiceId = params.invoiceId;
 
     const { searchParams } = new URL(req.url);
@@ -73,7 +84,11 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
-    const where = { invoiceId, status: "pending" as const };
+    const where = {
+      invoiceId,
+      companyId: principal.companyId,
+      status: "pending" as const,
+    };
 
     const [tasks, total] = await Promise.all([
       db.task.findMany({

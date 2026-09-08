@@ -2,6 +2,7 @@
 
 import EditVendor from "@/components/Lists/EditVendor";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { useHasPermissionKey } from "@/hooks/useHasPermissionKey";
 import { cn } from "@/lib/cn";
 import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
 import VendorListStore from "@/stores/vendorListStore";
@@ -27,6 +28,9 @@ export default function Table({
   const timezone = useCompanyTimezone();
   const { searchTerm } = useDemoVendorFilterStore();
   const { setActive } = VendorListStore();
+
+  // View-only Inventory reads the list; only full Inventory may change it.
+  const canManageVendors = useHasPermissionKey("inventoryAll");
 
   useEffect(() => {
     setActive(!!vendorId);
@@ -92,34 +96,41 @@ export default function Table({
                 </td>
 
                 <td className="mt-2 flex gap-3 px-2 py-1">
-                  <EditVendor
-                    button={
-                      <button className="text-2xl text-blue-600">
-                        <PencilLineIcon className="w-5 h-5 text-primary" />
-                      </button>
-                    }
-                    vendor={vendor}
-                  />
-                  <Popconfirm
-                    title={`Are you sure you want to delete this vendor?`}
-                    onConfirm={async () => {
-                      await deleteVendor(vendor.id);
-                      router.push("/dashboard/inventory/vendor");
-                    }}
-                    okText="Yes"
-                    cancelText="No"
-                    overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
-                    okButtonProps={{
-                      className:
-                        "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
-                    }}
-                    cancelButtonProps={{
-                      className:
-                        "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
-                    }}
-                  >
-                    <X size={20} strokeWidth={3} className="text-red-400" />
-                  </Popconfirm>
+                  {!canManageVendors && (
+                    <span className="text-slate-400">-</span>
+                  )}
+                  {canManageVendors && (
+                    <>
+                      <EditVendor
+                        button={
+                          <button className="text-2xl text-blue-600">
+                            <PencilLineIcon className="w-5 h-5 text-primary" />
+                          </button>
+                        }
+                        vendor={vendor}
+                      />
+                      <Popconfirm
+                        title={`Are you sure you want to delete this vendor?`}
+                        onConfirm={async () => {
+                          await deleteVendor(vendor.id);
+                          router.push("/dashboard/inventory/vendor");
+                        }}
+                        okText="Yes"
+                        cancelText="No"
+                        overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                        okButtonProps={{
+                          className:
+                            "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                        }}
+                        cancelButtonProps={{
+                          className:
+                            "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                        }}
+                      >
+                        <X size={20} strokeWidth={3} className="text-red-400" />
+                      </Popconfirm>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

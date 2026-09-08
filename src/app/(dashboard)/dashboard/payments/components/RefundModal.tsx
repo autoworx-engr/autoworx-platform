@@ -15,7 +15,7 @@ import { errorToast, successToast } from "@/lib/toast";
 import { PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useQueryClient } from "@tanstack/react-query";
-import { Settings, Trash2 } from "lucide-react";
+import { PiggyBank, Settings, Trash2 } from "lucide-react";
 import moment from "moment";
 import Image from "next/image";
 import React, { useEffect, useState, useTransition } from "react";
@@ -371,6 +371,14 @@ export default function RefundModal({
 
                 <TabTrigger value="OTHER" tab={tab}>
                   Other
+                </TabTrigger>
+
+                <TabTrigger value="DEPOSIT" tab={tab}>
+                  <PiggyBank
+                    size={20}
+                    color={tab === "DEPOSIT" ? "#ffffff" : "#6571ff"}
+                  />
+                  Deposit
                 </TabTrigger>
               </Tabs.List>
               <div className="mt-5">

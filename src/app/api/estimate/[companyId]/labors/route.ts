@@ -24,7 +24,7 @@ import { buildWordSearchAnd } from "@/lib/wordSearch";
  *         schema:
  *           type: string
  *           example: "Brake"
- *         description: Filter labors by name or notes
+ *         description: Filter labors by name, notes or category name
  *       - in: query
  *         name: categoryId
  *         schema:
@@ -118,7 +118,11 @@ export async function GET(
       where.categoryId = categoryId;
     }
 
-    const searchAnd = buildWordSearchAnd(search, ["name", "notes"]);
+    const searchAnd = buildWordSearchAnd(search, [
+      "name",
+      "notes",
+      "category.name",
+    ]);
     if (searchAnd) {
       where.AND = searchAnd;
     }

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import {
-  sendNewTaskAssignNotification,
-  sendNewTaskNotification,
-} from "@/lib/notification/task-and-appointment-notify";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { validateTaskRelations } from "./_authorizeTask";
+import { sendNewTaskAssignNotification } from "@/lib/notification/task-and-appointment-notify";
 import { Priority, TaskAndAppointmentCreatedByEnum } from "@prisma/client";
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
 import createGoogleCalendarEvent from "@/actions/task/google-calendar/createGoogleCalendarEvent";
 import { revalidatePath } from "next/cache";
+
+// only for human
 
 /**
  * @swagger
@@ -19,8 +20,6 @@ import { revalidatePath } from "next/cache";
  *         - title
  *         - priority
  *         - assignedUsers
- *         - userId
- *         - companyId
  *       properties:
  *         title:
  *           type: string
@@ -41,12 +40,10 @@ import { revalidatePath } from "next/cache";
  *           example: [1, 2]
  *         userId:
  *           type: integer
- *           description: Creator user ID (maps to Task.userId)
+ *           description: >-
+ *             Optional task owner (maps to Task.userId). Must belong to the
+ *             authenticated user's company; defaults to the authenticated user.
  *           example: 12
- *         companyId:
- *           type: integer
- *           description: Company ID (maps to Task.companyId)
- *           example: 5
  *         date:
  *           type: string
  *           format: date-time
@@ -66,9 +63,6 @@ import { revalidatePath } from "next/cache";
  *           type: integer
  *           nullable: true
  *         invoiceId:
- *           type: string
- *           nullable: true
- *         invoiceTemplateId:
  *           type: string
  *           nullable: true
  *         createdBy:
@@ -124,7 +118,10 @@ import { revalidatePath } from "next/cache";
  * /api/task:
  *   post:
  *     summary: Create Task
- *     description: Create a new task and assign multiple users based on Prisma Task schema
+ *     description: >-
+ *       Create a new task and assign multiple users. Requires an authenticated
+ *       principal; companyId is taken from the caller, never the body. Machine
+ *       callers use /api/sales-agent/task instead.
  *     tags:
  *       - Task
  *     requestBody:
@@ -141,9 +138,9 @@ import { revalidatePath } from "next/cache";
  *             schema:
  *               $ref: '#/components/schemas/TaskResponse'
  *       400:
- *         description: Validation error
+ *         description: Validation error, or client/lead/assigned user outside the caller's company
  *       401:
- *         description: Unauthorized (No session)
+ *         description: Unauthorized - missing or invalid auth principal
  *       500:
  *         description: Internal server error
  */
@@ -160,13 +157,20 @@ export async function POST(req: NextRequest) {
       priority,
       assignedUsers,
       invoiceId,
-      invoiceTemplateId,
       clientId,
       leadId,
       createdBy,
       userId,
-      companyId,
     } = body;
+
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    const companyId = principal.companyId;
 
     // Manual validation based on Prisma schema
     if (!title) {
@@ -179,14 +183,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!companyId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "CompanyId are required",
-        },
-        { status: 400 },
-      );
+    const relationError = await validateTaskRelations(
+      { clientId, leadId, assignedUsers },
+      companyId,
+    );
+    if (relationError) return relationError;
+
+    const ownerId = Number(userId);
+    if (userId !== undefined && userId !== null && Number.isFinite(ownerId)) {
+      const owner = await db.user.findFirst({
+        where: { id: ownerId, companyId },
+        select: { id: true },
+      });
+      if (!owner) {
+        return NextResponse.json(
+          { success: false, message: "Invalid task owner" },
+          { status: 400 },
+        );
+      }
     }
 
     const priorityEnum = priority as Priority;
@@ -200,14 +214,12 @@ export async function POST(req: NextRequest) {
         startTime: startTime ?? null,
         endTime: endTime ?? null,
         priority: priorityEnum ?? "High",
-        userId: userId === "anonymous" ? null : userId,
-        companyId: companyId,
+        userId: Number.isFinite(ownerId) ? ownerId : principal.userId,
+        companyId,
         invoiceId: invoiceId ?? null,
-        invoiceTemplateId: invoiceTemplateId ?? null,
         clientId: clientId ?? null,
         leadId: leadId ?? null,
-        createdBy:
-          (createdBy as TaskAndAppointmentCreatedByEnum) ?? "sales_agent",
+        createdBy: (createdBy as TaskAndAppointmentCreatedByEnum) ?? "user",
       },
       include: {
         client: true,
@@ -248,15 +260,7 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    await sendNewTaskNotification({
-      companyId,
-      clientName: newTask?.client
-        ? `${newTask?.client?.firstName} ${newTask?.client?.lastName}`
-        : "",
-      title: title,
-      appointmentDate: newTask?.date,
-      startTime: newTask?.startTime || "",
-    });
+
     // Google Calendar integration (optional)
     try {
       const googleToken = (await getGoogleCalendarToken())?.googleCalendarToken;
@@ -301,16 +305,27 @@ export async function POST(req: NextRequest) {
  * /api/task:
  *   get:
  *     summary: Get all tasks
+ *     description: Returns pending tasks for the authenticated user's company.
  *     tags:
  *       - Task
  *     responses:
  *       200:
  *         description: List of tasks
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const tasks = await db.task.findMany({
-      where: { status: "pending" },
+      where: { status: "pending", companyId: principal.companyId },
       include: {
         taskUser: true,
         client: true,
