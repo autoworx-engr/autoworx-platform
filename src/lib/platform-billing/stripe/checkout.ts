@@ -52,6 +52,20 @@ export async function ensurePlatformStripeCustomer(
     create: { companyId, stripeCustomerId: customer.id, email },
   });
 
+  // Cards are mirrored per company, not per Stripe customer, so the rows left
+  // behind describe the customer we just abandoned — including whichever one
+  // was flagged default. Leaving them would show the owner a card on file that
+  // no longer exists anywhere. The replacement customer's card gets mirrored
+  // by payment_method.attached during Checkout.
+  if (
+    billingCustomer?.stripeCustomerId &&
+    billingCustomer.stripeCustomerId !== customer.id
+  ) {
+    await db.platformPaymentMethod.deleteMany({
+      where: { billingCustomerId: updated.id },
+    });
+  }
+
   return { billingCustomer: updated, stripeCustomerId: customer.id };
 }
 

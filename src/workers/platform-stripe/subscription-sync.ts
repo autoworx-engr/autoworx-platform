@@ -9,6 +9,12 @@ export const LIVE_STRIPE_STATUSES = new Set<Stripe.Subscription.Status>([
   "past_due",
 ]);
 
+const LIVE_LOCAL_STATUSES = new Set<PlatformSubscriptionStatus>([
+  PlatformSubscriptionStatus.TRIALING,
+  PlatformSubscriptionStatus.ACTIVE,
+  PlatformSubscriptionStatus.PAST_DUE,
+]);
+
 const STATUS_MAP: Record<
   Stripe.Subscription.Status,
   PlatformSubscriptionStatus
@@ -69,15 +75,20 @@ export async function upsertSubscriptionFromStripe(
 
   const priorSubscriptionRow = await db.platformSubscription.findUnique({
     where: { companyId },
-    select: { stripeSubscriptionId: true },
+    select: { stripeSubscriptionId: true, status: true },
   });
   if (
     priorSubscriptionRow?.stripeSubscriptionId &&
     priorSubscriptionRow.stripeSubscriptionId !== subscription.id
   ) {
-    console.error(
-      `[platform-stripe] ALERT: company ${companyId} already had Stripe subscription ${priorSubscriptionRow.stripeSubscriptionId} on file; now receiving events for a different subscription ${subscription.id}. This likely means two live Stripe subscriptions exist for this company — investigate in the Stripe dashboard.`,
-    );
+    // A company that cancelled and later resubscribed legitimately gets a new
+    // subscription id, so a different id on its own is not a problem. Only the
+    // prior subscription still being live means two are billing at once.
+    if (LIVE_LOCAL_STATUSES.has(priorSubscriptionRow.status)) {
+      console.error(
+        `[platform-stripe] ALERT: company ${companyId} still has live subscription ${priorSubscriptionRow.stripeSubscriptionId} on file; now receiving events for a different subscription ${subscription.id}. Two live Stripe subscriptions may exist for this company — investigate in the Stripe dashboard.`,
+      );
+    }
 
     // One row per company, so an event for a different subscription would
     // overwrite it. A dead subscription must never displace the live one
@@ -90,11 +101,29 @@ export async function upsertSubscriptionFromStripe(
     }
   }
 
+  const stripeCustomerId = subscription.customer as string;
+  const priorBillingCustomer = await db.platformBillingCustomer.findUnique({
+    where: { companyId },
+    select: { id: true, stripeCustomerId: true },
+  });
+
   const billingCustomer = await db.platformBillingCustomer.upsert({
     where: { companyId },
-    update: { stripeCustomerId: subscription.customer as string },
-    create: { companyId, stripeCustomerId: subscription.customer as string },
+    update: { stripeCustomerId },
+    create: { companyId, stripeCustomerId },
   });
+
+  // Same reason as the self-heal in stripe/checkout.ts: mirrored cards belong
+  // to the customer we just replaced, so keeping them would display a card
+  // that is gone.
+  if (
+    priorBillingCustomer?.stripeCustomerId &&
+    priorBillingCustomer.stripeCustomerId !== stripeCustomerId
+  ) {
+    await db.platformPaymentMethod.deleteMany({
+      where: { billingCustomerId: billingCustomer.id },
+    });
+  }
 
   await db.webhookEvent.update({
     where: { id: webhookEventDbId },

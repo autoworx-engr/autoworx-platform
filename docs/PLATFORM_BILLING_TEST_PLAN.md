@@ -1,23 +1,50 @@
 # Platform Billing (Stripe) — Test Plan
 
 AutoWorx billing its tenant companies for SaaS plans. Tests are ordered by risk: T1–T3 touch
-money and access revocation and have never been exercised. Stop and fix before continuing if one
-fails.
+money and access revocation. Stop and fix before continuing if one fails.
 
 Tenant payment (a shop charging its own customers) is a **different** system and is out of scope
 here.
+
+## Status — 2026-09-09
+
+| Test                          | Result                                           |
+| ----------------------------- | ------------------------------------------------ |
+| T1 dunning chain              | **PASSED** — full cycle, see below               |
+| T2 renewal on a good card     | **PASSED**                                       |
+| T3 trial converts             | **PASSED**                                       |
+| Webhook signature rejection   | **PASSED** — 400 unsigned and on a bad signature |
+| Retired AuthNet webhook route | **PASSED** — 401, route gone                     |
+| `/api/awx/*` unauthenticated  | **PASSED** — 401 on all five                     |
+| Billing page unauthenticated  | **PASSED** — 307 to /login                       |
+| T4–T12                        | **not run** — need a logged-in browser session   |
+
+55 webhook events processed across the run, 0 stuck.
+
+Two bugs were found by running T2/T3 and are fixed:
+
+1. The "two live subscriptions" ALERT fired on an ordinary cancel-then-resubscribe. It now fires
+   only when the prior subscription is still live locally.
+2. Replacing a company's Stripe customer (self-heal, or a subscription arriving for a different
+   customer) left the old mirrored cards behind — including the one marked default. The billing
+   page showed a card that no longer existed in Stripe. Both writers now clear stale rows.
 
 ---
 
 ## Prerequisites
 
-**1. Stripe CLI** — not currently installed. No sudo needed:
+**1. Stripe CLI** — installed. Two gotchas that cost time the first run:
+
+- `stripe login` registers the **live** account, and `stripe switch context` will show only that
+  one row with no sandbox to pick. Pin test mode with the key instead.
+- `.env` uses **CRLF** line endings, so any shell that reads a value out of it picks up a trailing
+  `\r` and Stripe rejects the header as malformed. Strip it.
 
 ```bash
-curl -fsSL https://github.com/stripe/stripe-cli/releases/latest/download/stripe_linux_x86_64.tar.gz \
-  | tar xz -C ~/.local/bin stripe
-stripe login
+export STRIPE_API_KEY=$(grep -m1 '^PLATFORM_STRIPE_SECRET_KEY=' .env | cut -d= -f2- | tr -d '"\r')
 ```
+
+Never pass `--live`: that forwards real customer events into a `sk_test_` app.
 
 **2. Plan catalog synced to Stripe** — done, all 8 active plans have a `stripePriceId`. Re-run
 after any plan price/interval edit:
@@ -72,7 +99,10 @@ Any future expiry, any CVC.
 
 ---
 
-## T1 — Dunning: card declines on renewal ⚠️ never tested
+## T1 — Dunning: card declines on renewal ✅ passed
+
+Driver commands: `create` · `break` (card declines) · `fix` (card works) · `retry` (collect the
+open invoice now) · `cancel` (immediate) · `advance <days>` · `status` · `cleanup`.
 
 The highest-risk path in the system. A shop's card fails; Stripe retries; access must survive the
 grace period and then die.
@@ -137,7 +167,7 @@ access without paying, or a paying shop loses access mid-day.
 
 ---
 
-## T2 — Renewal on a good card
+## T2 — Renewal on a good card ✅ passed
 
 ```bash
 npx tsx scripts/platform-billing-testclock.ts cleanup
@@ -150,7 +180,7 @@ month. Two invoices, two payments, no duplicates.
 
 ---
 
-## T3 — Trial that converts
+## T3 — Trial that converts ✅ passed
 
 ```bash
 npx tsx scripts/platform-billing-testclock.ts cleanup

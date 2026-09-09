@@ -112,12 +112,44 @@ async function create(companyId: number, planName: string, failNow: boolean) {
     metadata: { companyId: String(companyId) },
   });
 
+  // Production records the customer id before Checkout attaches a card (see
+  // ensurePlatformStripeCustomer), and handlePaymentMethodAttached resolves the
+  // company through it — so seed it first or the card mirror silently no-ops.
+  const priorBillingCustomer = await db.platformBillingCustomer.findUnique({
+    where: { companyId },
+    select: { id: true, stripeCustomerId: true },
+  });
+  const billingCustomer = await db.platformBillingCustomer.upsert({
+    where: { companyId },
+    update: { stripeCustomerId: customer.id },
+    create: { companyId, stripeCustomerId: customer.id },
+  });
+  if (
+    priorBillingCustomer?.stripeCustomerId &&
+    priorBillingCustomer.stripeCustomerId !== customer.id
+  ) {
+    await db.platformPaymentMethod.deleteMany({
+      where: { billingCustomerId: billingCustomer.id },
+    });
+  }
+
   await attachAndDefault(customer.id, failNow ? DECLINING_CARD : GOOD_CARD);
 
+  // Mirror what createPlatformCheckoutSession sets, trial included, so the
+  // webhook handlers see the same shape they see in production.
+  const trialEligible = plan.trialLengthDays > 0;
   const subscription = await stripe.subscriptions.create({
     customer: customer.id,
     items: [{ price: plan.stripePriceId }],
     metadata: { companyId: String(companyId), planId: plan.id },
+    ...(trialEligible
+      ? {
+          trial_period_days: plan.trialLengthDays,
+          trial_settings: {
+            end_behavior: { missing_payment_method: "cancel" as const },
+          },
+        }
+      : {}),
   });
 
   const state: State = {
@@ -133,6 +165,9 @@ async function create(companyId: number, planName: string, failNow: boolean) {
   console.log(`customer      ${customer.id}`);
   console.log(`subscription  ${subscription.id}  (${subscription.status})`);
   console.log(`card          ${failNow ? "DECLINING" : "good"}`);
+  console.log(
+    `trial         ${trialEligible ? `${plan.trialLengthDays}d` : "none"}`,
+  );
   console.log(`\nstate written to ${STATE_FILE}`);
   console.log(`\nNext: npx tsx scripts/platform-billing-state.ts ${companyId}`);
 }
@@ -168,6 +203,15 @@ async function retryOpenInvoice() {
   }
   const paid = await stripe.invoices.pay(invoice.id);
   console.log(`invoice ${invoice.id} -> ${paid.status}`);
+  await new Promise((r) => setTimeout(r, 6000));
+  return status();
+}
+
+/** Immediate cancel — fires customer.subscription.deleted. */
+async function cancelNow() {
+  const state = readState();
+  const cancelled = await stripe.subscriptions.cancel(state.subscriptionId);
+  console.log(`subscription ${cancelled.id} -> ${cancelled.status}`);
   await new Promise((r) => setTimeout(r, 6000));
   return status();
 }
@@ -302,6 +346,8 @@ async function main() {
       return fixCard();
     case "retry":
       return retryOpenInvoice();
+    case "cancel":
+      return cancelNow();
     case "advance":
       if (!args[0]) throw new Error("usage: advance <days>");
       return advance(Number(args[0]));
@@ -311,7 +357,7 @@ async function main() {
       return cleanup();
     default:
       console.log(
-        "commands: create <companyId> <planName> [--fail-now] | break | fix | retry | advance <days> | status | cleanup",
+        "commands: create <companyId> <planName> [--fail-now] | break | fix | retry | cancel | advance <days> | status | cleanup",
       );
   }
 }
