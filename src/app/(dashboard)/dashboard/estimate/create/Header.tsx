@@ -123,9 +123,11 @@ export default function Header({
 
   return (
     <div className="col-start-1 flex flex-wrap items-center gap-3 rounded-md">
-      <div className="rounded-lg bg-stone-200/80 px-3 py-1 font-mono font-semibold text-slate-600/70">
-        {invoiceId || template?.id}
-      </div>
+      {(invoiceId || template?.id) && (
+        <div className="rounded-lg bg-stone-200/80 px-3 py-1 font-mono font-semibold text-slate-600/70">
+          {invoiceId || template?.id}
+        </div>
+      )}
 
       {!isTemplate && (
         <CreateEstimateActionsButtons
