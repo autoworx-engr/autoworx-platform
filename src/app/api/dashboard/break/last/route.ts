@@ -1,26 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { isCompanyToday, resolveCompanyTimezone } from "@/lib/companyTime";
 
 /**
  * @swagger
  * /api/dashboard/break/last:
  *   get:
- *     summary: Get the last break record for a user
- *     description: Fetches the most recent break for the authenticated user, including break start and end time.
+ *     summary: Get today's last break record for a user
+ *     description: >-
+ *       Fetches the authenticated user's most recent break, including break
+ *       start and end time. Scoped to the company's current calendar day —
+ *       returns `data: null` when the latest break did not start today, so a
+ *       previous day's break never leaks into today's dashboard.
  *     tags:
  *       - Attendance
  *     parameters:
  *       - in: query
  *         name: timezone
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
  *           example: "America/New_York"
- *         description: Timezone for date formatting
+ *         description: >-
+ *           Fallback IANA timezone. The company's configured timezone takes
+ *           precedence; this is only used when the company has none set.
  *     responses:
  *       200:
- *         description: Last break record for the user
+ *         description: Today's last break record, or null when there is none
  *         content:
  *           application/json:
  *             schema:
@@ -75,6 +82,9 @@ export async function GET(req: NextRequest) {
     }
     const userId = principal.userId;
 
+    const { searchParams } = new URL(req.url);
+    const timezone = searchParams.get("timezone");
+
     const lastClockInOut = await db.clockInOut.findFirst({
       where: {
         userId,
@@ -83,7 +93,7 @@ export async function GET(req: NextRequest) {
         id: "desc",
       },
       include: {
-        ClockBreak: true,
+        ClockBreak: { orderBy: { id: "asc" } },
       },
     });
 
@@ -94,8 +104,22 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    const companyTimezone = await resolveCompanyTimezone(
+      principal.companyId,
+      timezone ?? lastClockInOut.timezone,
+    );
+
+    // The most recent ClockInOut may be days old. Its last break is only the
+    // *current* break when it started on today's company date.
     const lastBreak =
       lastClockInOut.ClockBreak[lastClockInOut.ClockBreak.length - 1];
+
+    if (!isCompanyToday(lastBreak.breakStart, companyTimezone)) {
+      return NextResponse.json({
+        success: true,
+        data: null,
+      });
+    }
 
     return NextResponse.json({
       success: true,
