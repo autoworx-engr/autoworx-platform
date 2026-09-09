@@ -73,18 +73,28 @@ export function SubscriptionDetailsCard({
                     )}
                   </span>
                 </p>
-                <p>
-                  Next Billing:{" "}
-                  <span
-                    className={`font-semibold ${subStatus === PlatformSubscriptionStatus.PAST_DUE ? "text-red-500" : "text-gray-800"}`}
-                  >
-                    {subscription.currentPeriodEnd
-                      ? moment(subscription.currentPeriodEnd).format(
-                          "Do MMMM YYYY",
-                        )
-                      : "N/A"}
-                  </span>
-                </p>
+                {/* Without a Stripe subscription nothing will actually be
+                    charged on that date, and showing it reads as "you're paid
+                    up until then". */}
+                {subscription.stripeSubscriptionId ? (
+                  <p>
+                    Next Billing:{" "}
+                    <span
+                      className={`font-semibold ${subStatus === PlatformSubscriptionStatus.PAST_DUE ? "text-red-500" : "text-gray-800"}`}
+                    >
+                      {subscription.currentPeriodEnd
+                        ? moment(subscription.currentPeriodEnd).format(
+                            "Do MMMM YYYY",
+                          )
+                        : "N/A"}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-amber-700">
+                    This plan has no payment method set up yet. Choose a plan to
+                    start billing.
+                  </p>
+                )}
               </>
             ) : (
               <p>You don't have an active subscription yet.</p>
@@ -95,6 +105,7 @@ export function SubscriptionDetailsCard({
             <SubscriptionActions
               companyId={companyId}
               status={subStatus}
+              hasStripeSubscription={!!subscription?.stripeSubscriptionId}
               cancelAtPeriodEnd={!!subscription?.cancelAtPeriodEnd}
               onUpgradeClick={onUpgradeClick}
             />

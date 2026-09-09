@@ -13,6 +13,7 @@ import { toast } from "react-hot-toast";
 type SubscriptionActionsProps = {
   companyId: number;
   status: PlatformSubscriptionStatus | "NONE";
+  hasStripeSubscription: boolean;
   cancelAtPeriodEnd: boolean;
   onUpgradeClick: () => void;
 };
@@ -20,6 +21,7 @@ type SubscriptionActionsProps = {
 export function SubscriptionActions({
   companyId,
   status,
+  hasStripeSubscription,
   cancelAtPeriodEnd,
   onUpgradeClick,
 }: SubscriptionActionsProps) {
@@ -27,10 +29,15 @@ export function SubscriptionActions({
   const [isResuming, setIsResuming] = useState(false);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
 
+  // A pre-migration row can carry a live status with no Stripe subscription
+  // behind it. Cancel and Manage Billing both need one, so offering them would
+  // be a dead end — send those companies to checkout instead, which creates the
+  // real subscription and repairs the row.
   const isLive =
-    status === PlatformSubscriptionStatus.ACTIVE ||
-    status === PlatformSubscriptionStatus.PAST_DUE ||
-    status === PlatformSubscriptionStatus.TRIALING;
+    hasStripeSubscription &&
+    (status === PlatformSubscriptionStatus.ACTIVE ||
+      status === PlatformSubscriptionStatus.PAST_DUE ||
+      status === PlatformSubscriptionStatus.TRIALING);
 
   const handleCancel = async () => {
     if (
