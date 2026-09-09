@@ -8,16 +8,17 @@ here.
 
 ## Status — 2026-09-09
 
-| Test                          | Result                                           |
-| ----------------------------- | ------------------------------------------------ |
-| T1 dunning chain              | **PASSED** — full cycle, see below               |
-| T2 renewal on a good card     | **PASSED**                                       |
-| T3 trial converts             | **PASSED**                                       |
-| Webhook signature rejection   | **PASSED** — 400 unsigned and on a bad signature |
-| Retired AuthNet webhook route | **PASSED** — 401, route gone                     |
-| `/api/awx/*` unauthenticated  | **PASSED** — 401 on all five                     |
-| Billing page unauthenticated  | **PASSED** — 307 to /login                       |
-| T4–T12                        | **not run** — need a logged-in browser session   |
+| Test                          | Result                                               |
+| ----------------------------- | ---------------------------------------------------- |
+| T1 dunning chain              | **PASSED** — full cycle, see below                   |
+| T2 renewal on a good card     | **PASSED**                                           |
+| T3 trial converts             | **PASSED**                                           |
+| Webhook signature rejection   | **PASSED** — 400 unsigned and on a bad signature     |
+| Retired AuthNet webhook route | **PASSED** — 401, route gone                         |
+| `/api/awx/*` unauthenticated  | **PASSED** — 401 on all five                         |
+| Billing page unauthenticated  | **PASSED** — 307 to /login                           |
+| T12 entitlement enforcement   | **PASSED** — 5 statuses + 4 edge cases, real service |
+| T4–T11                        | **not run** — need a logged-in browser session       |
 
 55 webhook events processed across the run, 0 stuck.
 
@@ -320,22 +321,39 @@ stripe events resend <event_id>                     # duplicate delivery
 
 ---
 
-## T12 — Entitlement enforcement
+## T12 — Entitlement enforcement ✅ passed
 
-With a `CANCELED` subscription, as an Admin of that company, confirm each is actually blocked and
-the message is in plain language — no "entitlement" or "feature flag" wording on screen:
+Runs the real `entitlement-service` the app uses, not a reimplementation. `@/lib/db` imports
+"server-only", which resolves to an empty module under the react-server condition — hence the flag:
 
-- Send an SMS
-- Place a call
-- Create an automation beyond the plan's limit
-- Car wrap visualizer, AI smart replies, sales agent
+```bash
+npx tsx --conditions=react-server scripts/platform-entitlements-check.ts 24
+npx tsx --conditions=react-server scripts/platform-entitlements-check.ts 24 --simulate
+```
 
-Then re-subscribe and confirm they come back without a logout.
+`--simulate` walks every status and restores the original afterwards. Verified on company 24
+(`Starter (Call + Text)`):
 
-`-1` on a limit means unlimited. `0` means blocked. Any other negative number is invalid and the
-plan editor rejects it.
+| Status     | Result                                                      |
+| ---------- | ----------------------------------------------------------- |
+| `TRIALING` | granted — SMS, voice, call recording, missed-call text back |
+| `ACTIVE`   | granted                                                     |
+| `PAST_DUE` | **granted** — the deliberate grace period                   |
+| `CANCELED` | everything revoked, all limits 0                            |
+| `UNPAID`   | everything revoked, all limits 0                            |
 
----
+Edge cases:
+
+| Case                | Company              | Result                                                  |
+| ------------------- | -------------------- | ------------------------------------------------------- |
+| No subscription row | 59                   | everything blocked — fails closed                       |
+| Legacy mode         | 4                    | feature permissions used, subscription ignored          |
+| `-1` unlimited      | 4                    | `canAddAutomationRule` true with 999,999 existing rules |
+| Limit of `0`        | 24 marketing         | blocked at zero rules                                   |
+| At the limit        | 24 pipeline, limit 3 | true one below, false at the limit                      |
+
+Still worth one browser pass: that the **on-screen message** a blocked shop owner sees is plain
+language, not "entitlement" or "feature flag".
 
 ## Cleanup
 
