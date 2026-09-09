@@ -12,6 +12,7 @@ const HANDLED_EVENTS = new Set([
   "customer.subscription.deleted",
   "invoice.paid",
   "invoice.payment_failed",
+  "customer.updated",
   "payment_method.attached",
   "payment_method.detached",
 ]);
@@ -80,8 +81,8 @@ export async function POST(req: NextRequest) {
       event.id,
       err,
     );
-    // Unlike the Authorize.Net webhook, Stripe retries on non-2xx — return
-    // 500 so Stripe redelivers an event we failed to durably record.
+    // Stripe retries on non-2xx, so a 500 gets the event redelivered rather
+    // than silently dropped when we failed to durably record it.
     return new NextResponse("Internal error", { status: 500 });
   }
 

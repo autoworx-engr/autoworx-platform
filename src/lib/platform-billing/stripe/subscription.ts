@@ -5,8 +5,8 @@ import { getPlatformStripeClient } from "./client";
 /**
  * Swaps a live subscription onto a different Price. Prices are immutable in
  * Stripe, so both a plan upgrade/downgrade and a super-admin custom-price
- * override go through this same "replace the subscription item" call —
- * there is no separate "just change the amount" API like Authorize.Net's ARB.
+ * override go through this same "replace the subscription item" call — there
+ * is no API for changing an existing Price's amount in place.
  */
 export async function changePlatformStripeSubscriptionPrice(params: {
   stripeSubscriptionId: string;

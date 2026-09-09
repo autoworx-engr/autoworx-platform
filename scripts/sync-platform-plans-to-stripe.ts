@@ -51,7 +51,6 @@ async function syncPlan(plan: {
       await stripe.products.update(productId, {
         name: plan.name,
         description: plan.description || undefined,
-        active: plan.isActive,
       });
     } catch (err: any) {
       if (err?.code !== "resource_missing") throw err;
@@ -99,6 +98,10 @@ async function syncPlan(plan: {
     priceId = newPrice.id;
   }
 
+  // Archive state last, same ordering as catalog.ts — a Price cannot be
+  // created against an already-archived Product.
+  await stripe.products.update(productId, { active: plan.isActive });
+
   await db.platformPlan.update({
     where: { id: plan.id },
     data: { stripeProductId: productId, stripePriceId: priceId },
@@ -114,6 +117,8 @@ async function syncPlan(plan: {
 }
 
 async function main() {
+  // Active only: the seeded "Feature Catalog" pseudo-plan is isActive: false
+  // and must never become a purchasable Stripe Product.
   const plans = await db.platformPlan.findMany({ where: { isActive: true } });
   console.log(`Syncing ${plans.length} active plan(s) to Stripe...`);
 

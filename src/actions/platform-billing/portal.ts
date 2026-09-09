@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { createPlatformBillingPortalSession } from "@/lib/platform-billing/stripe/portal";
 import {
+  assertBillingAccess,
   assertCompanyAccess,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
@@ -10,6 +11,7 @@ import {
 export async function createPlatformBillingPortal(companyId: number) {
   try {
     const session = await requireBillingSession();
+    await assertBillingAccess();
     assertCompanyAccess(session, companyId);
 
     const billingCustomer = await db.platformBillingCustomer.findUnique({

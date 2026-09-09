@@ -162,8 +162,8 @@ export async function POST(req: NextRequest) {
       include: { features: true, _count: { select: { subscriptions: true } } },
     });
 
-    // Best-effort — a plan not yet synced to Stripe still works via the
-    // legacy Authorize.Net path; it just can't be used for checkout yet.
+    // Best-effort — an unsynced plan still exists locally, it just can't be
+    // used for checkout until the sync succeeds.
     try {
       await syncPlatformPlanToStripe(plan.id);
     } catch (err) {

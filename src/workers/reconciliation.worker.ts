@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { queueProductionTelegramAlert } from "@/error-boundary/sendProductionTelegramAlert";
 import {
   QUEUE_AUTHORIZE_NET,
   QUEUE_PLATFORM_BILLING,
@@ -34,6 +35,27 @@ export async function registerReconciliationWorker(boss: PgBoss) {
           eventId: event.eventId,
           gateway: event.gateway,
           lastError: event.lastError,
+        });
+      }
+
+      // A permanently failed platform-billing event means a charge or a
+      // subscription state change never made it into our records — that
+      // needs a human, not just a log line nobody reads.
+      const billingGaveUp = gaveUp.filter(
+        (e) => e.gateway === "PLATFORM_STRIPE",
+      );
+      if (billingGaveUp.length > 0) {
+        queueProductionTelegramAlert({
+          errorMessage: `${billingGaveUp.length} platform billing webhook event(s) permanently failed: ${billingGaveUp
+            .map((e) => `${e.gateway}:${e.eventId}`)
+            .join(", ")}`,
+          statusCode: 500,
+          context: {
+            route: "reconciliation.worker",
+            method: "NODE",
+            requestUrl: "",
+            eventName: "platform_billing_event_gave_up",
+          },
         });
       }
     }
@@ -73,14 +95,8 @@ export async function registerReconciliationWorker(boss: PgBoss) {
       events.map((e) => ({ data: { eventId: e.eventId } }));
 
     const stripeJobs = toJobs(stuck.filter((e) => e.gateway === "STRIPE"));
-    // Both platform billing gateways (legacy Authorize.Net and the new
-    // Stripe integration) share QUEUE_PLATFORM_BILLING.
     const platformJobs = toJobs(
-      stuck.filter(
-        (e) =>
-          e.gateway === "PLATFORM_AUTHORIZE_NET" ||
-          e.gateway === "PLATFORM_STRIPE",
-      ),
+      stuck.filter((e) => e.gateway === "PLATFORM_STRIPE"),
     );
     const authNetJobs = toJobs(
       stuck.filter((e) => e.gateway === "AUTHORIZE_NET"),

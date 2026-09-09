@@ -104,7 +104,10 @@ await boss.work(
       } catch (err: any) {
         await db.webhookEvent.update({
           where: { eventId: job.data.eventId },
-          data: { lastError: err?.message ?? "Unknown error" },
+          data: {
+            lastError: err?.message ?? "Unknown error",
+            attempts: { increment: 1 },
+          },
         });
         throw err;
       }

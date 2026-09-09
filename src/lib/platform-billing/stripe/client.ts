@@ -16,10 +16,10 @@ function getPlatformStripeSecretKey(): string {
 
 /**
  * Refuses to boot with a live/test key mismatch against PLATFORM_STRIPE_ENVIRONMENT.
- * Railway staging runs NODE_ENV=production, so — same reasoning as
- * PLATFORM_AUTHNET_ENVIRONMENT — live-ness must be opted into explicitly and
- * is never inferred from NODE_ENV. This check catches a live key leaking into
- * a non-production env (or vice versa) at boot instead of at first charge.
+ * Railway staging runs NODE_ENV=production, so live-ness must be opted into
+ * explicitly and is never inferred from NODE_ENV. This check catches a live key
+ * leaking into a non-production env (or vice versa) at boot instead of at first
+ * charge.
  */
 function assertKeyMatchesEnvironment(key: string): void {
   const explicit = (process.env.PLATFORM_STRIPE_ENVIRONMENT || "")

@@ -95,7 +95,6 @@ export function SubscriptionDetailsCard({
             <SubscriptionActions
               companyId={companyId}
               status={subStatus}
-              isStripeSubscription={!!subscription?.stripeSubscriptionId}
               cancelAtPeriodEnd={!!subscription?.cancelAtPeriodEnd}
               onUpgradeClick={onUpgradeClick}
             />

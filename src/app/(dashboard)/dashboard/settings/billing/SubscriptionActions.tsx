@@ -13,7 +13,6 @@ import { toast } from "react-hot-toast";
 type SubscriptionActionsProps = {
   companyId: number;
   status: PlatformSubscriptionStatus | "NONE";
-  isStripeSubscription: boolean;
   cancelAtPeriodEnd: boolean;
   onUpgradeClick: () => void;
 };
@@ -21,7 +20,6 @@ type SubscriptionActionsProps = {
 export function SubscriptionActions({
   companyId,
   status,
-  isStripeSubscription,
   cancelAtPeriodEnd,
   onUpgradeClick,
 }: SubscriptionActionsProps) {
@@ -35,18 +33,18 @@ export function SubscriptionActions({
     status === PlatformSubscriptionStatus.TRIALING;
 
   const handleCancel = async () => {
-    const confirmMessage = isStripeSubscription
-      ? "Cancel your subscription? You'll keep access until the end of your current billing period, and can undo this any time before then."
-      : "Are you sure you want to cancel your subscription? This will immediately revoke access to plan features.";
-    if (!window.confirm(confirmMessage)) return;
+    if (
+      !window.confirm(
+        "Cancel your subscription? You'll keep access until the end of your current billing period, and can undo this any time before then.",
+      )
+    )
+      return;
 
     setIsCancelling(true);
     const res = await cancelSubscription(companyId);
     if (res.success) {
       toast.success(
-        isStripeSubscription
-          ? "Your subscription will end at the close of the current billing period"
-          : "Subscription cancelled successfully",
+        "Your subscription will end at the close of the current billing period",
       );
       window.location.reload();
     } else {
@@ -123,20 +121,18 @@ export function SubscriptionActions({
         <Award className="w-5 h-5 inline mr-1" />
         Upgrade
       </button>
-      {isStripeSubscription && (
-        <button
-          className="h-11 w-full rounded-lg border border-gray-200 bg-white text-base font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition sm:w-44 disabled:opacity-50"
-          onClick={handleManageBilling}
-          disabled={isOpeningPortal}
-        >
-          {isOpeningPortal ? (
-            <Loader2 className="w-4 h-4 animate-spin inline mr-1" />
-          ) : (
-            <CreditCard className="w-4 h-4 inline mr-1" />
-          )}
-          Manage Billing
-        </button>
-      )}
+      <button
+        className="h-11 w-full rounded-lg border border-gray-200 bg-white text-base font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition sm:w-44 disabled:opacity-50"
+        onClick={handleManageBilling}
+        disabled={isOpeningPortal}
+      >
+        {isOpeningPortal ? (
+          <Loader2 className="w-4 h-4 animate-spin inline mr-1" />
+        ) : (
+          <CreditCard className="w-4 h-4 inline mr-1" />
+        )}
+        Manage Billing
+      </button>
     </div>
   );
 }

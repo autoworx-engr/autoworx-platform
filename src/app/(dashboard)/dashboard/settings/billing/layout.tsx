@@ -1,12 +1,17 @@
 import React from "react";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { requireRouteAccess } from "@/lib/serverRouteGuard";
 
 type Props = {
   children: React.ReactNode;
 };
 
 export default async function BillingLayout({ children }: Props) {
+  // Billing is under /dashboard/settings (businessSettings), and the client
+  // PrivateRoute check runs too late to stop a direct URL hit from fetching.
+  await requireRouteAccess("/dashboard/settings/billing");
+
   const companyId = await getCompanyId();
 
   if (companyId) {
@@ -15,8 +20,7 @@ export default async function BillingLayout({ children }: Props) {
       select: { enforcePlatformPlan: true },
     });
 
-    const isLegacy = company ? !company.enforcePlatformPlan : false;
-    if (isLegacy) {
+    if (company && !company.enforcePlatformPlan) {
       return (
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900">

@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { changePlatformStripeSubscriptionPrice } from "@/lib/platform-billing/stripe/subscription";
 import {
+  assertBillingAccess,
   assertCompanyAccess,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
@@ -12,14 +13,13 @@ const LIVE_STATUSES = new Set(["TRIALING", "ACTIVE", "PAST_DUE"]);
 
 /**
  * Switches an already-live Stripe subscription to a different plan in place
- * — no card re-entry, and Stripe prorates the difference. This is only for
- * subscriptions already on Stripe; a company with no live subscription (or
- * one still on the legacy Authorize.Net path) subscribes via checkout.ts
- * instead.
+ * — no card re-entry, and Stripe prorates the difference. A company with no
+ * live subscription subscribes via checkout.ts instead.
  */
 export async function changePlatformPlan(companyId: number, newPlanId: string) {
   try {
     const session = await requireBillingSession();
+    await assertBillingAccess();
     assertCompanyAccess(session, companyId);
 
     const subscription = await db.platformSubscription.findUnique({

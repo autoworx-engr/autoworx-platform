@@ -2,6 +2,7 @@
 
 import { createPlatformCheckoutSession } from "@/lib/platform-billing/stripe/checkout";
 import {
+  assertBillingAccess,
   assertCompanyAccess,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
@@ -19,6 +20,7 @@ export async function createPlatformCheckout({
 }: CreatePlatformCheckoutInput) {
   try {
     const session = await requireBillingSession();
+    await assertBillingAccess();
     assertCompanyAccess(session, companyId);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL;

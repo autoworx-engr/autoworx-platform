@@ -31,13 +31,13 @@ export async function syncPlatformPlanToStripe(planId: string) {
   const desiredInterval = priceIntervalFor(plan.interval);
 
   // 1. Product — mutable, just keep name/description current in place.
+  // `active` is deliberately applied at the end, after any new Price exists.
   let productId = plan.stripeProductId;
   if (productId) {
     try {
       await stripe.products.update(productId, {
         name: plan.name,
         description: plan.description || undefined,
-        active: plan.isActive,
       });
     } catch (err: any) {
       if (err?.code !== "resource_missing") throw err;
@@ -86,6 +86,14 @@ export async function syncPlatformPlanToStripe(planId: string) {
     }
     priceId = newPrice.id;
   }
+
+  // Archive state goes last. Creating a Price against an archived Product is
+  // not something Stripe's docs commit to supporting, and deactivating a plan
+  // and then changing its price would hit exactly that order — so sync the
+  // price first and only then match the plan's active flag. This also covers
+  // the first sync of an already-inactive plan, since products.create has no
+  // way to start inactive.
+  await stripe.products.update(productId, { active: plan.isActive });
 
   await db.platformPlan.update({
     where: { id: plan.id },

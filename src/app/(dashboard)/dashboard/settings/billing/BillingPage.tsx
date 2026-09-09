@@ -6,7 +6,6 @@ import {
   getCurrentSubscription,
   getPlatformPlans,
 } from "@/actions/platform-billing/plans";
-import { CheckoutForm } from "@/components/platform-billing/CheckoutForm";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { Loader2 } from "lucide-react";
@@ -22,8 +21,6 @@ export default function Page() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const [plansOpen, setPlansOpen] = useState(false);
-  const [selectedPlanForCheckout, setSelectedPlanForCheckout] =
-    useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -118,26 +115,25 @@ export default function Page() {
       return;
     }
 
-    // Plan is synced to Stripe and there's no legacy Authorize.Net
-    // subscription to migrate — go straight to Stripe Checkout.
-    if (plan.stripePriceId && !subscription?.authNetSubscriptionId) {
-      setIsChangingPlan(true);
-      const res = await createPlatformCheckout({
-        companyId: session!.user.companyId,
-        planId: plan.id,
-        email: session!.user.email,
-      });
-      if (res.success && res.url) {
-        window.location.href = res.url;
-      } else {
-        toast.error(res.message || "Failed to start checkout");
-        setIsChangingPlan(false);
-      }
+    if (!plan.stripePriceId) {
+      toast.error(
+        "This plan isn't synced to Stripe yet. Run the catalog sync first.",
+      );
       return;
     }
 
-    // Fallback: legacy Authorize.Net card-entry modal.
-    setSelectedPlanForCheckout(plan);
+    setIsChangingPlan(true);
+    const res = await createPlatformCheckout({
+      companyId: session!.user.companyId,
+      planId: plan.id,
+      email: session!.user.email,
+    });
+    if (res.success && res.url) {
+      window.location.href = res.url;
+    } else {
+      toast.error(res.message || "Failed to start checkout");
+      setIsChangingPlan(false);
+    }
   };
 
   return (
@@ -165,21 +161,6 @@ export default function Page() {
           setClose={() => setPlansOpen(false)}
           currentPlanId={currentPlanIdForModal}
         />
-      )}
-
-      {selectedPlanForCheckout && (
-        <section className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <CheckoutForm
-            plan={selectedPlanForCheckout}
-            companyId={session!.user.companyId}
-            email={session!.user.email}
-            onCancel={() => setSelectedPlanForCheckout(null)}
-            onSuccess={() => {
-              setSelectedPlanForCheckout(null);
-              window.location.reload();
-            }}
-          />
-        </section>
       )}
 
       {isChangingPlan && (

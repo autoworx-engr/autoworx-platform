@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import {
+  assertBillingAccess,
   assertCompanyAccess,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
@@ -9,6 +10,7 @@ import {
 export async function getPlatformPlans(companyId?: number) {
   try {
     const session = await requireBillingSession();
+    await assertBillingAccess();
 
     const where: any = { isActive: true };
 
@@ -42,6 +44,7 @@ export async function getPlatformPlans(companyId?: number) {
 export async function getCurrentSubscription(companyId: number) {
   try {
     const session = await requireBillingSession();
+    await assertBillingAccess();
     assertCompanyAccess(session, companyId);
 
     const subscription = await db.platformSubscription.findUnique({
@@ -55,6 +58,7 @@ export async function getCurrentSubscription(companyId: number) {
             },
             invoices: {
               orderBy: { createdAt: "desc" },
+              take: 24,
             },
           },
         },

@@ -41,6 +41,15 @@ export async function getWebhookEvents({
 }
 
 export async function retryWebhookEvent(eventId: string, gateway: string) {
+  // Historical rows only — there is no handler left to process them.
+  if (gateway === "PLATFORM_AUTHORIZE_NET") {
+    return {
+      success: false,
+      message:
+        "Authorize.Net platform billing is retired; this event cannot be replayed.",
+    };
+  }
+
   await db.webhookEvent.update({
     where: { eventId },
     data: { status: "PENDING", attempts: 0, lastError: null },
@@ -50,7 +59,7 @@ export async function retryWebhookEvent(eventId: string, gateway: string) {
   const queue =
     gateway === "STRIPE"
       ? QUEUE_STRIPE
-      : gateway === "PLATFORM_AUTHORIZE_NET" || gateway === "PLATFORM_STRIPE"
+      : gateway === "PLATFORM_STRIPE"
         ? QUEUE_PLATFORM_BILLING
         : QUEUE_AUTHORIZE_NET;
   await boss.send(queue, { eventId });

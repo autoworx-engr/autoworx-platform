@@ -31,10 +31,7 @@ export async function POST(req: NextRequest) {
     });
     if (!subscription?.stripeSubscriptionId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "No Stripe subscription found for this company",
-        },
+        { success: false, message: "No subscription found for this company" },
         { status: 400 },
       );
     }

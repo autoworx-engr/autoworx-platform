@@ -63,7 +63,11 @@ export default function WebhookEventsTable({
     setRetryingId(eventId);
     startTransition(async () => {
       try {
-        await retryWebhookEvent(eventId, gateway);
+        const result = await retryWebhookEvent(eventId, gateway);
+        if (!result.success) {
+          errorToast(result.message ?? "Failed to retry");
+          return;
+        }
         setEvents((prev) =>
           prev.map((e) =>
             e.eventId === eventId

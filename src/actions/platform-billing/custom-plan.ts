@@ -1,6 +1,10 @@
 "use server";
 
 import { db } from "@/lib/db";
+import {
+  assertSuperAdmin,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 import { PlatformFeatureType, PlatformPlanInterval } from "@prisma/client";
 
 export type CustomPlanFeatureInput = {
@@ -53,16 +57,42 @@ function serializeFeatureValue(
 }
 
 /**
+ * PlatformPlan.name is unique and the AWX dialog defaults the label, so two
+ * companies both taking the default would otherwise collide on
+ * "Custom Plan (For You)" and fail with an opaque constraint error.
+ */
+async function uniquePlanName(base: string): Promise<string> {
+  const taken = new Set(
+    (
+      await db.platformPlan.findMany({
+        where: { name: { startsWith: base } },
+        select: { name: true },
+      })
+    ).map((plan) => plan.name),
+  );
+
+  let candidate = base;
+  let suffix = 2;
+  while (taken.has(candidate)) candidate = `${base} #${suffix++}`;
+  return candidate;
+}
+
+/**
  * Create a custom PlatformPlan intended for a specific shop, with
  * an arbitrary set of features.
  *
- * This does **not** touch subscriptions or Authorize.Net directly;
- * it only defines a plan. Your existing `subscribeToPlatformPlan`
- * flow can then use the returned planId when onboarding that shop.
+ * This does **not** touch subscriptions or Stripe directly; it only defines a
+ * plan. The Stripe checkout flow can then use the returned planId when
+ * onboarding that shop.
  */
 export async function createCustomPlatformPlan(
   input: CreateCustomPlatformPlanInput,
 ) {
+  // The /api/awx/custom-plan route already checks this, but every export of a
+  // "use server" module is its own callable endpoint — and this one sets the
+  // price and feature limits a company gets billed against.
+  assertSuperAdmin(await requireBillingSession());
+
   const {
     label,
     companyId,
@@ -103,7 +133,7 @@ export async function createCustomPlatformPlan(
     nameParts.push(`(For You)`);
     // nameParts.push(`(Company ${companyId})`);
   }
-  const planName = nameParts.join(" ");
+  const planName = await uniquePlanName(nameParts.join(" "));
 
   // Determine feature definitions: either explicit input or copied from base plan.
   let featureDefinitions: {

@@ -1,59 +1,41 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { cancelPlatformARBSubscription } from "@/lib/platform-billing/authorize-net";
 import { setPlatformStripeCancelAtPeriodEnd } from "@/lib/platform-billing/stripe/subscription";
-import { PlatformSubscriptionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import {
+  assertBillingAccess,
   assertCompanyAccess,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
 
 /**
- * Cancels a subscription. Stripe subscriptions cancel at period end
- * (reversible via resumePlatformSubscription) — access continues until
- * currentPeriodEnd, matching what the customer already paid for. Legacy
- * Authorize.Net subscriptions keep the old immediate-revoke behavior; ARB has
- * no built-in "cancel at period end" and this path is being phased out.
+ * Cancels at period end, reversible via resumePlatformSubscription — access
+ * continues until currentPeriodEnd, matching what the customer already paid
+ * for. The status flip to CANCELED comes from the
+ * customer.subscription.deleted webhook when the period actually ends.
  */
 export async function cancelSubscription(companyId: number) {
   try {
     const session = await requireBillingSession();
+    await assertBillingAccess();
     assertCompanyAccess(session, companyId);
 
     const subscription = await db.platformSubscription.findUnique({
       where: { companyId },
     });
 
-    if (subscription?.stripeSubscriptionId) {
-      await setPlatformStripeCancelAtPeriodEnd(
-        subscription.stripeSubscriptionId,
-        true,
-      );
-      await db.platformSubscription.update({
-        where: { companyId },
-        data: { cancelAtPeriodEnd: true },
-      });
-      revalidatePath("/dashboard/settings/billing");
-      return { success: true };
-    }
-
-    if (!subscription?.authNetSubscriptionId) {
+    if (!subscription?.stripeSubscriptionId) {
       throw new Error("No active subscription found to cancel");
     }
 
-    await cancelPlatformARBSubscription(subscription.authNetSubscriptionId);
-
+    await setPlatformStripeCancelAtPeriodEnd(
+      subscription.stripeSubscriptionId,
+      true,
+    );
     await db.platformSubscription.update({
       where: { companyId },
-      data: {
-        status: PlatformSubscriptionStatus.CANCELED,
-        cancelAtPeriodEnd: false,
-        // Clear the remote subscription id so future flows
-        // don't keep trying to cancel or update a non-existent ARB.
-        authNetSubscriptionId: null,
-      },
+      data: { cancelAtPeriodEnd: true },
     });
 
     revalidatePath("/dashboard/settings/billing");
@@ -71,6 +53,7 @@ export async function cancelSubscription(companyId: number) {
 export async function resumePlatformSubscription(companyId: number) {
   try {
     const session = await requireBillingSession();
+    await assertBillingAccess();
     assertCompanyAccess(session, companyId);
 
     const subscription = await db.platformSubscription.findUnique({

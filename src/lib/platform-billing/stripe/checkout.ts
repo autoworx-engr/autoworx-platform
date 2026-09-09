@@ -17,11 +17,28 @@ export async function ensurePlatformStripeCustomer(
     where: { companyId },
   });
 
+  // A stored id can point at a customer this key can't see — deleted in the
+  // dashboard, or the account switched underneath us (test -> live at
+  // go-live, or a restored database). Verify before reusing, and fall
+  // through to creating a fresh one instead of failing checkout with an
+  // opaque Stripe error.
   if (billingCustomer?.stripeCustomerId) {
-    return {
-      billingCustomer,
-      stripeCustomerId: billingCustomer.stripeCustomerId,
-    };
+    try {
+      const existing = await stripe.customers.retrieve(
+        billingCustomer.stripeCustomerId,
+      );
+      if (!existing.deleted) {
+        return {
+          billingCustomer,
+          stripeCustomerId: billingCustomer.stripeCustomerId,
+        };
+      }
+    } catch (err: any) {
+      if (err?.code !== "resource_missing") throw err;
+    }
+    console.error(
+      `[platform-stripe] stored Stripe customer ${billingCustomer.stripeCustomerId} for company ${companyId} is unusable — creating a replacement`,
+    );
   }
 
   const customer = await stripe.customers.create({
