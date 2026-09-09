@@ -115,13 +115,6 @@ export default function Page() {
       return;
     }
 
-    if (!plan.stripePriceId) {
-      toast.error(
-        "This plan isn't synced to Stripe yet. Run the catalog sync first.",
-      );
-      return;
-    }
-
     setIsChangingPlan(true);
     const res = await createPlatformCheckout({
       companyId: session!.user.companyId,

@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { syncPlatformPlanToStripe } from "./catalog";
 import { getPlatformStripeClient } from "./client";
 
 const LIVE_STRIPE_STATUSES = new Set(["trialing", "active", "past_due"]);
@@ -87,9 +88,22 @@ export async function createPlatformCheckoutSession(params: {
     },
   });
   if (!plan) throw new Error("Plan not found");
-  if (!plan.stripePriceId) {
+
+  // The plan-create/update routes sync to Stripe best-effort and swallow
+  // failures, so one transient Stripe error would otherwise leave a plan
+  // permanently unbuyable. Sync on demand instead of refusing — it is
+  // idempotent, and a no-op once the price exists.
+  let stripePriceId = plan.stripePriceId;
+  if (!stripePriceId) {
+    console.error(
+      `[platform-stripe] plan ${plan.id} ("${plan.name}") had no Stripe price at checkout — syncing on demand`,
+    );
+    const synced = await syncPlatformPlanToStripe(plan.id);
+    stripePriceId = synced.priceId;
+  }
+  if (!stripePriceId) {
     throw new Error(
-      "Plan is not yet synced to Stripe. Run the catalog sync first.",
+      "We couldn't start checkout for this plan. Please try again in a moment.",
     );
   }
 
@@ -129,7 +143,7 @@ export async function createPlatformCheckoutSession(params: {
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: stripeCustomerId,
-    line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+    line_items: [{ price: stripePriceId, quantity: 1 }],
     success_url: successUrl,
     cancel_url: cancelUrl,
     metadata: { companyId: String(companyId), planId: plan.id },

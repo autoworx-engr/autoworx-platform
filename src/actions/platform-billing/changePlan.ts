@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { syncPlatformPlanToStripe } from "@/lib/platform-billing/stripe/catalog";
 import { changePlatformStripeSubscriptionPrice } from "@/lib/platform-billing/stripe/subscription";
 import {
   assertBillingAccess,
@@ -43,15 +44,24 @@ export async function changePlatformPlan(companyId: number, newPlanId: string) {
       },
     });
     if (!newPlan) throw new Error("Plan not found");
-    if (!newPlan.stripePriceId) {
+
+    // Same on-demand sync as checkout — see stripe/checkout.ts.
+    let newStripePriceId = newPlan.stripePriceId;
+    if (!newStripePriceId) {
+      console.error(
+        `[platform-stripe] plan ${newPlan.id} ("${newPlan.name}") had no Stripe price at plan change — syncing on demand`,
+      );
+      newStripePriceId = (await syncPlatformPlanToStripe(newPlan.id)).priceId;
+    }
+    if (!newStripePriceId) {
       throw new Error(
-        "Plan is not yet synced to Stripe. Run the catalog sync first.",
+        "We couldn't switch your plan just now. Please try again in a moment.",
       );
     }
 
     await changePlatformStripeSubscriptionPrice({
       stripeSubscriptionId: subscription.stripeSubscriptionId,
-      newStripePriceId: newPlan.stripePriceId,
+      newStripePriceId,
       newPlanId: newPlan.id,
     });
 
