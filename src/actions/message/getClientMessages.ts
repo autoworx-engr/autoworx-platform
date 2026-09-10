@@ -46,10 +46,18 @@ export async function getClientMessages(
   const trimmedSearch = search?.trim();
 
   if (trimmedSearch) {
-    where.OR = [
-      { firstName: { contains: trimmedSearch, mode: "insensitive" } },
-      { lastName: { contains: trimmedSearch, mode: "insensitive" } },
-    ];
+    // Names are stored split across firstName/lastName, so matching the whole
+    // query against either column fails as soon as the user types a full name
+    // ("John Smith" is in neither column). Match each word separately instead
+    // and require every word to hit some name field.
+    const terms = trimmedSearch.split(/\s+/);
+
+    where.AND = terms.map((term) => ({
+      OR: [
+        { firstName: { contains: term, mode: "insensitive" } },
+        { lastName: { contains: term, mode: "insensitive" } },
+      ],
+    }));
   }
 
   // Step 1: Fetch ALL clients with their latest email
