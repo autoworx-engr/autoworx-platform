@@ -127,7 +127,7 @@ export default function Header({
         {invoiceId || template?.id}
       </div>
 
-      {!isTemplate && isEstimateEdit && (
+      {!isTemplate && (
         <CreateEstimateActionsButtons
           status={status! || selectedStatus}
           requestEstimate={requestEstimate}

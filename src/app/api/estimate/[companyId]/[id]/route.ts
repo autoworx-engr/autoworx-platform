@@ -299,7 +299,8 @@ export async function PATCH(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    const principal = await getAuthPrincipal(req);
+    const jwtCompanyId = principal?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -309,7 +310,12 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const result = await fullUpdateInvoice(id, jwtCompanyId, body);
+    const result = await fullUpdateInvoice(
+      id,
+      jwtCompanyId,
+      body,
+      principal?.userId ?? null,
+    );
     return NextResponse.json(
       { success: result.success, message: result.message, data: result.data },
       { status: result.status },
@@ -355,11 +361,10 @@ export async function DELETE(
     }
 
     await db.$transaction(async (tx) => {
-      // Technician rows require an invoiceId with no cascade, and InvoiceRedo
-      // rows require a technicianId with no cascade, so both must be cleared
-      // before the invoice can be deleted or P2003 is thrown.
       await tx.invoiceRedo.deleteMany({ where: { invoiceId: id } });
       await tx.technician.deleteMany({ where: { invoiceId: id } });
+
+      await tx.task.deleteMany({ where: { invoiceId: id } });
 
       await tx.invoice.delete({ where: { id } });
 

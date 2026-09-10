@@ -18,7 +18,6 @@ export const createTaskValidationSchema = z.object({
   assignedUsers: z.array(z.number()),
   priority: z.enum([Priority.LOW, Priority.MEDIUM, Priority.HIGH]),
   invoiceId: z.string().optional(),
-  invoiceTemplateId: z.string().optional(),
   startTime: z.string().optional().nullable(),
   endTime: z.string().optional().nullable(),
   leadId: z

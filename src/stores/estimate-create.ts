@@ -3,6 +3,7 @@ import {
   Column,
   Coupon,
   InvoiceTemplate,
+  InvoiceType,
   Labor,
   Material,
   Service,
@@ -28,6 +29,8 @@ export type InspectionType = {
 };
 interface EstimateCreateStore {
   invoiceId: string;
+  savedInvoiceId: string | null;
+  savedInvoiceType: InvoiceType | null;
   title: string;
   subtotal: number;
   discount: number;
@@ -99,6 +102,8 @@ interface EstimateCreateStore {
 
 export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   invoiceId: "",
+  savedInvoiceId: null,
+  savedInvoiceType: null,
   type: "",
   title: "",
   template: null,
@@ -182,6 +187,8 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   reset: () =>
     set({
       invoiceId: "",
+      savedInvoiceId: null,
+      savedInvoiceType: null,
       title: "",
       template: null,
       templateSnapshot: null,

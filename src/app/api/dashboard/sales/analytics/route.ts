@@ -318,13 +318,13 @@ export async function GET(req: NextRequest) {
       timezone,
       companyId,
     );
-    const { currentTotalLeads: salesCurrentTotalLeads, currentConvertedLeads } =
-      await getSalespersonLeads(String(userId), companyId);
+    const { currentAssignedLeads, currentConvertedLeads } =
+      await getSalespersonLeads(String(userId), companyId, timezone);
 
     // --- Data Processing ---
     const winLossRateRaw =
-      salesCurrentTotalLeads > 0
-        ? (currentConvertedLeads / salesCurrentTotalLeads) * 100
+      currentAssignedLeads > 0
+        ? (currentConvertedLeads / currentAssignedLeads) * 100
         : 0;
     const winLossRate = parseFloat(winLossRateRaw.toFixed(2));
 
@@ -367,6 +367,8 @@ export async function GET(req: NextRequest) {
         currentMonthPayout,
         payoutGrowthRate: payoutGrowth.rate,
         isPayoutGrowthPositive: payoutGrowth.isPositive,
+        currentAssignedLeads,
+        currentConvertedLeads,
       },
     };
 

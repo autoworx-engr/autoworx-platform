@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn"; // Ensure cn utility is imported
 import { getClientMessages } from "@/actions/message/getClientMessages";
 import { hasRouteAccess } from "@/lib/serverRouteGuard";
 import BoxRestricted from "./BoxRestricted";
+import { attachInternalSeenState } from "@/lib/messages/seenState";
 
 /** Employee types this box appears for, and which message lists each may see. */
 const CLIENT_MESSAGE_ROLES = ["Sales"];
@@ -43,7 +44,7 @@ export default async function RecentMessagesBox() {
     : { messages: [], total: 0, hasMore: false };
 
   const internalMessages = canSeeInternalMessages
-    ? await fetchRecentMessages(100)
+    ? await attachInternalSeenState(await fetchRecentMessages(100), user.id)
     : [];
 
   // Point the header link at a list the user can actually open.
