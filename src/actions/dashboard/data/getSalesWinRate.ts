@@ -15,8 +15,8 @@ export const getSalespersonLeads = async (
   }
 
   const emptyResult = {
-    currentTotalLeads: 0,
-    previousTotalLeads: 0,
+    currentAssignedLeads: 0,
+    previousAssignedLeads: 0,
     currentConvertedLeads: 0,
     previousConvertedLeads: 0,
   };
@@ -48,45 +48,46 @@ export const getSalespersonLeads = async (
       assignedSalesUserId: Number(salespersonId),
     };
 
+    // Win/loss is measured over the leads assigned to this salesperson in the
+    // month: the converted counts are the same cohort narrowed to the
+    // Converted column, so the rate can never exceed 100%.
     const [
-      currentTotalLeads,
-      previousTotalLeads,
+      currentAssignedLeads,
+      previousAssignedLeads,
       currentConvertedLeads,
       previousConvertedLeads,
     ] = await Promise.all([
       db.lead.count({
         where: {
           ...assignedTo,
-          createdAt: { gte: currentMonthStart, lte: currentMonthEnd },
+          assignedDate: { gte: currentMonthStart, lte: currentMonthEnd },
         },
       }),
       db.lead.count({
         where: {
           ...assignedTo,
-          createdAt: { gte: previousMonthStart, lte: previousMonthEnd },
-        },
-      }),
-      // Converted leads are counted by columnChangedAt to match the admin
-      // dashboard metric — a lead created earlier can convert this month.
-      db.lead.count({
-        where: {
-          ...assignedTo,
-          columnId: convertedColumn.id,
-          columnChangedAt: { gte: currentMonthStart, lte: currentMonthEnd },
+          assignedDate: { gte: previousMonthStart, lte: previousMonthEnd },
         },
       }),
       db.lead.count({
         where: {
           ...assignedTo,
           columnId: convertedColumn.id,
-          columnChangedAt: { gte: previousMonthStart, lte: previousMonthEnd },
+          assignedDate: { gte: currentMonthStart, lte: currentMonthEnd },
+        },
+      }),
+      db.lead.count({
+        where: {
+          ...assignedTo,
+          columnId: convertedColumn.id,
+          assignedDate: { gte: previousMonthStart, lte: previousMonthEnd },
         },
       }),
     ]);
 
     return {
-      currentTotalLeads,
-      previousTotalLeads,
+      currentAssignedLeads,
+      previousAssignedLeads,
       currentConvertedLeads,
       previousConvertedLeads,
     };
