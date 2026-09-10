@@ -384,6 +384,8 @@ export async function GET(req: NextRequest) {
         totalPayout,
         jobPayout,
         salaryPayout,
+        hasValidSalaryInfo: !!hasValidSalaryInfo,
+        timezone,
         salaryPayouts,
       },
       appointments,

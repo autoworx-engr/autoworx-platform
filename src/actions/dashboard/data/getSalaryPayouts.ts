@@ -9,6 +9,7 @@ import {
   calculateSalaryPreviousMonthEarnings,
   calculateSalaryTotalEarnings,
 } from "@/lib/salaryPayout";
+import { getDateRanges } from "./lib";
 
 /**
  * Calculate salary payouts for a technician based on their salary type and work history.
@@ -159,14 +160,8 @@ async function calculateHourlyPayout(
   hourlyRate: any,
   timezone: string,
 ) {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const endOfMonth = new Date();
-  endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-  endOfMonth.setDate(0);
-  endOfMonth.setHours(23, 59, 59, 999);
+  const { currentMonthStart: startOfMonth, currentMonthEnd: endOfMonth } =
+    getDateRanges(timezone);
 
   // Get all completed clock in/out records for current month
   const clockRecords = await db.clockInOut.findMany({
