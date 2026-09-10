@@ -318,7 +318,7 @@ export async function GET(req: NextRequest) {
       companyId,
     );
     const { currentTotalLeads: salesCurrentTotalLeads, currentConvertedLeads } =
-      await getSalespersonLeads(String(userId), companyId);
+      await getSalespersonLeads(String(userId), companyId, timezone);
 
     // --- Data Processing ---
     const winLossRateRaw =
