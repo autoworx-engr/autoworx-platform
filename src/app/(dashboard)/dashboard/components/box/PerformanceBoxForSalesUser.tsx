@@ -27,13 +27,13 @@ export default async function PerformanceBoxForSalesUser() {
   const companyId = await getCompanyId();
   const timezone = companyTimezone?.timezone;
   const leadsConvertedData = await getConvertedLeadsPerMonth(timezone);
-  const { currentTotalLeads: salesCurrentTotalLeads, currentConvertedLeads } =
+  const { currentAssignedLeads, currentConvertedLeads } =
     await getSalespersonLeads(String(currentUser.id), companyId, timezone);
 
   // --- Data Processing ---
   const winLossRateRaw =
-    salesCurrentTotalLeads > 0
-      ? (currentConvertedLeads / salesCurrentTotalLeads) * 100
+    currentAssignedLeads > 0
+      ? (currentConvertedLeads / currentAssignedLeads) * 100
       : 0;
   const winLossRate = parseFloat(winLossRateRaw.toFixed(2));
 
@@ -104,13 +104,13 @@ export default async function PerformanceBoxForSalesUser() {
 
         {/* Metric 3: Win/Loss Rate (Individual Metric - High Emphasis) */}
         <ChartData
-          heading="Your Win/Loss Rate" // Emphasize individual performance
+          heading="Your Win/Loss Rate"
+          subHeading={`${currentConvertedLeads} of ${currentAssignedLeads} leads assigned this month converted`}
           number={winLossRate}
           isNumberPercent
-          // Visual Emphasis: Indigo highlight for the most important individual KPI
           className="p-3 rounded-lg border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/20 shadow-md"
           numberClassName="!text-2xl font-extrabold text-indigo-600 dark:text-indigo-300"
-          noRate // Assuming Win/Loss rate is the target metric, growth is handled externally if needed
+          noRate
         />
 
         {/* Metric 4: Employee Pay (Placeholder) */}
