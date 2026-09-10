@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { companyNow } from "@/lib/companyTime";
+import {
+  companyNow,
+  isCompanyToday,
+  resolveCompanyTimezone,
+} from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
-import moment from "moment-timezone";
 
 /**
  * @swagger
@@ -159,14 +162,19 @@ export async function POST(req: NextRequest) {
  * /api/dashboard/clock-in:
  *   get:
  *     summary: Get last clock-in record for user
- *     description: Returns the last clock-in record if it belongs to the current day.
+ *     description: >-
+ *       Returns the last clock-in record if it belongs to the company's current
+ *       calendar day, otherwise `data: null`. The embedded ClockBreak list is
+ *       filtered to breaks that also started today.
  *     tags:
  *       - Attendance
  *     parameters:
  *       - in: query
  *         name: timezone
  *         required: true
- *         description: User timezone
+ *         description: >-
+ *           Fallback IANA timezone. The company's configured timezone takes
+ *           precedence when deciding the day boundary.
  *         schema:
  *           type: string
  *           example: America/New_York
@@ -202,6 +210,7 @@ export async function POST(req: NextRequest) {
  *                       example: America/New_York
  *                     ClockBreak:
  *                       type: array
+ *                       description: Breaks that started on today's company date.
  *                       items:
  *                         type: object
  *       400:
@@ -262,7 +271,7 @@ export async function GET(req: NextRequest) {
         id: "desc",
       },
       include: {
-        ClockBreak: true,
+        ClockBreak: { orderBy: { id: "asc" } },
       },
     });
 
@@ -273,22 +282,26 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const clockInDay = moment(lastClockInOut.clockIn).tz(
-      lastClockInOut?.timezone || moment.tz.guess(),
+    const companyTimezone = await resolveCompanyTimezone(
+      user.companyId,
+      timezone,
     );
 
-    const now = moment.tz(timezone);
-
-    if (moment(clockInDay).isSame(now, "day")) {
+    if (!isCompanyToday(lastClockInOut.clockIn, companyTimezone)) {
       return NextResponse.json({
         success: true,
-        data: lastClockInOut,
+        data: null,
       });
     }
 
     return NextResponse.json({
       success: true,
-      data: null,
+      data: {
+        ...lastClockInOut,
+        ClockBreak: lastClockInOut.ClockBreak.filter((item) =>
+          isCompanyToday(item.breakStart, companyTimezone),
+        ),
+      },
     });
   } catch (error: any) {
     return NextResponse.json(
