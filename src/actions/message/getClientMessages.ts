@@ -46,10 +46,6 @@ export async function getClientMessages(
   const trimmedSearch = search?.trim();
 
   if (trimmedSearch) {
-    // Names are stored split across firstName/lastName, so matching the whole
-    // query against either column fails as soon as the user types a full name
-    // ("John Smith" is in neither column). Match each word separately instead
-    // and require every word to hit some name field.
     const terms = trimmedSearch.split(/\s+/);
 
     where.AND = terms.map((term) => ({
