@@ -1,18 +1,36 @@
 "use server";
-import { startOfMonth, endOfMonth } from "date-fns";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { getDateRanges } from "./lib";
 
 export const getSalespersonLeads = async (
   salespersonId: string,
   currentCompanyId?: number,
+  timezone?: string,
 ) => {
   let companyId = currentCompanyId;
 
   if (!companyId) {
     companyId = await getCompanyId();
   }
+
+  const emptyResult = {
+    currentTotalLeads: 0,
+    previousTotalLeads: 0,
+    currentConvertedLeads: 0,
+    previousConvertedLeads: 0,
+  };
+
   try {
+    const {
+      currentMonthStart,
+      currentMonthEnd,
+      previousMonthStart,
+      previousMonthEnd,
+    } = getDateRanges(
+      timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
+
     const convertedColumn = await db.column.findFirst({
       where: {
         title: "Converted",
@@ -21,63 +39,50 @@ export const getSalespersonLeads = async (
     });
 
     if (!convertedColumn) {
-      throw new Error("Converted column not found");
+      console.error("Converted column not found for company", companyId);
+      return emptyResult;
     }
 
-    const startOfCurrentMonth = startOfMonth(new Date());
-    const endOfCurrentMonth = endOfMonth(new Date());
-    const startOfPreviousMonth = startOfMonth(
-      new Date(new Date().setMonth(new Date().getMonth() - 1)),
-    );
-    const endOfPreviousMonth = endOfMonth(
-      new Date(new Date().setMonth(new Date().getMonth() - 1)),
-    );
+    const assignedTo = {
+      companyId,
+      assignedSalesUserId: Number(salespersonId),
+    };
 
-    const currentTotalLeads = await db.lead.count({
-      where: {
-        companyId,
-        assignedSalesUserId: Number(salespersonId),
-        createdAt: {
-          gte: startOfCurrentMonth,
-          lte: endOfCurrentMonth,
+    const [
+      currentTotalLeads,
+      previousTotalLeads,
+      currentConvertedLeads,
+      previousConvertedLeads,
+    ] = await Promise.all([
+      db.lead.count({
+        where: {
+          ...assignedTo,
+          createdAt: { gte: currentMonthStart, lte: currentMonthEnd },
         },
-      },
-    });
-
-    const previousTotalLeads = await db.lead.count({
-      where: {
-        companyId,
-        assignedSalesUserId: Number(salespersonId),
-        createdAt: {
-          gte: startOfPreviousMonth,
-          lte: endOfPreviousMonth,
+      }),
+      db.lead.count({
+        where: {
+          ...assignedTo,
+          createdAt: { gte: previousMonthStart, lte: previousMonthEnd },
         },
-      },
-    });
-
-    const currentConvertedLeads = await db.lead.count({
-      where: {
-        companyId,
-        assignedSalesUserId: Number(salespersonId),
-        columnId: convertedColumn.id,
-        createdAt: {
-          gte: startOfCurrentMonth,
-          lte: endOfCurrentMonth,
+      }),
+      // Converted leads are counted by columnChangedAt to match the admin
+      // dashboard metric — a lead created earlier can convert this month.
+      db.lead.count({
+        where: {
+          ...assignedTo,
+          columnId: convertedColumn.id,
+          columnChangedAt: { gte: currentMonthStart, lte: currentMonthEnd },
         },
-      },
-    });
-
-    const previousConvertedLeads = await db.lead.count({
-      where: {
-        companyId,
-        assignedSalesUserId: Number(salespersonId),
-        columnId: convertedColumn.id,
-        createdAt: {
-          gte: startOfPreviousMonth,
-          lte: endOfPreviousMonth,
+      }),
+      db.lead.count({
+        where: {
+          ...assignedTo,
+          columnId: convertedColumn.id,
+          columnChangedAt: { gte: previousMonthStart, lte: previousMonthEnd },
         },
-      },
-    });
+      }),
+    ]);
 
     return {
       currentTotalLeads,
@@ -87,6 +92,6 @@ export const getSalespersonLeads = async (
     };
   } catch (error) {
     console.error("Error fetching salesperson leads:", error);
-    throw error;
+    return emptyResult;
   }
 };
