@@ -27,13 +27,13 @@ export default async function PerformanceBoxForSalesUser() {
   const companyId = await getCompanyId();
   const timezone = companyTimezone?.timezone;
   const leadsConvertedData = await getConvertedLeadsPerMonth(timezone);
-  const { currentTotalLeads: salesCurrentTotalLeads, currentConvertedLeads } =
+  const { currentAssignedLeads, currentConvertedLeads } =
     await getSalespersonLeads(String(currentUser.id), companyId, timezone);
 
   // --- Data Processing ---
   const winLossRateRaw =
-    salesCurrentTotalLeads > 0
-      ? (currentConvertedLeads / salesCurrentTotalLeads) * 100
+    currentAssignedLeads > 0
+      ? (currentConvertedLeads / currentAssignedLeads) * 100
       : 0;
   const winLossRate = parseFloat(winLossRateRaw.toFixed(2));
 
