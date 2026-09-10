@@ -362,7 +362,7 @@ export async function GET(
 
     const [photos, tasks, inspections] = await Promise.all([
       db.templatePhoto.findMany({ where: { invoiceTemplateId: id } }),
-      db.task.findMany({ where: { invoiceTemplateId: id } }),
+      db.invoiceTemplateTask.findMany({ where: { invoiceTemplateId: id } }),
       db.invoiceInspection.findMany({
         where: { invoiceTemplateId: id },
         select: {
@@ -732,7 +732,6 @@ export async function PATCH(
           });
         }
 
-        // --- Tasks (upsert + delete removed) ---
         const keptTaskIds: number[] = [];
         if (Array.isArray(tasks)) {
           for (const t of tasks as any[]) {
@@ -742,25 +741,27 @@ export async function PATCH(
             const taskDesc = parts.length > 1 ? parts[1].trim() : "";
 
             if (t.id) {
-              const updatedTask = await tx.task.update({
-                where: { id: Number(t.id) },
+              const { count } = await tx.invoiceTemplateTask.updateMany({
+                where: { id: Number(t.id), invoiceTemplateId: id },
                 data: { title: taskTitle, description: taskDesc },
               });
-              keptTaskIds.push(updatedTask.id);
-            } else {
-              const newTask = await tx.task.create({
-                data: {
-                  title: taskTitle,
-                  description: taskDesc,
-                  invoiceTemplateId: id,
-                  companyId,
-                  priority: "Medium",
-                },
-              });
-              keptTaskIds.push(newTask.id);
+              if (count > 0) {
+                keptTaskIds.push(Number(t.id));
+                continue;
+              }
             }
+
+            const newTask = await tx.invoiceTemplateTask.create({
+              data: {
+                title: taskTitle,
+                description: taskDesc,
+                invoiceTemplateId: id,
+                companyId,
+              },
+            });
+            keptTaskIds.push(newTask.id);
           }
-          await tx.task.deleteMany({
+          await tx.invoiceTemplateTask.deleteMany({
             where: { invoiceTemplateId: id, id: { notIn: keptTaskIds } },
           });
         }
@@ -844,7 +845,9 @@ export async function DELETE(
         where: { invoiceTemplateId: id },
       });
       await tx.invoiceTags.deleteMany({ where: { invoiceTemplateId: id } });
-      await tx.task.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceTemplateTask.deleteMany({
+        where: { invoiceTemplateId: id },
+      });
       await tx.material.deleteMany({ where: { invoiceTemplateId: id } });
       await tx.invoiceItem.deleteMany({ where: { invoiceTemplateId: id } });
       await tx.invoiceTemplate.delete({ where: { id } });

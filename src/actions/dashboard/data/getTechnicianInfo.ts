@@ -181,69 +181,80 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
     previousMonthStart,
     previousMonthEnd,
   } = getDateRanges(timezone);
-  // Get all jobs for the current month
-  const currentMonthJobs = await db.technician.findMany({
-    where: {
-      userId,
-      status: TECHNICIAN_STATUS.COMPLETE,
-      date: {
-        gte: currentMonthStart,
-        lte: currentMonthEnd,
+  // Completed jobs are bucketed by dateClosed (when the work was finished),
+  // matching getMonthlyPayout and lib/payout.ts. The assigned date would drop a
+  // job assigned last month but completed this one.
+  const findCompletedJobs = (from: Date, to: Date) =>
+    db.technician.findMany({
+      where: {
+        userId,
+        status: TECHNICIAN_STATUS.COMPLETE,
+        dateClosed: {
+          gte: from,
+          lte: to,
+        },
       },
-    },
-  });
+    });
 
-  // Calculate on-time completion rate for the current month
-  const onTimeJobs = currentMonthJobs.filter(
-    (job) =>
-      job.status === TECHNICIAN_STATUS.COMPLETE && job.dateClosed! <= job.due!,
-  );
+  // On-time completion is measured against the jobs assigned in the month, so
+  // it reflects how the workload handed to the technician was turned around.
+  // Only completed rows qualify — an unfinished job has no dateClosed to judge.
+  const findJobsAssignedIn = (from: Date, to: Date) =>
+    db.technician.findMany({
+      where: {
+        userId,
+        status: TECHNICIAN_STATUS.COMPLETE,
+        date: {
+          gte: from,
+          lte: to,
+        },
+      },
+    });
+
+  // Each pair uses one filter across both months so the growth comparison is
+  // like-for-like.
+  const [
+    currentMonthJobs,
+    previousMonthJobs,
+    currentMonthAssignedJobs,
+    previousMonthAssignedJobs,
+  ] = await Promise.all([
+    findCompletedJobs(currentMonthStart, currentMonthEnd),
+    findCompletedJobs(previousMonthStart, previousMonthEnd),
+    findJobsAssignedIn(currentMonthStart, currentMonthEnd),
+    findJobsAssignedIn(previousMonthStart, previousMonthEnd),
+  ]);
+
+  const countOnTime = (jobs: { dateClosed: Date | null; due: Date | null }[]) =>
+    jobs.filter((job) => job.dateClosed! <= job.due!).length;
+
   const onTimeCompletionRate =
-    currentMonthJobs.length > 0
-      ? onTimeJobs.length / currentMonthJobs.length
+    currentMonthAssignedJobs.length > 0
+      ? countOnTime(currentMonthAssignedJobs) / currentMonthAssignedJobs.length
       : 0;
 
-  // Get all jobs for the previous month
-  const previousMonthJobs = await db.technician.findMany({
-    where: {
-      userId,
-      date: {
-        gte: previousMonthStart,
-        lte: previousMonthEnd,
-      },
-    },
-  });
-
-  // Calculate on-time completion rate for the previous month
-  const previousOnTimeJobs = previousMonthJobs.filter(
-    (job) =>
-      job.status === TECHNICIAN_STATUS.COMPLETE && job.dateClosed! <= job.due!,
-  );
   const previousOnTimeCompletionRate =
-    previousMonthJobs.length > 0
-      ? previousOnTimeJobs.length / previousMonthJobs.length
+    previousMonthAssignedJobs.length > 0
+      ? countOnTime(previousMonthAssignedJobs) /
+        previousMonthAssignedJobs.length
       : 0;
 
   // Get redo jobs for the current and previous months
-  const currentMonthRedoJobs = await db.invoiceRedo.count({
-    where: {
-      technicianId: userId,
-      createdAt: {
-        gte: currentMonthStart,
-        lte: currentMonthEnd,
+  const countRedoJobs = (from: Date, to: Date) =>
+    db.invoiceRedo.count({
+      where: {
+        technicianId: userId,
+        createdAt: {
+          gte: from,
+          lte: to,
+        },
       },
-    },
-  });
+    });
 
-  const previousMonthRedoJobs = await db.invoiceRedo.count({
-    where: {
-      technicianId: userId,
-      createdAt: {
-        gte: previousMonthStart,
-        lte: previousMonthEnd,
-      },
-    },
-  });
+  const [currentMonthRedoJobs, previousMonthRedoJobs] = await Promise.all([
+    countRedoJobs(currentMonthStart, currentMonthEnd),
+    countRedoJobs(previousMonthStart, previousMonthEnd),
+  ]);
 
   const currentMonthJobsLength = currentMonthJobs?.length ?? 0;
   const previousMonthJobsLength = previousMonthJobs?.length ?? 0;
@@ -283,11 +294,11 @@ export async function getMonthlyPayout(
     previousMonthStart,
     previousMonthEnd,
   } = getDateRanges(timezone);
-  // Get completed jobs for the current month
+
   const completedJobs = await db.technician.findMany({
     where: {
       userId,
-      date: {
+      dateClosed: {
         gte: currentMonthStart,
         lte: currentMonthEnd,
       },
@@ -323,7 +334,7 @@ export async function getMonthlyPayout(
   const previousMonthCompletedJobs = await db.technician.findMany({
     where: {
       userId,
-      date: {
+      dateClosed: {
         gte: previousMonthStart,
         lte: previousMonthEnd,
       },

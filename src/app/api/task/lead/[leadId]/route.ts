@@ -87,7 +87,6 @@ export async function GET(
     const where = {
       leadId,
       companyId: principal.companyId,
-      status: "pending" as const,
     };
 
     const [tasks, total] = await Promise.all([

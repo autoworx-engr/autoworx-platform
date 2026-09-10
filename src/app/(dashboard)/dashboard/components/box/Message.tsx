@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -7,6 +8,7 @@ type TMessageProps = {
   message: string;
   photoUrl?: string;
   redirectUrl?: string;
+  isSeen?: boolean;
 };
 
 export function Message({
@@ -15,11 +17,16 @@ export function Message({
   message,
   redirectUrl,
   photoUrl = "/images/default.png",
+  isSeen = true,
 }: TMessageProps) {
   return (
     <Link
       href={redirectUrl ?? "#"}
-      className="group relative block w-full rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-slate-700 dark:hover:shadow-slate-900/50"
+      className={cn(
+        "group relative block w-full rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-slate-700 dark:hover:shadow-slate-900/50",
+        !isSeen &&
+          "border-slate-300 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/60",
+      )}
     >
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-slate-50/0 via-slate-50/0 to-slate-100/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-slate-800/0 dark:via-slate-800/0 dark:to-slate-700/0" />
 
@@ -38,7 +45,12 @@ export function Message({
 
         {/* User info */}
         <div className="min-w-0 flex-1">
-          <p className="mb-1.5 truncate font-semibold text-slate-900 dark:text-slate-100">
+          <p
+            className={cn(
+              "mb-1.5 truncate text-slate-900 dark:text-slate-100",
+              isSeen ? "font-semibold" : "font-extrabold",
+            )}
+          >
             {userName.length > 20 ? userName.slice(0, 20) + "..." : userName}
           </p>
           <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-500/20 transition-colors duration-300 group-hover:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/30">
@@ -61,7 +73,14 @@ export function Message({
           />
         </svg>
       </div>
-      <p className="relative mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+      <p
+        className={cn(
+          "relative mt-3 text-sm leading-relaxed",
+          isSeen
+            ? "text-slate-600 dark:text-slate-400"
+            : "font-bold text-slate-900 dark:text-slate-100",
+        )}
+      >
         {message}
       </p>
     </Link>

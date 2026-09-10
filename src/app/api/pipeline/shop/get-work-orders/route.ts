@@ -58,7 +58,7 @@ import { NextRequest, NextResponse } from "next/server";
  *         required: false
  *         schema:
  *           type: string
- *         description: Search by client first/last name or invoice id (case-insensitive)
+ *         description: Search by client first/last name, invoice id, or vehicle make/model/year (case-insensitive)
  *         example: John
  *       - in: query
  *         name: invoiceId
@@ -170,6 +170,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (search) {
+      const searchAsYearCandidate = /^\d+$/.test(search)
+        ? parseInt(search, 10)
+        : undefined;
+      const searchAsYear =
+        searchAsYearCandidate !== undefined &&
+        searchAsYearCandidate >= 1900 &&
+        searchAsYearCandidate <= 2100
+          ? searchAsYearCandidate
+          : undefined;
+
       where.OR = [
         {
           client: {
@@ -182,6 +192,17 @@ export async function GET(req: NextRequest) {
           },
         },
         { id: { contains: search, mode: "insensitive" } },
+        {
+          vehicle: {
+            is: {
+              OR: [
+                { make: { contains: search, mode: "insensitive" } },
+                { model: { contains: search, mode: "insensitive" } },
+                ...(searchAsYear !== undefined ? [{ year: searchAsYear }] : []),
+              ],
+            },
+          },
+        },
       ];
     }
 
