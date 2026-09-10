@@ -105,7 +105,7 @@ export default async function PerformanceBoxForSalesUser() {
         {/* Metric 3: Win/Loss Rate (Individual Metric - High Emphasis) */}
         <ChartData
           heading="Your Win/Loss Rate"
-          subHeading={`${currentConvertedLeads} converted of ${currentAssignedLeads} assigned this month`}
+          subHeading={`${currentConvertedLeads} of ${currentAssignedLeads} leads assigned this month converted`}
           number={winLossRate}
           isNumberPercent
           className="p-3 rounded-lg border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/20 shadow-md"
