@@ -47,10 +47,14 @@ export async function getClientMessages(
   const trimmedSearch = search?.trim();
 
   if (trimmedSearch) {
-    where.OR = [
-      { firstName: { contains: trimmedSearch, mode: "insensitive" } },
-      { lastName: { contains: trimmedSearch, mode: "insensitive" } },
-    ];
+    const terms = trimmedSearch.split(/\s+/);
+
+    where.AND = terms.map((term) => ({
+      OR: [
+        { firstName: { contains: term, mode: "insensitive" } },
+        { lastName: { contains: term, mode: "insensitive" } },
+      ],
+    }));
   }
 
   // Step 1: Fetch ALL clients with their latest email
