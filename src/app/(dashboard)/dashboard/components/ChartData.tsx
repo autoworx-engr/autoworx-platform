@@ -1,6 +1,6 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { ArrowUp, ArrowDown } from "lucide-react"; // Using Lucide icons for sleeker SVGs
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 const MAX_DISPLAYED_RATE = 999;
 
@@ -10,15 +10,15 @@ const ChartData = ({
   number = 0,
   dollarSign = false,
   columnView = false,
-  largeChart = false, // Not used in this visual redesign but maintained
+  largeChart = false,
   rate = 0,
   isPositive = true,
   noRate = false,
   isNumberPercent = false,
 }: any) => {
   // Define performance colors from the specified palette
-  const positiveColor = "text-emerald-500 dark:text-emerald-400"; // Emerald/Teal for success
-  const negativeColor = "text-rose-500 dark:text-rose-400"; // Red/Rose for destructive/warning
+  const positiveColor = "text-emerald-500 dark:text-emerald-400";
+  const negativeColor = "text-rose-500 dark:text-rose-400";
 
   const absRate = Math.abs(rate);
   const rateLabel =
@@ -31,49 +31,36 @@ const ChartData = ({
 
   return (
     <div className={containerLayout}>
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         {/* Heading and Subheading - Clean, professional typography */}
-        <h3 className="text-base font-semibold text-slate-600 dark:text-slate-200">
+        <h3
+          title={heading}
+          className="truncate text-base font-semibold text-slate-600 dark:text-slate-200"
+        >
           {heading}
         </h3>
         {subHeading && (
-          <h6 className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <h6
+            title={subHeading}
+            className="truncate text-sm font-medium text-slate-500 dark:text-slate-400"
+          >
             {subHeading}
           </h6>
         )}
 
-        {/* Primary Metric Number Container */}
-        <div
-          className={`
-            mt-2 inline-block rounded-xl p-1 transition-all duration-300
-
-            
-          `}
-          // Subtle Gradient and Shadow for Emphasis
-
-          // bg-slate-50/50 dark:bg-slate-800/50
-          // ring-1 ring-slate-200/50 dark:ring-slate-700
-          // shadow-inner shadow-slate-200/50 dark:shadow-slate-900/50
-
-          // Hover effect: Subtle lift and shadow glow
-          // hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
-          // hover:-translate-y-[1px]
-        >
-          <span>
-            {/* Tooltip logic for long numbers */}
+        <div className="mt-2 block min-w-0 rounded-xl p-1 transition-all duration-300">
+          <span className="block min-w-0">
             {formatCurrency(number).length > 20 ||
             number.toString().length > 20 ? (
-              <span className="text-xl font-bold text-slate-600 dark:text-white xl:text-2xl">
+              <span className="block truncate text-xl font-bold text-slate-600 dark:text-white xl:text-2xl">
                 <Tooltip>
                   <TooltipTrigger>
-                    {/* Truncated display */}
                     {dollarSign
                       ? formatCurrency(number).slice(0, 20).concat("...")
                       : number.toString().slice(0, 20).concat("...")}
                   </TooltipTrigger>
                   <TooltipContent className="p-2 text-base font-medium">
                     <p>
-                      {/* Full number in tooltip */}
                       {dollarSign ? formatCurrency(number) : number}
                       {isNumberPercent && "%"}
                     </p>
@@ -82,7 +69,7 @@ const ChartData = ({
               </span>
             ) : (
               // Standard display
-              <span className="text-xl font-bold text-slate-600 dark:text-white xl:text-2xl">
+              <span className="block truncate text-xl font-bold text-slate-600 dark:text-white xl:text-2xl">
                 {dollarSign ? formatCurrency(number) : number}
                 {isNumberPercent && "%"}
               </span>
@@ -95,7 +82,7 @@ const ChartData = ({
       {!noRate && rate !== 0 && (
         <div
           className={`
-            mt-1 flex items-center gap-1
+            mt-1 flex shrink-0 items-center gap-1
             ${columnView ? "mt-3 justify-start" : "justify-center"} // Adjust spacing based on layout
             ${isPositive ? positiveColor : negativeColor}
           `}

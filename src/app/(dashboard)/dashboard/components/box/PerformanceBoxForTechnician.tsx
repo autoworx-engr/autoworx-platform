@@ -82,17 +82,11 @@ export default async function PerformanceBoxForTechnician({
     <div
       className={cn(
         `
-          flex flex-1 flex-col md:p-6 rounded-2xl transition-all duration-300 h-full
-
-             Glassmorphism aesthetic (Replaces old p-4 shadow-lg)
+          flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl p-4 transition-all duration-300 md:p-6 lg:h-full
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
-
-          // Subtle border and lift
           ring-1 ring-slate-900/5 dark:ring-white/10
           shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
-
-          // Hover effect for interactivity
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
           hover:translate-y-[-1px]
         `,
@@ -106,7 +100,7 @@ export default async function PerformanceBoxForTechnician({
       />
 
       {/* Metric Content Area - Consistent spacing applied */}
-      <div className="flex flex-col space-y-4">
+      <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto">
         <ChartData
           heading="Total Jobs Completed"
           number={totalJobsCount}
