@@ -28,6 +28,9 @@ import toast from "react-hot-toast";
 import DroppableColumn from "../../components/DroppableColumn";
 import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
 import SearchScroll from "../../components/SearchScroll";
+import { SelectedEmployee } from "../../components/SearchScrollFilters";
+import TeamListCard from "./TeamListCard";
+import { useTeamWorkOrderPanel } from "./useTeamWorkOrderPanel";
 
 const PIPELINE_PAGE_SIZE = 10;
 
@@ -38,6 +41,7 @@ interface PipelinesProps {
   loading?: boolean;
   isTechnician?: boolean;
   employeeType?: EmployeeType;
+  selectedEmployee?: SelectedEmployee | null;
 }
 
 type ColumnMeta = {
@@ -53,6 +57,7 @@ export default function TeamPipelines({
   shopPipelineDataProp,
   isTechnician,
   employeeType,
+  selectedEmployee,
 }: PipelinesProps) {
   const router = useRouter();
 
@@ -68,6 +73,7 @@ export default function TeamPipelines({
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
+  const { selectedLead, openLead, panel } = useTeamWorkOrderPanel();
   const urlSearchParams = useSearchParams();
   const searchTerm = urlSearchParams.get("search") ?? "";
   const searchTermRef = useRef(searchTerm);
@@ -577,6 +583,7 @@ export default function TeamPipelines({
           onSearchResult={handleSearchResult}
           onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
           isTeamPipeline={true}
+          selectedEmployee={selectedEmployee}
         />
       </div>
 
@@ -640,11 +647,28 @@ export default function TeamPipelines({
                     : false
                 }
                 onLoadMore={() => loadMoreForColumn(categoryIndex)}
+                listClassName="gap-2 p-2"
+                renderLead={(lead, leadIndex) => (
+                  <TeamListCard
+                    key={lead.invoiceId}
+                    lead={lead}
+                    technicianUserId={item.id ?? undefined}
+                    isSelected={selectedLead?.invoiceId === lead.invoiceId}
+                    onSelect={() => openLead(lead)}
+                    registerRef={(el) => {
+                      const key = `${categoryIndex}-${leadIndex}`;
+                      if (el) leadRefs.current.set(key, el);
+                      else leadRefs.current.delete(key);
+                    }}
+                  />
+                )}
               />
             ))}
           </div>
         </div>
       )}
+
+      {panel}
     </>
   );
 }

@@ -1,26 +1,23 @@
-import { getTeamWorkOrdersList } from "@/actions/pipelines/getTeamWorkOrdersList";
 import { getEmployeeFilterOption } from "@/actions/pipelines/getEmployeeFilterOptions";
+import { getTeamWeekSchedule } from "@/actions/pipelines/getTeamWeekSchedule";
 import { authOptions } from "@/authOptions";
 import { EmployeeType } from "@prisma/client";
 import { Metadata } from "next";
+import moment from "moment";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
 
 export const metadata: Metadata = {
-  title: "Pipelines - Team List",
-  description: "Every team work order in a single list",
+  title: "Pipelines - Team Week",
+  description: "The team's week at a glance",
 };
 
-const LIST_PAGE_SIZE = 20;
+const TeamWeekBoard = dynamic(() => import("../components/TeamWeekBoard"));
 
-const TeamListPipeline = dynamic(
-  () => import("../components/TeamListPipeline"),
-);
-
-const TeamListPage = async (props: {
+const TeamWeekPage = async (props: {
   searchParams: Promise<{
+    week?: string;
     type?: string;
-    search?: string;
     employeeId?: string;
   }>;
 }) => {
@@ -34,29 +31,31 @@ const TeamListPage = async (props: {
     ? Number(searchParams.employeeId)
     : undefined;
 
-  const [selectedEmployee, { leads, total, hasMore }] = await Promise.all([
+  // Anchored in UTC so the day columns line up with the clamped day offsets the
+  // action returns, regardless of where the viewer is.
+  const requested = moment.utc(searchParams.week, "YYYY-MM-DD", true);
+  const weekStart = (requested.isValid() ? requested : moment.utc())
+    .startOf("week")
+    .format("YYYY-MM-DD");
+
+  const [selectedEmployee, members] = await Promise.all([
     employeeId ? getEmployeeFilterOption(employeeId) : null,
-    getTeamWorkOrdersList(
-      0,
-      LIST_PAGE_SIZE,
+    getTeamWeekSchedule(
+      weekStart,
       employeeType,
-      isTechnician ? Number(currentUser?.id) : undefined,
-      searchParams.search,
       employeeId,
+      isTechnician ? Number(currentUser?.id) : undefined,
     ),
   ]);
 
   return (
-    <TeamListPipeline
-      leads={leads}
-      totalCount={total}
-      hasMore={hasMore}
+    <TeamWeekBoard
+      members={members}
+      weekStart={weekStart}
       employeeType={employeeType}
-      employeeId={employeeId}
       selectedEmployee={selectedEmployee}
-      isTechnician={isTechnician}
     />
   );
 };
 
-export default TeamListPage;
+export default TeamWeekPage;

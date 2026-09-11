@@ -12,7 +12,8 @@ export default async function TeamLayout({
 
   const toggleButtons = [
     { label: "Pipeline", href: "/dashboard/pipeline/team/pipeline" },
-    { label: "Workorders", href: "/dashboard/pipeline/team/workorder" },
+    { label: "Week", href: "/dashboard/pipeline/team/week" },
+    { label: "Kanban", href: "/dashboard/pipeline/team/kanban" },
   ];
 
   return (

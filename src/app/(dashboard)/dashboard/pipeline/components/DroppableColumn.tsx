@@ -1,4 +1,4 @@
-import { Employee, ShopPipelineData } from "@/types/invoiceLead";
+import { Employee, ShopLead, ShopPipelineData } from "@/types/invoiceLead";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
@@ -75,6 +75,9 @@ type DroppableColumnProps = {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  fullWidth?: boolean;
+  renderLead?: (lead: ShopLead, leadIndex: number) => React.ReactNode;
+  listClassName?: string;
 };
 
 const DroppableColumn = ({
@@ -112,6 +115,9 @@ const DroppableColumn = ({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  fullWidth = false,
+  renderLead,
+  listClassName = "gap-1 p-1",
 }: DroppableColumnProps) => {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -165,27 +171,33 @@ const DroppableColumn = ({
         columnRef.current = el;
         setColumnRef(el);
       }}
-      className={`mx-2 w-full max-w-md flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)] ${isDraggedOver ? "ring-2 ring-blue-50" : ""}`}
+      className={`mx-2 w-full rounded-md border ${
+        fullWidth
+          ? ""
+          : "max-w-md flex-shrink-0 sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
+      } ${isDraggedOver ? "ring-2 ring-blue-50" : ""}`}
       style={{
         backgroundColor: "rgba(101, 113, 255, 0.15)",
         padding: "0",
       }}
     >
-      <h2 className="rounded-lg bg-primary px-4 py-3 text-center text-white">
-        <p className="text-base font-bold">
+      <h2 className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-center text-white">
+        <span className="min-w-0 break-words text-base font-bold">
           {item.title || ""}
-          <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
-            {item.totalCount ?? item.leads.length}
-          </span>
-        </p>
+        </span>
+        <span className="shrink-0 rounded-lg bg-[#3F49B9] px-2 text-base font-bold">
+          {item.totalCount ?? item.leads.length}
+        </span>
       </h2>
 
       <ul
         ref={ulRef}
-        className="mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
+        className={`mt-1 flex min-h-[65vh] max-h-[65vh] min-w-0 flex-col overflow-y-auto ${listClassName}`}
         style={{ maxHeight: "65vh" }}
       >
         {item.leads.map((lead, leadIndex) => {
+          if (renderLead) return renderLead(lead, leadIndex);
+
           const key = `${categoryIndex}-${leadIndex}`;
           const isDropdownOpen =
             openDropdownIndex?.category === categoryIndex &&
@@ -201,7 +213,7 @@ const DroppableColumn = ({
               categoryIndex={categoryIndex}
               leadIndex={leadIndex}
               lead={lead}
-              userId={Number(item.id)}
+              userId={item.id ?? undefined}
               leadRefs={leadRefs}
               isTeamPipeline={isTeamPipeline}
               handleColumnDropdownToggle={handleColumnDropdownToggle}

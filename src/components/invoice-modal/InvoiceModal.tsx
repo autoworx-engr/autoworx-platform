@@ -10,30 +10,38 @@ export default function InvoiceModal({
   isShowEdit = true,
   autoOpen = false,
   fromCollaboration = false,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   invoiceId: string;
-  buttonChild: React.ReactNode;
+  /** Omit when the modal is driven by `open` from the parent */
+  buttonChild?: React.ReactNode;
   buttonChildClassName?: string;
   isShowEdit?: boolean;
   autoOpen?: boolean;
   fromCollaboration?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(autoOpen);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(autoOpen);
   const [dataFetched, setDataFetched] = useState(autoOpen);
 
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isControlled) setUncontrolledOpen(newOpen);
+    if (newOpen) setDataFetched(true);
+    onOpenChange?.(newOpen);
+  };
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(newOpen) => {
-        setOpen(newOpen);
-        if (newOpen) {
-          setDataFetched(true);
-        }
-      }}
-    >
-      <DialogTrigger asChild>
-        <div className={buttonChildClassName}>{buttonChild}</div>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {buttonChild && (
+        <DialogTrigger asChild>
+          <div className={buttonChildClassName}>{buttonChild}</div>
+        </DialogTrigger>
+      )}
 
       {(open || dataFetched) && (
         <InvoiceModalBody

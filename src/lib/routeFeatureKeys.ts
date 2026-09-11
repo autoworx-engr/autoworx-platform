@@ -62,7 +62,8 @@ export const FEATURE_PERMISSIONS_MAP: Record<string, RouteFeatureKey> = {
   "/dashboard/visualization": "visualization",
   "/dashboard/pipeline/shop/workorder": "shopPipeline",
   "/dashboard/pipeline/team/pipeline": "teamPipeline",
-  "/dashboard/pipeline/team/workorder": "teamPipeline",
+  "/dashboard/pipeline/team/kanban": "teamPipeline",
+  "/dashboard/pipeline/team/week": "teamPipeline",
   // These three settings pages are shown/hidden by their own product
   // entitlement — Virtual Shop, the Automation group and AI Sales Agent. Every
   // other settings page falls to the "/dashboard/settings" prefix below.

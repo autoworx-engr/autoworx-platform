@@ -75,67 +75,60 @@ export default function PipelineHeader({
       <div className="flex w-full items-center justify-between lg:justify-start">
         <PipelineTypeSelector currentType={type as "sales" | "shop" | "team"} />
 
-        {type !== "team" && (
-          <nav className="lg:hidden">
-            <ul className="flex list-none items-center p-0 lg:gap-4">
-              {toggleButtons.map((button, index) => (
-                <li key={index}>
+        <nav className="lg:hidden">
+          <ul className="flex list-none items-center p-0 lg:gap-4">
+            {toggleButtons.map((button, index) => (
+              <li key={index}>
+                <Link
+                  href={button.href}
+                  className={cn(
+                    "group flex items-center justify-between rounded py-2.5 transition-all duration-300",
+                    "lg:border lg:px-4",
+                    pathname === button.href
+                      ? "hidden lg:flex lg:bg-primary lg:text-white"
+                      : "border-primary text-primary lg:bg-background",
+                  )}
+                >
+                  <span className="font-medium tracking-wide">
+                    {button.label}
+                  </span>
+                  <div className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-primary to-[#818eff] shadow-sm text-white transition-all duration-300 group-hover:translate-x-1 group-hover:shadow-md lg:hidden">
+                    <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <nav className="hidden lg:block w-full lg:w-auto mt-2 lg:mt-0">
+          <ul
+            className="flex items-center gap-1.5 p-1.5 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm"
+            ref={tabsContainerRef}
+          >
+            {toggleButtons.map((button, index) => {
+              const isActive = pathname === button.href;
+
+              return (
+                <li key={index} className="shrink-0">
                   <Link
                     href={button.href}
-                    className={cn(
-                      "group flex items-center justify-between rounded py-2.5 transition-all duration-300",
-                      "lg:border lg:px-4",
-                      pathname === button.href
-                        ? "hidden lg:flex lg:bg-primary lg:text-white"
-                        : "border-primary text-primary lg:bg-background",
-                    )}
+                    data-active={isActive}
+                    className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${
+                      isActive
+                        ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                    }`}
                   >
-                    <span className="font-medium tracking-wide">
-                      {button.label}
-                    </span>
-                    <div className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-primary to-[#818eff] shadow-sm text-white transition-all duration-300 group-hover:translate-x-1 group-hover:shadow-md lg:hidden">
-                      <ChevronRight
-                        className="h-3.5 w-3.5"
-                        aria-hidden="true"
-                      />
-                    </div>
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] -z-10" />
+                    )}
+                    <span className="whitespace-nowrap">{button.label}</span>
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </nav>
-        )}
-        {type !== "team" && (
-          <nav className="hidden lg:block w-full lg:w-auto mt-2 lg:mt-0">
-            <ul
-              className="flex items-center gap-1.5 p-1.5 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm"
-              ref={tabsContainerRef}
-            >
-              {toggleButtons.map((button, index) => {
-                const isActive = pathname === button.href;
-
-                return (
-                  <li key={index} className="shrink-0">
-                    <Link
-                      href={button.href}
-                      data-active={isActive}
-                      className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${
-                        isActive
-                          ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
-                          : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                      }`}
-                    >
-                      {isActive && (
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] -z-10" />
-                      )}
-                      <span className="whitespace-nowrap">{button.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        )}
+              );
+            })}
+          </ul>
+        </nav>
       </div>
 
       {(pathname?.includes("/sales/pipeline") ||

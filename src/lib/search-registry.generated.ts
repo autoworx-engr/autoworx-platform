@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-08-22T20:01:00.967Z
+ * Generated: 2026-09-08T18:28:48.078Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
@@ -185,7 +185,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "inventory", "vendor"],
     description: "Manage your vendors",
-    permissionKey: "inventoryAll",
+    permissionKey: ["inventoryAll", "inventoryAllViewOnly"],
     featureKey: "inventory",
   },
   {
@@ -239,22 +239,32 @@ export const generatedRegistry: SearchItem[] = [
     featureKey: "shopPipeline",
   },
   {
-    id: "dashboard-pipeline-team-pipeline",
+    id: "dashboard-pipeline-team-kanban",
     label: "Pipelines - Team Pipeline",
-    href: "/dashboard/pipeline/team/pipeline",
+    href: "/dashboard/pipeline/team/kanban",
     type: "page",
-    keywords: ["dashboard", "pipeline", "team", "pipelines"],
+    keywords: ["dashboard", "pipeline", "team", "kanban", "pipelines"],
     description: "Manage your team pipeline",
     permissionKey: "teamPipeline",
     featureKey: "teamPipeline",
   },
   {
-    id: "dashboard-pipeline-team-workorder",
-    label: "Team Work Orders",
-    href: "/dashboard/pipeline/team/workorder",
+    id: "dashboard-pipeline-team-pipeline",
+    label: "Pipelines - Team List",
+    href: "/dashboard/pipeline/team/pipeline",
     type: "page",
-    keywords: ["dashboard", "pipeline", "team", "workorder", "work", "orders"],
-    description: "View and manage your team work orders",
+    keywords: ["dashboard", "pipeline", "team", "pipelines", "list"],
+    description: "Every team work order in a single list",
+    permissionKey: "teamPipeline",
+    featureKey: "teamPipeline",
+  },
+  {
+    id: "dashboard-pipeline-team-week",
+    label: "Pipelines - Team Week",
+    href: "/dashboard/pipeline/team/week",
+    type: "page",
+    keywords: ["dashboard", "pipeline", "team", "week", "pipelines"],
+    description: "The team",
     permissionKey: "teamPipeline",
     featureKey: "teamPipeline",
   },
@@ -702,4 +712,4 @@ export const generatedRegistry: SearchItem[] = [
   },
 ];
 
-// 65 route(s) registered
+// 66 route(s) registered

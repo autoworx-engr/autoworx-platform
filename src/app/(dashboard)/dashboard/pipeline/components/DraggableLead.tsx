@@ -333,7 +333,7 @@ const DraggableLead = ({
         <p className="mb-2 overflow-auto text-xs">{lead.vehicle}</p>
       </div>
 
-      {isTeamPipeline && lead.technicians.length > 0 && userId && (
+      {isTeamPipeline && lead.technicians.length > 0 && !!userId && (
         <div className="mb-2 flex flex-col gap-1 rounded-lg bg-slate-50 p-2 text-xs">
           {lead.technicians
             .filter((tech) => tech.userId === userId)
