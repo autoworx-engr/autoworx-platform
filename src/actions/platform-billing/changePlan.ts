@@ -2,7 +2,10 @@
 
 import { db } from "@/lib/db";
 import { syncPlatformPlanToStripe } from "@/lib/platform-billing/stripe/catalog";
-import { changePlatformStripeSubscriptionPrice } from "@/lib/platform-billing/stripe/subscription";
+import {
+  changePlatformStripeSubscriptionPrice,
+  previewPlatformPlanChange as previewStripePlanChange,
+} from "@/lib/platform-billing/stripe/subscription";
 import {
   assertBillingAccess,
   assertCompanyAccess,
@@ -95,6 +98,67 @@ export async function changePlatformPlan(companyId: number, newPlanId: string) {
     return {
       success: false,
       message: error.message || "Failed to change plan",
+    };
+  }
+}
+
+/**
+ * Priced preview for the confirm step. Prorations land on the next invoice, so
+ * without this the owner sees no charge today and an unexplained larger bill
+ * next cycle.
+ */
+export async function previewPlatformPlanChange(
+  companyId: number,
+  newPlanId: string,
+) {
+  try {
+    const session = await requireBillingSession();
+    await assertBillingAccess();
+    assertCompanyAccess(session, companyId);
+
+    const subscription = await db.platformSubscription.findUnique({
+      where: { companyId },
+    });
+    if (
+      !subscription?.stripeSubscriptionId ||
+      !LIVE_STATUSES.has(subscription.status)
+    ) {
+      throw new Error("No active subscription to change");
+    }
+
+    const newPlan = await db.platformPlan.findFirst({
+      where: {
+        id: newPlanId,
+        isActive: true,
+        OR: [{ companyId: null }, { companyId }],
+      },
+    });
+    if (!newPlan) throw new Error("Plan not found");
+
+    let priceId = newPlan.stripePriceId;
+    if (!priceId)
+      priceId = (await syncPlatformPlanToStripe(newPlan.id)).priceId;
+    if (!priceId) throw new Error("Plan is not available right now");
+
+    const preview = await previewStripePlanChange({
+      stripeSubscriptionId: subscription.stripeSubscriptionId,
+      newStripePriceId: priceId,
+    });
+
+    return {
+      success: true,
+      data: {
+        ...preview,
+        planName: newPlan.name,
+        recurringAmount: Number(newPlan.price),
+        interval: newPlan.interval,
+      },
+    };
+  } catch (error: any) {
+    console.error("❌ Failed to preview plan change:", error);
+    return {
+      success: false,
+      message: error.message || "Failed to preview plan change",
     };
   }
 }

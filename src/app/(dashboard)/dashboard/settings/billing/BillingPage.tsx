@@ -1,15 +1,20 @@
 "use client";
 
 import { createPlatformCheckout } from "@/actions/platform-billing/checkout";
-import { changePlatformPlan } from "@/actions/platform-billing/changePlan";
+import {
+  changePlatformPlan,
+  previewPlatformPlanChange,
+} from "@/actions/platform-billing/changePlan";
 import {
   getCurrentSubscription,
   getPlatformPlans,
 } from "@/actions/platform-billing/plans";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import moment from "moment-timezone";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -25,6 +30,9 @@ export default function Page() {
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<any>(null);
+  const [priceChange, setPriceChange] = useState<any>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const timezone = useCompanyTimezone();
 
   // Auto-open the plans modal when redirected from an upgrade prompt
@@ -101,17 +109,18 @@ export default function Page() {
     setPlansOpen(false);
 
     // Already on a live Stripe subscription — swap the plan in place with
-    // Stripe's own proration, no card re-entry.
+    // Stripe's own proration, no card re-entry. Confirm first with the real
+    // figure: the proration lands on the next invoice, so without it the owner
+    // is charged nothing today and sees an unexplained bigger bill next cycle.
     if (isLiveStripeSub) {
-      setIsChangingPlan(true);
-      const res = await changePlatformPlan(session!.user.companyId, plan.id);
-      if (res.success) {
-        toast.success("Plan changed successfully");
-        window.location.reload();
-      } else {
-        toast.error(res.message);
-        setIsChangingPlan(false);
-      }
+      setPendingPlan(plan);
+      setLoadingPreview(true);
+      const res = await previewPlatformPlanChange(
+        session!.user.companyId,
+        plan.id,
+      );
+      setPriceChange(res.success ? res.data : null);
+      setLoadingPreview(false);
       return;
     }
 
@@ -127,6 +136,41 @@ export default function Page() {
       toast.error(res.message || "Failed to start checkout");
       setIsChangingPlan(false);
     }
+  };
+
+  const confirmPlanChange = async () => {
+    const plan = pendingPlan;
+    setPendingPlan(null);
+    setIsChangingPlan(true);
+    const res = await changePlatformPlan(session!.user.companyId, plan.id);
+    if (res.success) {
+      toast.success("Plan changed successfully");
+      window.location.reload();
+    } else {
+      toast.error(res.message);
+      setIsChangingPlan(false);
+    }
+  };
+
+  const describePlanChange = () => {
+    if (loadingPreview) return "Working out what this changes on your bill…";
+    if (!priceChange) {
+      return `Switch to ${pendingPlan?.name}? Your next bill will be adjusted for the time remaining on your current plan.`;
+    }
+    const per = priceChange.interval === "YEARLY" ? "year" : "month";
+    const rate = `$${priceChange.recurringAmount}/${per}`;
+    const when = priceChange.nextBillDate
+      ? moment(priceChange.nextBillDate).tz(timezone).format("MMM D")
+      : "your next billing date";
+    const diff = Math.abs(priceChange.prorationAmount).toFixed(2);
+
+    if (priceChange.prorationAmount > 0) {
+      return `You'll be charged $${diff} extra on your next bill (${when}), then ${rate}.`;
+    }
+    if (priceChange.prorationAmount < 0) {
+      return `You'll get a $${diff} credit on your next bill (${when}), then ${rate}.`;
+    }
+    return `Your next bill on ${when} will be ${rate}.`;
   };
 
   return (
@@ -155,6 +199,21 @@ export default function Page() {
           currentPlanId={currentPlanIdForModal}
         />
       )}
+
+      <ConfirmModal
+        open={!!pendingPlan}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingPlan(null);
+            setPriceChange(null);
+          }
+        }}
+        title={`Switch to ${pendingPlan?.name ?? "this plan"}?`}
+        description={describePlanChange()}
+        confirmText="Confirm change"
+        loading={loadingPreview}
+        onConfirm={confirmPlanChange}
+      />
 
       {isChangingPlan && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm">

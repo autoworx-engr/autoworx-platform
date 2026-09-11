@@ -58,3 +58,52 @@ export async function cancelPlatformStripeSubscriptionImmediately(
   const stripe = getPlatformStripeClient();
   return stripe.subscriptions.cancel(stripeSubscriptionId);
 }
+
+/**
+ * What the customer's next bill becomes if they switch to this price, so the
+ * confirm step can show a real number instead of a surprise next cycle.
+ * Prorations are deferred (create_prorations), so the charge lands on the
+ * upcoming invoice rather than today.
+ */
+export async function previewPlatformPlanChange(params: {
+  stripeSubscriptionId: string;
+  newStripePriceId: string;
+}) {
+  const stripe = getPlatformStripeClient();
+  const subscription = await stripe.subscriptions.retrieve(
+    params.stripeSubscriptionId,
+  );
+  const item = subscription.items.data[0];
+  if (!item) {
+    throw new Error(
+      `Stripe subscription ${params.stripeSubscriptionId} has no items to preview`,
+    );
+  }
+
+  const preview = await stripe.invoices.createPreview({
+    customer: subscription.customer as string,
+    subscription: params.stripeSubscriptionId,
+    subscription_details: {
+      items: [{ id: item.id, price: params.newStripePriceId }],
+      proration_behavior: "create_prorations",
+    },
+  });
+
+  const prorationCents = preview.lines.data
+    .filter((line) => {
+      const parent = line.parent;
+      return Boolean(
+        parent?.subscription_item_details?.proration ||
+        parent?.invoice_item_details?.proration,
+      );
+    })
+    .reduce((sum, line) => sum + line.amount, 0);
+
+  return {
+    prorationAmount: prorationCents / 100,
+    nextInvoiceTotal: preview.total / 100,
+    nextBillDate: item.current_period_end
+      ? new Date(item.current_period_end * 1000).toISOString()
+      : null,
+  };
+}
