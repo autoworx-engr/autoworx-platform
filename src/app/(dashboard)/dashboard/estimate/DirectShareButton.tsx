@@ -14,6 +14,62 @@ import { RotatingLines } from "react-loader-spinner";
 import { Session } from "next-auth";
 import { sendCollaborationInvoiceSms } from "@/actions/estimate/invoice/sendCollaborationInvoiceSms";
 
+const SEND_TIMEOUT_MS = 30_000;
+
+async function withSendTimeout<T>(work: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new Error(
+                "Sending is taking too long. The estimate was saved — check the client's messages before trying again.",
+              ),
+            ),
+          SEND_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function SendButton({
+  label,
+  bold,
+  busy,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  bold?: boolean;
+  busy: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={cn(
+        "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-primary/5 hover:text-primary hover:ring-primary/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
+        bold ? "font-bold" : "font-semibold",
+      )}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {busy ? (
+        <RotatingLines strokeColor="#6571FF" strokeWidth="5" width="16" />
+      ) : (
+        <Send size={16} strokeWidth={2.5} />
+      )}
+      <span>{label}</span>
+    </button>
+  );
+}
+
 export default function DirectShareButton({
   requestEstimate,
 }: {
@@ -25,7 +81,6 @@ export default function DirectShareButton({
   const type = pathname.includes("/invoices/") ? "Invoice" : "Estimate";
   const createInvoice = useInvoiceCreate(type);
   const goToEstimateEdit = useGoToEstimateEdit();
-  const resetEstimateCreate = useEstimateCreateStore((state) => state.reset);
   const client = useListsStore((state) => state.client);
   const invoiceId = useEstimateCreateStore((state) => state.invoiceId);
   // Not useTransition: a send ends in a route change, and React 19 keeps an
@@ -34,7 +89,6 @@ export default function DirectShareButton({
   const [sending, setSending] = useState<
     "Email" | "SMS" | "Collaboration" | null
   >(null);
-  const resetLists = useListsStore((state) => state.reset);
   const createInvoicePath = pathname.includes("/dashboard/estimate/create");
   const senderUserId = (authUser as Session & { user: { companyId: number } })
     ?.user?.id;
@@ -63,14 +117,17 @@ export default function DirectShareButton({
       }
 
       const savedId = saved.data?.id ?? invoiceId;
+      let sendFailed = false;
 
       try {
         if (type === "Email") {
-          const sendEmailResponse = await sendInvoiceEmail({
-            invoiceId: savedId,
-          });
+          const sendEmailResponse = await withSendTimeout(
+            sendInvoiceEmail({ invoiceId: savedId }),
+          );
           if (!sendEmailResponse.success) {
-            throw new Error("Email sending failed");
+            throw new Error(
+              sendEmailResponse.message || "Email sending failed",
+            );
           }
           if (!createInvoicePath) {
             router.push(
@@ -79,11 +136,11 @@ export default function DirectShareButton({
           }
           successToast("Email sent successfully");
         } else if (type === "SMS") {
-          const sendEmailResponse = await sendInvoiceSms({
-            invoiceId: savedId,
-          });
+          const sendEmailResponse = await withSendTimeout(
+            sendInvoiceSms({ invoiceId: savedId }),
+          );
           if (!sendEmailResponse.success) {
-            throw new Error("SMS sending failed");
+            throw new Error(sendEmailResponse.message || "SMS sending failed");
           }
           if (!createInvoicePath) {
             router.push(
@@ -92,13 +149,15 @@ export default function DirectShareButton({
           }
           successToast("SMS sent successfully");
         } else if (type === "Collaboration") {
-          const sendEmailResponse = await sendCollaborationInvoiceSms({
-            invoiceId: savedId,
-            senderUserId: Number(senderUserId),
-            toCompanyId: requestEstimate?.senderCompanyId,
-          });
+          const sendEmailResponse = await withSendTimeout(
+            sendCollaborationInvoiceSms({
+              invoiceId: savedId,
+              senderUserId: Number(senderUserId),
+              toCompanyId: requestEstimate?.senderCompanyId,
+            }),
+          );
           if (!sendEmailResponse.success) {
-            throw new Error("SMS sending failed");
+            throw new Error(sendEmailResponse.message || "SMS sending failed");
           }
 
           if (!createInvoicePath) {
@@ -109,89 +168,59 @@ export default function DirectShareButton({
           successToast("SMS sent successfully");
         }
       } catch (error) {
-        errorToast("Sending failed. Please try again.");
-        if (!createInvoicePath) {
-          router.push(`/dashboard/estimate`);
-        }
+        sendFailed = true;
+        errorToast(
+          error instanceof Error && error.message
+            ? error.message
+            : "Sending failed. Please try again.",
+        );
+        // The estimate is saved either way, so a failed send goes to the list
+        // rather than back to the create page it was started from.
+        router.push(`/dashboard/estimate`);
       }
 
-      // Sending has written the estimate, so the create page must not stay in
-      // its create state — the next send would write a second estimate. Move
-      // to the edit state for the record that was just saved, and keep the
-      // store as it is so the edit page can pick it up.
-      if (createInvoicePath) {
+      // A send that went through has written the estimate, so the create page
+      // must not stay in its create state — the next send would write a second
+      // estimate. Move to the edit state for the record that was just saved,
+      // and keep the store as it is so the edit page can pick it up.
+      if (!sendFailed && createInvoicePath) {
         goToEstimateEdit(savedId, clientId);
-        return;
       }
-
-      resetEstimateCreate();
-      resetLists();
     } catch (error) {
       errorToast(`Sending ${type} failed. Please try again.`);
     } finally {
       setSending(null);
     }
   }
-  if (!client) return null;
+  // Never unmount on a missing client: these buttons disappearing mid-flow is
+  // worse than a disabled one, and the store can be briefly empty while a
+  // route hydrates. handleSubmit still guards the send itself.
+  const disabled = sending !== null || !client;
+
   return (
     <div className="flex items-center gap-x-3">
-      <button
-        className={cn(
-          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-primary/5 hover:text-primary hover:ring-primary/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
-        )}
+      <SendButton
+        label="Email"
+        bold
+        busy={sending === "Email"}
+        disabled={disabled}
         onClick={() => handleSubmit({ type: "Email" })}
-        disabled={sending !== null}
-      >
-        {sending === "Email" ? (
-          <div className="flex h-5 items-center justify-center">
-            <RotatingLines strokeColor="#6571FF" strokeWidth="5" width="20" />
-          </div>
-        ) : (
-          <>
-            <Send size={16} strokeWidth={2.5} />
-            <span>Email</span>
-          </>
-        )}
-      </button>
+      />
 
-      <button
-        className={cn(
-          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-primary/5 hover:text-primary hover:ring-primary/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
-        )}
+      <SendButton
+        label="SMS"
+        busy={sending === "SMS"}
+        disabled={disabled}
         onClick={() => handleSubmit({ type: "SMS" })}
-        disabled={sending !== null}
-      >
-        {sending === "SMS" ? (
-          <div className="flex h-5 items-center justify-center">
-            <RotatingLines strokeColor="#6571FF" strokeWidth="5" width="20" />
-          </div>
-        ) : (
-          <>
-            <Send size={16} strokeWidth={2.5} />
-            <span>SMS</span>
-          </>
-        )}
-      </button>
+      />
 
       {requestEstimate && (
-        <button
-          className={cn(
-            "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-primary/5 hover:text-primary hover:ring-primary/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
-          )}
+        <SendButton
+          label="Collaboration"
+          busy={sending === "Collaboration"}
+          disabled={disabled}
           onClick={() => handleSubmit({ type: "Collaboration" })}
-          disabled={sending !== null}
-        >
-          {sending === "Collaboration" ? (
-            <div className="flex h-5 items-center justify-center">
-              <RotatingLines strokeColor="#6571FF" strokeWidth="5" width="20" />
-            </div>
-          ) : (
-            <>
-              <Send size={16} strokeWidth={2.5} />
-              <span>Collaboration</span>
-            </>
-          )}
-        </button>
+        />
       )}
     </div>
   );
