@@ -28,7 +28,7 @@ export default async function PerformanceBoxForSalesUser() {
   const timezone = companyTimezone?.timezone;
   const leadsConvertedData = await getConvertedLeadsPerMonth(timezone);
   const { currentTotalLeads: salesCurrentTotalLeads, currentConvertedLeads } =
-    await getSalespersonLeads(String(currentUser.id));
+    await getSalespersonLeads(String(currentUser.id), companyId, timezone);
 
   // --- Data Processing ---
   const winLossRateRaw =
