@@ -1,5 +1,4 @@
 "use server";
-
 import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
@@ -38,7 +37,7 @@ export default async function newService({
       const existingService = await db.service.findFirst({
         where: {
           companyId,
-          name: validatedServiceInfo.name,
+          name: { equals: validatedServiceInfo.name, mode: "insensitive" },
           canned: true,
         },
       });
