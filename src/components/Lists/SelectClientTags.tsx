@@ -1,9 +1,12 @@
 "use client";
 
 import newTag from "@/actions/tag/newTag";
+import { CLIENT_LIST_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQuery";
+import { CLIENT_DETAIL_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQueryById";
 import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { Tag } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -45,6 +48,7 @@ export function SelectClientTags({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const handleClickOutside = useCallback(
     (event: MouseEvent) => {
@@ -101,6 +105,8 @@ export function SelectClientTags({
       if (res.type === "success") {
         setTags((prev: Tag[]) => prev.filter((tag) => tag.id !== id));
         if (tag?.id === id) setTag(undefined!);
+        queryClient.invalidateQueries({ queryKey: [CLIENT_DETAIL_KEY] });
+        queryClient.invalidateQueries({ queryKey: [CLIENT_LIST_KEY] });
         successToast("Tag deleted successfully");
       } else {
         setError("Failed to delete tag.");
