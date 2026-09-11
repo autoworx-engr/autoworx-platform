@@ -143,7 +143,8 @@ function getPaymentMethod(payment: any) {
   } else if (payment.other) {
     return payment.other.paymentMethod?.name;
   } else if (payment.type === "DEPOSIT") {
-    return "Deposit";
+    const depositMethod = payment.deposit?.depositMethod?.trim();
+    return depositMethod ? `Deposit (${depositMethod})` : "Deposit";
   } else {
     return "Unknown";
   }
