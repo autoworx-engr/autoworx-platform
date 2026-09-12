@@ -46,10 +46,15 @@ async function attachLastMessages(
   const senders = senderIds.length
     ? await db.user.findMany({
         where: { id: { in: senderIds } },
-        select: { id: true, firstName: true },
+        select: { id: true, firstName: true, lastName: true },
       })
     : [];
-  const nameById = new Map(senders.map((s) => [s.id, s.firstName]));
+  const nameById = new Map(
+    senders.map((s) => [
+      s.id,
+      [s.firstName, s.lastName].filter(Boolean).join(" ").trim() || s.firstName,
+    ]),
+  );
 
   const trackByGroup = new Map<number, Record<string, unknown>>();
   for (const m of messages) {

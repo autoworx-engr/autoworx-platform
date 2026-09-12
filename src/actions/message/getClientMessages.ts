@@ -61,6 +61,7 @@ export async function getClientMessages(
         take: 1, // Only get the latest email
         include: { client: true },
       },
+      conversationsTrack: true,
     },
   });
 
