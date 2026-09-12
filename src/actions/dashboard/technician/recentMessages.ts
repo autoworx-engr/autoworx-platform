@@ -1,7 +1,13 @@
 "use server";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import { Attachment, Group, User as PrismaUser, User } from "@prisma/client";
+import {
+  Attachment,
+  ChatTrack,
+  Group,
+  User as PrismaUser,
+  User,
+} from "@prisma/client";
 
 export interface FullMessage {
   id: number;
@@ -14,6 +20,7 @@ export interface FullMessage {
   updatedAt: Date;
   attachment: Attachment[] | null;
   group: Group | null;
+  chatTrack: ChatTrack | null;
 }
 
 export const fetchRecentMessages = async (
@@ -33,6 +40,7 @@ export const fetchRecentMessages = async (
       include: {
         attachment: true,
         group: true,
+        chatTrack: true,
       },
       take: take,
     });
