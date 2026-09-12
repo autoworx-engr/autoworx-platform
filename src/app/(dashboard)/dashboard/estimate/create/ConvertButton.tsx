@@ -56,11 +56,10 @@ export default function ConvertButton({
 
   useEffect(() => clearFallback, [clearFallback]);
 
-  function goToList(savedId?: string) {
-    // Carry the just-saved id so the table view auto-opens its modal.
+  function goToList(savedId?: string, savedType: InvoiceType = type) {
     const openParam = savedId ? `?openEstimateId=${savedId}` : "";
     const target =
-      type === "Estimate"
+      savedType === InvoiceType.Estimate
         ? `/dashboard/estimate${openParam}`
         : `/dashboard/estimate/invoices${openParam}`;
 
@@ -102,7 +101,7 @@ export default function ConvertButton({
         }).catch((err) => console.error("notifyInventoryShortage failed", err));
       }
 
-      goToList(savedId);
+      goToList(savedId, res.data?.type ?? type);
       // resetEstimateCreate();
       // resetLists();
     } catch (err) {

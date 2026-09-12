@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
+import { notifyAppointmentUpdated } from "../_appointmentNotifications";
 
 const INCLUDE = {
   appointmentUsers: {
@@ -66,7 +67,9 @@ type Ctx = { params: Promise<{ id: string }> };
 async function authorizeAppointmentAccess(
   req: NextRequest,
   rawId: string,
-): Promise<{ error: NextResponse } | { appointmentId: number }> {
+): Promise<
+  { error: NextResponse } | { appointmentId: number; companyId: number }
+> {
   const appointmentId = Number(rawId);
   if (!Number.isFinite(appointmentId)) {
     return {
@@ -108,7 +111,7 @@ async function authorizeAppointmentAccess(
     };
   }
 
-  return { appointmentId };
+  return { appointmentId, companyId: principal.companyId };
 }
 
 export async function GET(req: NextRequest, context: Ctx) {
@@ -237,6 +240,8 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       where: { id: appointmentId },
       include: INCLUDE,
     });
+
+    await notifyAppointmentUpdated(appointmentId, access.companyId);
 
     return NextResponse.json({
       success: true,

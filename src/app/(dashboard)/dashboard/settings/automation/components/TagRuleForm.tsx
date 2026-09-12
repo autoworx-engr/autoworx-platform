@@ -66,6 +66,26 @@ type Rule = {
   ruleType: string;
 };
 
+const getEmptyFormData = (companyId: any): Rule => ({
+  companyId,
+  title: "",
+  pipelineType: "",
+  tagIds: [],
+  timeDelay: null,
+  condition_type: "",
+  targetColumnId: null,
+  columnIds: [],
+  communicationType: "SMS",
+  templateType: "SMS",
+  isSendWeekDays: false,
+  isSendOfficeHours: false,
+  subject: "",
+  emailBody: "",
+  smsBody: "",
+  attachments: [],
+  ruleType: "",
+});
+
 const TagRuleForm = ({
   mode,
   id,
@@ -76,25 +96,7 @@ const TagRuleForm = ({
   twilio,
 }: RuleFormProps) => {
   const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
-  const [formData, setFormData] = useState<Rule>({
-    companyId: companyId,
-    title: "",
-    pipelineType: "",
-    tagIds: [],
-    timeDelay: null,
-    condition_type: "",
-    targetColumnId: null,
-    columnIds: [],
-    communicationType: "SMS",
-    templateType: "SMS",
-    isSendWeekDays: false,
-    isSendOfficeHours: false,
-    subject: "",
-    emailBody: "",
-    smsBody: "",
-    attachments: [],
-    ruleType: "",
-  });
+  const [formData, setFormData] = useState<Rule>(getEmptyFormData(companyId));
 
   const [salesTags, setSalesTags] = useState<Tag[]>([]);
   const [shopTags, setShopTags] = useState<Tag[]>([]);
@@ -202,25 +204,7 @@ const TagRuleForm = ({
             : tagAutomationCommunication.communicationType,
         );
       } else {
-        const initialData: Rule = {
-          companyId: companyId,
-          title: "",
-          pipelineType: "",
-          tagIds: [],
-          timeDelay: null,
-          condition_type: "",
-          targetColumnId: null,
-          columnIds: [],
-          communicationType: "SMS",
-          templateType: "SMS",
-          isSendWeekDays: false,
-          isSendOfficeHours: false,
-          subject: "",
-          emailBody: "",
-          smsBody: "",
-          attachments: [],
-          ruleType: "",
-        };
+        const initialData = getEmptyFormData(companyId);
         setFormData(initialData);
         setInitialFormData(initialData);
       }
@@ -597,7 +581,14 @@ const TagRuleForm = ({
           data: finalData,
         });
       } else {
-        createRule(finalData);
+        createRule(finalData, {
+          onSuccess: () => {
+            const emptyData = getEmptyFormData(companyId);
+            setFormData(emptyData);
+            setInitialFormData(emptyData);
+            setActiveTemplate("SMS");
+          },
+        });
       }
     } catch (err) {
       errorToast("Something went wrong!");

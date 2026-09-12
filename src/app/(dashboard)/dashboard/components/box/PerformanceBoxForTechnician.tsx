@@ -110,7 +110,7 @@ export default async function PerformanceBoxForTechnician({
         <ChartData
           heading="Total Jobs Completed"
           number={totalJobsCount}
-          // subHeading="/this period"
+          subHeading="/monthly"
           isPositive={isTotalJobsPositive}
           rate={totalJobsGrowthRate}
         />

@@ -342,7 +342,7 @@ export default function EditPaymentModal({
           <DialogClose />
         </DialogHeader>
 
-        <form className="mt-5 space-y-6">
+        <form className="mt-5 space-y-6" autoComplete="off">
           {/* Type Buttons */}
           <div className="flex flex-wrap gap-2">
             {["CARD", "CHECK", "CASH", "OTHER", "DEPOSIT"].map((t) => (
@@ -390,6 +390,10 @@ export default function EditPaymentModal({
               <SlimInput
                 label="Card (Last 4 digits)"
                 name="card"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore
+                data-form-type="other"
                 value={card}
                 onChange={(e) => setCard(e.target.value)}
               />

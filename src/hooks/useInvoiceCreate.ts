@@ -35,6 +35,8 @@ export function useInvoiceCreate(type: InvoiceType) {
     coupon,
     inspections,
     damageNotes,
+    savedInvoiceId,
+    savedInvoiceType,
   } = useEstimateCreateStore();
 
   const { client, vehicle, status } = useListsStore();
@@ -50,8 +52,13 @@ export function useInvoiceCreate(type: InvoiceType) {
     const columnId = status?.id;
     const isEditPage = pathaname?.includes("/estimate/edit/");
 
+    const isAlreadySaved = !!invoiceId && savedInvoiceId === invoiceId;
+    const shouldUpdate = isEditPage || isAlreadySaved;
+
+    const targetType = isAlreadySaved ? (savedInvoiceType ?? type) : type;
+
     // check if client is selected
-    if (!isEditPage && !client) {
+    if (!shouldUpdate && !client) {
       return {
         type: "globalError",
         message: "Please select a client before creating an estimate.",
@@ -71,7 +78,7 @@ export function useInvoiceCreate(type: InvoiceType) {
     }
 
     let res: ServerAction | TErrorHandler;
-    if (isEditPage) {
+    if (shouldUpdate) {
       res = await updateInvoice(
         {
           id: invoiceId,
@@ -114,7 +121,7 @@ export function useInvoiceCreate(type: InvoiceType) {
               : null,
           })),
           tasks,
-          type,
+          type: targetType,
           inspections,
           damageNotes,
         },
@@ -124,9 +131,11 @@ export function useInvoiceCreate(type: InvoiceType) {
       );
 
       if (res.type === "success") {
-        successToast(`${type} Update successfully`);
+        successToast(`${targetType} Update successfully`);
         useEstimateCreateStore.setState({
           items: res?.data?.invoiceItems ?? [],
+          savedInvoiceId: invoiceId,
+          savedInvoiceType: res?.data?.type ?? targetType,
         });
       }
     } else {
@@ -189,6 +198,11 @@ export function useInvoiceCreate(type: InvoiceType) {
             console.error("updateInventoryWhenInvoiceCreate failed", err),
           );
         }
+
+        useEstimateCreateStore.setState({
+          savedInvoiceId: res.data.id ?? invoiceId,
+          savedInvoiceType: res.data.type ?? type,
+        });
 
         successToast(`${type} Create successfully`);
       }

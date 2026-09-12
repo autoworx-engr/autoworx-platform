@@ -31,6 +31,7 @@ export default function TopNavbarIcons() {
         <SquarePlay className="size-5 sm:size-7  text-primary" />
       </Link>
       {/* <SwitchDashboard /> */}
+
       {(currentUser?.employeeType == "Admin" ||
         currentUser?.employeeType == "Manager" ||
         currentUser?.employeeType == "Sales") &&

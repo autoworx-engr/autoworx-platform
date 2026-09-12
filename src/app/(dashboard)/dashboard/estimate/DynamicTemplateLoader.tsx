@@ -44,7 +44,14 @@ export default function DynamicTemplateLoader({
         setTemplate(data.template);
         setStatus(data.template?.column);
         setItems(data.items);
-        setTasks(data.tasks);
+        setTasks(
+          (data.tasks ?? []).map(
+            (t: { title: string; description: string }) => ({
+              title: t.title,
+              description: t.description,
+            }),
+          ),
+        );
         setPhotos(data.photos);
         setInspections(data.inspections);
       })
